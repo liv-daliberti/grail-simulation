@@ -302,6 +302,8 @@
     <span class="n">BASE_TRAIN_KEEP_COLUMNS</span><span class="p">,</span>
     <span class="n">collect_passthrough_fields</span><span class="p">,</span>
     <span class="n">parse_and_run</span><span class="p">,</span>
+    <span class="n">GrpoPipelineComponents</span><span class="p">,</span>
+    <span class="n">GrpoPipelineContext</span><span class="p">,</span>
     <span class="n">prepare_model_eval_and_run_grpo</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.rewards</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_reward_funcs</span>
@@ -447,22 +449,22 @@
         <span class="n">training_args</span><span class="o">.</span><span class="n">reward_weights</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">common_kwargs</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;dataset&quot;</span><span class="p">:</span> <span class="n">dataset</span><span class="p">,</span>
-        <span class="s2">&quot;script_args&quot;</span><span class="p">:</span> <span class="n">script_args</span><span class="p">,</span>
-        <span class="s2">&quot;training_args&quot;</span><span class="p">:</span> <span class="n">training_args</span><span class="p">,</span>
-        <span class="s2">&quot;model_args&quot;</span><span class="p">:</span> <span class="n">model_args</span><span class="p">,</span>
-        <span class="s2">&quot;tokenizer&quot;</span><span class="p">:</span> <span class="n">tokenizer</span><span class="p">,</span>
-    <span class="p">}</span>
-    <span class="n">prepare_model_eval_and_run_grpo</span><span class="p">(</span>
+    <span class="n">components</span> <span class="o">=</span> <span class="n">GrpoPipelineComponents</span><span class="p">(</span>
         <span class="n">model_builder</span><span class="o">=</span><span class="n">get_model</span><span class="p">,</span>
-        <span class="n">reward_funcs</span><span class="o">=</span><span class="n">reward_fns</span><span class="p">,</span>
         <span class="n">trainer_cls</span><span class="o">=</span><span class="n">GRPOTrainer</span><span class="p">,</span>
+        <span class="n">reward_funcs</span><span class="o">=</span><span class="n">reward_fns</span><span class="p">,</span>
+        <span class="n">tokenizer</span><span class="o">=</span><span class="n">tokenizer</span><span class="p">,</span>
+        <span class="n">peft_config_fn</span><span class="o">=</span><span class="n">get_peft_config</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">context</span> <span class="o">=</span> <span class="n">GrpoPipelineContext</span><span class="p">(</span>
+        <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
+        <span class="n">script_args</span><span class="o">=</span><span class="n">script_args</span><span class="p">,</span>
+        <span class="n">training_args</span><span class="o">=</span><span class="n">training_args</span><span class="p">,</span>
+        <span class="n">model_args</span><span class="o">=</span><span class="n">model_args</span><span class="p">,</span>
         <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
         <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;grpo&quot;</span><span class="p">,</span>
-        <span class="n">peft_config_fn</span><span class="o">=</span><span class="n">get_peft_config</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">common_kwargs</span><span class="p">,</span>
-    <span class="p">)</span></div>
+    <span class="p">)</span>
+    <span class="n">prepare_model_eval_and_run_grpo</span><span class="p">(</span><span class="n">components</span><span class="o">=</span><span class="n">components</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span></div>
 
 
 

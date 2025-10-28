@@ -3,13 +3,13 @@
 # Apache License, Version 2.0; see the LICENSE file or
 # https://www.apache.org/licenses/LICENSE-2.0 for details.
 
+# pylint: disable=too-many-branches,too-many-locals,too-many-statements,broad-exception-caught,duplicate-code
+
 """Evaluation routines for the GPT-4o slate-ranking baseline.
 
 Fetches the configured dataset, issues batched GPT-4o requests, parses the
 responses, and aggregates accuracy and formatting metrics for reporting.
 """
-
-# pylint: disable=too-many-branches,too-many-locals,too-many-statements,broad-exception-caught,duplicate-code
 
 from __future__ import annotations
 

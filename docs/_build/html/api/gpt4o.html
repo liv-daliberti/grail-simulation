@@ -480,6 +480,267 @@ We keep the behaviour but allow shell overrides to win.</p>
 <p id="module-gpt4o.evaluate">Evaluation routines for the GPT-4o slate-ranking baseline.</p>
 <p>Fetches the configured dataset, issues batched GPT-4o requests, parses the
 responses, and aggregates accuracy and formatting metrics for reporting.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="gpt4o.evaluate.EvaluationLimits">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">EvaluationLimits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eval_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#EvaluationLimits"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.EvaluationLimits" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Encapsulates evaluation row limits for progress reporting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>eval_max</strong> (<em>int</em>)</p></li>
+<li><p><strong>target</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.evaluate.EvaluationLimits.eval_max">
+<span class="sig-name descname"><span class="pre">eval_max</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#gpt4o.evaluate.EvaluationLimits.eval_max" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gpt4o.evaluate.EvaluationLimits.from_arg">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_arg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw_eval_max</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#EvaluationLimits.from_arg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.EvaluationLimits.from_arg" title="Link to this definition">¶</a></dt>
+<dd><p>Create limits from the CLI <code class="docutils literal notranslate"><span class="pre">eval_max</span></code> argument.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>raw_eval_max</strong> (<em>int</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#gpt4o.evaluate.EvaluationLimits" title="gpt4o.evaluate.EvaluationLimits"><em>EvaluationLimits</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.evaluate.EvaluationLimits.target">
+<span class="sig-name descname"><span class="pre">target</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#gpt4o.evaluate.EvaluationLimits.target" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gpt4o.evaluate.EvaluationRunner">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">EvaluationRunner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#EvaluationRunner"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.EvaluationRunner" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Stateful helper that orchestrates GPT-4o evaluation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>args</strong> (<em>Namespace</em>)</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="gpt4o.evaluate.EvaluationRunner.metrics_request">
+<span class="sig-name descname"><span class="pre">metrics_request</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#EvaluationRunner.metrics_request"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.EvaluationRunner.metrics_request" title="Link to this definition">¶</a></dt>
+<dd><p>Construct the payload used when serialising evaluation metrics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>SlateMetricsRequest</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gpt4o.evaluate.EvaluationRunner.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#EvaluationRunner.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.EvaluationRunner.run" title="Link to this definition">¶</a></dt>
+<dd><p>Execute the full evaluation workflow.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gpt4o.evaluate.EvaluationState">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">EvaluationState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'validation'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">streaming</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#EvaluationState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.EvaluationState" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Mutable state tracked during evaluation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>split</strong> (<em>str</em>)</p></li>
+<li><p><strong>streaming</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.evaluate.EvaluationState.split">
+<span class="sig-name descname"><span class="pre">split</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'validation'</span></em><a class="headerlink" href="#gpt4o.evaluate.EvaluationState.split" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.evaluate.EvaluationState.streaming">
+<span class="sig-name descname"><span class="pre">streaming</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#gpt4o.evaluate.EvaluationState.streaming" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gpt4o.evaluate.ExampleLabels">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">ExampleLabels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issue_label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">study_label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">study_key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#ExampleLabels"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.ExampleLabels" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Normalised issue/study labels used for filtering and reporting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>issue_label</strong> (<em>str</em>)</p></li>
+<li><p><strong>issue_key</strong> (<em>str</em>)</p></li>
+<li><p><strong>study_label</strong> (<em>str</em>)</p></li>
+<li><p><strong>study_key</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.evaluate.ExampleLabels.issue_key">
+<span class="sig-name descname"><span class="pre">issue_key</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#gpt4o.evaluate.ExampleLabels.issue_key" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.evaluate.ExampleLabels.issue_label">
+<span class="sig-name descname"><span class="pre">issue_label</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#gpt4o.evaluate.ExampleLabels.issue_label" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.evaluate.ExampleLabels.study_key">
+<span class="sig-name descname"><span class="pre">study_key</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#gpt4o.evaluate.ExampleLabels.study_key" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.evaluate.ExampleLabels.study_label">
+<span class="sig-name descname"><span class="pre">study_label</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#gpt4o.evaluate.ExampleLabels.study_label" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gpt4o.evaluate.FilterSet">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">FilterSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">requested</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">active_keys</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#FilterSet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.FilterSet" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Container for requested filters and their lower-cased match set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>requested</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>active_keys</strong> (<em>set</em><em>[</em><em>str</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.evaluate.FilterSet.active_keys">
+<span class="sig-name descname"><span class="pre">active_keys</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#gpt4o.evaluate.FilterSet.active_keys" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gpt4o.evaluate.FilterSet.allows">
+<span class="sig-name descname"><span class="pre">allows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">candidate</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#FilterSet.allows"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.FilterSet.allows" title="Link to this definition">¶</a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> when the candidate is not filtered out.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>candidate</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.evaluate.FilterSet.requested">
+<span class="sig-name descname"><span class="pre">requested</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#gpt4o.evaluate.FilterSet.requested" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gpt4o.evaluate.FilterState">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">FilterState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issues</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">studies</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#FilterState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.FilterState" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Aggregate filters for issues and participant studies.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>issues</strong> (<a class="reference internal" href="#gpt4o.evaluate.FilterSet" title="gpt4o.evaluate.FilterSet"><em>FilterSet</em></a>)</p></li>
+<li><p><strong>studies</strong> (<a class="reference internal" href="#gpt4o.evaluate.FilterSet" title="gpt4o.evaluate.FilterSet"><em>FilterSet</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="gpt4o.evaluate.FilterState.allows">
+<span class="sig-name descname"><span class="pre">allows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">labels</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#FilterState.allows"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.FilterState.allows" title="Link to this definition">¶</a></dt>
+<dd><p>Check whether an example passes the configured filters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>labels</strong> (<a class="reference internal" href="#gpt4o.evaluate.ExampleLabels" title="gpt4o.evaluate.ExampleLabels"><em>ExampleLabels</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.evaluate.FilterState.issues">
+<span class="sig-name descname"><span class="pre">issues</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#gpt4o.evaluate.FilterSet" title="gpt4o.evaluate.FilterSet"><span class="pre">FilterSet</span></a></em><a class="headerlink" href="#gpt4o.evaluate.FilterState.issues" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.evaluate.FilterState.studies">
+<span class="sig-name descname"><span class="pre">studies</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#gpt4o.evaluate.FilterSet" title="gpt4o.evaluate.FilterSet"><span class="pre">FilterSet</span></a></em><a class="headerlink" href="#gpt4o.evaluate.FilterState.studies" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gpt4o.evaluate.OutputPaths">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">OutputPaths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#OutputPaths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.OutputPaths" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Resolved filesystem locations for evaluation artifacts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>root</strong> (<em>Path</em>)</p></li>
+<li><p><strong>predictions</strong> (<em>Path</em>)</p></li>
+<li><p><strong>metrics</strong> (<em>Path</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="gpt4o.evaluate.OutputPaths.build">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#OutputPaths.build"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.OutputPaths.build" title="Link to this definition">¶</a></dt>
+<dd><p>Validate and construct the output directory structure.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out_dir</strong> (<em>str</em><em> | </em><em>Path</em>)</p></li>
+<li><p><strong>overwrite</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#gpt4o.evaluate.OutputPaths" title="gpt4o.evaluate.OutputPaths"><em>OutputPaths</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.evaluate.OutputPaths.metrics">
+<span class="sig-name descname"><span class="pre">metrics</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#gpt4o.evaluate.OutputPaths.metrics" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.evaluate.OutputPaths.predictions">
+<span class="sig-name descname"><span class="pre">predictions</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#gpt4o.evaluate.OutputPaths.predictions" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.evaluate.OutputPaths.root">
+<span class="sig-name descname"><span class="pre">root</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#gpt4o.evaluate.OutputPaths.root" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="gpt4o.evaluate.run_eval">
 <span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">run_eval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#run_eval"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.run_eval" title="Link to this definition">¶</a></dt>
@@ -848,6 +1109,48 @@ the GPT-4o workflow used in Grail Simulation experiments.</p>
 <li><a class="reference internal" href="#gpt4o.conversation.humanise_profile"><code class="docutils literal notranslate"><span class="pre">humanise_profile()</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.conversation.make_conversation_record"><code class="docutils literal notranslate"><span class="pre">make_conversation_record()</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.conversation.pick_case_insensitive"><code class="docutils literal notranslate"><span class="pre">pick_case_insensitive()</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.evaluate.EvaluationLimits"><code class="docutils literal notranslate"><span class="pre">EvaluationLimits</span></code></a><ul>
+<li><a class="reference internal" href="#gpt4o.evaluate.EvaluationLimits.eval_max"><code class="docutils literal notranslate"><span class="pre">EvaluationLimits.eval_max</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.evaluate.EvaluationLimits.from_arg"><code class="docutils literal notranslate"><span class="pre">EvaluationLimits.from_arg()</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.evaluate.EvaluationLimits.target"><code class="docutils literal notranslate"><span class="pre">EvaluationLimits.target</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#gpt4o.evaluate.EvaluationRunner"><code class="docutils literal notranslate"><span class="pre">EvaluationRunner</span></code></a><ul>
+<li><a class="reference internal" href="#gpt4o.evaluate.EvaluationRunner.metrics_request"><code class="docutils literal notranslate"><span class="pre">EvaluationRunner.metrics_request()</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.evaluate.EvaluationRunner.run"><code class="docutils literal notranslate"><span class="pre">EvaluationRunner.run()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#gpt4o.evaluate.EvaluationState"><code class="docutils literal notranslate"><span class="pre">EvaluationState</span></code></a><ul>
+<li><a class="reference internal" href="#gpt4o.evaluate.EvaluationState.split"><code class="docutils literal notranslate"><span class="pre">EvaluationState.split</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.evaluate.EvaluationState.streaming"><code class="docutils literal notranslate"><span class="pre">EvaluationState.streaming</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#gpt4o.evaluate.ExampleLabels"><code class="docutils literal notranslate"><span class="pre">ExampleLabels</span></code></a><ul>
+<li><a class="reference internal" href="#gpt4o.evaluate.ExampleLabels.issue_key"><code class="docutils literal notranslate"><span class="pre">ExampleLabels.issue_key</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.evaluate.ExampleLabels.issue_label"><code class="docutils literal notranslate"><span class="pre">ExampleLabels.issue_label</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.evaluate.ExampleLabels.study_key"><code class="docutils literal notranslate"><span class="pre">ExampleLabels.study_key</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.evaluate.ExampleLabels.study_label"><code class="docutils literal notranslate"><span class="pre">ExampleLabels.study_label</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#gpt4o.evaluate.FilterSet"><code class="docutils literal notranslate"><span class="pre">FilterSet</span></code></a><ul>
+<li><a class="reference internal" href="#gpt4o.evaluate.FilterSet.active_keys"><code class="docutils literal notranslate"><span class="pre">FilterSet.active_keys</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.evaluate.FilterSet.allows"><code class="docutils literal notranslate"><span class="pre">FilterSet.allows()</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.evaluate.FilterSet.requested"><code class="docutils literal notranslate"><span class="pre">FilterSet.requested</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#gpt4o.evaluate.FilterState"><code class="docutils literal notranslate"><span class="pre">FilterState</span></code></a><ul>
+<li><a class="reference internal" href="#gpt4o.evaluate.FilterState.allows"><code class="docutils literal notranslate"><span class="pre">FilterState.allows()</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.evaluate.FilterState.issues"><code class="docutils literal notranslate"><span class="pre">FilterState.issues</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.evaluate.FilterState.studies"><code class="docutils literal notranslate"><span class="pre">FilterState.studies</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#gpt4o.evaluate.OutputPaths"><code class="docutils literal notranslate"><span class="pre">OutputPaths</span></code></a><ul>
+<li><a class="reference internal" href="#gpt4o.evaluate.OutputPaths.build"><code class="docutils literal notranslate"><span class="pre">OutputPaths.build()</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.evaluate.OutputPaths.metrics"><code class="docutils literal notranslate"><span class="pre">OutputPaths.metrics</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.evaluate.OutputPaths.predictions"><code class="docutils literal notranslate"><span class="pre">OutputPaths.predictions</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.evaluate.OutputPaths.root"><code class="docutils literal notranslate"><span class="pre">OutputPaths.root</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#gpt4o.evaluate.run_eval"><code class="docutils literal notranslate"><span class="pre">run_eval()</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.titles.TitleResolver"><code class="docutils literal notranslate"><span class="pre">TitleResolver</span></code></a><ul>
 <li><a class="reference internal" href="#gpt4o.titles.TitleResolver.__init__"><code class="docutils literal notranslate"><span class="pre">TitleResolver.__init__()</span></code></a></li>

@@ -2752,7 +2752,7 @@ settings configured by <code class="docutils literal notranslate"><span class="p
 <p id="module-xgb.pipeline_reports">Public interface for the XGBoost pipeline report builders.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="xgb.pipeline_reports.OpinionReportData">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_reports.</span></span><span class="sig-name descname"><span class="pre">OpinionReportData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metrics=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcomes=()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selections=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_reports/runner.html#OpinionReportData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_reports.OpinionReportData" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_reports.</span></span><span class="sig-name descname"><span class="pre">OpinionReportData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metrics=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcomes=()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selections=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title='XGBoost</span> <span class="pre">Opinion</span> <span class="pre">Regression'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description_lines=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_reports/runner.html#OpinionReportData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_reports.OpinionReportData" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Bundle describing opinion sweep data and aggregated metrics.</p>
 <dl class="field-list simple">
@@ -2761,9 +2761,16 @@ settings configured by <code class="docutils literal notranslate"><span class="p
 <li><p><strong>metrics</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em><em>]</em>)</p></li>
 <li><p><strong>outcomes</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome" title="xgb.pipeline_context.OpinionSweepOutcome"><em>OpinionSweepOutcome</em></a><em>]</em>)</p></li>
 <li><p><strong>selections</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#xgb.pipeline_context.OpinionStudySelection" title="common.pipeline_types.OpinionStudySelection"><em>OpinionStudySelection</em></a><em>]</em>)</p></li>
+<li><p><strong>title</strong> (<em>str</em>)</p></li>
+<li><p><strong>description_lines</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_reports.OpinionReportData.description_lines">
+<span class="sig-name descname"><span class="pre">description_lines</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_reports.OpinionReportData.description_lines" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="py attribute">
 <dt class="sig sig-object py" id="xgb.pipeline_reports.OpinionReportData.metrics">
 <span class="sig-name descname"><span class="pre">metrics</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">object</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.pipeline_reports.OpinionReportData.metrics" title="Link to this definition">¶</a></dt>
@@ -2779,11 +2786,47 @@ settings configured by <code class="docutils literal notranslate"><span class="p
 <span class="sig-name descname"><span class="pre">selections</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_context.OpinionStudySelection" title="common.pipeline_types.OpinionStudySelection"><span class="pre">OpinionStudySelection</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.pipeline_reports.OpinionReportData.selections" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_reports.OpinionReportData.title">
+<span class="sig-name descname"><span class="pre">title</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'XGBoost</span> <span class="pre">Opinion</span> <span class="pre">Regression'</span></em><a class="headerlink" href="#xgb.pipeline_reports.OpinionReportData.title" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="xgb.pipeline_reports.ReportSections">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_reports.</span></span><span class="sig-name descname"><span class="pre">ReportSections</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">include_next_video</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opinion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opinion_from_next</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_reports/runner.html#ReportSections"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_reports.ReportSections" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Describe which report sections should be generated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>include_next_video</strong> (<em>bool</em>)</p></li>
+<li><p><strong>opinion</strong> (<a class="reference internal" href="#xgb.pipeline_reports.OpinionReportData" title="xgb.pipeline_reports.runner.OpinionReportData"><em>OpinionReportData</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>opinion_from_next</strong> (<a class="reference internal" href="#xgb.pipeline_reports.OpinionReportData" title="xgb.pipeline_reports.runner.OpinionReportData"><em>OpinionReportData</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_reports.ReportSections.include_next_video">
+<span class="sig-name descname"><span class="pre">include_next_video</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#xgb.pipeline_reports.ReportSections.include_next_video" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_reports.ReportSections.opinion">
+<span class="sig-name descname"><span class="pre">opinion</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_reports.OpinionReportData" title="xgb.pipeline_reports.runner.OpinionReportData"><span class="pre">OpinionReportData</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_reports.ReportSections.opinion" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_reports.ReportSections.opinion_from_next">
+<span class="sig-name descname"><span class="pre">opinion_from_next</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#xgb.pipeline_reports.OpinionReportData" title="xgb.pipeline_reports.runner.OpinionReportData"><span class="pre">OpinionReportData</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_reports.ReportSections.opinion_from_next" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="xgb.pipeline_reports.SweepReportData">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_reports.</span></span><span class="sig-name descname"><span class="pre">SweepReportData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outcomes=()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selections=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">final_metrics=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_reports/runner.html#SweepReportData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_reports.SweepReportData" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_reports.</span></span><span class="sig-name descname"><span class="pre">SweepReportData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outcomes=()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selections=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">final_metrics=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loso_metrics=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline_reports/runner.html#SweepReportData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_reports.SweepReportData" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Bundle describing sweep outcomes, selections, and evaluation metrics.</p>
 <dl class="field-list simple">
@@ -2792,12 +2835,18 @@ settings configured by <code class="docutils literal notranslate"><span class="p
 <li><p><strong>outcomes</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="#xgb.pipeline_context.SweepOutcome" title="xgb.pipeline_context.SweepOutcome"><em>SweepOutcome</em></a><em>]</em>)</p></li>
 <li><p><strong>selections</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#xgb.pipeline_context.StudySelection" title="xgb.pipeline_context.StudySelection"><em>StudySelection</em></a><em>]</em>)</p></li>
 <li><p><strong>final_metrics</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>loso_metrics</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em><em>]</em>)</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="xgb.pipeline_reports.SweepReportData.final_metrics">
 <span class="sig-name descname"><span class="pre">final_metrics</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">object</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.pipeline_reports.SweepReportData.final_metrics" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_reports.SweepReportData.loso_metrics">
+<span class="sig-name descname"><span class="pre">loso_metrics</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">object</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.pipeline_reports.SweepReportData.loso_metrics" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -3207,13 +3256,22 @@ stages can select the best configurations.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#xgb.pipeline_reports.OpinionReportData"><code class="docutils literal notranslate"><span class="pre">OpinionReportData</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.pipeline_reports.OpinionReportData.description_lines"><code class="docutils literal notranslate"><span class="pre">OpinionReportData.description_lines</span></code></a></li>
 <li><a class="reference internal" href="#xgb.pipeline_reports.OpinionReportData.metrics"><code class="docutils literal notranslate"><span class="pre">OpinionReportData.metrics</span></code></a></li>
 <li><a class="reference internal" href="#xgb.pipeline_reports.OpinionReportData.outcomes"><code class="docutils literal notranslate"><span class="pre">OpinionReportData.outcomes</span></code></a></li>
 <li><a class="reference internal" href="#xgb.pipeline_reports.OpinionReportData.selections"><code class="docutils literal notranslate"><span class="pre">OpinionReportData.selections</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_reports.OpinionReportData.title"><code class="docutils literal notranslate"><span class="pre">OpinionReportData.title</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xgb.pipeline_reports.ReportSections"><code class="docutils literal notranslate"><span class="pre">ReportSections</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.pipeline_reports.ReportSections.include_next_video"><code class="docutils literal notranslate"><span class="pre">ReportSections.include_next_video</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_reports.ReportSections.opinion"><code class="docutils literal notranslate"><span class="pre">ReportSections.opinion</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_reports.ReportSections.opinion_from_next"><code class="docutils literal notranslate"><span class="pre">ReportSections.opinion_from_next</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#xgb.pipeline_reports.SweepReportData"><code class="docutils literal notranslate"><span class="pre">SweepReportData</span></code></a><ul>
 <li><a class="reference internal" href="#xgb.pipeline_reports.SweepReportData.final_metrics"><code class="docutils literal notranslate"><span class="pre">SweepReportData.final_metrics</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_reports.SweepReportData.loso_metrics"><code class="docutils literal notranslate"><span class="pre">SweepReportData.loso_metrics</span></code></a></li>
 <li><a class="reference internal" href="#xgb.pipeline_reports.SweepReportData.outcomes"><code class="docutils literal notranslate"><span class="pre">SweepReportData.outcomes</span></code></a></li>
 <li><a class="reference internal" href="#xgb.pipeline_reports.SweepReportData.selections"><code class="docutils literal notranslate"><span class="pre">SweepReportData.selections</span></code></a></li>
 </ul>

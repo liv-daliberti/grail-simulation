@@ -353,6 +353,33 @@
         <span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
     <span class="k">return</span> <span class="n">matrix</span>
 
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EncodedDataset</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pair of encoded documents and their aligned labels.&quot;&quot;&quot;</span>
+
+    <span class="n">matrix</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">labels</span><span class="p">:</span> <span class="n">Any</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TrainingBatch</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container for training data and optional evaluation split.&quot;&quot;&quot;</span>
+
+    <span class="n">train</span><span class="p">:</span> <span class="n">EncodedDataset</span>
+    <span class="n">evaluation</span><span class="p">:</span> <span class="n">EncodedDataset</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationArtifactsContext</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Information required to prepare evaluation matrices.&quot;&quot;&quot;</span>
+
+    <span class="n">dataset</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">vectorizer</span><span class="p">:</span> <span class="n">BaseTextVectorizer</span>
+    <span class="n">encoder</span><span class="p">:</span> <span class="n">LabelEncoder</span>
+    <span class="n">train_config</span><span class="p">:</span> <span class="n">XGBoostTrainConfig</span>
+    <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
 <div class="viewcode-block" id="XGBoostSlateModel">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.model.XGBoostSlateModel">[docs]</a>
 <span class="nd">@dataclass</span>
@@ -692,21 +719,42 @@
     <span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_build_fit_kwargs</span><span class="p">(</span>
-    <span class="n">collect_history</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
-    <span class="n">matrix</span><span class="p">,</span>
-    <span class="n">labels</span><span class="p">,</span>
-    <span class="n">eval_matrix</span><span class="p">,</span>
-    <span class="n">eval_labels</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_fit_kwargs</span><span class="p">(</span><span class="n">collect_history</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">TrainingBatch</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct ``fit`` keyword arguments when evaluation tracking is enabled.&quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">collect_history</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">{}</span>
-    <span class="n">eval_set</span> <span class="o">=</span> <span class="p">[(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">labels</span><span class="p">)]</span>
-    <span class="k">if</span> <span class="n">eval_matrix</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">eval_labels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">eval_set</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">eval_matrix</span><span class="p">,</span> <span class="n">eval_labels</span><span class="p">))</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;eval_set&quot;</span><span class="p">:</span> <span class="n">eval_set</span><span class="p">,</span> <span class="s2">&quot;eval_metric&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;mlogloss&quot;</span><span class="p">,</span> <span class="s2">&quot;merror&quot;</span><span class="p">],</span> <span class="s2">&quot;verbose&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}</span>
+    <span class="n">eval_set</span> <span class="o">=</span> <span class="p">[(</span><span class="n">batch</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="n">batch</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">labels</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="n">batch</span><span class="o">.</span><span class="n">evaluation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">eval_set</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">batch</span><span class="o">.</span><span class="n">evaluation</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="n">batch</span><span class="o">.</span><span class="n">evaluation</span><span class="o">.</span><span class="n">labels</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;eval_set&quot;</span><span class="p">:</span> <span class="n">eval_set</span><span class="p">,</span> <span class="s2">&quot;verbose&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_ensure_history_metrics</span><span class="p">(</span><span class="n">booster</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">collect_history</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Ensure the booster tracks accuracy metrics when evaluation history is requested.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">collect_history</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">booster</span><span class="p">,</span> <span class="s2">&quot;get_xgb_params&quot;</span><span class="p">):</span>
+        <span class="k">return</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">booster</span><span class="o">.</span><span class="n">get_xgb_params</span><span class="p">()</span>
+    <span class="n">metrics</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;eval_metric&quot;</span><span class="p">)</span>
+    <span class="c1"># Respect callable metrics by leaving them untouched.</span>
+    <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">metrics</span><span class="p">):</span>
+        <span class="k">return</span>
+    <span class="k">if</span> <span class="n">metrics</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">booster</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="n">eval_metric</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mlogloss&quot;</span><span class="p">,</span> <span class="s2">&quot;merror&quot;</span><span class="p">])</span>
+        <span class="k">return</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metrics</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">metrics_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">metrics</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metrics</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+        <span class="n">metrics_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">metrics</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># Unsupported type; do not modify.</span>
+        <span class="k">return</span>
+    <span class="n">required</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;mlogloss&quot;</span><span class="p">,</span> <span class="s2">&quot;merror&quot;</span><span class="p">]</span>
+    <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">metric</span> <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">required</span> <span class="k">if</span> <span class="n">metric</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">metrics_list</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+        <span class="n">booster</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="n">eval_metric</span><span class="o">=</span><span class="n">metrics_list</span> <span class="o">+</span> <span class="n">missing</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_collect_training_history</span><span class="p">(</span><span class="n">booster</span><span class="p">,</span> <span class="n">collect_history</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
@@ -720,10 +768,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_train_booster</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">train_config</span><span class="p">:</span> <span class="n">XGBoostTrainConfig</span><span class="p">,</span>
-    <span class="n">matrix</span><span class="p">,</span>
-    <span class="n">labels</span><span class="p">,</span>
-    <span class="n">eval_matrix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">eval_labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">batch</span><span class="p">:</span> <span class="n">TrainingBatch</span><span class="p">,</span>
     <span class="n">collect_history</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -731,14 +776,8 @@
 
 <span class="sd">    :param train_config: Training configuration containing booster hyper-parameters.</span>
 <span class="sd">    :type train_config: XGBoostTrainConfig</span>
-<span class="sd">    :param matrix: Feature matrix produced by the text vectoriser.</span>
-<span class="sd">    :type matrix: Any</span>
-<span class="sd">    :param labels: Numeric labels aligned with ``matrix`` rows.</span>
-<span class="sd">    :type labels: Any</span>
-<span class="sd">    :param eval_matrix: Optional evaluation feature matrix monitored during fitting.</span>
-<span class="sd">    :type eval_matrix: Any</span>
-<span class="sd">    :param eval_labels: Optional evaluation labels aligned with ``eval_matrix`` rows.</span>
-<span class="sd">    :type eval_labels: Any</span>
+<span class="sd">    :param batch: Encoded training data and optional evaluation split.</span>
+<span class="sd">    :type batch: TrainingBatch</span>
 <span class="sd">    :param collect_history: When ``True`` record per-round metrics for plotting.</span>
 <span class="sd">    :type collect_history: bool</span>
 <span class="sd">    :returns: Tuple of fitted classifier and optional evaluation history.</span>
@@ -747,7 +786,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">params</span> <span class="o">=</span> <span class="n">train_config</span><span class="o">.</span><span class="n">booster</span>
     <span class="n">booster_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">extra_kwargs</span> <span class="ow">or</span> <span class="p">{})</span>
-    <span class="n">booster_kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;num_class&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+    <span class="n">booster_kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;num_class&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">labels</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
 
     <span class="n">requested_method</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">tree_method</span> <span class="ow">or</span> <span class="s2">&quot;hist&quot;</span>
     <span class="n">requested_lower</span> <span class="o">=</span> <span class="n">requested_method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
@@ -762,16 +801,11 @@
         <span class="n">tree_method</span><span class="p">,</span>
         <span class="n">booster_kwargs</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">fit_kwargs</span> <span class="o">=</span> <span class="n">_build_fit_kwargs</span><span class="p">(</span>
-        <span class="n">collect_history</span><span class="p">,</span>
-        <span class="n">matrix</span><span class="p">,</span>
-        <span class="n">labels</span><span class="p">,</span>
-        <span class="n">eval_matrix</span><span class="p">,</span>
-        <span class="n">eval_labels</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="n">fit_kwargs</span> <span class="o">=</span> <span class="n">_build_fit_kwargs</span><span class="p">(</span><span class="n">collect_history</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
+    <span class="n">_ensure_history_metrics</span><span class="p">(</span><span class="n">booster</span><span class="p">,</span> <span class="n">collect_history</span><span class="o">=</span><span class="n">collect_history</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">booster</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="o">**</span><span class="n">fit_kwargs</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">booster</span><span class="p">,</span> <span class="n">_collect_training_history</span><span class="p">(</span><span class="n">booster</span><span class="p">,</span> <span class="n">collect_history</span><span class="p">)</span>
+        <span class="n">booster</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="n">batch</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span> <span class="o">**</span><span class="n">fit_kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">booster</span><span class="p">,</span> <span class="n">_collect_training_history</span><span class="p">(</span><span class="n">booster</span><span class="p">,</span> <span class="nb">bool</span><span class="p">(</span><span class="n">fit_kwargs</span><span class="p">))</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># pragma: no cover - runtime guard</span>
         <span class="k">if</span> <span class="n">attempt_gpu</span> <span class="ow">and</span> <span class="n">_should_retry_on_cpu</span><span class="p">(</span><span class="n">requested_method</span><span class="p">,</span> <span class="n">exc</span><span class="p">):</span>
             <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
@@ -782,11 +816,9 @@
             <span class="k">return</span> <span class="n">_retry_training_on_cpu</span><span class="p">(</span>
                 <span class="n">train_config</span><span class="o">=</span><span class="n">train_config</span><span class="p">,</span>
                 <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
-                <span class="n">matrix</span><span class="o">=</span><span class="n">matrix</span><span class="p">,</span>
-                <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span>
-                <span class="n">fit_kwargs</span><span class="o">=</span><span class="n">fit_kwargs</span><span class="p">,</span>
-                <span class="n">collect_history</span><span class="o">=</span><span class="n">collect_history</span><span class="p">,</span>
+                <span class="n">batch</span><span class="o">=</span><span class="n">batch</span><span class="p">,</span>
                 <span class="n">booster_kwargs</span><span class="o">=</span><span class="n">booster_kwargs</span><span class="p">,</span>
+                <span class="n">fit_kwargs</span><span class="o">=</span><span class="n">fit_kwargs</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">raise</span>
 
@@ -826,11 +858,9 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">train_config</span><span class="p">:</span> <span class="n">XGBoostTrainConfig</span><span class="p">,</span>
     <span class="n">params</span><span class="p">:</span> <span class="n">XGBoostBoosterParams</span><span class="p">,</span>
-    <span class="n">matrix</span><span class="p">,</span>
-    <span class="n">labels</span><span class="p">,</span>
-    <span class="n">fit_kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
-    <span class="n">collect_history</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">batch</span><span class="p">:</span> <span class="n">TrainingBatch</span><span class="p">,</span>
     <span class="n">booster_kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">fit_kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Retry booster fitting on CPU after a GPU-specific failure.</span>
@@ -846,34 +876,31 @@
         <span class="s2">&quot;hist&quot;</span><span class="p">,</span>
         <span class="n">cpu_kwargs</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">cpu_booster</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="o">**</span><span class="n">fit_kwargs</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">cpu_booster</span><span class="p">,</span> <span class="n">_collect_training_history</span><span class="p">(</span><span class="n">cpu_booster</span><span class="p">,</span> <span class="n">collect_history</span><span class="p">)</span>
+    <span class="n">_ensure_history_metrics</span><span class="p">(</span><span class="n">cpu_booster</span><span class="p">,</span> <span class="n">collect_history</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">fit_kwargs</span><span class="p">))</span>
+    <span class="n">cpu_booster</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="n">batch</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span> <span class="o">**</span><span class="n">fit_kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cpu_booster</span><span class="p">,</span> <span class="n">_collect_training_history</span><span class="p">(</span><span class="n">cpu_booster</span><span class="p">,</span> <span class="nb">bool</span><span class="p">(</span><span class="n">fit_kwargs</span><span class="p">))</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_eval_artifacts</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">collect_history</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
-    <span class="n">eval_ds</span><span class="p">,</span>
-    <span class="n">vectorizer</span><span class="p">:</span> <span class="n">BaseTextVectorizer</span><span class="p">,</span>
-    <span class="n">encoder</span><span class="p">:</span> <span class="n">LabelEncoder</span><span class="p">,</span>
-    <span class="n">train_config</span><span class="p">:</span> <span class="n">XGBoostTrainConfig</span><span class="p">,</span>
-    <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">EvaluationArtifactsContext</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Prepare evaluation matrices compatible with the fitted encoder.&quot;&quot;&quot;</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">collect_history</span> <span class="ow">or</span> <span class="n">eval_ds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">collect_history</span> <span class="ow">or</span> <span class="n">context</span><span class="o">.</span><span class="n">dataset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
 
     <span class="n">eval_docs</span><span class="p">,</span> <span class="n">eval_label_ids</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">feature_utils</span><span class="o">.</span><span class="n">prepare_prompt_documents</span><span class="p">(</span>
-        <span class="n">eval_ds</span><span class="p">,</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span>
         <span class="n">max_train</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-        <span class="n">seed</span><span class="o">=</span><span class="n">train_config</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span>
-        <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
+        <span class="n">seed</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">train_config</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span>
+        <span class="n">extra_fields</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">extra_fields</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">eval_docs</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
 
-    <span class="n">known_labels</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">encoder</span><span class="o">.</span><span class="n">classes_</span><span class="p">)</span>
+    <span class="n">known_labels</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">classes_</span><span class="p">)</span>
     <span class="n">filtered_docs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">filtered_labels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">doc</span><span class="p">,</span> <span class="n">label_id</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">eval_docs</span><span class="p">,</span> <span class="n">eval_label_ids</span><span class="p">):</span>
@@ -890,8 +917,50 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="n">filtered_docs</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
 
-    <span class="n">eval_matrix</span> <span class="o">=</span> <span class="n">_ensure_float32</span><span class="p">(</span><span class="n">vectorizer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">filtered_docs</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">eval_matrix</span><span class="p">,</span> <span class="n">encoder</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">filtered_labels</span><span class="p">)</span>
+    <span class="n">eval_matrix</span> <span class="o">=</span> <span class="n">_ensure_float32</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">vectorizer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">filtered_docs</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">eval_matrix</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">filtered_labels</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_prepare_training_dataset</span><span class="p">(</span>
+    <span class="n">train_ds</span><span class="p">,</span>
+    <span class="n">train_config</span><span class="p">:</span> <span class="n">XGBoostTrainConfig</span><span class="p">,</span>
+    <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">BaseTextVectorizer</span><span class="p">,</span> <span class="n">LabelEncoder</span><span class="p">,</span> <span class="n">EncodedDataset</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Vectorise ``train_ds`` and return the encoded dataset alongside the encoder.&quot;&quot;&quot;</span>
+    <span class="n">docs</span><span class="p">,</span> <span class="n">labels_id</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">feature_utils</span><span class="o">.</span><span class="n">prepare_prompt_documents</span><span class="p">(</span>
+        <span class="n">train_ds</span><span class="p">,</span>
+        <span class="n">max_train</span><span class="o">=</span><span class="n">train_config</span><span class="o">.</span><span class="n">max_train</span><span class="p">,</span>
+        <span class="n">seed</span><span class="o">=</span><span class="n">train_config</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span>
+        <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">docs</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No training documents were produced for XGBoost fitting.&quot;</span><span class="p">)</span>
+
+    <span class="n">vectorizer</span> <span class="o">=</span> <span class="n">create_vectorizer</span><span class="p">(</span>
+        <span class="n">train_config</span><span class="o">.</span><span class="n">vectorizer_kind</span><span class="p">,</span>
+        <span class="n">tfidf</span><span class="o">=</span><span class="n">train_config</span><span class="o">.</span><span class="n">tfidf</span><span class="p">,</span>
+        <span class="n">word2vec</span><span class="o">=</span><span class="n">train_config</span><span class="o">.</span><span class="n">word2vec</span><span class="p">,</span>
+        <span class="n">sentence_transformer</span><span class="o">=</span><span class="n">train_config</span><span class="o">.</span><span class="n">sentence_transformer</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">matrix</span> <span class="o">=</span> <span class="n">_ensure_float32</span><span class="p">(</span><span class="n">vectorizer</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">docs</span><span class="p">))</span>
+    <span class="n">encoder</span><span class="p">,</span> <span class="n">encoded_labels</span> <span class="o">=</span> <span class="n">_encode_labels</span><span class="p">(</span><span class="n">labels_id</span><span class="p">)</span>
+    <span class="n">train_split</span> <span class="o">=</span> <span class="n">EncodedDataset</span><span class="p">(</span><span class="n">matrix</span><span class="o">=</span><span class="n">matrix</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">encoded_labels</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">vectorizer</span><span class="p">,</span> <span class="n">encoder</span><span class="p">,</span> <span class="n">train_split</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_prepare_evaluation_dataset</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">collect_history</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">EvaluationArtifactsContext</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EncodedDataset</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the optional evaluation split when metrics should be collected.&quot;&quot;&quot;</span>
+    <span class="n">eval_matrix</span><span class="p">,</span> <span class="n">eval_labels</span> <span class="o">=</span> <span class="n">_prepare_eval_artifacts</span><span class="p">(</span>
+        <span class="n">collect_history</span><span class="o">=</span><span class="n">collect_history</span><span class="p">,</span>
+        <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">eval_matrix</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">eval_labels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">EncodedDataset</span><span class="p">(</span><span class="n">matrix</span><span class="o">=</span><span class="n">eval_matrix</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">eval_labels</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_model_components</span><span class="p">(</span>
@@ -920,37 +989,27 @@
 <span class="sd">    :raises RuntimeError: If no documents are produced for training.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">docs</span><span class="p">,</span> <span class="n">labels_id</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">feature_utils</span><span class="o">.</span><span class="n">prepare_prompt_documents</span><span class="p">(</span>
-        <span class="n">train_ds</span><span class="p">,</span>
-        <span class="n">max_train</span><span class="o">=</span><span class="n">train_config</span><span class="o">.</span><span class="n">max_train</span><span class="p">,</span>
-        <span class="n">seed</span><span class="o">=</span><span class="n">train_config</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span>
-        <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
+    <span class="n">vectorizer</span><span class="p">,</span> <span class="n">encoder</span><span class="p">,</span> <span class="n">train_split</span> <span class="o">=</span> <span class="n">_prepare_training_dataset</span><span class="p">(</span>
+        <span class="n">train_ds</span><span class="p">,</span> <span class="n">train_config</span><span class="p">,</span> <span class="n">extra_fields</span>
     <span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">docs</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No training documents were produced for XGBoost fitting.&quot;</span><span class="p">)</span>
-
-    <span class="n">vectorizer</span> <span class="o">=</span> <span class="n">create_vectorizer</span><span class="p">(</span>
-        <span class="n">train_config</span><span class="o">.</span><span class="n">vectorizer_kind</span><span class="p">,</span>
-        <span class="n">tfidf</span><span class="o">=</span><span class="n">train_config</span><span class="o">.</span><span class="n">tfidf</span><span class="p">,</span>
-        <span class="n">word2vec</span><span class="o">=</span><span class="n">train_config</span><span class="o">.</span><span class="n">word2vec</span><span class="p">,</span>
-        <span class="n">sentence_transformer</span><span class="o">=</span><span class="n">train_config</span><span class="o">.</span><span class="n">sentence_transformer</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">matrix</span> <span class="o">=</span> <span class="n">_ensure_float32</span><span class="p">(</span><span class="n">vectorizer</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">docs</span><span class="p">))</span>
-    <span class="n">encoder</span><span class="p">,</span> <span class="n">encoded_labels</span> <span class="o">=</span> <span class="n">_encode_labels</span><span class="p">(</span><span class="n">labels_id</span><span class="p">)</span>
-    <span class="n">eval_matrix</span><span class="p">,</span> <span class="n">eval_labels</span> <span class="o">=</span> <span class="n">_prepare_eval_artifacts</span><span class="p">(</span>
+    <span class="n">eval_split</span> <span class="o">=</span> <span class="n">_prepare_evaluation_dataset</span><span class="p">(</span>
         <span class="n">collect_history</span><span class="o">=</span><span class="n">collect_history</span><span class="p">,</span>
-        <span class="n">eval_ds</span><span class="o">=</span><span class="n">eval_ds</span><span class="p">,</span>
-        <span class="n">vectorizer</span><span class="o">=</span><span class="n">vectorizer</span><span class="p">,</span>
-        <span class="n">encoder</span><span class="o">=</span><span class="n">encoder</span><span class="p">,</span>
-        <span class="n">train_config</span><span class="o">=</span><span class="n">train_config</span><span class="p">,</span>
-        <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
+        <span class="n">context</span><span class="o">=</span><span class="n">EvaluationArtifactsContext</span><span class="p">(</span>
+            <span class="n">dataset</span><span class="o">=</span><span class="n">eval_ds</span><span class="p">,</span>
+            <span class="n">vectorizer</span><span class="o">=</span><span class="n">vectorizer</span><span class="p">,</span>
+            <span class="n">encoder</span><span class="o">=</span><span class="n">encoder</span><span class="p">,</span>
+            <span class="n">train_config</span><span class="o">=</span><span class="n">train_config</span><span class="p">,</span>
+            <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">batch</span> <span class="o">=</span> <span class="n">TrainingBatch</span><span class="p">(</span>
+        <span class="n">train</span><span class="o">=</span><span class="n">train_split</span><span class="p">,</span>
+        <span class="n">evaluation</span><span class="o">=</span><span class="n">eval_split</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">booster</span><span class="p">,</span> <span class="n">history</span> <span class="o">=</span> <span class="n">_train_booster</span><span class="p">(</span>
         <span class="n">train_config</span><span class="o">=</span><span class="n">train_config</span><span class="p">,</span>
-        <span class="n">matrix</span><span class="o">=</span><span class="n">matrix</span><span class="p">,</span>
-        <span class="n">labels</span><span class="o">=</span><span class="n">encoded_labels</span><span class="p">,</span>
-        <span class="n">eval_matrix</span><span class="o">=</span><span class="n">eval_matrix</span><span class="p">,</span>
-        <span class="n">eval_labels</span><span class="o">=</span><span class="n">eval_labels</span><span class="p">,</span>
+        <span class="n">batch</span><span class="o">=</span><span class="n">batch</span><span class="p">,</span>
         <span class="n">collect_history</span><span class="o">=</span><span class="n">collect_history</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">vectorizer</span><span class="p">,</span> <span class="n">encoder</span><span class="p">,</span> <span class="n">booster</span><span class="p">,</span> <span class="n">history</span>

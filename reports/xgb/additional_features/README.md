@@ -230,9 +230,7 @@ This report tracks the supplementary text columns appended to the prompt builder
 
 | Study | Issue | Extra text fields |
 | --- | --- | --- |
-| Study 1 – Gun Control (MTurk) | gun_control | `viewer_profile`, `state_text` |
-| Study 2 – Minimum Wage (MTurk) | minimum_wage | `viewer_profile`, `state_text` |
-| Study 3 – Minimum Wage (YouGov) | minimum_wage | `viewer_profile`, `state_text` |
+| Study 1 – Gun Control (MTurk) | Gun Control | `viewer_profile`, `state_text` |
 
 ## Opinion Regression
 

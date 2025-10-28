@@ -350,9 +350,7 @@
     <span class="n">executed</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">T</span><span class="p">],</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">order_key</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="nb">int</span><span class="p">],</span>
-    <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span>
-    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">args_factory</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">,</span> <span class="n">T</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">duplicate_warning</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">,</span> <span class="n">T</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Convenience wrapper around :func:`merge_ordered` that logs duplicate replacements.</span>
@@ -363,12 +361,8 @@
 <span class="sd">    :type executed: Sequence[T]</span>
 <span class="sd">    :param order_key: Callable returning a deterministic integer position for each result.</span>
 <span class="sd">    :type order_key: Callable[[T], int]</span>
-<span class="sd">    :param logger: Logger used when emitting duplicate warnings.</span>
-<span class="sd">    :type logger: logging.Logger</span>
-<span class="sd">    :param message: Logging format string passed to :py:meth:`logging.Logger.warning`.</span>
-<span class="sd">    :type message: str</span>
-<span class="sd">    :param args_factory: Optional callable returning arguments supplied with the warning.</span>
-<span class="sd">    :type args_factory: Callable[[T, T], Sequence[Any]] | None</span>
+<span class="sd">    :param duplicate_warning: Optional callback invoked when cached results are replaced.</span>
+<span class="sd">    :type duplicate_warning: Callable[[T, T], None] | None</span>
 <span class="sd">    :returns: Combined results ordered by ``order_key``.</span>
 <span class="sd">    :rtype: List[T]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -377,11 +371,7 @@
         <span class="n">cached</span><span class="p">,</span>
         <span class="n">executed</span><span class="p">,</span>
         <span class="n">order_key</span><span class="o">=</span><span class="n">order_key</span><span class="p">,</span>
-        <span class="n">on_replace</span><span class="o">=</span><span class="n">make_duplicate_warning</span><span class="p">(</span>
-            <span class="n">logger</span><span class="p">,</span>
-            <span class="n">message</span><span class="p">,</span>
-            <span class="n">args_factory</span><span class="o">=</span><span class="n">args_factory</span><span class="p">,</span>
-        <span class="p">),</span>
+        <span class="n">on_replace</span><span class="o">=</span><span class="n">duplicate_warning</span><span class="p">,</span>
     <span class="p">)</span>
 
 
@@ -403,9 +393,11 @@
         <span class="n">cached</span><span class="p">,</span>
         <span class="n">executed</span><span class="p">,</span>
         <span class="n">order_key</span><span class="o">=</span><span class="n">attrgetter</span><span class="p">(</span><span class="s2">&quot;order_index&quot;</span><span class="p">),</span>
-        <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
-        <span class="n">message</span><span class="o">=</span><span class="n">message</span><span class="p">,</span>
-        <span class="n">args_factory</span><span class="o">=</span><span class="n">args_factory</span><span class="p">,</span>
+        <span class="n">duplicate_warning</span><span class="o">=</span><span class="n">make_duplicate_warning</span><span class="p">(</span>
+            <span class="n">logger</span><span class="p">,</span>
+            <span class="n">message</span><span class="p">,</span>
+            <span class="n">args_factory</span><span class="o">=</span><span class="n">args_factory</span><span class="p">,</span>
+        <span class="p">),</span>
     <span class="p">)</span>
 
 

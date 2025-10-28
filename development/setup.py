@@ -39,6 +39,8 @@ def read_requirements(relative_path: str) -> list[str]:
 
 SRC_DIR = REPO_ROOT / "src"
 CLEAN_DATA_DIR = REPO_ROOT / "clean_data"
+SRC_DIR_REL = os.path.relpath(SRC_DIR, PROJECT_ROOT)
+CLEAN_DATA_DIR_REL = os.path.relpath(CLEAN_DATA_DIR, PROJECT_ROOT)
 
 src_packages = find_packages(where=str(SRC_DIR))
 clean_data_packages = find_packages(where=str(REPO_ROOT), include=["clean_data", "clean_data.*"])
@@ -52,7 +54,7 @@ setup(
     long_description_content_type="text/markdown",
     author="GRAIL Simulation Team",
     packages=sorted(set(src_packages + clean_data_packages)),
-    package_dir={"": str(SRC_DIR), "clean_data": str(CLEAN_DATA_DIR)},
+    package_dir={"": SRC_DIR_REL, "clean_data": CLEAN_DATA_DIR_REL},
     python_requires=">=3.10",
     install_requires=[
         "accelerate==1.4.0",

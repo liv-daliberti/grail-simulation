@@ -295,6 +295,7 @@
     <span class="n">OpinionSpec</span><span class="p">,</span>
     <span class="n">float_or_none</span><span class="p">,</span>
     <span class="n">make_opinion_example</span><span class="p">,</span>
+    <span class="n">make_opinion_inputs</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.opinion_metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_opinion_metrics</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.prompt_docs</span><span class="w"> </span><span class="kn">import</span> <span class="n">merge_default_extra_fields</span>
@@ -360,6 +361,27 @@
     <span class="n">targets_before</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
     <span class="n">participant_keys</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span>
     <span class="n">neighbors</span><span class="p">:</span> <span class="n">NearestNeighbors</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OpinionEmbeddingConfigs</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Optional embedding builders available during evaluation.&quot;&quot;&quot;</span>
+
+    <span class="n">word2vec</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Word2VecConfig</span><span class="p">]</span>
+    <span class="n">sentence_transformer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SentenceTransformerConfig</span><span class="p">]</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OpinionEvaluationContext</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Shared configuration for evaluating a single opinion study.&quot;&quot;&quot;</span>
+
+    <span class="n">args</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">dataset</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span>
+    <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">k_values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">feature_space</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">embedding_configs</span><span class="p">:</span> <span class="n">OpinionEmbeddingConfigs</span>
+    <span class="n">outputs_root</span><span class="p">:</span> <span class="n">Path</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">find_spec</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OpinionSpec</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -436,9 +458,15 @@
         <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">participant_id</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
         <span class="n">existing</span> <span class="o">=</span> <span class="n">per_participant</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="n">session_id</span> <span class="o">=</span> <span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;session_id&quot;</span><span class="p">)</span>
-        <span class="n">core_args</span> <span class="o">=</span> <span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">participant_id</span><span class="p">,</span> <span class="n">document</span><span class="p">,</span> <span class="n">before</span><span class="p">,</span> <span class="n">after</span><span class="p">)</span>
+        <span class="n">inputs</span> <span class="o">=</span> <span class="n">make_opinion_inputs</span><span class="p">(</span>
+            <span class="n">participant_id</span><span class="o">=</span><span class="n">participant_id</span><span class="p">,</span>
+            <span class="n">document</span><span class="o">=</span><span class="n">document</span><span class="p">,</span>
+            <span class="n">before</span><span class="o">=</span><span class="n">before</span><span class="p">,</span>
+            <span class="n">after</span><span class="o">=</span><span class="n">after</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="n">candidate</span> <span class="o">=</span> <span class="n">make_opinion_example</span><span class="p">(</span>
-            <span class="o">*</span><span class="n">core_args</span><span class="p">,</span>
+            <span class="n">spec</span><span class="p">,</span>
+            <span class="n">inputs</span><span class="p">,</span>
             <span class="n">factory</span><span class="o">=</span><span class="n">OpinionExample</span><span class="p">,</span>
             <span class="n">step_index</span><span class="o">=</span><span class="n">step_index</span><span class="p">,</span>
             <span class="n">session_id</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">session_id</span><span class="p">)</span> <span class="k">if</span> <span class="n">session_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
@@ -1515,25 +1543,18 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_evaluate_opinion_study</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="n">dataset</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Any</span><span class="p">]],</span>
     <span class="n">spec</span><span class="p">:</span> <span class="n">OpinionSpec</span><span class="p">,</span>
-    <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-    <span class="n">k_values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
-    <span class="n">feature_space</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">word2vec_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Word2VecConfig</span><span class="p">],</span>
-    <span class="n">sentence_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SentenceTransformerConfig</span><span class="p">],</span>
-    <span class="n">outputs_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">OpinionEvaluationContext</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the full evaluation pipeline for a single opinion study.&quot;&quot;&quot;</span>
 
     <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[OPINION] Study=</span><span class="si">%s</span><span class="s2"> (</span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
     <span class="n">train_examples</span> <span class="o">=</span> <span class="n">collect_examples</span><span class="p">(</span>
-        <span class="n">dataset</span><span class="p">[</span><span class="n">TRAIN_SPLIT</span><span class="p">],</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">dataset</span><span class="p">[</span><span class="n">TRAIN_SPLIT</span><span class="p">],</span>
         <span class="n">spec</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span>
-        <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
-        <span class="n">max_examples</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;knn_max_train&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">),</span>
-        <span class="n">seed</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;knn_seed&quot;</span><span class="p">,</span> <span class="mi">42</span><span class="p">)),</span>
+        <span class="n">extra_fields</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">extra_fields</span><span class="p">,</span>
+        <span class="n">max_examples</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;knn_max_train&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">),</span>
+        <span class="n">seed</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;knn_seed&quot;</span><span class="p">,</span> <span class="mi">42</span><span class="p">)),</span>
     <span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">train_examples</span><span class="p">:</span>
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;[OPINION] No training examples found for study=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
@@ -1541,27 +1562,27 @@
 
     <span class="n">index</span> <span class="o">=</span> <span class="n">build_index</span><span class="p">(</span>
         <span class="n">examples</span><span class="o">=</span><span class="n">train_examples</span><span class="p">,</span>
-        <span class="n">feature_space</span><span class="o">=</span><span class="n">feature_space</span><span class="p">,</span>
+        <span class="n">feature_space</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">feature_space</span><span class="p">,</span>
         <span class="n">spec</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span>
-        <span class="n">seed</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;knn_seed&quot;</span><span class="p">,</span> <span class="mi">42</span><span class="p">)),</span>
-        <span class="n">metric</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;knn_metric&quot;</span><span class="p">,</span> <span class="s2">&quot;cosine&quot;</span><span class="p">)),</span>
-        <span class="n">word2vec_config</span><span class="o">=</span><span class="n">word2vec_config</span><span class="p">,</span>
-        <span class="n">sentence_config</span><span class="o">=</span><span class="n">sentence_config</span><span class="p">,</span>
+        <span class="n">seed</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;knn_seed&quot;</span><span class="p">,</span> <span class="mi">42</span><span class="p">)),</span>
+        <span class="n">metric</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;knn_metric&quot;</span><span class="p">,</span> <span class="s2">&quot;cosine&quot;</span><span class="p">)),</span>
+        <span class="n">word2vec_config</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">embedding_configs</span><span class="o">.</span><span class="n">word2vec</span><span class="p">,</span>
+        <span class="n">sentence_config</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">embedding_configs</span><span class="o">.</span><span class="n">sentence_transformer</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">eval_examples</span> <span class="o">=</span> <span class="n">collect_examples</span><span class="p">(</span>
-        <span class="n">dataset</span><span class="p">[</span><span class="n">EVAL_SPLIT</span><span class="p">],</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">dataset</span><span class="p">[</span><span class="n">EVAL_SPLIT</span><span class="p">],</span>
         <span class="n">spec</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span>
-        <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
-        <span class="n">max_examples</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;eval_max&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">),</span>
-        <span class="n">seed</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;knn_seed&quot;</span><span class="p">,</span> <span class="mi">42</span><span class="p">)),</span>
+        <span class="n">extra_fields</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">extra_fields</span><span class="p">,</span>
+        <span class="n">max_examples</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;eval_max&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">),</span>
+        <span class="n">seed</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;knn_seed&quot;</span><span class="p">,</span> <span class="mi">42</span><span class="p">)),</span>
     <span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">eval_examples</span><span class="p">:</span>
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;[OPINION] No evaluation examples found for study=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
         <span class="k">return</span>
 
-    <span class="n">predictions</span> <span class="o">=</span> <span class="n">_evaluation_predictions</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">eval_examples</span><span class="p">,</span> <span class="n">k_values</span><span class="p">)</span>
-    <span class="n">best_k</span> <span class="o">=</span> <span class="n">_select_best_k</span><span class="p">(</span><span class="n">predictions</span><span class="o">.</span><span class="n">metrics_by_k</span><span class="p">,</span> <span class="n">k_values</span><span class="p">)</span>
+    <span class="n">predictions</span> <span class="o">=</span> <span class="n">_evaluation_predictions</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">eval_examples</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">k_values</span><span class="p">)</span>
+    <span class="n">best_k</span> <span class="o">=</span> <span class="n">_select_best_k</span><span class="p">(</span><span class="n">predictions</span><span class="o">.</span><span class="n">metrics_by_k</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">k_values</span><span class="p">)</span>
     <span class="n">output_payload</span> <span class="o">=</span> <span class="n">_OutputPayload</span><span class="p">(</span>
         <span class="n">rows</span><span class="o">=</span><span class="n">predictions</span><span class="o">.</span><span class="n">rows</span><span class="p">,</span>
         <span class="n">metrics_by_k</span><span class="o">=</span><span class="n">predictions</span><span class="o">.</span><span class="n">metrics_by_k</span><span class="p">,</span>
@@ -1570,15 +1591,15 @@
         <span class="n">curve_metrics</span><span class="o">=</span><span class="n">_curve_metrics_bundle</span><span class="p">(</span>
             <span class="n">predictions</span><span class="o">.</span><span class="n">metrics_by_k</span><span class="p">,</span>
             <span class="n">eval_examples</span><span class="p">,</span>
-            <span class="n">_training_curve_metrics</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">train_examples</span><span class="p">,</span> <span class="n">k_values</span><span class="p">),</span>
+            <span class="n">_training_curve_metrics</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">train_examples</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">k_values</span><span class="p">),</span>
         <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">_write_outputs</span><span class="p">(</span>
         <span class="n">context</span><span class="o">=</span><span class="n">_OutputContext</span><span class="p">(</span>
-            <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">args</span><span class="p">,</span>
             <span class="n">spec</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span>
             <span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="p">,</span>
-            <span class="n">outputs_root</span><span class="o">=</span><span class="n">outputs_root</span><span class="p">,</span>
+            <span class="n">outputs_root</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">outputs_root</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="n">payload</span><span class="o">=</span><span class="n">output_payload</span><span class="p">,</span>
     <span class="p">)</span>
@@ -1623,17 +1644,25 @@
     <span class="n">outputs_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">out_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;opinion&quot;</span> <span class="o">/</span> <span class="n">feature_space</span>
     <span class="n">outputs_root</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
+    <span class="n">embedding_configs</span> <span class="o">=</span> <span class="n">OpinionEmbeddingConfigs</span><span class="p">(</span>
+        <span class="n">word2vec</span><span class="o">=</span><span class="n">word2vec_cfg</span><span class="p">,</span>
+        <span class="n">sentence_transformer</span><span class="o">=</span><span class="n">sentence_cfg</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">evaluation_context</span> <span class="o">=</span> <span class="n">OpinionEvaluationContext</span><span class="p">(</span>
+        <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+        <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
+        <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
+        <span class="n">k_values</span><span class="o">=</span><span class="n">k_values</span><span class="p">,</span>
+        <span class="n">feature_space</span><span class="o">=</span><span class="n">feature_space</span><span class="p">,</span>
+        <span class="n">embedding_configs</span><span class="o">=</span><span class="n">embedding_configs</span><span class="p">,</span>
+        <span class="n">outputs_root</span><span class="o">=</span><span class="n">outputs_root</span><span class="p">,</span>
+    <span class="p">)</span>
+
     <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">specs</span><span class="p">:</span>
         <span class="n">_evaluate_opinion_study</span><span class="p">(</span>
-            <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
-            <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
             <span class="n">spec</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span>
-            <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields</span><span class="p">,</span>
-            <span class="n">k_values</span><span class="o">=</span><span class="n">k_values</span><span class="p">,</span>
-            <span class="n">feature_space</span><span class="o">=</span><span class="n">feature_space</span><span class="p">,</span>
-            <span class="n">word2vec_config</span><span class="o">=</span><span class="n">word2vec_cfg</span><span class="p">,</span>
-            <span class="n">sentence_config</span><span class="o">=</span><span class="n">sentence_cfg</span><span class="p">,</span>
-            <span class="n">outputs_root</span><span class="o">=</span><span class="n">outputs_root</span><span class="p">,</span>
+            <span class="n">context</span><span class="o">=</span><span class="n">evaluation_context</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 

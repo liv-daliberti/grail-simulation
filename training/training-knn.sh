@@ -115,7 +115,8 @@ DEFAULT_KNN_PIPELINE_TASKS="next_video,opinion"
 KNN_PIPELINE_TASKS=$(ensure_dual_task_string "${KNN_PIPELINE_TASKS}")
 : "${KNN_K_SELECT_METHOD:=max}"
 : "${KNN_FEATURE_SPACES:=tfidf,word2vec,sentence_transformer}"
-: "${KNN_K_SWEEP:=10}"
+# Broaden default k sweep to cover small and moderate neighbourhood sizes
+: "${KNN_K_SWEEP:=1,2,3,4,5,10,25,50}"
 : "${KNN_TFIDF_METRICS:=cosine}"
 : "${KNN_WORD2VEC_METRICS:=cosine}"
 : "${KNN_SENTENCE_METRICS:=cosine}"

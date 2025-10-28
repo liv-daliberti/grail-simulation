@@ -1220,6 +1220,7 @@ def _evaluate_dataset_split(
     log_label: str,
     max_examples: int | None,
     log_k: int | None = None,
+    k_select_method: str | None = None,
 ) -> Dict[str, Any]:
     """Return aggregate statistics for ``dataset`` using the provided index.
 
@@ -1265,8 +1266,11 @@ def _evaluate_dataset_split(
         metric=metric,
     )
 
+    # Determine how to report progress accuracy:
+    # - If a specific log_k is provided, report acc@log_k (existing behaviour).
+    # - Otherwise, report acc@best_k_so_far using the configured selection method.
     log_k_value: int | None = None
-    if log_k:
+    if log_k is not None:
         desired = int(log_k)
         if desired in per_k_stats:
             log_k_value = desired
@@ -1293,8 +1297,24 @@ def _evaluate_dataset_split(
             elapsed = time.time() - start_time
             acc_message = ""
             if log_k_value is not None:
+                # Fixed-k progress metric
                 stats = per_k_stats[log_k_value]
                 acc_message = f"  acc@{log_k_value}={safe_div(stats['correct'], stats['eligible']):.3f}"
+            else:
+                # Dynamic best-k progress metric using the configured selection method
+                # Be explicit about supported types to avoid broad exception catching
+                if isinstance(k_select_method, str) and k_select_method.strip():
+                    method = k_select_method.strip().lower()
+                else:
+                    method = "max"
+                accuracy_by_k_now = {
+                    int(k): safe_div(stats["correct"], stats["eligible"]) for k, stats in per_k_stats.items()
+                }
+                # Use current k_values ordering to select best k so far
+                k_values_int = sorted(int(k) for k in k_values)
+                chosen_k = select_best_k(k_values_int, accuracy_by_k_now, method=method)
+                stats_now = per_k_stats.get(int(chosen_k), {"correct": 0, "eligible": 0})
+                acc_message = f"  acc@{int(chosen_k)}={safe_div(stats_now['correct'], stats_now['eligible']):.3f}"
             logging.info(
                 "[%s] %d/%d  elapsed=%.1fs%s",
                 log_label,
@@ -1439,7 +1459,9 @@ def evaluate_issue(
         capture_rows=True,
         log_label=f"eval][{issue_slug}",
         max_examples=eval_max,
-        log_k=args.knn_k,
+        # Progress logging: report accuracy at best k so far
+        log_k=None,
+        k_select_method=getattr(args, "k_select_method", "max"),
     )
 
     rows: List[Dict[str, Any]] = eval_summary["rows"]
@@ -1479,7 +1501,9 @@ def evaluate_issue(
             capture_rows=False,
             log_label=f"train][{issue_slug}",
             max_examples=max_examples,
-            log_k=args.knn_k,
+            # Progress logging: report accuracy at best k so far
+            log_k=None,
+            k_select_method=getattr(args, "k_select_method", "max"),
         )
         train_accuracy_by_k = {
             k: safe_div(train_summary["per_k_stats"][k]["correct"], train_summary["per_k_stats"][k]["eligible"])

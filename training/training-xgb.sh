@@ -107,8 +107,11 @@ export XGB_REUSE_FINAL
 DEFAULT_XGB_PIPELINE_TASKS="next_video,opinion"
 : "${XGB_PIPELINE_TASKS:=${DEFAULT_XGB_PIPELINE_TASKS}}"
 XGB_PIPELINE_TASKS=$(ensure_dual_task_string "${XGB_PIPELINE_TASKS}")
-: "${XGB_LEARNING_RATE_GRID:=0.05}"
-: "${XGB_MAX_DEPTH_GRID:=4}"
+# Expand the default sweep slightly: 3 learning rates × 2 depths
+# yields ~6 configs per vectorizer (~54 tasks/stage with 3 studies
+# and 3 vectorizers). Keep other params fixed to limit growth.
+: "${XGB_LEARNING_RATE_GRID:=0.03,0.05,0.1}"
+: "${XGB_MAX_DEPTH_GRID:=3,4}"
 : "${XGB_N_ESTIMATORS_GRID:=300}"
 : "${XGB_SUBSAMPLE_GRID:=0.9}"
 : "${XGB_COLSAMPLE_GRID:=0.8}"

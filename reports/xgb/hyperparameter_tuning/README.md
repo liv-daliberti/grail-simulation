@@ -8,71 +8,8 @@ This summary lists the top-performing configurations uncovered during the hyper-
 
 ## Next-Video Sweeps
 
-### Study 1 – Gun Control (MTurk)
-
-*Issue:* Gun Control
-
-| Config | Accuracy ↑ | Acc (eligible) ↑ | Coverage ↑ | Known hits / total | Known availability ↑ | Avg prob ↑ | Evaluated |
-| --- | ---: | ---: | ---: | --- | ---: | ---: | ---: |
-| **tfidf_lr0p05_depth4_estim300_sub0p9_col0p8_l21_l10** | 0.786 | 0.786 | 0.789 | 431/546 | 0.996 | 0.495 | 548 |
-
-### Study 2 – Minimum Wage (MTurk)
-
-*Issue:* Minimum Wage
-
-| Config | Accuracy ↑ | Acc (eligible) ↑ | Coverage ↑ | Known hits / total | Known availability ↑ | Avg prob ↑ | Evaluated |
-| --- | ---: | ---: | ---: | --- | ---: | ---: | ---: |
-| **tfidf_lr0p05_depth4_estim300_sub0p9_col0p8_l21_l10** | 0.219 | 0.219 | 0.219 | 147/671 | 1.000 | 0.027 | 671 |
-
-### Study 3 – Minimum Wage (YouGov)
-
-*Issue:* Minimum Wage
-
-| Config | Accuracy ↑ | Acc (eligible) ↑ | Coverage ↑ | Known hits / total | Known availability ↑ | Avg prob ↑ | Evaluated |
-| --- | ---: | ---: | ---: | --- | ---: | ---: | ---: |
-| **tfidf_lr0p05_depth4_estim300_sub0p9_col0p8_l21_l10** | 0.220 | 0.220 | 0.220 | 264/1,200 | 1.000 | 0.020 | 1,200 |
-
-### Configuration Leaderboards
-
-#### Study 1 – Gun Control (MTurk)
-
-| Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Coverage ↑ | Δ coverage ↓ | Evaluated |
-| ---: | --- | ---: | ---: | ---: | ---: | ---: |
-| 1 | **tfidf_lr0p05_depth4_estim300_sub0p9_col0p8_l21_l10** | 0.786 | 0.000 | 0.789 | 0.000 | 548 |
-
-#### Study 2 – Minimum Wage (MTurk)
-
-| Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Coverage ↑ | Δ coverage ↓ | Evaluated |
-| ---: | --- | ---: | ---: | ---: | ---: | ---: |
-| 1 | **tfidf_lr0p05_depth4_estim300_sub0p9_col0p8_l21_l10** | 0.219 | 0.000 | 0.219 | 0.000 | 671 |
-
-#### Study 3 – Minimum Wage (YouGov)
-
-| Rank | Config | Accuracy ↑ | Δ accuracy ↓ | Coverage ↑ | Δ coverage ↓ | Evaluated |
-| ---: | --- | ---: | ---: | ---: | ---: | ---: |
-| 1 | **tfidf_lr0p05_depth4_estim300_sub0p9_col0p8_l21_l10** | 0.220 | 0.000 | 0.220 | 0.000 | 1,200 |
-
-### Selection Summary
-
-- **Study 1 – Gun Control (MTurk) (issue Gun Control)**: accuracy 0.786 (coverage 0.789) using vectorizer=tfidf, lr=0.05, depth=4, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0.
-  Command: `python -m xgb.cli --fit_model --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --issues gun_control --participant_studies study1 --extra_text_fields child18,educ,employ,freq_youtube,gun_enthusiasm,gun_identity,gun_importance,gun_index,ideo1,ideo2,inputstate,minwage15_w1,minwage15_w2,minwage_text_w1,minwage_text_w2,mw_index_w1,mw_index_w2,mw_support_w1,mw_support_w2,newsint,participant_study,pid1,pid2,pol_interest,q31,religpew,slate_source,state_text,viewer_profile,youtube_time --text_vectorizer tfidf --xgb_learning_rate 0.05 --xgb_max_depth 4 --xgb_n_estimators 300 --xgb_subsample 0.9 --xgb_colsample_bytree 0.8 --xgb_tree_method hist --xgb_reg_lambda 1.0 --xgb_reg_alpha 0.0 --out_dir '<run_dir>'`
-- **Study 2 – Minimum Wage (MTurk) (issue Minimum Wage)**: accuracy 0.219 (coverage 0.219) using vectorizer=tfidf, lr=0.05, depth=4, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0.
-  Command: `python -m xgb.cli --fit_model --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --issues minimum_wage --participant_studies study2 --extra_text_fields child18,educ,employ,freq_youtube,gun_enthusiasm,gun_identity,gun_importance,gun_index,ideo1,ideo2,inputstate,minwage15_w1,minwage15_w2,minwage_text_w1,minwage_text_w2,mw_index_w1,mw_index_w2,mw_support_w1,mw_support_w2,newsint,participant_study,pid1,pid2,pol_interest,q31,religpew,slate_source,state_text,viewer_profile,youtube_time --text_vectorizer tfidf --xgb_learning_rate 0.05 --xgb_max_depth 4 --xgb_n_estimators 300 --xgb_subsample 0.9 --xgb_colsample_bytree 0.8 --xgb_tree_method hist --xgb_reg_lambda 1.0 --xgb_reg_alpha 0.0 --out_dir '<run_dir>'`
-- **Study 3 – Minimum Wage (YouGov) (issue Minimum Wage)**: accuracy 0.220 (coverage 0.220) using vectorizer=tfidf, lr=0.05, depth=4, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0.
-  Command: `python -m xgb.cli --fit_model --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --issues minimum_wage --participant_studies study3 --extra_text_fields child18,educ,employ,freq_youtube,gun_enthusiasm,gun_identity,gun_importance,gun_index,ideo1,ideo2,inputstate,minwage15_w1,minwage15_w2,minwage_text_w1,minwage_text_w2,mw_index_w1,mw_index_w2,mw_support_w1,mw_support_w2,newsint,participant_study,pid1,pid2,pol_interest,q31,religpew,slate_source,state_text,viewer_profile,youtube_time --text_vectorizer tfidf --xgb_learning_rate 0.05 --xgb_max_depth 4 --xgb_n_estimators 300 --xgb_subsample 0.9 --xgb_colsample_bytree 0.8 --xgb_tree_method hist --xgb_reg_lambda 1.0 --xgb_reg_alpha 0.0 --out_dir '<run_dir>'`
-
-### Parameter Frequency Across Selected Configurations
-
-| Parameter | Preferred values (count) |
-| --- | --- |
-| Vectorizer | tfidf ×3 |
-| Learning rate | 0.05 ×3 |
-| Max depth | 4 ×3 |
-| Estimators | 300 ×3 |
-| Subsample | 0.9 ×3 |
-| Column subsample | 0.8 ×3 |
-| L2 regularisation | 1 ×3 |
-| L1 regularisation | 0 ×3 |
+No next-video sweep runs were available when this report was generated.
+Run the XGBoost pipeline with `--stage sweeps` or `--stage full` once artifacts are ready.
 
 ## Opinion Regression Sweeps
 
@@ -82,7 +19,12 @@ This summary lists the top-performing configurations uncovered during the hyper-
 
 | Config | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| **tfidf_lr0p05_depth4_estim300_sub0p9_col0p8_l21_l10**<br>vectorizer=tfidf, lr=0.05, depth=4, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0 | 0.772 | 0.074 | +0.698 | — | 162 | 0.035 | +0.002 | 0.061 | 0.955 |
+| **tfidf_lr0p05_depth4_estim300_sub0p9_col0p8_l21_l10**<br>vectorizer=tfidf, lr=0.05, depth=4, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0 | 0.852 | 0.074 | +0.778 | — | 162 | 0.012 | +0.025 | 0.021 | 0.994 |
+| tfidf_lr0p03_depth4_estim300_sub0p9_col0p8_l21_l10<br>vectorizer=tfidf, lr=0.03, depth=4, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0 | 0.864 | 0.074 | +0.790 | — | 162 | 0.012 | +0.025 | 0.022 | 0.994 |
+| tfidf_lr0p1_depth4_estim300_sub0p9_col0p8_l21_l10<br>vectorizer=tfidf, lr=0.1, depth=4, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0 | 0.864 | 0.074 | +0.790 | — | 162 | 0.012 | +0.025 | 0.022 | 0.994 |
+| tfidf_lr0p03_depth3_estim300_sub0p9_col0p8_l21_l10<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0 | 0.858 | 0.074 | +0.784 | — | 162 | 0.013 | +0.024 | 0.022 | 0.994 |
+| tfidf_lr0p05_depth3_estim300_sub0p9_col0p8_l21_l10<br>vectorizer=tfidf, lr=0.05, depth=3, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0 | 0.852 | 0.074 | +0.778 | — | 162 | 0.013 | +0.024 | 0.022 | 0.994 |
+| tfidf_lr0p1_depth3_estim300_sub0p9_col0p8_l21_l10<br>vectorizer=tfidf, lr=0.1, depth=3, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0 | 0.864 | 0.074 | +0.790 | — | 162 | 0.013 | +0.024 | 0.023 | 0.994 |
   Command: `python -m xgb.pipeline --stage full --tasks opinion --issues gun_control --studies study1 --tree-method hist --learning-rate-grid 0.05 --max-depth-grid 4 --n-estimators-grid 300 --subsample-grid 0.9 --colsample-grid 0.8 --reg-lambda-grid 1 --reg-alpha-grid 0 --text-vectorizer-grid tfidf --out-dir '<models_dir>' --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --max-features 200000`
 
 ### Study 2 – Minimum Wage (MTurk)
@@ -91,7 +33,12 @@ This summary lists the top-performing configurations uncovered during the hyper-
 
 | Config | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| **tfidf_lr0p05_depth4_estim300_sub0p9_col0p8_l21_l10**<br>vectorizer=tfidf, lr=0.05, depth=4, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0 | 0.861 | 0.061 | +0.800 | — | 165 | 0.033 | +0.063 | 0.045 | 0.974 |
+| **tfidf_lr0p05_depth4_estim300_sub0p9_col0p8_l21_l10**<br>vectorizer=tfidf, lr=0.05, depth=4, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0 | 0.806 | 0.061 | +0.745 | — | 165 | 0.039 | +0.057 | 0.052 | 0.964 |
+| tfidf_lr0p03_depth4_estim300_sub0p9_col0p8_l21_l10<br>vectorizer=tfidf, lr=0.03, depth=4, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0 | 0.800 | 0.061 | +0.739 | — | 165 | 0.039 | +0.057 | 0.053 | 0.963 |
+| tfidf_lr0p1_depth4_estim300_sub0p9_col0p8_l21_l10<br>vectorizer=tfidf, lr=0.1, depth=4, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0 | 0.800 | 0.061 | +0.739 | — | 165 | 0.039 | +0.057 | 0.053 | 0.964 |
+| tfidf_lr0p05_depth3_estim300_sub0p9_col0p8_l21_l10<br>vectorizer=tfidf, lr=0.05, depth=3, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0 | 0.800 | 0.061 | +0.739 | — | 165 | 0.040 | +0.056 | 0.054 | 0.962 |
+| tfidf_lr0p03_depth3_estim300_sub0p9_col0p8_l21_l10<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0 | 0.806 | 0.061 | +0.745 | — | 165 | 0.040 | +0.056 | 0.054 | 0.962 |
+| tfidf_lr0p1_depth3_estim300_sub0p9_col0p8_l21_l10<br>vectorizer=tfidf, lr=0.1, depth=3, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0 | 0.794 | 0.061 | +0.733 | — | 165 | 0.041 | +0.055 | 0.055 | 0.960 |
   Command: `python -m xgb.pipeline --stage full --tasks opinion --issues minimum_wage --studies study2 --tree-method hist --learning-rate-grid 0.05 --max-depth-grid 4 --n-estimators-grid 300 --subsample-grid 0.9 --colsample-grid 0.8 --reg-lambda-grid 1 --reg-alpha-grid 0 --text-vectorizer-grid tfidf --out-dir '<models_dir>' --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --max-features 200000`
 
 ### Study 3 – Minimum Wage (YouGov)
@@ -100,27 +47,32 @@ This summary lists the top-performing configurations uncovered during the hyper-
 
 | Config | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| **tfidf_lr0p05_depth4_estim300_sub0p9_col0p8_l21_l10**<br>vectorizer=tfidf, lr=0.05, depth=4, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0 | 0.782 | 0.058 | +0.724 | — | 257 | 0.048 | +0.036 | 0.070 | 0.927 |
-  Command: `python -m xgb.pipeline --stage full --tasks opinion --issues minimum_wage --studies study3 --tree-method hist --learning-rate-grid 0.05 --max-depth-grid 4 --n-estimators-grid 300 --subsample-grid 0.9 --colsample-grid 0.8 --reg-lambda-grid 1 --reg-alpha-grid 0 --text-vectorizer-grid tfidf --out-dir '<models_dir>' --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --max-features 200000`
+| **tfidf_lr0p03_depth4_estim300_sub0p9_col0p8_l21_l10**<br>vectorizer=tfidf, lr=0.03, depth=4, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0 | 0.743 | 0.058 | +0.685 | — | 257 | 0.049 | +0.035 | 0.068 | 0.933 |
+| tfidf_lr0p03_depth3_estim300_sub0p9_col0p8_l21_l10<br>vectorizer=tfidf, lr=0.03, depth=3, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0 | 0.747 | 0.058 | +0.689 | — | 257 | 0.049 | +0.035 | 0.069 | 0.929 |
+| tfidf_lr0p1_depth3_estim300_sub0p9_col0p8_l21_l10<br>vectorizer=tfidf, lr=0.1, depth=3, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0 | 0.774 | 0.058 | +0.716 | — | 257 | 0.049 | +0.035 | 0.069 | 0.930 |
+| tfidf_lr0p1_depth4_estim300_sub0p9_col0p8_l21_l10<br>vectorizer=tfidf, lr=0.1, depth=4, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0 | 0.743 | 0.058 | +0.685 | — | 257 | 0.049 | +0.035 | 0.068 | 0.931 |
+| tfidf_lr0p05_depth4_estim300_sub0p9_col0p8_l21_l10<br>vectorizer=tfidf, lr=0.05, depth=4, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0 | 0.747 | 0.058 | +0.689 | — | 257 | 0.049 | +0.035 | 0.068 | 0.931 |
+| tfidf_lr0p05_depth3_estim300_sub0p9_col0p8_l21_l10<br>vectorizer=tfidf, lr=0.05, depth=3, estimators=300, subsample=0.9, colsample=0.8, λ=1, α=0 | 0.751 | 0.058 | +0.693 | — | 257 | 0.050 | +0.034 | 0.070 | 0.928 |
+  Command: `python -m xgb.pipeline --stage full --tasks opinion --issues minimum_wage --studies study3 --tree-method hist --learning-rate-grid 0.03 --max-depth-grid 4 --n-estimators-grid 300 --subsample-grid 0.9 --colsample-grid 0.8 --reg-lambda-grid 1 --reg-alpha-grid 0 --text-vectorizer-grid tfidf --out-dir '<models_dir>' --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --max-features 200000`
 
 ### Portfolio Summary
 
-- Weighted MAE 0.040 across 584 participants.
-- Weighted baseline MAE 0.074 (+0.035 vs. final).
-- Weighted directional accuracy 0.801 across 584 participants.
-- Weighted baseline accuracy 0.063 (+0.738 vs. final).
-- Weighted RMSE (change) 0.061 across 584 participants.
-- Weighted baseline RMSE (change) 0.107 (+0.046 vs. final).
-- Weighted calibration ECE 0.016 across 584 participants.
-- Weighted KL divergence 0.187 across 584 participants.
-- Weighted baseline KL divergence 18.435 (+18.249 vs. final).
-- Largest MAE reduction: Study 2 – Minimum Wage (MTurk) (+0.063).
-- Lowest MAE: Study 2 – Minimum Wage (MTurk) (0.033); Highest MAE: Study 3 – Minimum Wage (YouGov) (0.048).
-- Highest directional accuracy: Study 2 – Minimum Wage (MTurk) (0.861).
-- Lowest directional accuracy: Study 1 – Gun Control (MTurk) (0.772).
-- Largest directional-accuracy gain: Study 2 – Minimum Wage (MTurk) (+0.800).
-- Largest RMSE(change) reduction: Study 2 – Minimum Wage (MTurk) (+0.093).
-- Lowest RMSE(change): Study 2 – Minimum Wage (MTurk) (0.045); Highest: Study 3 – Minimum Wage (YouGov) (0.070).
-- Lowest calibration ECE: Study 2 – Minimum Wage (MTurk) (0.007); Highest: Study 1 – Gun Control (MTurk) (0.025).
-- Largest KL divergence drop: Study 1 – Gun Control (MTurk) (+21.271).
-- Lowest KL divergence: Study 2 – Minimum Wage (MTurk) (0.058); Highest: Study 3 – Minimum Wage (YouGov) (0.277).
+- Weighted MAE 0.036 across 584 participants.
+- Weighted baseline MAE 0.074 (+0.039 vs. final).
+- Weighted directional accuracy 0.791 across 584 participants.
+- Weighted baseline accuracy 0.063 (+0.728 vs. final).
+- Weighted RMSE (change) 0.051 across 584 participants.
+- Weighted baseline RMSE (change) 0.107 (+0.056 vs. final).
+- Weighted calibration ECE 0.010 across 584 participants.
+- Weighted KL divergence 0.586 across 584 participants.
+- Weighted baseline KL divergence 18.435 (+17.849 vs. final).
+- Largest MAE reduction: Study 2 – Minimum Wage (MTurk) (+0.057).
+- Lowest MAE: Study 1 – Gun Control (MTurk) (0.012); Highest MAE: Study 3 – Minimum Wage (YouGov) (0.049).
+- Highest directional accuracy: Study 1 – Gun Control (MTurk) (0.852).
+- Lowest directional accuracy: Study 3 – Minimum Wage (YouGov) (0.743).
+- Largest directional-accuracy gain: Study 1 – Gun Control (MTurk) (+0.778).
+- Largest RMSE(change) reduction: Study 2 – Minimum Wage (MTurk) (+0.086).
+- Lowest RMSE(change): Study 1 – Gun Control (MTurk) (0.021); Highest: Study 3 – Minimum Wage (YouGov) (0.068).
+- Lowest calibration ECE: Study 1 – Gun Control (MTurk) (0.005); Highest: Study 2 – Minimum Wage (MTurk) (0.014).
+- Largest KL divergence drop: Study 1 – Gun Control (MTurk) (+20.780).
+- Lowest KL divergence: Study 3 – Minimum Wage (YouGov) (0.384); Highest: Study 2 – Minimum Wage (MTurk) (0.823).

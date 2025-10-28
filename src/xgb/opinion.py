@@ -59,7 +59,7 @@ from .data import (
     TRAIN_SPLIT,
     load_dataset_source,
 )
-from .features import assemble_document, viewer_profile_sentence
+from .features import assemble_document
 from .model import XGBoostBoosterParams
 from .vectorizers import (
     SentenceTransformerVectorizerConfig,

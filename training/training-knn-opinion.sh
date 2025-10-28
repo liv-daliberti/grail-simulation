@@ -15,6 +15,6 @@ export PYTHONPATH="${ROOT_DIR}/src${PYTHONPATH:+:${PYTHONPATH}}"
 export KNN_PIPELINE_TASKS="next_video,opinion"
 # Ensure k sweep includes small neighbourhood sizes used in analysis
 if [[ -z "${KNN_K_SWEEP:-}" ]]; then
-  export KNN_K_SWEEP="1,3,5,10"
+  export KNN_K_SWEEP="1,2,3,4,5,10,25,50"
 fi
 exec "${SCRIPT_DIR}/training-knn.sh" "$@"

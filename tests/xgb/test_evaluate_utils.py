@@ -97,6 +97,9 @@ def _prediction_outcome(
     known_candidate_hit: bool,
     record_probability: bool,
     correct: bool,
+    option_count: int = 0,
+    gold_index: Optional[int] = None,
+    eligible: bool = False,
 ) -> PredictionOutcome:
     return PredictionOutcome(
         prediction_index=prediction_index,
@@ -108,6 +111,9 @@ def _prediction_outcome(
         known_candidate_hit=known_candidate_hit,
         record_probability=record_probability,
         correct=correct,
+        option_count=option_count,
+        gold_index=gold_index,
+        eligible=eligible,
     )
 
 
@@ -125,6 +131,9 @@ def test_summarise_outcomes_counts_metrics() -> None:
                 known_candidate_hit=True,
                 record_probability=True,
                 correct=True,
+                option_count=2,
+                gold_index=1,
+                eligible=True,
             ),
         ),
         (
@@ -139,6 +148,9 @@ def test_summarise_outcomes_counts_metrics() -> None:
                 known_candidate_hit=False,
                 record_probability=False,
                 correct=False,
+                option_count=3,
+                gold_index=None,
+                eligible=False,
             ),
         ),
         (
@@ -153,6 +165,9 @@ def test_summarise_outcomes_counts_metrics() -> None:
                 known_candidate_hit=False,
                 record_probability=True,
                 correct=False,
+                option_count=1,
+                gold_index=1,
+                eligible=True,
             ),
         ),
     ]
@@ -164,6 +179,10 @@ def test_summarise_outcomes_counts_metrics() -> None:
     assert summary.known_hits == 1
     assert summary.known_total == 2
     assert summary.avg_probability == pytest.approx(0.7)
+    assert summary.eligible == 2
+    assert summary.gold_hist == {1: 2}
+    assert summary.random_inverse_sum == pytest.approx(1.5)
+    assert summary.random_inverse_count == 2
 
 
 def test_records_to_predictions_serialises_expected_fields() -> None:

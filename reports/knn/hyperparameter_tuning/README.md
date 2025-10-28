@@ -28,7 +28,7 @@ Tables bold the configurations promoted to the finalize stage. Commands beneath 
 | Study | Metric | Text fields | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible | Command |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | **Study 1 – Gun Control (MTurk)** | cosine | viewer_profile, state_text, ideo2 | 0.276 | 0.540 | -0.265 | 3 | 548 | `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space word2vec --issues gun_control --participant-studies study1 --knn-metric cosine --knn-k 3 --knn-k-sweep 3 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text,ideo2 --word2vec-size 256 --word2vec-window 5 --word2vec-min-count 1 --word2vec-epochs 10 --word2vec-workers 40` |
-| **Study 2 – Minimum Wage (MTurk)** | cosine | viewer_profile, state_text | 0.308 | 0.368 | -0.060 | 5 | 671 | `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space word2vec --issues minimum_wage --participant-studies study2 --knn-metric cosine --knn-k 5 --knn-k-sweep 5 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text --word2vec-size 256 --word2vec-window 5 --word2vec-min-count 1 --word2vec-epochs 10 --word2vec-workers 40` |
+| **Study 2 – Minimum Wage (MTurk)** | cosine | viewer_profile, state_text, ideo1 | 0.320 | 0.368 | -0.048 | 10 | 671 | `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space word2vec --issues minimum_wage --participant-studies study2 --knn-metric cosine --knn-k 10 --knn-k-sweep 10 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text,ideo1 --word2vec-size 256 --word2vec-window 5 --word2vec-min-count 1 --word2vec-epochs 10 --word2vec-workers 40` |
 
 
 ### Observations
@@ -37,9 +37,9 @@ Tables bold the configurations promoted to the finalize stage. Commands beneath 
   Command (Study 1 – Gun Control (MTurk)): `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues gun_control --participant-studies study1 --knn-metric cosine --knn-k 3 --knn-k-sweep 3 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text`
   Command (Study 2 – Minimum Wage (MTurk)): `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study2 --knn-metric cosine --knn-k 3 --knn-k-sweep 3 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text,freq_youtube`
   Command (Study 3 – Minimum Wage (YouGov)): `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study3 --knn-metric cosine --knn-k 3 --knn-k-sweep 3 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text,newsint`
-- WORD2VEC: Study 1 – Gun Control (MTurk): accuracy 0.276 (baseline 0.540, Δ -0.265, k=3) using word2vec (256d, window 5, min_count 1) with viewer_profile, state_text, ideo2; Study 2 – Minimum Wage (MTurk): accuracy 0.308 (baseline 0.368, Δ -0.060, k=5) using word2vec (256d, window 5, min_count 1) with viewer_profile, state_text.
+- WORD2VEC: Study 1 – Gun Control (MTurk): accuracy 0.276 (baseline 0.540, Δ -0.265, k=3) using word2vec (256d, window 5, min_count 1) with viewer_profile, state_text, ideo2; Study 2 – Minimum Wage (MTurk): accuracy 0.320 (baseline 0.368, Δ -0.048, k=10) using word2vec (256d, window 5, min_count 1) with viewer_profile, state_text, ideo1.
   Command (Study 1 – Gun Control (MTurk)): `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space word2vec --issues gun_control --participant-studies study1 --knn-metric cosine --knn-k 3 --knn-k-sweep 3 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text,ideo2 --word2vec-size 256 --word2vec-window 5 --word2vec-min-count 1 --word2vec-epochs 10 --word2vec-workers 40`
-  Command (Study 2 – Minimum Wage (MTurk)): `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space word2vec --issues minimum_wage --participant-studies study2 --knn-metric cosine --knn-k 5 --knn-k-sweep 5 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text --word2vec-size 256 --word2vec-window 5 --word2vec-min-count 1 --word2vec-epochs 10 --word2vec-workers 40`
+  Command (Study 2 – Minimum Wage (MTurk)): `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space word2vec --issues minimum_wage --participant-studies study2 --knn-metric cosine --knn-k 10 --knn-k-sweep 10 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text,ideo1 --word2vec-size 256 --word2vec-window 5 --word2vec-min-count 1 --word2vec-epochs 10 --word2vec-workers 40`
 
 
 ### Configuration Leaderboards
@@ -127,8 +127,13 @@ Tables bold the configurations promoted to the finalize stage. Commands beneath 
 | 81 | Study 1 – Gun Control (MTurk) | WORD2VEC | cosine | viewer_profile, state_text | 0.274 | 0.540 | -0.266 | 3 | 548 |
 | 82 | Study 2 – Minimum Wage (MTurk) | WORD2VEC | cosine | viewer_profile, state_text | 0.308 | 0.368 | -0.060 | 5 | 671 |
 | 87 | Study 1 – Gun Control (MTurk) | WORD2VEC | cosine | viewer_profile, state_text, ideo1 | 0.272 | 0.540 | -0.268 | 3 | 548 |
+| 88 | Study 2 – Minimum Wage (MTurk) | WORD2VEC | cosine | viewer_profile, state_text, ideo1 | 0.320 | 0.368 | -0.048 | 10 | 671 |
 | 93 | Study 1 – Gun Control (MTurk) | WORD2VEC | cosine | viewer_profile, state_text, ideo2 | 0.276 | 0.540 | -0.265 | 3 | 548 |
+| 94 | Study 2 – Minimum Wage (MTurk) | WORD2VEC | cosine | viewer_profile, state_text, ideo2 | 0.320 | 0.368 | -0.048 | 10 | 671 |
 | 99 | Study 1 – Gun Control (MTurk) | WORD2VEC | cosine | viewer_profile, state_text, pol_interest | 0.274 | 0.540 | -0.266 | 3 | 548 |
+| 100 | Study 2 – Minimum Wage (MTurk) | WORD2VEC | cosine | viewer_profile, state_text, pol_interest | 0.306 | 0.368 | -0.063 | 5 | 671 |
+| 105 | Study 1 – Gun Control (MTurk) | WORD2VEC | cosine | viewer_profile, state_text, religpew | 0.276 | 0.540 | -0.265 | 3 | 548 |
+| 111 | Study 1 – Gun Control (MTurk) | WORD2VEC | cosine | viewer_profile, state_text, freq_youtube | 0.272 | 0.540 | -0.268 | 3 | 548 |
 
 
 ## Post-Study Opinion Regression

@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import json
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 
@@ -88,9 +88,12 @@ class IssueMetrics:
     known_candidate_total: int
     coverage: float
     avg_probability: float
+    eligible: int
     timestamp: float
     extra_fields: Sequence[str]
     xgboost_params: Dict[str, Any]
+    baseline_most_frequent_gold_index: Dict[str, Any] = field(default_factory=dict)
+    random_baseline_expected_accuracy: Optional[float] = None
     curve_metrics: Optional[Dict[str, Any]] = None
     curve_metrics_path: Optional[str] = None
 
@@ -152,6 +155,12 @@ class PredictionOutcome:
     :vartype record_probability: bool
     :ivar correct: ``True`` when the predicted option matches the gold id.
     :vartype correct: bool
+    :ivar option_count: Number of candidates presented in the slate.
+    :vartype option_count: int
+    :ivar gold_index: 1-based index of the gold candidate when present in the slate.
+    :vartype gold_index: Optional[int]
+    :ivar eligible: ``True`` when the slate contained the gold candidate.
+    :vartype eligible: bool
     """
 
     prediction_index: Optional[int]
@@ -163,6 +172,9 @@ class PredictionOutcome:
     known_candidate_hit: bool
     record_probability: bool
     correct: bool
+    option_count: int
+    gold_index: Optional[int]
+    eligible: bool
 
 
 @dataclass(frozen=True)
@@ -200,6 +212,14 @@ class OutcomeSummary:
     :vartype known_total: int
     :ivar avg_probability: Mean probability assigned to known predictions.
     :vartype avg_probability: float
+    :ivar eligible: Count of slates where the gold option was present.
+    :vartype eligible: int
+    :ivar gold_hist: Histogram of observed gold indices for eligible slates.
+    :vartype gold_hist: Dict[int, int]
+    :ivar random_inverse_sum: Sum of ``1 / n_options`` contributions for eligible slates.
+    :vartype random_inverse_sum: float
+    :ivar random_inverse_count: Number of eligible slates contributing to the random baseline.
+    :vartype random_inverse_count: int
     """
 
     evaluated: int
@@ -207,6 +227,10 @@ class OutcomeSummary:
     known_hits: int
     known_total: int
     avg_probability: float
+    eligible: int
+    gold_hist: Dict[int, int]
+    random_inverse_sum: float
+    random_inverse_count: int
 
 
 def run_eval(args) -> None:
@@ -500,13 +524,28 @@ def _evaluate_single_example(
         extra_fields=extra_fields,
     )
     slate = extract_slate_items(example)
+    option_count = len(slate)
     gold_id = example.get(SOLUTION_COLUMN) or ""
     gold_id_canon = canon_video_id(gold_id)
+    raw_gold_index = example.get("gold_index")
+    gold_index: Optional[int] = None
+    if raw_gold_index is not None:
+        try:
+            parsed_index = int(raw_gold_index)
+        except (TypeError, ValueError):
+            parsed_index = None
+        if parsed_index is not None and parsed_index >= 1 and parsed_index <= option_count:
+            gold_index = parsed_index
+    if gold_index is None and gold_id_canon:
+        for idx, (_title, candidate_id) in enumerate(slate, start=1):
+            if canon_video_id(candidate_id) == gold_id_canon:
+                gold_index = idx
+                break
 
     if prediction_idx is None and slate:
         prediction_idx = 1
 
-    if prediction_idx is not None and 1 <= prediction_idx <= len(slate):
+    if prediction_idx is not None and 1 <= prediction_idx <= option_count:
         predicted_id = slate[prediction_idx - 1][1]
     else:
         predicted_id = ""
@@ -521,6 +560,11 @@ def _evaluate_single_example(
 
     predicted_id_canon = canon_video_id(predicted_id)
     correct = predicted_id_canon == gold_id_canon and bool(predicted_id_canon)
+    eligible = bool(
+        gold_index is not None
+        and option_count > 0
+        and 1 <= gold_index <= option_count
+    )
 
     return PredictionOutcome(
         prediction_index=prediction_idx,
@@ -532,6 +576,9 @@ def _evaluate_single_example(
         known_candidate_hit=probability_ctx.known_candidate_hit,
         record_probability=probability_ctx.record_probability,
         correct=correct,
+        option_count=option_count,
+        gold_index=gold_index,
+        eligible=eligible,
     )
 
 
@@ -586,6 +633,26 @@ def _summarise_records(
     :rtype: IssueMetrics
     """
     summary = _summarise_outcomes(records)
+    baseline_top_index: Optional[int] = None
+    baseline_count = 0
+    if summary.gold_hist:
+        baseline_top_index, baseline_count = max(
+            summary.gold_hist.items(),
+            key=lambda item: item[1],
+        )
+    baseline_accuracy: Optional[float] = None
+    if baseline_count and summary.eligible:
+        baseline_accuracy = safe_div(baseline_count, summary.eligible)
+    random_accuracy: Optional[float] = None
+    if summary.random_inverse_count:
+        random_accuracy = safe_div(
+            summary.random_inverse_sum,
+            summary.random_inverse_count,
+        )
+    baseline_payload: Dict[str, Any] = {"accuracy": baseline_accuracy}
+    if baseline_top_index is not None:
+        baseline_payload["top_index"] = baseline_top_index
+        baseline_payload["count"] = baseline_count
     return IssueMetrics(
         issue=issue_slug,
         participant_studies=tuple(config.participant_studies),
@@ -597,9 +664,12 @@ def _summarise_records(
         known_candidate_total=summary.known_total,
         coverage=safe_div(summary.known_hits, summary.known_total),
         avg_probability=summary.avg_probability,
+        eligible=summary.eligible,
         timestamp=time.time(),
         extra_fields=tuple(config.extra_fields),
         xgboost_params=_model_params(model),
+        baseline_most_frequent_gold_index=baseline_payload,
+        random_baseline_expected_accuracy=random_accuracy,
     )
 
 
@@ -828,6 +898,10 @@ def _summarise_outcomes(
     evaluated = len(outcomes)
     known_total = sum(outcome.known_candidate_seen for outcome in outcomes)
     known_hits = sum(outcome.known_candidate_hit for outcome in outcomes)
+    eligible = 0
+    gold_hist: Dict[int, int] = {}
+    random_inverse_sum = 0.0
+    random_inverse_count = 0
     probability_values = [
         outcome.best_probability
         for outcome in outcomes
@@ -835,12 +909,26 @@ def _summarise_outcomes(
     ]
     avg_probability = float(np.mean(probability_values)) if probability_values else 0.0
     correct = sum(outcome.correct for outcome in outcomes)
+    for outcome in outcomes:
+        if (
+            outcome.eligible
+            and outcome.gold_index is not None
+            and outcome.option_count > 0
+        ):
+            eligible += 1
+            gold_hist[outcome.gold_index] = gold_hist.get(outcome.gold_index, 0) + 1
+            random_inverse_sum += 1.0 / outcome.option_count
+            random_inverse_count += 1
     return OutcomeSummary(
         evaluated=evaluated,
         correct=correct,
         known_hits=known_hits,
         known_total=known_total,
         avg_probability=avg_probability,
+        eligible=eligible,
+        gold_hist=gold_hist,
+        random_inverse_sum=random_inverse_sum,
+        random_inverse_count=random_inverse_count,
     )
 
 

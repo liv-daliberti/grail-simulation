@@ -90,8 +90,13 @@ Overview of the supplementary text columns appended to the viewer prompt alongsi
 | word2vec | Study 1 – Gun Control (MTurk) | metric-cosine_text-viewerprofile_statetext_sz256_win5_min1 | `viewer_profile`, `state_text` |
 | word2vec | Study 2 – Minimum Wage (MTurk) | metric-cosine_text-viewerprofile_statetext_sz256_win5_min1 | `viewer_profile`, `state_text` |
 | word2vec | Study 1 – Gun Control (MTurk) | metric-cosine_text-viewerprofile_statetext_ideo1_sz256_win5_min1 | `viewer_profile`, `state_text`, `ideo1` |
+| word2vec | Study 2 – Minimum Wage (MTurk) | metric-cosine_text-viewerprofile_statetext_ideo1_sz256_win5_min1 | `viewer_profile`, `state_text`, `ideo1` |
 | word2vec | Study 1 – Gun Control (MTurk) | metric-cosine_text-viewerprofile_statetext_ideo2_sz256_win5_min1 | `viewer_profile`, `state_text`, `ideo2` |
+| word2vec | Study 2 – Minimum Wage (MTurk) | metric-cosine_text-viewerprofile_statetext_ideo2_sz256_win5_min1 | `viewer_profile`, `state_text`, `ideo2` |
 | word2vec | Study 1 – Gun Control (MTurk) | metric-cosine_text-viewerprofile_statetext_polinterest_sz256_win5_min1 | `viewer_profile`, `state_text`, `pol_interest` |
+| word2vec | Study 2 – Minimum Wage (MTurk) | metric-cosine_text-viewerprofile_statetext_polinterest_sz256_win5_min1 | `viewer_profile`, `state_text`, `pol_interest` |
+| word2vec | Study 1 – Gun Control (MTurk) | metric-cosine_text-viewerprofile_statetext_religpew_sz256_win5_min1 | `viewer_profile`, `state_text`, `religpew` |
+| word2vec | Study 1 – Gun Control (MTurk) | metric-cosine_text-viewerprofile_statetext_freqyoutube_sz256_win5_min1 | `viewer_profile`, `state_text`, `freq_youtube` |
 
 ### Final Evaluations
 

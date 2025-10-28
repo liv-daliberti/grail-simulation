@@ -383,6 +383,12 @@ class NextVideoMetricSummary:
     :type known_availability: Optional[float]
     :param avg_probability: Mean probability recorded for known predictions.
     :type avg_probability: Optional[float]
+    :param baseline_most_frequent_accuracy:
+        Accuracy achieved by recommending the most frequent gold index.
+    :type baseline_most_frequent_accuracy: Optional[float]
+    :param random_baseline_accuracy:
+        Expected accuracy from uniformly sampling a slate candidate.
+    :type random_baseline_accuracy: Optional[float]
     :param dataset: Dataset identifier.
     :type dataset: Optional[str]
     :param issue: Issue key under evaluation.
@@ -401,6 +407,8 @@ class NextVideoMetricSummary:
     known_total: Optional[int] = None
     known_availability: Optional[float] = None
     avg_probability: Optional[float] = None
+    baseline_most_frequent_accuracy: Optional[float] = None
+    random_baseline_accuracy: Optional[float] = None
     dataset: Optional[str] = None
     issue: Optional[str] = None
     issue_label: Optional[str] = None

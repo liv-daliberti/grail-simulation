@@ -251,6 +251,11 @@ def _extract_next_video_summary(data: Mapping[str, object]) -> NextVideoMetricSu
     if known_total is not None and evaluated:
         known_availability = known_total / evaluated if evaluated else None
     avg_probability = _safe_float(data.get("avg_probability"))
+    baseline_payload = data.get("baseline_most_frequent_gold_index")
+    baseline_accuracy = None
+    if isinstance(baseline_payload, Mapping):
+        baseline_accuracy = _safe_float(baseline_payload.get("accuracy"))
+    random_accuracy = _safe_float(data.get("random_baseline_expected_accuracy"))
     dataset = data.get("dataset_source") or data.get("dataset")
     issue = data.get("issue")
     issue_label = data.get("issue_label")
@@ -264,6 +269,8 @@ def _extract_next_video_summary(data: Mapping[str, object]) -> NextVideoMetricSu
         known_total=known_total,
         known_availability=known_availability,
         avg_probability=avg_probability,
+        baseline_most_frequent_accuracy=baseline_accuracy,
+        random_baseline_accuracy=random_accuracy,
         dataset=str(dataset) if dataset else None,
         issue=str(issue) if issue else None,
         issue_label=str(issue_label) if issue_label else None,
@@ -477,9 +484,9 @@ def _next_video_table_lines(
     """
 
     lines = [
-        "| Study | Issue | Accuracy ↑ | Correct / evaluated | Coverage ↑ | "
+        "| Study | Issue | Accuracy ↑ | Baseline ↑ | Random ↑ | Correct / evaluated | Coverage ↑ | "
         "Known hits / total | Known availability ↑ | Avg prob ↑ |",
-        "| --- | --- | ---: | --- | ---: | --- | ---: | ---: |",
+        "| --- | --- | ---: | ---: | ---: | --- | ---: | --- | ---: | ---: |",
     ]
     ordered_keys = sorted(
         metrics.keys(),
@@ -503,6 +510,8 @@ def _next_video_table_lines(
             study_label,
             resolved_issue,
             _format_optional_float(summary.accuracy),
+            _format_optional_float(summary.baseline_most_frequent_accuracy),
+            _format_optional_float(summary.random_baseline_accuracy),
             _format_ratio(summary.correct, summary.evaluated),
             _format_optional_float(summary.coverage),
             _format_ratio(summary.known_hits, summary.known_total),

@@ -13,35 +13,26 @@ responses, and aggregates accuracy and formatting metrics for reporting.
 
 from __future__ import annotations
 
-import json
-import logging
-import time
-from dataclasses import dataclass
-from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, Tuple
+import json, logging, time, pathlib
+import typing
 
-from common.eval_utils import ensure_hf_cache
-from common.hf_datasets import get_dataset_loaders, require_dataset_support
-from common.slate_eval import (
-    EvaluationAccumulator,
-    EvaluationFilters,
-    Observation,
-    SlateMetricsRequest,
-    bucket_from_options,
-    bucket_from_position,
-)
+t = typing
+
+from common import eval_utils as _eval_utils
+from common import hf_datasets as _hf_datasets
+from common import slate_eval
 
 from .client import ds_call
 from .config import DATASET_NAME, DEPLOYMENT_NAME, EVAL_SPLIT
 from .conversation import make_conversation_record
 from .utils import ANS_TAG, INDEX_ONLY
 
-if TYPE_CHECKING:  # pragma: no cover - typing only imports
+if t.TYPE_CHECKING:  # pragma: no cover - typing only imports
     from argparse import Namespace
 else:  # pragma: no cover - runtime fallback for type hints
     Namespace = object  # type: ignore[misc]
 
-DOWNLOAD_CONFIG_CLS, LOAD_DATASET, LOAD_FROM_DISK = get_dataset_loaders()
+DOWNLOAD_CONFIG_CLS, LOAD_DATASET, LOAD_FROM_DISK = _hf_datasets.get_dataset_loaders()
 
 
 def _parse_index_from_output(raw: str) -> int | None:
@@ -70,7 +61,7 @@ def _parse_index_from_output(raw: str) -> int | None:
     return None
 
 
-def _ensure_output_dir(output_dir: Path, overwrite: bool) -> None:
+def _ensure_output_dir(output_dir: pathlib.Path, overwrite: bool) -> None:
     """Create the evaluation output directory if it does not already exist.
 
     :param output_dir: Target directory for evaluation artifacts.
@@ -84,8 +75,7 @@ def _ensure_output_dir(output_dir: Path, overwrite: bool) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
 
-@dataclass(frozen=True)
-class ExampleLabels:
+class ExampleLabels(t.NamedTuple):
     """Normalised issue/study labels used for filtering and reporting."""
 
     issue_label: str
@@ -94,8 +84,7 @@ class ExampleLabels:
     study_key: str
 
 
-@dataclass(frozen=True)
-class FilterSet:
+class FilterSet(t.NamedTuple):
     """Container for requested filters and their lower-cased match set."""
 
     requested: list[str]
@@ -106,8 +95,7 @@ class FilterSet:
         return not self.active_keys or candidate in self.active_keys
 
 
-@dataclass(frozen=True)
-class FilterState:
+class FilterState(t.NamedTuple):
     """Aggregate filters for issues and participant studies."""
 
     issues: FilterSet
@@ -120,18 +108,17 @@ class FilterState:
         )
 
 
-@dataclass(frozen=True)
-class OutputPaths:
+class OutputPaths(t.NamedTuple):
     """Resolved filesystem locations for evaluation artifacts."""
 
-    root: Path
-    predictions: Path
-    metrics: Path
+    root: pathlib.Path
+    predictions: pathlib.Path
+    metrics: pathlib.Path
 
     @classmethod
-    def build(cls, out_dir: str | Path, overwrite: bool) -> "OutputPaths":
+    def build(cls, out_dir: str | pathlib.Path, overwrite: bool) -> "OutputPaths":
         """Validate and construct the output directory structure."""
-        root = Path(out_dir)
+        root = pathlib.Path(out_dir)
         _ensure_output_dir(root, overwrite)
         return cls(
             root=root,
@@ -140,8 +127,7 @@ class OutputPaths:
         )
 
 
-@dataclass(frozen=True)
-class EvaluationLimits:
+class EvaluationLimits(t.NamedTuple):
     """Encapsulates evaluation row limits for progress reporting."""
 
     eval_max: int
@@ -155,12 +141,14 @@ class EvaluationLimits:
         return cls(eval_max=eval_max, target=target)
 
 
-@dataclass
 class EvaluationState:
     """Mutable state tracked during evaluation."""
 
-    split: str = EVAL_SPLIT
-    streaming: bool = False
+    __slots__ = ("split", "streaming")
+
+    def __init__(self, *, split: str = EVAL_SPLIT, streaming: bool = False) -> None:
+        self.split = split
+        self.streaming = streaming
 
 
 class EvaluationRunner:
@@ -173,7 +161,7 @@ class EvaluationRunner:
 
         self.output = OutputPaths.build(args.out_dir, args.overwrite)
 
-        ensure_hf_cache(args.cache_dir)
+        _eval_utils.ensure_hf_cache(args.cache_dir)
 
         issues_raw = str(getattr(args, "issues", "") or "")
         studies_raw = str(getattr(args, "studies", "") or "")
@@ -188,24 +176,28 @@ class EvaluationRunner:
         self.state = EvaluationState()
 
     @staticmethod
-    def _parse_filter(raw: str) -> Tuple[list[str], set[str]]:
-        tokens = [token.strip() for token in raw.split(",") if token.strip()]
+    def _parse_filter(raw: str) -> t.Tuple[list[str], set[str]]:
+        tokens: list[str] = []
+        for segment in raw.split(","):
+            candidate = segment.strip()
+            if candidate:
+                tokens.append(candidate)
         lowered = {token.lower() for token in tokens if token}
         if "all" in lowered:
             lowered.clear()
         return tokens, lowered
 
-    def _load_dataset_iter(self) -> Iterable[dict[str, object]]:
-        dataset_path = Path(self.dataset_name)
+    def _load_dataset_iter(self) -> t.Iterable[dict[str, object]]:
+        dataset_path = pathlib.Path(self.dataset_name)
         dataset = None
 
         if dataset_path.exists():
-            require_dataset_support(needs_local=True)
+            _hf_datasets.require_dataset_support(needs_local=True)
             assert LOAD_FROM_DISK is not None  # narrow Optional for type checkers
             logging.info("Detected local dataset at %s", dataset_path)
             dataset = LOAD_FROM_DISK(str(dataset_path))  # type: ignore[arg-type]
         else:
-            require_dataset_support()
+            _hf_datasets.require_dataset_support()
             assert LOAD_DATASET is not None and DOWNLOAD_CONFIG_CLS is not None
             download_config = DOWNLOAD_CONFIG_CLS(
                 resume_download=True,
@@ -233,7 +225,7 @@ class EvaluationRunner:
             return self._load_streaming_split()
         return self._load_materialised_split(dataset)
 
-    def _load_streaming_split(self) -> Iterable[dict[str, object]]:
+    def _load_streaming_split(self) -> t.Iterable[dict[str, object]]:
         eval_split = EVAL_SPLIT
         try:
             data_iter = LOAD_DATASET(  # type: ignore[misc]
@@ -263,7 +255,7 @@ class EvaluationRunner:
             data_iter = data_iter.take(self.limits.eval_max)
         return data_iter
 
-    def _load_materialised_split(self, dataset: object) -> Iterable[dict[str, object]]:
+    def _load_materialised_split(self, dataset: object) -> t.Iterable[dict[str, object]]:
         if dataset is None:
             raise RuntimeError("Expected dataset object when not streaming.")
 
@@ -325,7 +317,7 @@ class EvaluationRunner:
 
     def _evaluate_example(
         self, example: dict[str, object]
-    ) -> Tuple[Observation, dict[str, object]] | None:
+    ) -> t.Tuple[slate_eval.Observation, dict[str, object]] | None:
         labels = self._prepare_labels(example)
         if not self._passes_filters(labels):
             return None
@@ -339,25 +331,26 @@ class EvaluationRunner:
         raw_output = self._invoke_model(messages)
         is_formatted = bool(ANS_TAG.search(raw_output))
         parsed_index = _parse_index_from_output(raw_output)
-        pos_bucket = bucket_from_position(position_index)
-        option_bucket = bucket_from_options(option_count)
+        pos_bucket = slate_eval.bucket_from_position(position_index)
+        option_bucket = slate_eval.bucket_from_options(option_count)
         eligible = gold_index > 0 and option_count > 0
         is_correct = (
             eligible and (parsed_index is not None) and (parsed_index == gold_index)
         )
 
-        observation = Observation(
-            issue_label=labels.issue_label,
-            study_label=labels.study_label,
-            position_bucket=pos_bucket,
-            option_bucket=option_bucket,
-            option_count=option_count,
-            gold_index=gold_index,
-            parsed_index=parsed_index,
-            is_formatted=is_formatted,
-            eligible=eligible,
-            is_correct=is_correct,
-        )
+        observation_fields = {
+            "issue_label": labels.issue_label,
+            "study_label": labels.study_label,
+            "position_bucket": pos_bucket,
+            "option_bucket": option_bucket,
+            "option_count": option_count,
+            "gold_index": gold_index,
+            "parsed_index": parsed_index,
+            "is_formatted": is_formatted,
+            "eligible": eligible,
+            "is_correct": is_correct,
+        }
+        observation = slate_eval.Observation(**observation_fields)
         payload = {
             "messages": messages,
             "gpt_output": raw_output,
@@ -374,7 +367,10 @@ class EvaluationRunner:
         return observation, payload
 
     def _maybe_log_progress(
-        self, seen_rows: int, start_time: float, accumulator: EvaluationAccumulator
+        self,
+        seen_rows: int,
+        start_time: float,
+        accumulator: slate_eval.EvaluationAccumulator,
     ) -> None:
         if seen_rows == 0 or seen_rows % 25:
             return
@@ -390,20 +386,20 @@ class EvaluationRunner:
             elapsed,
         )
 
-    def metrics_request(self) -> SlateMetricsRequest:
+    def metrics_request(self) -> slate_eval.SlateMetricsRequest:
         """Construct the payload used when serialising evaluation metrics."""
         model_name = getattr(self.args, "deployment", None) or DEPLOYMENT_NAME
-        return SlateMetricsRequest(
+        return slate_eval.SlateMetricsRequest(
             model_name=model_name,
             dataset_name=self.dataset_name,
             eval_split=self.state.split,
-            filters=EvaluationFilters(
+            filters=slate_eval.EvaluationFilters(
                 issues=self.filters.issues.requested,
                 studies=self.filters.studies.requested,
             ),
         )
 
-    def _print_summary(self, accumulator: EvaluationAccumulator) -> None:
+    def _print_summary(self, accumulator: slate_eval.EvaluationAccumulator) -> None:
         summary_bits = [
             f"[DONE] dataset={self.dataset_name}",
             f"split={self.state.split}",
@@ -421,7 +417,7 @@ class EvaluationRunner:
     def run(self) -> None:
         """Execute the full evaluation workflow."""
         data_iter = self._load_dataset_iter()
-        accumulator = EvaluationAccumulator()
+        accumulator = slate_eval.EvaluationAccumulator()
         start_time = time.time()
         seen_rows = 0
 
@@ -438,7 +434,8 @@ class EvaluationRunner:
 
         metrics = accumulator.metrics_payload(self.metrics_request())
         with open(self.output.metrics, "w", encoding="utf-8") as handle:
-            json.dump(metrics, handle, ensure_ascii=False, indent=2)
+            serialised = json.dumps(metrics, ensure_ascii=False, indent=2)
+            handle.write(serialised)
 
         self._print_summary(accumulator)
 

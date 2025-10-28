@@ -113,7 +113,7 @@ export KNN_REUSE_FINAL
 DEFAULT_KNN_PIPELINE_TASKS="next_video,opinion"
 : "${KNN_PIPELINE_TASKS:=${DEFAULT_KNN_PIPELINE_TASKS}}"
 KNN_PIPELINE_TASKS=$(ensure_dual_task_string "${KNN_PIPELINE_TASKS}")
-: "${KNN_FEATURE_SPACES:=tfidf}"
+: "${KNN_FEATURE_SPACES:=tfidf,word2vec,sentence_transformer}"
 : "${KNN_K_SWEEP:=1,3,5,10}"
 : "${WORD2VEC_SWEEP_SIZES:=256}"
 : "${WORD2VEC_SWEEP_WINDOWS:=5}"

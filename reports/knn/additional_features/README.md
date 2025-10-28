@@ -93,6 +93,7 @@ Overview of the supplementary text columns appended to the viewer prompt alongsi
 | Feature space | Study | Extra text fields |
 | --- | --- | --- |
 | tfidf | Study 1 – Gun Control (MTurk) | `viewer_profile`, `state_text` |
+| tfidf | Study 2 – Minimum Wage (MTurk) | `viewer_profile`, `state_text`, `freq_youtube` |
 
 ## Opinion Regression
 

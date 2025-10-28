@@ -543,7 +543,7 @@ def _evaluate_single_example(
             parsed_index = int(raw_gold_index)
         except (TypeError, ValueError):
             parsed_index = None
-        if parsed_index is not None and parsed_index >= 1 and parsed_index <= option_count:
+        if parsed_index is not None and 1 <= parsed_index <= option_count:
             gold_index = parsed_index
     if gold_index is None and gold_id_canon:
         for idx, (_title, candidate_id) in enumerate(slate, start=1):

@@ -1,11 +1,21 @@
-"""Shared pytest fixtures."""
+"""Shared pytest fixtures and test-wide configuration."""
 
 from __future__ import annotations
 
 import base64
+import sys
 from pathlib import Path
 
 import pytest
+
+from .helpers.datasets_stub import ensure_datasets_stub
+
+# Ensure project modules and the datasets stub are available for imports.
+ensure_datasets_stub()
+ROOT = Path(__file__).resolve().parent.parent
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
 
 # Single transparent 1x1 PNG (base64-encoded)
 _PNG_DATA = base64.b64decode(

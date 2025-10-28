@@ -30,6 +30,11 @@ from xgb.pipeline_context import (
     SweepRunContext,
     SweepTask,
 )
+from xgb.vectorizers import (
+    SentenceTransformerVectorizerConfig,
+    TfidfConfig,
+    Word2VecVectorizerConfig,
+)
 
 
 def _make_study_spec() -> StudySpec:
@@ -573,6 +578,10 @@ def test_run_opinion_stage_invokes_matching_studies(
         max_features=10,
         tree_method="hist",
         overwrite=True,
+        tfidf_config=TfidfConfig(max_features=10),
+        word2vec_config=Word2VecVectorizerConfig(),
+        sentence_transformer_config=SentenceTransformerVectorizerConfig(),
+        word2vec_model_base=None,
         reuse_existing=False,
     )
 
@@ -612,6 +621,10 @@ def test_run_opinion_from_next_stage_uses_slate_booster(
         max_features=None,
         tree_method="hist",
         overwrite=True,
+        tfidf_config=TfidfConfig(max_features=None),
+        word2vec_config=Word2VecVectorizerConfig(),
+        sentence_transformer_config=SentenceTransformerVectorizerConfig(),
+        word2vec_model_base=None,
         reuse_existing=False,
     )
 
@@ -687,6 +700,10 @@ def test_run_opinion_stage_reuses_metrics_and_warns(monkeypatch: pytest.MonkeyPa
         max_features=None,
         tree_method="hist",
         overwrite=False,
+        tfidf_config=TfidfConfig(max_features=None),
+        word2vec_config=Word2VecVectorizerConfig(),
+        sentence_transformer_config=SentenceTransformerVectorizerConfig(),
+        word2vec_model_base=None,
         reuse_existing=True,
     )
 
@@ -780,12 +797,16 @@ def test_prepare_opinion_sweep_tasks_reuses_cached_metrics(
         max_features=None,
         tree_method="hist",
         overwrite=False,
+        tfidf_config=TfidfConfig(max_features=None),
+        word2vec_config=Word2VecVectorizerConfig(),
+        sentence_transformer_config=SentenceTransformerVectorizerConfig(),
+        word2vec_model_base=None,
     )
 
     run_root = context.sweep_dir / study.issue_slug / study.study_slug / config.label()
     metrics_path = (
         run_root
-        / sweeps.OPINION_FEATURE_SPACE
+        / sweeps.DEFAULT_OPINION_FEATURE_SPACE
         / study.key
         / f"opinion_xgb_{study.key}_validation_metrics.json"
     )
@@ -1043,7 +1064,7 @@ def test_load_final_metrics_from_disk_adds_defaults(tmp_path: Path) -> None:
 
 def test_load_opinion_metrics_from_disk_supports_feature_space_layout(tmp_path: Path) -> None:
     study = _make_study_spec()
-    feature_dir = tmp_path / sweeps.OPINION_FEATURE_SPACE / study.key
+    feature_dir = tmp_path / sweeps.DEFAULT_OPINION_FEATURE_SPACE / study.key
     feature_dir.mkdir(parents=True, exist_ok=True)
     preferred_payload = {"metrics": {"mae_after": 0.42}}
     metrics_path = (
@@ -1084,7 +1105,7 @@ def test_load_opinion_metrics_from_disk_falls_back_to_legacy(tmp_path: Path) -> 
 
 def test_load_opinion_from_next_metrics_from_disk(tmp_path: Path) -> None:
     study = _make_study_spec()
-    base_dir = tmp_path / "from_next" / sweeps.OPINION_FEATURE_SPACE / study.key
+    base_dir = tmp_path / "from_next" / sweeps.DEFAULT_OPINION_FEATURE_SPACE / study.key
     base_dir.mkdir(parents=True, exist_ok=True)
     payload = {"metrics": {"mae_after": 0.44}}
     metrics_path = base_dir / f"opinion_xgb_{study.key}_validation_metrics.json"

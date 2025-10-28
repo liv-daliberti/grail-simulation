@@ -24,7 +24,6 @@ from __future__ import annotations
 
 import logging
 from dataclasses import replace
-from pathlib import Path
 from typing import Dict, List, Mapping, Sequence, Set
 
 from .opinion import DEFAULT_SPECS, OpinionEvalRequest, OpinionTrainConfig, run_opinion_eval
@@ -36,7 +35,6 @@ from .pipeline_context import (
     StudySpec,
 )
 from .pipeline_sweeps import (
-    DEFAULT_OPINION_FEATURE_SPACE,
     _inject_study_metadata,
     _load_loso_metrics_from_disk,
     _load_metrics,
@@ -46,6 +44,28 @@ from .pipeline_sweeps import (
 )
 
 LOGGER = logging.getLogger("xgb.pipeline.finalize")
+
+
+def _word2vec_eval_config(
+    *,
+    config: OpinionStageConfig,
+    feature_space: str,
+    default_dir,
+    override_parts: tuple[str, ...],
+) -> object | None:
+    """Return the word2vec configuration for opinion evaluations."""
+
+    if feature_space != "word2vec":
+        return None
+    if config.word2vec_model_base is not None:
+        model_dir = config.word2vec_model_base.joinpath(*override_parts)
+    else:
+        model_dir = default_dir
+    return replace(
+        config.word2vec_config,
+        model_dir=str(model_dir),
+        seed=config.seed,
+    )
 
 
 def _run_final_evaluations(
@@ -226,19 +246,18 @@ def _run_opinion_stage(
             )
             continue
         feature_space = selection.outcome.config.text_vectorizer.lower()
-        feature_dir = opinion_out_dir / feature_space
-        study_dir = feature_dir / study_key
+        study_dir = opinion_out_dir / feature_space / study_key
         metrics_path = study_dir / f"opinion_xgb_{study_key}_validation_metrics.json"
         if config.reuse_existing and metrics_path.exists():
             try:
-                payload = dict(_load_metrics(metrics_path))
+                metrics = dict(_load_metrics(metrics_path))
             except FileNotFoundError:
                 LOGGER.warning(
                     "Opinion metrics expected at %s but missing; rerunning evaluation.",
                     metrics_path,
                 )
             else:
-                results[study_key] = payload
+                results[study_key] = metrics
                 LOGGER.info(
                     "[OPINION][SKIP] study=%s issue=%s feature=%s (metrics cached).",
                     study_key,
@@ -246,52 +265,47 @@ def _run_opinion_stage(
                     feature_space,
                 )
                 continue
-        opinion_config = OpinionTrainConfig(
-            max_participants=config.max_participants,
-            seed=config.seed,
-            max_features=config.max_features if feature_space == "tfidf" else None,
-            booster=selection.config.booster_params(config.tree_method),
-        )
-        tfidf_config = config.tfidf_config if feature_space == "tfidf" else None
-        word2vec_config = None
-        if feature_space == "word2vec":
-            base_cfg = config.word2vec_config
-            if config.word2vec_model_base is not None:
-                model_dir = (
-                    config.word2vec_model_base
-                    / "opinion_stage"
-                    / feature_space
-                    / selection.study.issue_slug
-                    / study_key
-                )
-            else:
-                model_dir = study_dir / "word2vec_model"
-            word2vec_config = replace(
-                base_cfg,
-                model_dir=str(model_dir),
-                seed=config.seed,
+
+        results.update(
+            run_opinion_eval(
+                request=OpinionEvalRequest(
+                    dataset=str(config.dataset) if config.dataset else None,
+                    cache_dir=str(config.cache_dir) if config.cache_dir else None,
+                    out_dir=opinion_out_dir,
+                    feature_space=feature_space,
+                    extra_fields=config.extra_fields,
+                    train_config=OpinionTrainConfig(
+                        max_participants=config.max_participants,
+                        seed=config.seed,
+                        max_features=(
+                            config.max_features if feature_space == "tfidf" else None
+                        ),
+                        booster=selection.config.booster_params(config.tree_method),
+                    ),
+                    tfidf_config=(
+                        config.tfidf_config if feature_space == "tfidf" else None
+                    ),
+                    word2vec_config=_word2vec_eval_config(
+                        config=config,
+                        feature_space=feature_space,
+                        default_dir=study_dir / "word2vec_model",
+                        override_parts=(
+                            "opinion_stage",
+                            feature_space,
+                            selection.study.issue_slug,
+                            study_key,
+                        ),
+                    ),
+                    sentence_transformer_config=(
+                        config.sentence_transformer_config
+                        if feature_space == "sentence_transformer"
+                        else None
+                    ),
+                    overwrite=config.overwrite,
+                ),
+                studies=[study_key],
             )
-        sentence_config = (
-            config.sentence_transformer_config
-            if feature_space == "sentence_transformer"
-            else None
         )
-        payload = run_opinion_eval(
-            request=OpinionEvalRequest(
-                dataset=str(config.dataset) if config.dataset else None,
-                cache_dir=str(config.cache_dir) if config.cache_dir else None,
-                out_dir=opinion_out_dir,
-                feature_space=feature_space,
-                extra_fields=config.extra_fields,
-                train_config=opinion_config,
-                tfidf_config=tfidf_config,
-                word2vec_config=word2vec_config,
-                sentence_transformer_config=sentence_config,
-                overwrite=config.overwrite,
-            ),
-            studies=[study_key],
-        )
-        results.update(payload)
     return results
 
 

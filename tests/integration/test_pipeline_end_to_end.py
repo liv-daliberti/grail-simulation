@@ -47,7 +47,7 @@ from xgb.pipeline_context import (
     SweepRunContext,
     SweepTask as XgbSweepTask,
 )
-from xgb.pipeline_sweeps import OPINION_FEATURE_SPACE
+from xgb.pipeline_sweeps import DEFAULT_OPINION_FEATURE_SPACE
 
 
 # ---------------------------------------------------------------------------
@@ -154,7 +154,7 @@ def _xgb_make_opinion_task(
     run_root = context.sweep_dir / study.issue_slug / study.study_slug / config.label()
     metrics_path = (
         run_root
-        / OPINION_FEATURE_SPACE
+        / DEFAULT_OPINION_FEATURE_SPACE
         / study.key
         / f"opinion_xgb_{study.key}_validation_metrics.json"
     )
@@ -164,7 +164,7 @@ def _xgb_make_opinion_task(
         "dataset": context.dataset,
         "cache_dir": context.cache_dir,
         "out_dir": str(run_root),
-        "feature_space": OPINION_FEATURE_SPACE,
+        "feature_space": DEFAULT_OPINION_FEATURE_SPACE,
         "extra_fields": tuple(context.extra_fields),
         "max_participants": int(context.max_participants),
         "seed": int(context.seed),

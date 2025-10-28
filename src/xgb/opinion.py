@@ -86,42 +86,46 @@ class OpinionTrainConfig:
 
 
 @dataclass(frozen=True)
-class OpinionEvalRequest:
-    """
-    Inputs required to execute the opinion regression workflow.
+class OpinionVectorizerConfig:
+    """Feature extraction parameters for opinion regression."""
 
-    :ivar dataset: Dataset identifier or path passed to :func:`load_dataset_source`.
-    :vartype dataset: Optional[str]
-    :ivar cache_dir: Optional cache directory for dataset loading.
-    :vartype cache_dir: Optional[str]
-    :ivar out_dir: Base directory receiving artefacts written by the stage.
-    :vartype out_dir: Path
-    :ivar feature_space: Identifier describing the feature representation (e.g. ``tfidf``).
-    :vartype feature_space: str
-    :ivar extra_fields: Additional prompt columns appended during document assembly.
-    :vartype extra_fields: Sequence[str]
-    :ivar train_config: Configuration applied during regressor training.
-    :vartype train_config: OpinionTrainConfig
-    :ivar tfidf_config: Optional TF-IDF vectoriser configuration.
-    :vartype tfidf_config: Optional[TfidfConfig]
-    :ivar word2vec_config: Optional Word2Vec configuration describing embedding training.
-    :vartype word2vec_config: Optional[Word2VecVectorizerConfig]
-    :ivar sentence_transformer_config: Optional sentence-transformer configuration.
-    :vartype sentence_transformer_config: Optional[SentenceTransformerVectorizerConfig]
-    :ivar overwrite: Flag controlling whether existing artefacts may be replaced.
-    :vartype overwrite: bool
-    """
+    feature_space: str
+    extra_fields: Sequence[str] = field(default_factory=tuple)
+    tfidf: TfidfConfig | None = None
+    word2vec: Word2VecVectorizerConfig | None = None
+    sentence_transformer: SentenceTransformerVectorizerConfig | None = None
+
+
+@dataclass(frozen=True)
+class OpinionEvalRequest:
+    """Inputs required to execute the opinion regression workflow."""
 
     dataset: str | None
     cache_dir: str | None
     out_dir: Path
-    feature_space: str
-    extra_fields: Sequence[str]
     train_config: OpinionTrainConfig
-    tfidf_config: TfidfConfig | None = None
-    word2vec_config: Word2VecVectorizerConfig | None = None
-    sentence_transformer_config: SentenceTransformerVectorizerConfig | None = None
+    vectorizer: OpinionVectorizerConfig
     overwrite: bool = True
+
+    @property
+    def feature_space(self) -> str:
+        return self.vectorizer.feature_space
+
+    @property
+    def extra_fields(self) -> Sequence[str]:
+        return self.vectorizer.extra_fields
+
+    @property
+    def tfidf_config(self) -> TfidfConfig | None:
+        return self.vectorizer.tfidf
+
+    @property
+    def word2vec_config(self) -> Word2VecVectorizerConfig | None:
+        return self.vectorizer.word2vec
+
+    @property
+    def sentence_transformer_config(self) -> SentenceTransformerVectorizerConfig | None:
+        return self.vectorizer.sentence_transformer
 
 
 def _vectorizer_available() -> None:
@@ -602,6 +606,7 @@ __all__ = [
     "OpinionSpec",
     "OpinionExample",
     "OpinionTrainConfig",
+    "OpinionVectorizerConfig",
     "OpinionEvalRequest",
     "DEFAULT_SPECS",
     "collect_examples",

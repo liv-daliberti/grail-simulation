@@ -231,6 +231,22 @@ class _PortfolioAccumulator:
         return sum(self.probability_values) / len(self.probability_values)
 
 
+
+def _baseline_accuracy(data: Mapping[str, object]) -> Optional[float]:
+    """Extract the most-frequent baseline accuracy from ``data`` when present."""
+
+    payload = data.get("baseline_most_frequent_gold_index")
+    if isinstance(payload, Mapping):
+        return _safe_float(payload.get("accuracy"))
+    return None
+
+
+def _optional_str(value: object) -> Optional[str]:
+    """Return the string form of ``value`` when truthy."""
+
+    return str(value) if value else None
+
+
 def _extract_next_video_summary(data: Mapping[str, object]) -> NextVideoMetricSummary:
     """
     Normalise next-video metrics into a reusable summary structure.
@@ -241,40 +257,28 @@ def _extract_next_video_summary(data: Mapping[str, object]) -> NextVideoMetricSu
     :rtype: NextVideoMetricSummary
     """
 
-    accuracy = _safe_float(data.get("accuracy"))
-    coverage = _safe_float(data.get("coverage"))
     evaluated = _safe_int(data.get("evaluated"))
-    correct = _safe_int(data.get("correct"))
-    known_hits = _safe_int(data.get("known_candidate_hits"))
     known_total = _safe_int(data.get("known_candidate_total"))
-    known_availability = None
-    if known_total is not None and evaluated:
-        known_availability = known_total / evaluated if evaluated else None
-    avg_probability = _safe_float(data.get("avg_probability"))
-    baseline_payload = data.get("baseline_most_frequent_gold_index")
-    baseline_accuracy = None
-    if isinstance(baseline_payload, Mapping):
-        baseline_accuracy = _safe_float(baseline_payload.get("accuracy"))
-    random_accuracy = _safe_float(data.get("random_baseline_expected_accuracy"))
-    dataset = data.get("dataset_source") or data.get("dataset")
-    issue = data.get("issue")
-    issue_label = data.get("issue_label")
-    study_label = data.get("study_label") or data.get("study")
+    known_hits = _safe_int(data.get("known_candidate_hits"))
     return NextVideoMetricSummary(
-        accuracy=accuracy,
-        coverage=coverage,
+        accuracy=_safe_float(data.get("accuracy")),
+        coverage=_safe_float(data.get("coverage")),
         evaluated=evaluated,
-        correct=correct,
+        correct=_safe_int(data.get("correct")),
         known_hits=known_hits,
         known_total=known_total,
-        known_availability=known_availability,
-        avg_probability=avg_probability,
-        baseline_most_frequent_accuracy=baseline_accuracy,
-        random_baseline_accuracy=random_accuracy,
-        dataset=str(dataset) if dataset else None,
-        issue=str(issue) if issue else None,
-        issue_label=str(issue_label) if issue_label else None,
-        study_label=str(study_label) if study_label else None,
+        known_availability=(
+            known_total / evaluated if known_total is not None and evaluated else None
+        ),
+        avg_probability=_safe_float(data.get("avg_probability")),
+        baseline_most_frequent_accuracy=_baseline_accuracy(data),
+        random_baseline_accuracy=_safe_float(
+            data.get("random_baseline_expected_accuracy")
+        ),
+        dataset=_optional_str(data.get("dataset_source") or data.get("dataset")),
+        issue=_optional_str(data.get("issue")),
+        issue_label=_optional_str(data.get("issue_label")),
+        study_label=_optional_str(data.get("study_label") or data.get("study")),
     )
 
 

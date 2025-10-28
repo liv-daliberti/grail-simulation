@@ -34,7 +34,12 @@ from common.opinion_sweep_types import AccuracySummary, MetricsArtifact
 
 from .cli import build_parser as build_xgb_parser
 from .evaluate import run_eval
-from .opinion import OpinionEvalRequest, OpinionTrainConfig, run_opinion_eval
+from .opinion import (
+    OpinionEvalRequest,
+    OpinionTrainConfig,
+    OpinionVectorizerConfig,
+    run_opinion_eval,
+)
 from .pipeline_context import (
     OpinionStudySelection,
     OpinionSweepOutcome,
@@ -354,6 +359,44 @@ def _opinion_sweep_outcome_from_metrics(
             eligible=eligible_value,
         ),
     )
+
+
+def _build_opinion_vectorizer_config(
+    *,
+    config: SweepConfig,
+    context: OpinionSweepRunContext,
+    run_root: Path,
+    study: StudySpec,
+    extra_fields: Sequence[str],
+) -> OpinionVectorizerConfig:
+    """Construct vectoriser settings for a single opinion sweep."""
+
+    feature_space = config.text_vectorizer.lower()
+    vectorizer_args: Dict[str, object] = {
+        "feature_space": feature_space,
+        "extra_fields": extra_fields,
+    }
+    if feature_space == "tfidf":
+        vectorizer_args["tfidf"] = context.tfidf_config
+    elif feature_space == "word2vec":
+        base_cfg = context.word2vec_config
+        model_dir = (
+            context.word2vec_model_base
+            / "opinion_sweeps"
+            / study.issue_slug
+            / study.study_slug
+            / config.label()
+            if context.word2vec_model_base is not None
+            else run_root / feature_space / "word2vec_model"
+        )
+        vectorizer_args["word2vec"] = replace(
+            base_cfg,
+            model_dir=str(model_dir),
+            seed=context.seed,
+        )
+    elif feature_space == "sentence_transformer":
+        vectorizer_args["sentence_transformer"] = context.sentence_transformer_config
+    return OpinionVectorizerConfig(**vectorizer_args)
 
 
 def _iter_opinion_sweep_tasks(

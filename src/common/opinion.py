@@ -175,8 +175,8 @@ def make_opinion_example_from_values(
     spec: OpinionSpec,
     participant_id: str,
     document: str,
-    before: float,
-    after: float,
+    scores: Tuple[float, float],
+    *,
     factory: Callable[..., ExampleT] = OpinionExample,
     **extra_fields: object,
 ) -> ExampleT:
@@ -188,6 +188,7 @@ def make_opinion_example_from_values(
     code blocks flagged by pylint.
     """
 
+    before, after = scores
     inputs = make_opinion_inputs(
         participant_id=participant_id,
         document=document,

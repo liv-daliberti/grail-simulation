@@ -26,11 +26,10 @@ from pathlib import Path
 from typing import Dict, List, Mapping, Sequence
 
 from common.pipeline_stage import (
-    DryRunSummary,
     build_sweep_partition,
     SweepPartitionExecutors,
     dispatch_cli_partitions,
-    log_dry_run_summary,
+    emit_stage_dry_run_summary,
     prepare_sweep_execution as _prepare_sweep_execution,
 )
 from common.prompt_docs import merge_default_extra_fields

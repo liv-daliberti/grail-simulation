@@ -800,10 +800,9 @@ def _load_opinion_from_next_metrics_from_disk(
     """
 
     results: Dict[str, Dict[str, object]] = {}
-    base_dirs = [
-        opinion_dir / "from_next" / OPINION_FEATURE_SPACE,
-        opinion_dir / "from_next",
-    ]
+    feature_spaces = ("tfidf", "word2vec", "sentence_transformer")
+    base_dirs = [opinion_dir / "from_next" / space for space in feature_spaces]
+    base_dirs.append(opinion_dir / "from_next")
     filename_template = "opinion_xgb_{study}_validation_metrics.json"
     for spec in studies:
         filename = filename_template.format(study=spec.key)

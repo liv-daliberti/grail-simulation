@@ -85,7 +85,7 @@ for prompt augmentation and the `--xgb_*` hyper-parameters).
 2. Selection of the best slate configuration per study followed by final
    evaluations (with optional checkpoint export).
 3. Opinion-regression sweeps and evaluations that reuse the winning slate
-   settings.
+   settings (runs by default; use `--tasks` to restrict stages).
 4. Markdown regeneration beneath `reports/xgb/`.
 
 Typical invocations:
@@ -112,6 +112,22 @@ Use `--tasks next_video,opinion` to control stages, `--learning-rate-grid` and
 friends to trim sweeps, and `--no-reuse-sweeps` / `--no-reuse-final` to force
 recomputation. The SLURM launcher `training/training-xgb.sh` orchestrates these
 stages in production.
+
+### Defaults
+
+The training launcher sets defaults that align with our standard sweeps:
+
+- Tasks: `next_video,opinion` (set via `--tasks` or `XGB_PIPELINE_TASKS`).
+- Text vectorisers: `tfidf,word2vec,sentence_transformer` (env `XGB_TEXT_VECTORIZER_GRID`).
+- Sweep grids: `--learning-rate-grid 0.03,0.05,0.1`, `--max-depth-grid 3,4`,
+  `--n-estimators-grid 300`, `--subsample-grid 0.9`, `--colsample-grid 0.8`,
+  `--reg-lambda-grid 1.0`, `--reg-alpha-grid 0.0`.
+- Tree method: uses GPU boosters by default; when GPUs are disabled or the
+  installed `xgboost` lacks CUDA support, the launcher forces `--tree-method hist`.
+- Sentence-Transformer device: `cuda` when GPUs are enabled; override with
+  `SENTENCE_TRANSFORMER_DEVICE` or `XGB_SENTENCE_DEVICE`.
+- GPU scheduling is enabled by default in the launcher (`XGB_USE_GPU=1`); set
+  `XGB_USE_GPU=0` to force CPU-only execution.
 
 ## Feature Spaces & Vectorisers
 

@@ -15,14 +15,24 @@ Tables bold the configurations promoted to the finalize stage. Commands beneath 
 
 ### Configuration Leaderboards
 
+## TF-IDF Feature Space
+
+| Study | Metric | Text fields | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible | Command |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| **Study 3 – Minimum Wage (YouGov)** | cosine | viewer_profile, state_text | 0.324 | 0.479 | -0.155 | 50 | 1,200 | `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study3 --knn-metric cosine --knn-k 50 --knn-k-sweep 50 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text` |
+
 
 ### Observations
 
+- TFIDF: Study 3 – Minimum Wage (YouGov): accuracy 0.324 (baseline 0.479, Δ -0.155, k=50) using cosine distance with viewer_profile, state_text.
+  Command (Study 3 – Minimum Wage (YouGov)): `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study3 --knn-metric cosine --knn-k 50 --knn-k-sweep 50 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text`
 
 
 ### Configuration Leaderboards
 
-No sweep outcomes were recorded for this run.
+| Order | Study | Feature space | Metric | Text fields | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible |
+| ---: | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| 2 | Study 3 – Minimum Wage (YouGov) | TFIDF | cosine | viewer_profile, state_text | 0.324 | 0.479 | -0.155 | 50 | 1,200 |
 
 
 ## Post-Study Opinion Regression

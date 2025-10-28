@@ -73,7 +73,8 @@ All switches are documented via `python -m knn.cli --help`, including the
    (`tfidf`, `word2vec`, `sentence_transformer`).
 2. Final evaluations that reload the winning configuration per study and export
    metrics, predictions, and elbow curves.
-3. Optional opinion-regression sweeps that reuse the slate configs.
+3. Opinion-regression sweeps that reuse the slate configs (runs by default; use
+   `--tasks` to restrict to a subset, e.g. `--tasks next_video`).
 4. Markdown regeneration under `reports/knn/`.
 
 Common invocations:
@@ -97,6 +98,19 @@ python -m knn.pipeline \
 
 Use `--no-reuse-sweeps` or `--no-reuse-final` to force reruns. The SLURM wrapper
 `training/training-knn.sh` simply orchestrates these stages on the cluster.
+
+### Defaults
+
+The training launcher applies sensible defaults that mirror typical runs:
+
+- Tasks: `next_video,opinion` (set via `--tasks` or `KNN_PIPELINE_TASKS`).
+- Feature spaces: `tfidf,word2vec,sentence_transformer` (env `KNN_FEATURE_SPACES`).
+- K sweep: `1,2,3,4,5,10,25,50` (env `KNN_K_SWEEP`).
+- K selection: `max` (env `KNN_K_SELECT_METHOD`).
+- Sentence-Transformer device: `cuda` when GPUs are enabled; override with
+  `SENTENCE_TRANSFORMER_DEVICE` or `KNN_SENTENCE_DEVICE`.
+- GPU scheduling is enabled by default in the launcher (`KNN_USE_GPU=1`); set
+  `KNN_USE_GPU=0` to force CPU-only execution.
 
 ## Feature Spaces
 

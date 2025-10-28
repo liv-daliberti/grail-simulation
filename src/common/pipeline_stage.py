@@ -452,3 +452,50 @@ def dispatch_cli_partitions(
         logger=logger,
         prepare=prepare,
     )
+
+
+def build_standard_sweeps_partitions(
+    *,
+    include_next: bool,
+    next_label: str,
+    next_pending,
+    next_cached,
+    next_executors,
+    include_opinion: bool,
+    opinion_pending,
+    opinion_cached,
+    opinion_executors,
+    reuse_existing: bool = True,
+    next_prefix: str = "",
+    opinion_prefix: str = "",
+):
+    """Assemble standard next-video/opinion sweep partitions with shared semantics.
+
+    Minimises duplicated setup code across pipeline implementations by providing
+    a thin wrapper around :func:`build_sweep_partition` for the common case.
+    """
+
+    partitions = []
+    if include_next:
+        partitions.append(
+            build_sweep_partition(
+                label=next_label,
+                pending=next_pending,
+                cached=next_cached,
+                reuse_existing=reuse_existing,
+                executors=next_executors,
+                prefix=next_prefix,
+            )
+        )
+    if include_opinion:
+        partitions.append(
+            build_sweep_partition(
+                label="opinion",
+                pending=opinion_pending,
+                cached=opinion_cached,
+                reuse_existing=reuse_existing,
+                executors=opinion_executors,
+                prefix=opinion_prefix,
+            )
+        )
+    return partitions

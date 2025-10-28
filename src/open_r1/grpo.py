@@ -45,6 +45,7 @@ from open_r1.example_utils import (
 from open_r1.shared import (
     BASE_TRAIN_KEEP_COLUMNS,
     collect_passthrough_fields,
+    make_grpo_execute_kwargs,
     execute_grpo_pipeline,
     parse_and_run,
     build_default_component_factory,
@@ -193,15 +194,17 @@ def main(
     )
 
     execute_grpo_pipeline(
-        component_factory=COMPONENT_FACTORY,
-        reward_funcs=reward_fns,
-        tokenizer=tokenizer,
-        dataset=dataset,
-        script_args=script_args,
-        training_args=training_args,
-        model_args=model_args,
-        logger=logger,
-        prefix="grpo",
+        **make_grpo_execute_kwargs(
+            component_factory=COMPONENT_FACTORY,
+            reward_funcs=reward_fns,
+            tokenizer=tokenizer,
+            dataset=dataset,
+            script_args=script_args,
+            training_args=training_args,
+            model_args=model_args,
+            logger=logger,
+            prefix="grpo",
+        )
     )
 
 

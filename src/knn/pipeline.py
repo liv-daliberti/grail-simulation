@@ -30,6 +30,7 @@ from common.pipeline_stage import (
     SweepPartitionExecutors,
     dispatch_cli_partitions,
     emit_stage_dry_run_summary,
+    build_standard_sweeps_partitions,
     prepare_sweep_execution as _prepare_sweep_execution,
 )
 
@@ -215,42 +216,32 @@ def main(argv: Sequence[str] | None = None) -> None:
         return
 
     if stage == "sweeps":
-        partitions = []
         # Always skip execution for tasks that already produced metrics. The sweeps stage
         # is intended to fill gaps rather than rerun the entire grid, so cached artefacts
         # short-circuit regardless of the CLI reuse flag. To force recomputation, clear
         # the cached metrics before invoking the stage.
         reuse_cached_metrics = True
-        if context.run_next_video:
-            partitions.append(
-                build_sweep_partition(
-                    label="next-video",
-                    pending=planned_tasks,
-                    cached=cached_planned,
-                    reuse_existing=reuse_cached_metrics,
-                    executors=SweepPartitionExecutors(
-                        execute_task=_execute_sweep_task,
-                        describe_pending=_format_sweep_task_descriptor,
-                        describe_cached=_describe_sweep_outcome,
-                    ),
-                )
-            )
-        if context.run_opinion:
-            partitions.append(
-                build_sweep_partition(
-                    label="opinion",
-                    pending=planned_opinion_tasks,
-                    cached=cached_planned_opinion,
-                    reuse_existing=reuse_cached_metrics,
-                    executors=SweepPartitionExecutors(
-                        execute_task=_execute_opinion_sweep_task,
-                        describe_pending=_format_opinion_sweep_task_descriptor,
-                        describe_cached=_describe_opinion_sweep_outcome,
-                    ),
-                    prefix="[OPINION]",
-                )
-            )
-
+        partitions = build_standard_sweeps_partitions(
+            include_next=context.run_next_video,
+            next_label="next-video",
+            next_pending=planned_tasks,
+            next_cached=cached_planned,
+            next_executors=SweepPartitionExecutors(
+                execute_task=_execute_sweep_task,
+                describe_pending=_format_sweep_task_descriptor,
+                describe_cached=_describe_sweep_outcome,
+            ),
+            include_opinion=context.run_opinion,
+            opinion_pending=planned_opinion_tasks,
+            opinion_cached=cached_planned_opinion,
+            opinion_executors=SweepPartitionExecutors(
+                execute_task=_execute_opinion_sweep_task,
+                describe_pending=_format_opinion_sweep_task_descriptor,
+                describe_cached=_describe_opinion_sweep_outcome,
+            ),
+            reuse_existing=reuse_cached_metrics,
+            opinion_prefix="[OPINION]",
+        )
         dispatch_cli_partitions(partitions, args=args, logger=LOGGER)
         return
 

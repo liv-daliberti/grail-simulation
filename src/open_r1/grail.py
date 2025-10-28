@@ -63,6 +63,7 @@ from open_r1.shared import (
     BASE_TRAIN_KEEP_COLUMNS,
     collect_passthrough_fields,
     collect_grpo_pipeline_kwargs,
+    make_grpo_execute_kwargs,
     build_default_component_factory,
     execute_grpo_pipeline,
     parse_and_run,

@@ -254,7 +254,8 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for clean_data.sessions.watch</h1><div class="highlight"><pre>
-<span></span><span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
 <span class="c1">#</span>
 <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
@@ -283,7 +284,11 @@
 <div class="viewcode-block" id="coerce_session_value">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.sessions.coerce_session_value">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">coerce_session_value</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert session log values to numeric scalars when possible.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert session log values to numeric scalars when possible.</span>
+
+<span class="sd">    :param value: Raw value from the session logs.</span>
+<span class="sd">    :returns: Coerced numeric/boolean/string value suitable for storage.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">_helpers_coerce_session_value</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
 
@@ -296,7 +301,13 @@
     <span class="n">raw_vids</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">base_vids</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert per-video session arrays/dicts into a standard lookup dict.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert per-video session arrays/dicts into a standard lookup dict.</span>
+
+<span class="sd">    :param values: Raw session payload (dict/list/other) to normalize.</span>
+<span class="sd">    :param raw_vids: Sequence of raw video ids in session order.</span>
+<span class="sd">    :param base_vids: Sequence of canonical base video ids.</span>
+<span class="sd">    :returns: Mapping from raw/base ids (and indices) to coerced values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">mapping</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
@@ -325,7 +336,13 @@
     <span class="n">raw_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">base_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Retrieve a session metric for either the raw or canonical video id.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Retrieve a session metric for either the raw or canonical video id.</span>
+
+<span class="sd">    :param mapping: Normalized session mapping produced by ``normalize_session_mapping``.</span>
+<span class="sd">    :param raw_id: Raw video identifier used as a lookup key.</span>
+<span class="sd">    :param base_id: Canonical video identifier used as a fallback key.</span>
+<span class="sd">    :returns: Mapped session value or ``None`` when absent.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">mapping</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
@@ -337,7 +354,13 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">build_session_timings</span><span class="p">(</span><span class="n">sess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">raw_vids</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">base_vids</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">SessionTiming</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize per-video timing dictionaries for a session.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize per-video timing dictionaries for a session.</span>
+
+<span class="sd">    :param sess: Raw session payload containing timing arrays/dicts.</span>
+<span class="sd">    :param raw_vids: Sequence of raw video ids in session order.</span>
+<span class="sd">    :param base_vids: Sequence of canonical base video ids.</span>
+<span class="sd">    :returns: :class:`SessionTiming` bundle with per-field lookup maps.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">SessionTiming</span><span class="p">(</span>
         <span class="n">start</span><span class="o">=</span><span class="n">normalize_session_mapping</span><span class="p">(</span><span class="n">sess</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;vidStartTimes&quot;</span><span class="p">),</span> <span class="n">raw_vids</span><span class="p">,</span> <span class="n">base_vids</span><span class="p">),</span>
@@ -358,7 +381,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_title</span><span class="p">(</span><span class="n">meta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">fallback_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a title for the candidate along with a missing flag.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a title for the candidate along with a missing flag.</span>
+
+<span class="sd">    :param meta: Metadata dictionary containing title information.</span>
+<span class="sd">    :param fallback_id: Video id used when a title is unavailable.</span>
+<span class="sd">    :returns: Tuple of ``(title, missing_flag)``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">title</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">title</span><span class="p">:</span>
@@ -367,7 +395,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_channel</span><span class="p">(</span><span class="n">meta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the channel title with a missing flag.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the channel title with a missing flag.</span>
+
+<span class="sd">    :param meta: Metadata dictionary containing channel information.</span>
+<span class="sd">    :returns: Tuple of ``(channel_title, missing_flag)``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">channel</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;channel_title&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">channel</span><span class="p">:</span>
@@ -381,7 +413,13 @@
     <span class="n">base_vid</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">timings</span><span class="p">:</span> <span class="n">SessionTiming</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Populate timing metrics for the watched entry when present.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Populate timing metrics for the watched entry when present.</span>
+
+<span class="sd">    :param entry: Watched-entry dictionary to be updated in-place.</span>
+<span class="sd">    :param raw_vid: Raw video identifier for the row.</span>
+<span class="sd">    :param base_vid: Canonical video identifier for the row.</span>
+<span class="sd">    :param timings: Precomputed session timing lookups.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">for</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">timing_map</span> <span class="ow">in</span> <span class="p">(</span>
         <span class="p">(</span><span class="s2">&quot;start_delay_ms&quot;</span><span class="p">,</span> <span class="n">timings</span><span class="o">.</span><span class="n">delay</span><span class="p">),</span>
@@ -400,7 +438,13 @@
     <span class="n">raw_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">metadata</span><span class="p">:</span> <span class="n">VideoMetadataSources</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return augmented metadata for a watched video.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return augmented metadata for a watched video.</span>
+
+<span class="sd">    :param base_id: Canonical video identifier.</span>
+<span class="sd">    :param raw_id: Raw video identifier (may match ``base_id``).</span>
+<span class="sd">    :param metadata: Sources providing tree metadata and fallbacks.</span>
+<span class="sd">    :returns: Metadata dictionary describing the watched video.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">info</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">tree_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">base_id</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span>
     <span class="k">if</span> <span class="n">raw_id</span> <span class="ow">and</span> <span class="n">raw_id</span> <span class="o">!=</span> <span class="n">base_id</span><span class="p">:</span>
@@ -427,7 +471,15 @@
     <span class="n">metadata</span><span class="p">:</span> <span class="n">VideoMetadataSources</span><span class="p">,</span>
     <span class="n">timings</span><span class="p">:</span> <span class="n">SessionTiming</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a single watched-detail dictionary with timing fields.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a single watched-detail dictionary with timing fields.</span>
+
+<span class="sd">    :param idx: Zero-based position of the video within the session.</span>
+<span class="sd">    :param raw_vid: Raw video identifier.</span>
+<span class="sd">    :param base_vid: Canonical video identifier.</span>
+<span class="sd">    :param metadata: Metadata sources for resolving titles/channels.</span>
+<span class="sd">    :param timings: Session timing lookup bundle.</span>
+<span class="sd">    :returns: Dictionary describing the watched video with metadata.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">meta</span> <span class="o">=</span> <span class="n">_video_meta</span><span class="p">(</span><span class="n">base_vid</span><span class="p">,</span> <span class="n">raw_vid</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
     <span class="n">title_val</span><span class="p">,</span> <span class="n">title_missing</span> <span class="o">=</span> <span class="n">_resolve_title</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">base_vid</span><span class="p">)</span>
@@ -458,7 +510,14 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">timings</span><span class="p">:</span> <span class="n">SessionTiming</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return per-video metadata entries for the watched sequence.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return per-video metadata entries for the watched sequence.</span>
+
+<span class="sd">    :param raw_vids: Ordered list of raw video identifiers.</span>
+<span class="sd">    :param base_vids: Ordered list of canonical video identifiers.</span>
+<span class="sd">    :param metadata: Metadata sources for resolving per-video information.</span>
+<span class="sd">    :param timings: Session timing lookup bundle.</span>
+<span class="sd">    :returns: List of dictionaries describing each watched video.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">details</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">raw_vid</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">raw_vids</span><span class="p">):</span>

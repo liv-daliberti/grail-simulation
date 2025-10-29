@@ -274,7 +274,10 @@ provides a discoverable namespace for the prompt analytics subpackage.
 Most consumers will interact with <a class="reference internal" href="#clean_data.clean_data.build_clean_dataset" title="clean_data.clean_data.build_clean_dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">clean_data.clean_data.build_clean_dataset()</span></code></a>
 or <a class="reference internal" href="#clean_data.clean_data.generate_prompt_stats" title="clean_data.clean_data.generate_prompt_stats"><code class="xref py py-func docutils literal notranslate"><span class="pre">clean_data.clean_data.generate_prompt_stats()</span></code></a>. Use of this package
 is governed by the repository’s Apache 2.0 license, described in LICENSE.</p>
-<p id="module-clean_data.clean_data">Orchestrates loading, filtering, validation, persistence, and reporting for <code class="docutils literal notranslate"><span class="pre">clean_data</span></code> datasets (Apache 2.0; see LICENSE).</p>
+<p id="module-clean_data.clean_data">Orchestrate loading, filtering, validation, persistence, and reporting for
+<code class="docutils literal notranslate"><span class="pre">clean_data</span></code> datasets.</p>
+<p>All functionality is provided under the repository’s Apache 2.0 license; see
+LICENSE for terms and conditions.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="clean_data.clean_data.BuildOptions">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">clean_data.clean_data.</span></span><span class="sig-name descname"><span class="pre">BuildOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">validation_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'train'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validation_split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'validation'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system_prompt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sol_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_history</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">12</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_proc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/clean_data/clean_data.html#BuildOptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean_data.clean_data.BuildOptions" title="Link to this definition">¶</a></dt>
@@ -584,10 +587,13 @@ the definitive terms.</p>
 <dd><p>Construct the full interaction dataframe from raw CodeOcean assets.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>data_root</strong> (<em>Path</em>)</p>
+<dd class="field-odd"><p><strong>data_root</strong> (<em>Path</em>) – Path to the CodeOcean capsule <code class="docutils literal notranslate"><span class="pre">data</span></code> directory.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>pandas.DataFrame</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataframe containing cleaned interaction rows per session pair.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
 </dd>
 </dl>
 </dd></dl>
@@ -639,12 +645,15 @@ the definitive terms.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>interaction_frame</strong> (<em>pandas.DataFrame</em>)</p></li>
-<li><p><strong>validation_ratio</strong> (<em>float</em>)</p></li>
+<li><p><strong>interaction_frame</strong> (<em>pandas.DataFrame</em>) – Full interaction dataframe produced by <code class="docutils literal notranslate"><span class="pre">build_codeocean_rows</span></code>.</p></li>
+<li><p><strong>validation_ratio</strong> (<em>float</em>) – Share of participant groups assigned to the validation split.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, pandas.DataFrame]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Mapping of split name to dataframe subset.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Dict</em>[str, pandas.DataFrame]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -918,12 +927,15 @@ explicit overrides when provided.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ex</strong> (<em>dict</em>)</p></li>
-<li><p><strong>sol_key</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>ex</strong> (<em>dict</em>) – Example/row dictionary providing slate and answer fields.</p></li>
+<li><p><strong>sol_key</strong> (<em>str</em><em> | </em><em>None</em>) – Optional alternative column name containing the gold id.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Resolved gold next-video identifier.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -935,12 +947,15 @@ explicit overrides when provided.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>gold</strong> (<em>str</em>)</p></li>
-<li><p><strong>items</strong> (<em>List</em><em>[</em><em>dict</em><em>]</em>)</p></li>
+<li><p><strong>gold</strong> (<em>str</em>) – Canonical gold video identifier.</p></li>
+<li><p><strong>items</strong> (<em>List</em><em>[</em><em>dict</em><em>]</em>) – Sequence of slate item dictionaries.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>int</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>One-based index for the gold item, or <code class="docutils literal notranslate"><span class="pre">0</span></code> when missing.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
 </dd>
 </dl>
 </dd></dl>
@@ -951,10 +966,13 @@ explicit overrides when provided.</p>
 <dd><p>Parse <code class="docutils literal notranslate"><span class="pre">slate_items_json</span></code> into a normalized list of <code class="docutils literal notranslate"><span class="pre">{title,</span> <span class="pre">id}</span></code> dicts.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>ex</strong> (<em>dict</em>)</p>
+<dd class="field-odd"><p><strong>ex</strong> (<em>dict</em>) – Example/row dictionary containing <code class="docutils literal notranslate"><span class="pre">slate_items_json</span></code>.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>List</em>[dict]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of dictionaries with <code class="docutils literal notranslate"><span class="pre">title</span></code> and <code class="docutils literal notranslate"><span class="pre">id</span></code> keys.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>List</em>[dict]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1059,13 +1077,16 @@ for the exact terms.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>urlid</strong> (<em>str</em>)</p></li>
-<li><p><strong>worker_candidate</strong> (<em>str</em>)</p></li>
-<li><p><strong>case_candidate</strong> (<em>str</em>)</p></li>
+<li><p><strong>urlid</strong> (<em>str</em>) – URL identifier associated with the session.</p></li>
+<li><p><strong>worker_candidate</strong> (<em>str</em>) – Candidate worker id extracted from survey/session.</p></li>
+<li><p><strong>case_candidate</strong> (<em>str</em>) – Candidate case id extracted from survey/session.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tuple</em>[str, str | None, bool]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple of resolved study label, participant token, and validity flag.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tuple</em>[str, str | None, bool]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1076,10 +1097,13 @@ for the exact terms.</p>
 <dd><p>Create an allowlist state from the nested mapping used on disk.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>mapping</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Set</em><em>[</em><em>str</em><em>]</em><em>]</em><em>]</em>)</p>
+<dd class="field-odd"><p><strong>mapping</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Set</em><em>[</em><em>str</em><em>]</em><em>]</em><em>]</em>) – Nested mapping of issue -&gt; bucket -&gt; identifier set.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#clean_data.sessions.AllowlistState" title="clean_data.sessions.models.AllowlistState"><em>AllowlistState</em></a></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Initialized <a class="reference internal" href="#clean_data.sessions.AllowlistState" title="clean_data.sessions.AllowlistState"><code class="xref py py-class docutils literal notranslate"><span class="pre">AllowlistState</span></code></a> populated with identifier sets.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#clean_data.sessions.AllowlistState" title="clean_data.sessions.models.AllowlistState"><em>AllowlistState</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1095,10 +1119,13 @@ for the exact terms.</p>
 <dd><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> when the given topic should be filtered by allowlists.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>topic</strong> (<em>str</em>)</p>
+<dd class="field-odd"><p><strong>topic</strong> (<em>str</em>) – Topic/issue string extracted from the session payload.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>bool</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> when allowlist enforcement is required.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1265,10 +1292,13 @@ for the exact terms.</p>
 <dd><p>Construct the full interaction dataframe from raw CodeOcean assets.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>data_root</strong> (<em>Path</em>)</p>
+<dd class="field-odd"><p><strong>data_root</strong> (<em>Path</em>) – Path to the CodeOcean capsule <code class="docutils literal notranslate"><span class="pre">data</span></code> directory.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>pandas.DataFrame</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataframe containing cleaned interaction rows per session pair.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1280,15 +1310,18 @@ for the exact terms.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>step_index</strong> (<em>int</em>)</p></li>
-<li><p><strong>display_orders</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em>)</p></li>
-<li><p><strong>recommendations</strong> (<em>List</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
-<li><p><strong>tree_meta</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>)</p></li>
-<li><p><strong>fallback_titles</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>)</p></li>
+<li><p><strong>step_index</strong> (<em>int</em>) – Current interaction step index.</p></li>
+<li><p><strong>display_orders</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em>) – Normalized <code class="docutils literal notranslate"><span class="pre">displayOrders</span></code> mapping.</p></li>
+<li><p><strong>recommendations</strong> (<em>List</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>] </em><em>| </em><em>None</em>) – Recommendation metadata emitted by the session.</p></li>
+<li><p><strong>tree_meta</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – Recommendation tree metadata keyed by video id.</p></li>
+<li><p><strong>fallback_titles</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Mapping of fallback titles by video id.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tuple</em>[<em>List</em>[<em>Dict</em>[str, <em>Any</em>]], str]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple containing slate item dictionaries and the source label.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tuple</em>[<em>List</em>[<em>Dict</em>[str, <em>Any</em>]], str]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1299,10 +1332,13 @@ for the exact terms.</p>
 <dd><p>Convert session log values to numeric scalars when possible.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>value</strong> (<em>Any</em>)</p>
+<dd class="field-odd"><p><strong>value</strong> (<em>Any</em>) – Raw value from the session logs.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Any</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Coerced numeric/boolean/string value suitable for storage.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Any</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1314,12 +1350,15 @@ for the exact terms.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ex</strong> (<em>dict</em>)</p></li>
-<li><p><strong>current_id</strong> (<em>str</em>)</p></li>
+<li><p><strong>ex</strong> (<em>dict</em>) – Example/row dictionary containing watch history fields.</p></li>
+<li><p><strong>current_id</strong> (<em>str</em>) – Canonical id of the current video.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Derived next-video id or empty string when unavailable.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1336,12 +1375,15 @@ explicit overrides when provided.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ex</strong> (<em>dict</em>)</p></li>
-<li><p><strong>sol_key</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>ex</strong> (<em>dict</em>) – Example/row dictionary providing slate and answer fields.</p></li>
+<li><p><strong>sol_key</strong> (<em>str</em><em> | </em><em>None</em>) – Optional alternative column name containing the gold id.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Resolved gold next-video identifier.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1353,12 +1395,15 @@ explicit overrides when provided.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>gold</strong> (<em>str</em>)</p></li>
-<li><p><strong>items</strong> (<em>List</em><em>[</em><em>dict</em><em>]</em>)</p></li>
+<li><p><strong>gold</strong> (<em>str</em>) – Canonical gold video identifier.</p></li>
+<li><p><strong>items</strong> (<em>List</em><em>[</em><em>dict</em><em>]</em>) – Sequence of slate item dictionaries.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>int</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>One-based index for the gold item, or <code class="docutils literal notranslate"><span class="pre">0</span></code> when missing.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1369,10 +1414,13 @@ explicit overrides when provided.</p>
 <dd><p>Parse <code class="docutils literal notranslate"><span class="pre">slate_items_json</span></code> into a normalized list of <code class="docutils literal notranslate"><span class="pre">{title,</span> <span class="pre">id}</span></code> dicts.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>ex</strong> (<em>dict</em>)</p>
+<dd class="field-odd"><p><strong>ex</strong> (<em>dict</em>) – Example/row dictionary containing <code class="docutils literal notranslate"><span class="pre">slate_items_json</span></code>.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>List</em>[dict]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of dictionaries with <code class="docutils literal notranslate"><span class="pre">title</span></code> and <code class="docutils literal notranslate"><span class="pre">id</span></code> keys.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>List</em>[dict]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1384,13 +1432,16 @@ explicit overrides when provided.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>mapping</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>)</p></li>
-<li><p><strong>raw_id</strong> (<em>str</em>)</p></li>
-<li><p><strong>base_id</strong> (<em>str</em>)</p></li>
+<li><p><strong>mapping</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Normalized session mapping produced by <code class="docutils literal notranslate"><span class="pre">normalize_session_mapping</span></code>.</p></li>
+<li><p><strong>raw_id</strong> (<em>str</em>) – Raw video identifier used as a lookup key.</p></li>
+<li><p><strong>base_id</strong> (<em>str</em>) – Canonical video identifier used as a fallback key.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Any</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Mapped session value or <code class="docutils literal notranslate"><span class="pre">None</span></code> when absent.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Any</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1401,10 +1452,13 @@ explicit overrides when provided.</p>
 <dd><p>Return normalized mapping from step index to canonical video ids.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>display_orders</strong> (<em>Any</em>)</p>
+<dd class="field-odd"><p><strong>display_orders</strong> (<em>Any</em>) – Raw <code class="docutils literal notranslate"><span class="pre">displayOrders</span></code> mapping from the session payload.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[int, <em>List</em>[str]]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Mapping of step index to canonicalized video id strings.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Dict</em>[int, <em>List</em>[str]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1416,13 +1470,16 @@ explicit overrides when provided.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>values</strong> (<em>Any</em>)</p></li>
-<li><p><strong>raw_vids</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>)</p></li>
-<li><p><strong>base_vids</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>values</strong> (<em>Any</em>) – Raw session payload (dict/list/other) to normalize.</p></li>
+<li><p><strong>raw_vids</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – Sequence of raw video ids in session order.</p></li>
+<li><p><strong>base_vids</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – Sequence of canonical base video ids.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Mapping from raw/base ids (and indices) to coerced values.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Dict</em>[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1434,12 +1491,15 @@ explicit overrides when provided.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>identifiers</strong> (<a class="reference internal" href="#clean_data.sessions.ParticipantIdentifiers" title="clean_data.sessions.models.ParticipantIdentifiers"><em>ParticipantIdentifiers</em></a>)</p></li>
-<li><p><strong>fallback_counter</strong> (<em>int</em>)</p></li>
+<li><p><strong>identifiers</strong> (<a class="reference internal" href="#clean_data.sessions.ParticipantIdentifiers" title="clean_data.sessions.models.ParticipantIdentifiers"><em>ParticipantIdentifiers</em></a>) – Structured participant identifiers collected from a session.</p></li>
+<li><p><strong>fallback_counter</strong> (<em>int</em>) – Monotonic counter used when no identifiers are present.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tuple</em>[str, int]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple of canonical participant token and updated fallback counter.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tuple</em>[str, int]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1451,12 +1511,15 @@ explicit overrides when provided.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>interaction_frame</strong> (<em>pandas.DataFrame</em>)</p></li>
-<li><p><strong>validation_ratio</strong> (<em>float</em>)</p></li>
+<li><p><strong>interaction_frame</strong> (<em>pandas.DataFrame</em>) – Full interaction dataframe produced by <code class="docutils literal notranslate"><span class="pre">build_codeocean_rows</span></code>.</p></li>
+<li><p><strong>validation_ratio</strong> (<em>float</em>) – Share of participant groups assigned to the validation split.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, pandas.DataFrame]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Mapping of split name to dataframe subset.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Dict</em>[str, pandas.DataFrame]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1945,13 +2008,17 @@ under the repository’s Apache 2.0 license; refer to LICENSE for details.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>train_df</strong> (<em>pandas.DataFrame</em>)</p></li>
-<li><p><strong>val_df</strong> (<em>pandas.DataFrame</em>)</p></li>
-<li><p><strong>figures_dir</strong> (<em>Path</em>)</p></li>
+<li><p><strong>train_df</strong> (<em>pandas.DataFrame</em>) – Training split dataframe to evaluate.</p></li>
+<li><p><strong>val_df</strong> (<em>pandas.DataFrame</em>) – Validation split dataframe to evaluate.</p></li>
+<li><p><strong>figures_dir</strong> (<em>Path</em>) – Directory where the demographic bar chart will be stored.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tuple</em>[<em>Dict</em>[str, <em>Dict</em>[str, float]], <em>Path</em>]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple of <code class="docutils literal notranslate"><span class="pre">(summaries,</span> <span class="pre">figure_path)</span></code> with per-split missing metrics
+and the path to the rendered figure.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tuple</em>[<em>Dict</em>[str, <em>Dict</em>[str, float]], <em>Path</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1963,13 +2030,17 @@ under the repository’s Apache 2.0 license; refer to LICENSE for details.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>train_df</strong> (<em>pandas.DataFrame</em>)</p></li>
-<li><p><strong>val_df</strong> (<em>pandas.DataFrame</em>)</p></li>
-<li><p><strong>figures_dir</strong> (<em>Path</em>)</p></li>
+<li><p><strong>train_df</strong> (<em>pandas.DataFrame</em>) – Training split dataframe containing <code class="docutils literal notranslate"><span class="pre">n_options</span></code> values.</p></li>
+<li><p><strong>val_df</strong> (<em>pandas.DataFrame</em>) – Validation split dataframe containing <code class="docutils literal notranslate"><span class="pre">n_options</span></code> values.</p></li>
+<li><p><strong>figures_dir</strong> (<em>Path</em>) – Directory where the slate-size histogram will be written.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tuple</em>[<em>Dict</em>[str, <em>Dict</em>[int, int]], <em>Path</em>]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple of <code class="docutils literal notranslate"><span class="pre">(counts,</span> <span class="pre">figure_path)</span></code> with per-split slate-size counts
+and the path to the rendered figure.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tuple</em>[<em>Dict</em>[str, <em>Dict</em>[int, int]], <em>Path</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1981,12 +2052,15 @@ under the repository’s Apache 2.0 license; refer to LICENSE for details.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>train_df</strong> (<em>pandas.DataFrame</em>)</p></li>
-<li><p><strong>val_df</strong> (<em>pandas.DataFrame</em>)</p></li>
+<li><p><strong>train_df</strong> (<em>pandas.DataFrame</em>) – Training split dataframe containing participant metadata.</p></li>
+<li><p><strong>val_df</strong> (<em>pandas.DataFrame</em>) – Validation split dataframe containing participant metadata.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Dict</em>[str, <em>Any</em>]]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Mapping with overall counts plus breakouts by issue and study per split.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Dict</em>[str, <em>Dict</em>[str, <em>Any</em>]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1998,13 +2072,17 @@ under the repository’s Apache 2.0 license; refer to LICENSE for details.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>train_df</strong> (<em>pandas.DataFrame</em>)</p></li>
-<li><p><strong>val_df</strong> (<em>pandas.DataFrame</em>)</p></li>
-<li><p><strong>figures_dir</strong> (<em>Path</em>)</p></li>
+<li><p><strong>train_df</strong> (<em>pandas.DataFrame</em>) – Training split dataframe containing interaction history columns.</p></li>
+<li><p><strong>val_df</strong> (<em>pandas.DataFrame</em>) – Validation split dataframe containing interaction history columns.</p></li>
+<li><p><strong>figures_dir</strong> (<em>Path</em>) – Directory where the generated histogram will be saved.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tuple</em>[<em>Dict</em>[str, <em>Dict</em>[int, int]], <em>Path</em>]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple of <code class="docutils literal notranslate"><span class="pre">(counts,</span> <span class="pre">figure_path)</span></code> with per-split prior-history counts
+and the path to the rendered figure.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tuple</em>[<em>Dict</em>[str, <em>Dict</em>[int, int]], <em>Path</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2016,13 +2094,16 @@ under the repository’s Apache 2.0 license; refer to LICENSE for details.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>train_df</strong> (<em>pandas.DataFrame</em>)</p></li>
-<li><p><strong>val_df</strong> (<em>pandas.DataFrame</em>)</p></li>
-<li><p><strong>profile_col</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>train_df</strong> (<em>pandas.DataFrame</em>) – Training split dataframe whose rows represent prompt examples.</p></li>
+<li><p><strong>val_df</strong> (<em>pandas.DataFrame</em>) – Validation split dataframe whose rows represent prompt examples.</p></li>
+<li><p><strong>profile_col</strong> (<em>str</em><em> | </em><em>None</em>) – Column containing the viewer profile text, or <code class="docutils literal notranslate"><span class="pre">None</span></code> when absent.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Dict</em>[str, float]]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Mapping with per-split counts for total rows and rows missing profile text.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Dict</em>[str, <em>Dict</em>[str, float]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2034,13 +2115,16 @@ under the repository’s Apache 2.0 license; refer to LICENSE for details.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>pair</strong> (<a class="reference internal" href="#clean_data.prompt.utils.SeriesPair" title="clean_data.prompt.utils.SeriesPair"><em>SeriesPair</em></a>)</p></li>
-<li><p><strong>label</strong> (<em>str</em>)</p></li>
-<li><p><strong>output_path</strong> (<em>Path</em>)</p></li>
+<li><p><strong>pair</strong> (<a class="reference internal" href="#clean_data.prompt.utils.SeriesPair" title="clean_data.prompt.utils.SeriesPair"><em>SeriesPair</em></a>) – Training/validation series plus backing dataframes for the feature.</p></li>
+<li><p><strong>label</strong> (<em>str</em>) – Human-readable label used for chart titles.</p></li>
+<li><p><strong>output_path</strong> (<em>Path</em>) – Path where the rendered figure will be written.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Dict</em>[str, float | int]]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Mapping of split name to numeric or categorical summary metrics.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Dict</em>[str, <em>Dict</em>[str, float | int]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2052,13 +2136,17 @@ under the repository’s Apache 2.0 license; refer to LICENSE for details.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>train_df</strong> (<em>pandas.DataFrame</em>)</p></li>
-<li><p><strong>val_df</strong> (<em>pandas.DataFrame</em>)</p></li>
-<li><p><strong>figures_dir</strong> (<em>Path</em>)</p></li>
+<li><p><strong>train_df</strong> (<em>pandas.DataFrame</em>) – Training split dataframe containing prompt rows.</p></li>
+<li><p><strong>val_df</strong> (<em>pandas.DataFrame</em>) – Validation split dataframe containing prompt rows.</p></li>
+<li><p><strong>figures_dir</strong> (<em>Path</em>) – Directory used to persist per-feature figures.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tuple</em>[<em>Dict</em>[str, <em>Dict</em>[str, <em>Dict</em>[str, float | int]]], <em>List</em>[str]]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple of <code class="docutils literal notranslate"><span class="pre">(feature_summary,</span> <span class="pre">skipped_features)</span></code> where the summary maps
+feature names to split-level metrics and <code class="docutils literal notranslate"><span class="pre">skipped_features</span></code> lists empty signals.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tuple</em>[<em>Dict</em>[str, <em>Dict</em>[str, <em>Dict</em>[str, float | int]]], <em>List</em>[str]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2070,12 +2158,15 @@ under the repository’s Apache 2.0 license; refer to LICENSE for details.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>train_df</strong> (<em>pandas.DataFrame</em>)</p></li>
-<li><p><strong>val_df</strong> (<em>pandas.DataFrame</em>)</p></li>
+<li><p><strong>train_df</strong> (<em>pandas.DataFrame</em>) – Training split dataframe containing prompt metadata.</p></li>
+<li><p><strong>val_df</strong> (<em>pandas.DataFrame</em>) – Validation split dataframe containing prompt metadata.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Dict</em>[str, int]]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Mapping of split name to counts of unique videos, slates, and texts.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Dict</em>[str, <em>Dict</em>[str, int]]</p>
 </dd>
 </dl>
 </dd></dl>

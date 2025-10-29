@@ -318,7 +318,13 @@
     <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">output_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render plots for a feature and return summary statistics.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render plots for a feature and return summary statistics.</span>
+
+<span class="sd">    :param pair: Training/validation series plus backing dataframes for the feature.</span>
+<span class="sd">    :param label: Human-readable label used for chart titles.</span>
+<span class="sd">    :param output_path: Path where the rendered figure will be written.</span>
+<span class="sd">    :returns: Mapping of split name to numeric or categorical summary metrics.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">numeric_train</span> <span class="o">=</span> <span class="n">convert_numeric</span><span class="p">(</span><span class="n">pair</span><span class="o">.</span><span class="n">train_series</span><span class="p">)</span>
     <span class="n">numeric_val</span> <span class="o">=</span> <span class="n">convert_numeric</span><span class="p">(</span><span class="n">pair</span><span class="o">.</span><span class="n">val_series</span><span class="p">)</span>
@@ -356,7 +362,14 @@
     <span class="n">val_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="n">figures_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]]],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate plots/statistics for all prompt features.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate plots/statistics for all prompt features.</span>
+
+<span class="sd">    :param train_df: Training split dataframe containing prompt rows.</span>
+<span class="sd">    :param val_df: Validation split dataframe containing prompt rows.</span>
+<span class="sd">    :param figures_dir: Directory used to persist per-feature figures.</span>
+<span class="sd">    :returns: Tuple of ``(feature_summary, skipped_features)`` where the summary maps</span>
+<span class="sd">        feature names to split-level metrics and ``skipped_features`` lists empty signals.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">summary</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">skipped</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -386,7 +399,13 @@
     <span class="n">val_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="n">profile_col</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return profile availability counts for each split.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return profile availability counts for each split.</span>
+
+<span class="sd">    :param train_df: Training split dataframe whose rows represent prompt examples.</span>
+<span class="sd">    :param val_df: Validation split dataframe whose rows represent prompt examples.</span>
+<span class="sd">    :param profile_col: Column containing the viewer profile text, or ``None`` when absent.</span>
+<span class="sd">    :returns: Mapping with per-split counts for total rows and rows missing profile text.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">profile_col</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">train_series</span> <span class="o">=</span> <span class="n">clean_viewer_profile</span><span class="p">(</span><span class="n">train_df</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">profile_col</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)))</span>
@@ -415,7 +434,14 @@
     <span class="n">val_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="n">figures_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">Path</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute prior-history counts and render the corresponding chart.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute prior-history counts and render the corresponding chart.</span>
+
+<span class="sd">    :param train_df: Training split dataframe containing interaction history columns.</span>
+<span class="sd">    :param val_df: Validation split dataframe containing interaction history columns.</span>
+<span class="sd">    :param figures_dir: Directory where the generated histogram will be saved.</span>
+<span class="sd">    :returns: Tuple of ``(counts, figure_path)`` with per-split prior-history counts</span>
+<span class="sd">        and the path to the rendered figure.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">train_prior</span> <span class="o">=</span> <span class="n">train_df</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">count_prior_history</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">val_prior</span> <span class="o">=</span> <span class="n">val_df</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">count_prior_history</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -441,7 +467,14 @@
     <span class="n">val_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="n">figures_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">Path</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Summarize slate sizes and render their distribution chart.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Summarize slate sizes and render their distribution chart.</span>
+
+<span class="sd">    :param train_df: Training split dataframe containing ``n_options`` values.</span>
+<span class="sd">    :param val_df: Validation split dataframe containing ``n_options`` values.</span>
+<span class="sd">    :param figures_dir: Directory where the slate-size histogram will be written.</span>
+<span class="sd">    :returns: Tuple of ``(counts, figure_path)`` with per-split slate-size counts</span>
+<span class="sd">        and the path to the rendered figure.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">train_series</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span>
         <span class="n">train_df</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n_options&quot;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">)),</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;coerce&quot;</span>
@@ -471,7 +504,14 @@
     <span class="n">val_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="n">figures_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span> <span class="n">Path</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Report rows missing all demographic feature columns and render a bar chart.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Report rows missing all demographic feature columns and render a bar chart.</span>
+
+<span class="sd">    :param train_df: Training split dataframe to evaluate.</span>
+<span class="sd">    :param val_df: Validation split dataframe to evaluate.</span>
+<span class="sd">    :param figures_dir: Directory where the demographic bar chart will be stored.</span>
+<span class="sd">    :returns: Tuple of ``(summaries, figure_path)`` with per-split missing metrics</span>
+<span class="sd">        and the path to the rendered figure.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">demo_columns</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">col</span>
@@ -565,7 +605,12 @@
     <span class="n">train_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="n">val_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return counts of unique content per split.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return counts of unique content per split.</span>
+
+<span class="sd">    :param train_df: Training split dataframe containing prompt metadata.</span>
+<span class="sd">    :param val_df: Validation split dataframe containing prompt metadata.</span>
+<span class="sd">    :returns: Mapping of split name to counts of unique videos, slates, and texts.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_count_unique</span><span class="p">(</span><span class="n">data_frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">column</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the number of unique non-empty values for ``column``.</span>
@@ -645,7 +690,12 @@
     <span class="n">train_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="n">val_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Summarize participant counts for each split and overall.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Summarize participant counts for each split and overall.</span>
+
+<span class="sd">    :param train_df: Training split dataframe containing participant metadata.</span>
+<span class="sd">    :param val_df: Validation split dataframe containing participant metadata.</span>
+<span class="sd">    :returns: Mapping with overall counts plus breakouts by issue and study per split.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">combined_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">train_df</span><span class="p">,</span> <span class="n">val_df</span><span class="p">],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">{</span>

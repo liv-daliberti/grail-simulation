@@ -254,7 +254,8 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for clean_data.sessions.slates</h1><div class="highlight"><pre>
-<span></span><span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
 <span class="c1">#</span>
 <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
@@ -282,7 +283,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_normalize_display_step_index</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the zero-based step index encoded by the display-order key.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the zero-based step index encoded by the display-order key.</span>
+
+<span class="sd">    :param key: Arbitrary key from the ``displayOrders`` payload.</span>
+<span class="sd">    :returns: Zero-based step index or ``None`` when parsing fails.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">key</span> <span class="k">if</span> <span class="n">key</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
@@ -299,7 +304,11 @@
 <div class="viewcode-block" id="normalize_display_orders">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompting.normalize_display_orders">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">normalize_display_orders</span><span class="p">(</span><span class="n">display_orders</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return normalized mapping from step index to canonical video ids.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return normalized mapping from step index to canonical video ids.</span>
+
+<span class="sd">    :param display_orders: Raw ``displayOrders`` mapping from the session payload.</span>
+<span class="sd">    :returns: Mapping of step index to canonicalized video id strings.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">normalized</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">display_orders</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
@@ -329,7 +338,13 @@
     <span class="n">display_orders</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
     <span class="n">recommendations</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]],</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ordered ``(base_id, raw_id)`` candidates and their source.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ordered ``(base_id, raw_id)`` candidates and their source.</span>
+
+<span class="sd">    :param step_index: Current interaction step index.</span>
+<span class="sd">    :param display_orders: Normalized ``displayOrders`` mapping.</span>
+<span class="sd">    :param recommendations: Recommendation metadata emitted by the session.</span>
+<span class="sd">    :returns: Tuple of candidate list and string describing the data source.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">order_ids</span> <span class="o">=</span> <span class="n">display_orders</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">step_index</span><span class="p">,</span> <span class="p">[])</span>
     <span class="k">if</span> <span class="n">order_ids</span><span class="p">:</span>
@@ -365,7 +380,14 @@
     <span class="n">tree_meta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
     <span class="n">fallback_titles</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct a single slate entry with metadata fallbacks.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct a single slate entry with metadata fallbacks.</span>
+
+<span class="sd">    :param base_id: Canonical video identifier.</span>
+<span class="sd">    :param raw_id: Raw/alternate identifier for the candidate (optional).</span>
+<span class="sd">    :param tree_meta: Metadata mapping derived from recommendation trees.</span>
+<span class="sd">    :param fallback_titles: Mapping of video ids to fallback titles or metadata.</span>
+<span class="sd">    :returns: Slate item dictionary with id/title and optional metadata.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">meta</span> <span class="o">=</span> <span class="n">tree_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">base_id</span><span class="p">,</span> <span class="p">{})</span>
     <span class="n">title_candidates</span> <span class="o">=</span> <span class="p">(</span>
@@ -417,7 +439,15 @@
     <span class="n">tree_meta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
     <span class="n">fallback_titles</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Derive the slate items for the given interaction step.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Derive the slate items for the given interaction step.</span>
+
+<span class="sd">    :param step_index: Current interaction step index.</span>
+<span class="sd">    :param display_orders: Normalized ``displayOrders`` mapping.</span>
+<span class="sd">    :param recommendations: Recommendation metadata emitted by the session.</span>
+<span class="sd">    :param tree_meta: Recommendation tree metadata keyed by video id.</span>
+<span class="sd">    :param fallback_titles: Mapping of fallback titles by video id.</span>
+<span class="sd">    :returns: Tuple containing slate item dictionaries and the source label.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">candidates</span><span class="p">,</span> <span class="n">source</span> <span class="o">=</span> <span class="n">_gather_slate_candidates</span><span class="p">(</span>
         <span class="n">step_index</span><span class="p">,</span>
@@ -439,7 +469,11 @@
 <div class="viewcode-block" id="load_slate_items">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompting.load_slate_items">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_slate_items</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse ``slate_items_json`` into a normalized list of ``{title, id}`` dicts.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse ``slate_items_json`` into a normalized list of ``{title, id}`` dicts.</span>
+
+<span class="sd">    :param ex: Example/row dictionary containing ``slate_items_json``.</span>
+<span class="sd">    :returns: List of dictionaries with ``title`` and ``id`` keys.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">arr</span> <span class="o">=</span> <span class="n">_as_list_json</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;slate_items_json&quot;</span><span class="p">))</span>
     <span class="n">out</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -457,7 +491,12 @@
 <div class="viewcode-block" id="derive_next_from_history">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompting.derive_next_from_history">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">derive_next_from_history</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">current_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Infer the next video id from the watch history when explicit labels are missing.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Infer the next video id from the watch history when explicit labels are missing.</span>
+
+<span class="sd">    :param ex: Example/row dictionary containing watch history fields.</span>
+<span class="sd">    :param current_id: Canonical id of the current video.</span>
+<span class="sd">    :returns: Derived next-video id or empty string when unavailable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">vids</span> <span class="o">=</span> <span class="n">_as_list_json</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;watched_vids_json&quot;</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">current_id</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vids</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="n">vids</span><span class="p">:</span>
@@ -484,7 +523,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_normalize_candidate</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">current_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a cleaned gold-id candidate or ``&quot;&quot;`` when unusable.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a cleaned gold-id candidate or ``\&quot;\&quot;`` when unusable.</span>
+
+<span class="sd">    :param value: Candidate value extracted from the row.</span>
+<span class="sd">    :param current_id: Canonical id of the current video.</span>
+<span class="sd">    :returns: Normalized candidate id or empty string when invalid.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">&quot;&quot;</span>
@@ -504,6 +548,10 @@
 <span class="sd">    downstream helpers saw empty gold ids and dropped otherwise valid rows.</span>
 <span class="sd">    Restoring the legacy precedence keeps ``None`` working while still allowing</span>
 <span class="sd">    explicit overrides when provided.</span>
+
+<span class="sd">    :param ex: Example/row dictionary providing slate and answer fields.</span>
+<span class="sd">    :param sol_key: Optional alternative column name containing the gold id.</span>
+<span class="sd">    :returns: Resolved gold next-video identifier.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">current_id</span> <span class="o">=</span> <span class="n">_normalize_candidate</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;current_video_id&quot;</span><span class="p">),</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
@@ -528,7 +576,12 @@
 <div class="viewcode-block" id="gold_index_from_items">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.prompting.gold_index_from_items">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">gold_index_from_items</span><span class="p">(</span><span class="n">gold</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">items</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return 1-based index of the gold item within ``items``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return 1-based index of the gold item within ``items``.</span>
+
+<span class="sd">    :param gold: Canonical gold video identifier.</span>
+<span class="sd">    :param items: Sequence of slate item dictionaries.</span>
+<span class="sd">    :returns: One-based index for the gold item, or ``0`` when missing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">gold</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">items</span><span class="p">:</span>
         <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>

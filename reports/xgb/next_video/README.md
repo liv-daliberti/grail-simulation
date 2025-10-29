@@ -32,15 +32,16 @@ Slate-ranking accuracy for the selected XGBoost configuration.
 
 - Highest holdout accuracy: Study 1 – Gun Control (MTurk) (0.874).
 - Lowest holdout accuracy: Study 2 – Minimum Wage (MTurk) (0.329).
-- Average holdout accuracy 0.602.
+- Average holdout accuracy 0.521.
 - Highest holdout eligible-only accuracy: Study 1 – Gun Control (MTurk) (0.874).
 - Lowest holdout eligible-only accuracy: Study 2 – Minimum Wage (MTurk) (0.329).
-- Average holdout eligible-only accuracy 0.602.
+- Average holdout eligible-only accuracy 0.521.
 
 | Holdout study | Issue | Accuracy ↑ | Acc (eligible) ↑ | Correct / evaluated | Coverage ↑ | Known hits / total | Known availability ↑ | Avg prob ↑ |
 | --- | --- | ---: | ---: | --- | ---: | --- | ---: | ---: |
 | Study 1 – Gun Control (MTurk) | Gun Control | 0.874 | 0.874 | 479/548 | 0.874 | 477/546 | 0.996 | 0.610 |
 | Study 2 – Minimum Wage (MTurk) | Minimum Wage | 0.329 | 0.329 | 221/671 | 0.329 | 221/671 | 1.000 | 0.360 |
+| Study 3 – Minimum Wage (YouGov) | Minimum Wage | 0.359 | 0.359 | 431/1,200 | 0.359 | 431/1,200 | 1.000 | 0.435 |
 
 ## Observations
 

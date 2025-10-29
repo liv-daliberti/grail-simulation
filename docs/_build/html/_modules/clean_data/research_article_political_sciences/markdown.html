@@ -357,7 +357,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_opinion_summary_lines</span><span class="p">(</span><span class="n">study_rows</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render Markdown rows describing opinion shift summaries.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render Markdown rows describing opinion shift summaries.</span>
+
+<span class="sd">    :param study_rows: Iterable containing dictionaries with study labels and summary stats.</span>
+<span class="sd">    :returns: Markdown table row strings summarizing opinion shifts per study.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">lines</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">study_rows</span><span class="p">:</span>
@@ -378,7 +382,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_heatmap_section</span><span class="p">(</span><span class="n">heatmap_paths</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span> <span class="n">output_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build Markdown image blocks for the heatmap paths.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build Markdown image blocks for the heatmap paths.</span>
+
+<span class="sd">    :param heatmap_paths: Iterable of paths to generated heatmap images.</span>
+<span class="sd">    :param output_dir: Base directory used to compute relative image paths.</span>
+<span class="sd">    :returns: Markdown lines embedding each heatmap image.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">blocks</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">heatmap_path</span> <span class="ow">in</span> <span class="n">heatmap_paths</span><span class="p">:</span>
@@ -394,7 +403,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_assignment_section</span><span class="p">(</span><span class="n">rows</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render the control vs. treatment summary table when data is available.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render the control vs. treatment summary table when data is available.</span>
+
+<span class="sd">    :param rows: Iterable of dictionaries describing study-level control/treatment changes.</span>
+<span class="sd">    :returns: Markdown lines forming the summary table (or empty when no rows provided).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">material</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">material</span><span class="p">:</span>
@@ -419,7 +432,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_policy_section</span><span class="p">(</span><span class="n">rows</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render the preregistered stratified contrast table when present.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render the preregistered stratified contrast table when present.</span>
+
+<span class="sd">    :param rows: Iterable of dictionaries representing stratified contrast results.</span>
+<span class="sd">    :returns: Markdown lines describing the contrast table (or empty when no rows).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">material</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">material</span><span class="p">:</span>

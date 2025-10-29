@@ -269,30 +269,39 @@
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 
-<span class="sd">&quot;&quot;&quot;Orchestrates loading, filtering, validation, persistence, and reporting for ``clean_data`` datasets (Apache 2.0; see LICENSE).&quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;Orchestrate loading, filtering, validation, persistence, and reporting for</span>
+<span class="sd">``clean_data`` datasets.</span>
+
+<span class="sd">All functionality is provided under the repository&#39;s Apache 2.0 license; see</span>
+<span class="sd">LICENSE for terms and conditions.</span>
+<span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">bz2</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">gzip</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">io</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">lzma</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">types</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">zipfile</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">lru_cache</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>  <span class="c1"># type: ignore</span>
 <span class="k">except</span> <span class="p">(</span><span class="ne">ImportError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">,</span> <span class="ne">RuntimeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
     <span class="n">torch</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">clean_data._datasets</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DatasetDict</span><span class="p">,</span>
+    <span class="n">DatasetGenerationCastError</span><span class="p">,</span>
+    <span class="n">Features</span><span class="p">,</span>
+    <span class="n">HFSequence</span><span class="p">,</span>
+    <span class="n">Value</span><span class="p">,</span>
+    <span class="n">datasets</span><span class="p">,</span>
+    <span class="n">ensure_datasets_imported</span> <span class="k">as</span> <span class="n">_ensure_datasets_imported</span><span class="p">,</span>
+    <span class="n">load_dataset_with_column_union</span> <span class="k">as</span> <span class="n">_load_dataset_with_column_union</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">clean_data.filters</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_issue_counts</span><span class="p">,</span> <span class="n">filter_prompt_ready</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">clean_data.prompt.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">REQUIRED_PROMPT_COLUMNS</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">clean_data.prompting</span><span class="w"> </span><span class="kn">import</span> <span class="n">row_to_example</span>
@@ -332,62 +341,6 @@
 
 
 <span class="n">_ensure_torch_env_compat</span><span class="p">()</span>
-
-<span class="k">try</span><span class="p">:</span>
-    <span class="kn">import</span><span class="w"> </span><span class="nn">datasets</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">DatasetDict</span><span class="p">,</span> <span class="n">Features</span><span class="p">,</span> <span class="n">Sequence</span> <span class="k">as</span> <span class="n">HFSequence</span><span class="p">,</span> <span class="n">Value</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">datasets.builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetGenerationCastError</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency for linting</span>
-    <span class="n">datasets</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
-    <span class="n">Dataset</span> <span class="o">=</span> <span class="n">Any</span>  <span class="c1"># type: ignore</span>
-    <span class="n">DatasetDict</span> <span class="o">=</span> <span class="n">Any</span>  <span class="c1"># type: ignore</span>
-    <span class="n">Features</span> <span class="o">=</span> <span class="n">Any</span>  <span class="c1"># type: ignore</span>
-    <span class="n">HFSequence</span> <span class="o">=</span> <span class="n">Any</span>  <span class="c1"># type: ignore</span>
-    <span class="n">Value</span> <span class="o">=</span> <span class="n">Any</span>  <span class="c1"># type: ignore</span>
-
-    <span class="k">class</span><span class="w"> </span><span class="nc">DatasetGenerationCastError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fallback stub for :class:`datasets.builder.DatasetGenerationCastError`.</span>
-
-<span class="sd">        :meta private:</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_ensure_datasets_imported</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure the optional datasets dependency (or its stub) is available.</span>
-
-<span class="sd">    :raises ModuleNotFoundError: If the optional ``datasets`` package cannot be imported.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">if</span> <span class="n">datasets</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">Features</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="k">return</span>
-
-    <span class="n">module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s2">&quot;datasets&quot;</span><span class="p">)</span>
-    <span class="n">module_globals</span> <span class="o">=</span> <span class="nb">globals</span><span class="p">()</span>
-    <span class="n">module_globals</span><span class="p">[</span><span class="s2">&quot;datasets&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">module</span>
-    <span class="n">module_globals</span><span class="p">[</span><span class="s2">&quot;Dataset&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;Dataset&quot;</span><span class="p">,</span> <span class="n">Dataset</span><span class="p">)</span>
-    <span class="n">module_globals</span><span class="p">[</span><span class="s2">&quot;DatasetDict&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;DatasetDict&quot;</span><span class="p">,</span> <span class="n">DatasetDict</span><span class="p">)</span>
-    <span class="n">module_globals</span><span class="p">[</span><span class="s2">&quot;Features&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;Features&quot;</span><span class="p">,</span> <span class="n">Features</span><span class="p">)</span>
-    <span class="n">module_globals</span><span class="p">[</span><span class="s2">&quot;HFSequence&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;Sequence&quot;</span><span class="p">,</span> <span class="n">HFSequence</span><span class="p">)</span>
-    <span class="n">module_globals</span><span class="p">[</span><span class="s2">&quot;Value&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;Value&quot;</span><span class="p">,</span> <span class="n">Value</span><span class="p">)</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">builder_module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s2">&quot;datasets.builder&quot;</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
-        <span class="k">return</span>
-    <span class="n">module_globals</span><span class="p">[</span><span class="s2">&quot;DatasetGenerationCastError&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span>
-        <span class="n">builder_module</span><span class="p">,</span>
-        <span class="s2">&quot;DatasetGenerationCastError&quot;</span><span class="p">,</span>
-        <span class="n">DatasetGenerationCastError</span><span class="p">,</span>
-    <span class="p">)</span>
-
-<span class="k">try</span><span class="p">:</span>
-    <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency for linting</span>
-    <span class="n">pd</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
-
-<span class="k">try</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">fsspec.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">url_to_fs</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency for linting</span>
-    <span class="n">url_to_fs</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;clean_grail&quot;</span><span class="p">)</span>
 
@@ -510,414 +463,6 @@
     <span class="k">return</span> <span class="n">DatasetDict</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">loaded</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span></div>
 
 
-
-<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">_ReadAttempt</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture a single pandas CSV parsing attempt configuration.</span>
-
-<span class="sd">    :param engine: Pandas CSV engine identifier (``&quot;c&quot;`` or ``&quot;python&quot;``).</span>
-<span class="sd">    :param sep: Delimiter candidate evaluated for the CSV payload.</span>
-<span class="sd">    :param on_bad_lines: Policy forwarded to pandas for malformed rows.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">engine</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">sep</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-    <span class="n">on_bad_lines</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_load_dataset_with_column_union</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DatasetDict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a flat CSV dataset while unioning columns across data files.</span>
-
-<span class="sd">    This is a fallback path used when the standard :func:`load_dataset` call</span>
-<span class="sd">    fails due to heterogeneous column sets across CSV shards. The implementation</span>
-<span class="sd">    fetches every declared data file, reads it via :mod:`pandas`, aligns missing</span>
-<span class="sd">    columns, and rehydrates the result into a :class:`~datasets.DatasetDict`.</span>
-
-<span class="sd">    :param dataset_name: Hugging Face dataset identifier (optionally ``name``).</span>
-<span class="sd">    :returns: ``DatasetDict`` with the unioned schema.</span>
-<span class="sd">    :raises RuntimeError: If :mod:`pandas` is unavailable or no data files were</span>
-<span class="sd">        discovered for the dataset.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">_ensure_datasets_imported</span><span class="p">()</span>
-
-    <span class="k">if</span> <span class="n">pd</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - environment guard</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;pandas is required to load &#39;</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">&#39; due to column mismatches. &quot;</span>
-            <span class="s2">&quot;Install pandas to enable the union fallback.&quot;</span>
-        <span class="p">)</span>
-
-    <span class="n">builder</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">load_dataset_builder</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">)</span>
-    <span class="n">data_files</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">builder</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;data_files&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">data_files</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dataset &#39;</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">&#39; does not expose data_files metadata&quot;</span><span class="p">)</span>
-
-    <span class="n">split_files</span> <span class="o">=</span> <span class="n">_normalize_split_mappings</span><span class="p">(</span><span class="n">data_files</span><span class="p">)</span>
-    <span class="n">features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Features</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">builder</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="s2">&quot;features&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="n">loader</span> <span class="o">=</span> <span class="n">_ColumnUnionLoader</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">builder</span><span class="p">,</span> <span class="n">features</span><span class="p">)</span>
-    <span class="n">unioned</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">split_files</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">unioned</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No data could be loaded for dataset &#39;</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">DatasetDict</span><span class="p">(</span><span class="n">unioned</span><span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_normalize_split_mappings</span><span class="p">(</span><span class="n">data_files</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Coerce the builder ``data_files`` mapping into ``split -&gt; [files]`` form.</span>
-
-<span class="sd">    :param data_files: Mapping extracted from ``datasets.Builder`` configuration.</span>
-<span class="sd">    :returns: Normalized mapping where every value is a list of file references.</span>
-<span class="sd">    :raises RuntimeError: If a mapping value cannot be interpreted as str or sequence.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">split_files</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">split_name</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">data_files</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">split_files</span><span class="p">[</span><span class="n">split_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">files</span><span class="p">]</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">):</span>
-            <span class="n">split_files</span><span class="p">[</span><span class="n">split_name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">files</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Unsupported data_files entry for split &#39;</span><span class="si">{</span><span class="n">split_name</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">files</span><span class="p">)</span><span class="si">!r}</span><span class="s2">&quot;</span>
-            <span class="p">)</span>
-    <span class="k">return</span> <span class="n">split_files</span>
-
-
-<span class="nd">@dataclass</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">_ColumnUnionLoader</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper that recreates CSV datasets while unioning distinct column sets.</span>
-
-<span class="sd">    :param dataset_name: Hugging Face dataset identifier being reconstructed.</span>
-<span class="sd">    :param builder: Dataset builder instance supplying data files and filesystem.</span>
-<span class="sd">    :param features: Optional feature schema used to cast the reconstructed frames.</span>
-<span class="sd">    :ivar expected_columns: Columns inferred from the declared feature schema.</span>
-<span class="sd">    :ivar filesystem: Filesystem handle used to read the dataset shards.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">builder</span><span class="p">:</span> <span class="n">Any</span>
-    <span class="n">features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Features</span><span class="p">]</span>
-    <span class="n">expected_columns</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="n">filesystem</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Populate derived filesystem metadata for dataset reconstruction.</span>
-
-<span class="sd">        :raises RuntimeError: If the dataset builder does not expose a filesystem handle.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">,</span> <span class="n">Features</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">expected_columns</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">expected_columns</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="n">filesystem_handle</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">builder</span><span class="p">,</span> <span class="s2">&quot;_fs&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">filesystem_handle</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - defensive branch</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Dataset builder for &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">&#39; does not expose a filesystem handle&quot;</span>
-            <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">filesystem</span> <span class="o">=</span> <span class="n">filesystem_handle</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">split_files</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dataset</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Union column schemas for every split and return the reconstructed datasets.</span>
-
-<span class="sd">        :param split_files: Mapping of split name to the list of backing data files.</span>
-<span class="sd">        :returns: Dictionary of split names to rehydrated ``Dataset`` objects.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">unioned</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dataset</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">split_name</span><span class="p">,</span> <span class="n">file_refs</span> <span class="ow">in</span> <span class="n">split_files</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">dataset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_split</span><span class="p">(</span><span class="n">split_name</span><span class="p">,</span> <span class="n">file_refs</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">dataset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">unioned</span><span class="p">[</span><span class="n">split_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataset</span>
-        <span class="k">return</span> <span class="n">unioned</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_build_split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">split_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">file_refs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dataset</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reconstruct a single split by unioning column schemas across files.</span>
-
-<span class="sd">        :param split_name: Identifier of the split being reconstructed.</span>
-<span class="sd">        :param file_refs: Iterable of file references associated with the split.</span>
-<span class="sd">        :returns: Hugging Face ``Dataset`` instance when any rows are loaded, otherwise ``None``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">frames</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">file_ref</span> <span class="ow">in</span> <span class="n">file_refs</span><span class="p">:</span>
-            <span class="n">filesystem</span><span class="p">,</span> <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_file_ref</span><span class="p">(</span><span class="n">file_ref</span><span class="p">)</span>
-            <span class="n">frame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_csv_frame</span><span class="p">(</span><span class="n">filesystem</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
-            <span class="n">frame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_postprocess_frame</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
-            <span class="n">frames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">frames</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;No frames produced for split &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span><span class="p">,</span> <span class="n">split_name</span><span class="p">)</span>
-            <span class="k">return</span> <span class="kc">None</span>
-
-        <span class="n">combined</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_combine_frames</span><span class="p">(</span><span class="n">frames</span><span class="p">)</span>
-        <span class="n">combined</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_feature_casts</span><span class="p">(</span><span class="n">combined</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">Dataset</span><span class="o">.</span><span class="n">from_pandas</span><span class="p">(</span><span class="n">combined</span><span class="p">,</span> <span class="n">preserve_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_file_ref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_ref</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve a file reference to an ``fsspec`` filesystem and path.</span>
-
-<span class="sd">        :param file_ref: Local or remote identifier describing a dataset shard.</span>
-<span class="sd">        :returns: Tuple of filesystem handle and path within that filesystem.</span>
-<span class="sd">        :raises RuntimeError: If remote references are encountered without ``fsspec``.</span>
-<span class="sd">        :raises FileNotFoundError: If the resolved file cannot be opened.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_ref</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;://&quot;</span> <span class="ow">in</span> <span class="n">file_ref</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">url_to_fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Encountered remote data file &#39;</span><span class="si">{</span><span class="n">file_ref</span><span class="si">}</span><span class="s2">&#39; but fsspec is unavailable. &quot;</span>
-                    <span class="s2">&quot;Install fsspec to enable remote downloads.&quot;</span>
-                <span class="p">)</span>
-            <span class="k">return</span> <span class="n">url_to_fs</span><span class="p">(</span><span class="n">file_ref</span><span class="p">)</span>
-
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">filesystem</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">file_ref</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">):</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filesystem</span><span class="p">,</span> <span class="n">file_ref</span>
-        <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">url_to_fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_ref</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">url_to_fs</span><span class="p">(</span><span class="n">file_ref</span><span class="p">)</span>
-            <span class="k">raise</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_read_csv_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filesystem</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read and normalize a CSV shard into a pandas DataFrame.</span>
-
-<span class="sd">        :param filesystem: Filesystem handle capable of opening the shard.</span>
-<span class="sd">        :param path: Path or identifier of the shard within ``filesystem``.</span>
-<span class="sd">        :returns: DataFrame containing the parsed rows.</span>
-<span class="sd">        :raises RuntimeError: If none of the decoding strategies succeed.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">with</span> <span class="n">filesystem</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">raw_handle</span><span class="p">:</span>
-            <span class="n">raw_bytes</span> <span class="o">=</span> <span class="n">raw_handle</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-
-        <span class="n">data_bytes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decompress_payload</span><span class="p">(</span><span class="n">raw_bytes</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
-        <span class="n">sample_bytes</span> <span class="o">=</span> <span class="n">data_bytes</span><span class="p">[:</span><span class="mi">16384</span><span class="p">]</span>
-        <span class="n">decoded_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decode_sample_texts</span><span class="p">(</span><span class="n">sample_bytes</span><span class="p">)</span>
-
-        <span class="k">for</span> <span class="n">encoding</span><span class="p">,</span> <span class="n">sample_text</span> <span class="ow">in</span> <span class="n">decoded_samples</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_attempts</span><span class="p">(</span><span class="n">sample_text</span><span class="p">):</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_with_attempt</span><span class="p">(</span><span class="n">data_bytes</span><span class="p">,</span> <span class="n">encoding</span><span class="p">,</span> <span class="n">attempt</span><span class="p">)</span>
-                <span class="k">except</span> <span class="ne">UnicodeDecodeError</span><span class="p">:</span>
-                    <span class="k">break</span>
-                <span class="k">except</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">ParserError</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">EmptyDataError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">):</span>
-                    <span class="k">continue</span>
-
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unable to read CSV file &#39;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&#39; using available fallbacks&quot;</span><span class="p">)</span>
-
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_decompress_payload</span><span class="p">(</span><span class="n">payload</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Expand compressed payloads emitted by common archival formats.</span>
-
-<span class="sd">        :param payload: Raw bytes read from the filesystem.</span>
-<span class="sd">        :param path: Identifier of the current shard, used for diagnostics.</span>
-<span class="sd">        :returns: Decompressed bytes when compression is detected, otherwise the original payload.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">payload</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;</span><span class="se">\x1f\x8b\x08</span><span class="s2">&quot;</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">gzip</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">payload</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;PK</span><span class="se">\x03\x04</span><span class="s2">&quot;</span><span class="p">):</span>
-                <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">payload</span><span class="p">))</span> <span class="k">as</span> <span class="n">archive</span><span class="p">:</span>
-                    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">archive</span><span class="o">.</span><span class="n">namelist</span><span class="p">():</span>
-                        <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">):</span>
-                            <span class="k">return</span> <span class="n">archive</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Zip archive &#39;</span><span class="si">%s</span><span class="s2">&#39; does not contain file entries; using raw bytes&quot;</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
-                <span class="k">return</span> <span class="n">payload</span>
-            <span class="k">if</span> <span class="n">payload</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;BZh&quot;</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">bz2</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">payload</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;</span><span class="se">\xfd</span><span class="s2">7zXZ</span><span class="se">\x00</span><span class="s2">&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">payload</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;</span><span class="se">\x5d\x00\x00</span><span class="s2">&quot;</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">lzma</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
-        <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">BadZipFile</span><span class="p">,</span> <span class="n">lzma</span><span class="o">.</span><span class="n">LZMAError</span><span class="p">)</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                <span class="p">(</span>
-                    <span class="s2">&quot;Failed to decompress &#39;</span><span class="si">%s</span><span class="s2">&#39; despite matching signature; falling back to raw &quot;</span>
-                    <span class="s2">&quot;bytes (</span><span class="si">%s</span><span class="s2">)&quot;</span>
-                <span class="p">),</span>
-                <span class="n">path</span><span class="p">,</span>
-                <span class="n">err</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="k">return</span> <span class="n">payload</span>
-
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_decode_sample_texts</span><span class="p">(</span><span class="n">sample_bytes</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Decode sample bytes using several fallback encodings.</span>
-
-<span class="sd">        :param sample_bytes: Initial slice of the CSV payload used for detection heuristics.</span>
-<span class="sd">        :returns: List of ``(encoding, text)`` tuples in evaluation order.</span>
-<span class="sd">        :raises UnicodeDecodeError: If no encoding successfully decodes the bytes.</span>
-<span class="sd">        :raises LookupError: If no recognized encoding can be used during detection.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">decoded</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">last_decode_err</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="ne">UnicodeDecodeError</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">last_lookup_err</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="ne">LookupError</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-
-        <span class="k">for</span> <span class="n">encoding</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span> <span class="s2">&quot;utf-8-sig&quot;</span><span class="p">,</span> <span class="s2">&quot;latin-1&quot;</span><span class="p">):</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">decoded</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">encoding</span><span class="p">,</span> <span class="n">sample_bytes</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">encoding</span><span class="p">)))</span>
-            <span class="k">except</span> <span class="ne">UnicodeDecodeError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-                <span class="n">last_decode_err</span> <span class="o">=</span> <span class="n">err</span>
-            <span class="k">except</span> <span class="ne">LookupError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-                <span class="n">last_lookup_err</span> <span class="o">=</span> <span class="n">err</span>
-
-        <span class="k">if</span> <span class="n">decoded</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">decoded</span>
-        <span class="k">if</span> <span class="n">last_decode_err</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">last_decode_err</span>
-        <span class="k">if</span> <span class="n">last_lookup_err</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">last_lookup_err</span>
-        <span class="k">raise</span> <span class="ne">UnicodeDecodeError</span><span class="p">(</span><span class="s2">&quot;unicodeescape&quot;</span><span class="p">,</span> <span class="sa">b</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;no valid encoding candidates found&quot;</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_build_attempts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">_ReadAttempt</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct CSV parsing attempts from the sample payload.</span>
-
-<span class="sd">        :param sample_text: Text decoded from the beginning of the CSV payload.</span>
-<span class="sd">        :returns: Ordered list of parsing attempts to evaluate.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">delimiters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_candidate_delimiters</span><span class="p">(</span><span class="n">sample_text</span><span class="p">)</span>
-        <span class="n">attempts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">_ReadAttempt</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-
-        <span class="k">for</span> <span class="n">delimiter</span> <span class="ow">in</span> <span class="n">delimiters</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">engine</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;c&quot;</span><span class="p">,</span> <span class="s2">&quot;python&quot;</span><span class="p">):</span>
-                <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">delimiter</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
-                    <span class="n">attempts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_ReadAttempt</span><span class="p">(</span><span class="n">engine</span><span class="o">=</span><span class="n">engine</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="n">delimiter</span><span class="p">))</span>
-                    <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-
-        <span class="k">for</span> <span class="n">on_bad_lines</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;skip&quot;</span><span class="p">):</span>
-            <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">on_bad_lines</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
-                <span class="n">attempts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_ReadAttempt</span><span class="p">(</span><span class="n">engine</span><span class="o">=</span><span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_bad_lines</span><span class="o">=</span><span class="n">on_bad_lines</span><span class="p">))</span>
-                <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">attempts</span>
-
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_candidate_delimiters</span><span class="p">(</span><span class="n">sample_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Infer potential delimiter characters from sample CSV text.</span>
-
-<span class="sd">        :param sample_text: Text snippet used to identify likely delimiters.</span>
-<span class="sd">        :returns: List of delimiter characters ranked by confidence.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">sniffed</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">Sniffer</span><span class="p">()</span><span class="o">.</span><span class="n">sniff</span><span class="p">(</span>
-                <span class="n">sample_text</span><span class="p">,</span>
-                <span class="n">delimiters</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;;&quot;</span><span class="p">,</span> <span class="s2">&quot;|&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\x1f</span><span class="s2">&quot;</span><span class="p">],</span>
-            <span class="p">)</span>
-            <span class="n">primary</span> <span class="o">=</span> <span class="p">[</span><span class="n">sniffed</span><span class="o">.</span><span class="n">delimiter</span><span class="p">]</span>
-        <span class="k">except</span> <span class="n">csv</span><span class="o">.</span><span class="n">Error</span><span class="p">:</span>
-            <span class="n">primary</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">fallbacks</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;;&quot;</span><span class="p">,</span> <span class="s2">&quot;|&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\x1f</span><span class="s2">&quot;</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">primary</span> <span class="o">+</span> <span class="n">fallbacks</span>
-
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_read_with_attempt</span><span class="p">(</span><span class="n">data_bytes</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">encoding</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">attempt</span><span class="p">:</span> <span class="n">_ReadAttempt</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate a single pandas CSV read attempt.</span>
-
-<span class="sd">        :param data_bytes: Raw CSV payload (optionally decompressed).</span>
-<span class="sd">        :param encoding: Text encoding used for decoding the payload.</span>
-<span class="sd">        :param attempt: Candidate configuration describing the CSV read.</span>
-<span class="sd">        :returns: DataFrame produced by ``pandas.read_csv`` when successful.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;encoding&quot;</span><span class="p">:</span> <span class="n">encoding</span><span class="p">,</span>
-            <span class="s2">&quot;low_memory&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-            <span class="s2">&quot;engine&quot;</span><span class="p">:</span> <span class="n">attempt</span><span class="o">.</span><span class="n">engine</span><span class="p">,</span>
-        <span class="p">}</span>
-        <span class="k">if</span> <span class="n">attempt</span><span class="o">.</span><span class="n">sep</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;sep&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">attempt</span><span class="o">.</span><span class="n">sep</span>
-        <span class="k">if</span> <span class="n">attempt</span><span class="o">.</span><span class="n">on_bad_lines</span> <span class="ow">and</span> <span class="n">attempt</span><span class="o">.</span><span class="n">engine</span> <span class="o">==</span> <span class="s2">&quot;python&quot;</span><span class="p">:</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;on_bad_lines&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">attempt</span><span class="o">.</span><span class="n">on_bad_lines</span>
-        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">data_bytes</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_postprocess_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Rename and prune columns so they align with the expected schema.</span>
-
-<span class="sd">        :param frame: DataFrame produced by pandas for an individual shard.</span>
-<span class="sd">        :returns: Normalized DataFrame ready for unioning.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">frame</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Unnamed: 0&quot;</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
-        <span class="n">frame_columns</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">frame</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
-        <span class="n">rename_map</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">frame</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-            <span class="n">new_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_maybe_canonical_name</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">frame_columns</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">new_name</span> <span class="o">!=</span> <span class="n">column</span><span class="p">:</span>
-                <span class="n">rename_map</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_name</span>
-        <span class="k">if</span> <span class="n">rename_map</span><span class="p">:</span>
-            <span class="n">frame</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">rename_map</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">frame</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_maybe_canonical_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">frame_columns</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a canonical column name when possible.</span>
-
-<span class="sd">        :param column: Column name emitted by the CSV file.</span>
-<span class="sd">        :param frame_columns: All columns currently present in the frame.</span>
-<span class="sd">        :returns: Either the canonical column name or the original value when no change is needed.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="s2">&quot;_pre&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">column</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">column</span>
-
-        <span class="n">candidates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_candidate_column_names</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">candidate</span> <span class="ow">or</span> <span class="n">candidate</span> <span class="o">==</span> <span class="n">column</span><span class="p">:</span>
-                <span class="k">continue</span>
-            <span class="k">if</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">frame_columns</span><span class="p">:</span>
-                <span class="k">continue</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">expected_columns</span> <span class="ow">and</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">expected_columns</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">candidate</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">expected_columns</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">candidate</span>
-        <span class="k">return</span> <span class="n">column</span>
-
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_candidate_column_names</span><span class="p">(</span><span class="n">column</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate canonical column name candidates for ``_pre`` variants.</span>
-
-<span class="sd">        :param column: Column name sourced from the CSV shard.</span>
-<span class="sd">        :returns: Candidate column names stripped of ``_pre`` suffixes.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">candidates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">if</span> <span class="n">column</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;_pre&quot;</span><span class="p">):</span>
-            <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">column</span><span class="p">[:</span><span class="o">-</span><span class="mi">4</span><span class="p">])</span>
-        <span class="k">if</span> <span class="s2">&quot;_pre_&quot;</span> <span class="ow">in</span> <span class="n">column</span><span class="p">:</span>
-            <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_pre_&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
-        <span class="k">if</span> <span class="s2">&quot;_pre&quot;</span> <span class="ow">in</span> <span class="n">column</span><span class="p">:</span>
-            <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_pre&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">candidate</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">]</span>
-
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_combine_frames</span><span class="p">(</span><span class="n">frames</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Align columns across frames and concatenate them.</span>
-
-<span class="sd">        :param frames: Collection of DataFrames produced from dataset shards.</span>
-<span class="sd">        :returns: DataFrame containing the union of the provided columns.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">all_columns</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">col</span> <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">frames</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">frame</span><span class="o">.</span><span class="n">columns</span><span class="p">})</span>
-        <span class="n">aligned</span> <span class="o">=</span> <span class="p">[</span><span class="n">frame</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">all_columns</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">NA</span><span class="p">)</span> <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">frames</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">aligned</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_feature_casts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Cast string-like columns so they align with the dataset feature schema.</span>
-
-<span class="sd">        :param frame: DataFrame produced by combining all shard outputs.</span>
-<span class="sd">        :returns: DataFrame with corrected pandas dtypes.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">frame</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">frame</span>
-
-        <span class="n">object_columns</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">select_dtypes</span><span class="p">(</span><span class="n">include</span><span class="o">=</span><span class="s2">&quot;object&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">columns</span>
-        <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="n">object_columns</span><span class="p">:</span>
-            <span class="n">feature</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">,</span> <span class="n">Features</span><span class="p">):</span>
-                <span class="n">feature</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column_name</span><span class="p">)</span>
-            <span class="n">expected_dtype</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="s2">&quot;dtype&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">feature</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">expected_dtype</span> <span class="o">==</span> <span class="s2">&quot;string&quot;</span><span class="p">:</span>
-                <span class="n">frame</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">frame</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;string&quot;</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">,</span> <span class="n">Features</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">column_name</span><span class="p">,</span> <span class="n">feature</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">Value</span><span class="p">):</span>
-                    <span class="k">continue</span>
-                <span class="k">if</span> <span class="n">column_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">frame</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-                    <span class="k">continue</span>
-                <span class="k">if</span> <span class="n">feature</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="s2">&quot;string&quot;</span><span class="p">:</span>
-                    <span class="n">frame</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">frame</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;string&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">frame</span>
 
 
 <div class="viewcode-block" id="map_rows_to_examples">

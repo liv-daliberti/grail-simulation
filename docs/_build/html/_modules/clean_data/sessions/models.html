@@ -254,7 +254,8 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for clean_data.sessions.models</h1><div class="highlight"><pre>
-<span></span><span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
 <span class="c1">#</span>
 <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
@@ -335,7 +336,11 @@
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.sessions.AllowlistState.from_mapping">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_mapping</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">mapping</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]])</span> <span class="o">-&gt;</span> <span class="s2">&quot;AllowlistState&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create an allowlist state from the nested mapping used on disk.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create an allowlist state from the nested mapping used on disk.</span>
+
+<span class="sd">        :param mapping: Nested mapping of issue -&gt; bucket -&gt; identifier set.</span>
+<span class="sd">        :returns: Initialized :class:`AllowlistState` populated with identifier sets.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">wage</span> <span class="o">=</span> <span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;minimum_wage&quot;</span><span class="p">,</span> <span class="p">{})</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
@@ -351,7 +356,11 @@
 <div class="viewcode-block" id="AllowlistState.requires_enforcement">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.sessions.AllowlistState.requires_enforcement">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">requires_enforcement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return ``True`` when the given topic should be filtered by allowlists.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return ``True`` when the given topic should be filtered by allowlists.</span>
+
+<span class="sd">        :param topic: Topic/issue string extracted from the session payload.</span>
+<span class="sd">        :returns: ``True`` when allowlist enforcement is required.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">topic_lower</span> <span class="o">=</span> <span class="n">topic</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">topic_lower</span> <span class="o">==</span> <span class="s2">&quot;gun_control&quot;</span><span class="p">:</span>
@@ -375,7 +384,13 @@
         <span class="n">worker_candidate</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">case_candidate</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return ``(study_label, participant_token, valid)`` for minimum wage topics.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return ``(study_label, participant_token, valid)`` for minimum wage topics.</span>
+
+<span class="sd">        :param urlid: URL identifier associated with the session.</span>
+<span class="sd">        :param worker_candidate: Candidate worker id extracted from survey/session.</span>
+<span class="sd">        :param case_candidate: Candidate case id extracted from survey/session.</span>
+<span class="sd">        :returns: Tuple of resolved study label, participant token, and validity flag.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">urlid_norm</span> <span class="o">=</span> <span class="n">urlid</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
         <span class="k">if</span> <span class="p">(</span>

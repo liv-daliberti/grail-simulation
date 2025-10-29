@@ -254,7 +254,8 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for clean_data.sessions.build</h1><div class="highlight"><pre>
-<span></span><span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
 <span class="c1">#</span>
 <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
@@ -432,7 +433,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_session_info</span><span class="p">(</span><span class="n">sess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">watched_details</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">SessionInfo</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build reusable identifiers and payloads for a session.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build reusable identifiers and payloads for a session.</span>
+
+<span class="sd">    :param sess: Raw session dictionary emitted by ``sessions.json``.</span>
+<span class="sd">    :param watched_details: Sequence of normalized watched-video metadata entries.</span>
+<span class="sd">    :returns: Populated :class:`SessionInfo` describing the session identifiers.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">session_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">sess</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sessionID&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">sess</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;session_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="n">anon_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">sess</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;anonymousFirebaseAuthUID&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
@@ -460,7 +466,14 @@
     <span class="n">watched_details</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
     <span class="n">surveys</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Derive the canonical issue and survey rows associated with the session.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Derive the canonical issue and survey rows associated with the session.</span>
+
+<span class="sd">    :param sess: Raw session payload.</span>
+<span class="sd">    :param info: Session identifiers constructed by :func:`_session_info`.</span>
+<span class="sd">    :param watched_details: Normalized watched-video metadata for the session.</span>
+<span class="sd">    :param surveys: Mapping of issue -&gt; urlid -&gt; survey rows.</span>
+<span class="sd">    :returns: Tuple of canonical issue slug and associated survey rows.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">canonical_issue</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">survey_rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -494,7 +507,14 @@
     <span class="n">resources</span><span class="p">:</span> <span class="n">_SessionResources</span><span class="p">,</span>
     <span class="n">state</span><span class="p">:</span> <span class="n">_SessionBuildState</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">_SessionContext</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize the session payload into reusable components.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize the session payload into reusable components.</span>
+
+<span class="sd">    :param sess: Raw session dictionary from the CodeOcean export.</span>
+<span class="sd">    :param resources: Preloaded survey, tree, and metadata resources.</span>
+<span class="sd">    :param state: Mutable build state tracking statistics and caches.</span>
+<span class="sd">    :returns: Session context bundle ready for step construction, or ``None`` when the</span>
+<span class="sd">        session should be skipped.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">state</span><span class="o">.</span><span class="n">interaction_stats</span><span class="p">[</span><span class="s2">&quot;sessions_total&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
     <span class="n">raw_vids</span> <span class="o">=</span> <span class="p">[</span>
@@ -560,7 +580,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_participant_metadata</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">_SessionContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_ParticipantSessionMeta</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return participant identifiers and study metadata for the session.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return participant identifiers and study metadata for the session.</span>
+
+<span class="sd">    :param context: Session context created by :func:`_build_session_context`.</span>
+<span class="sd">    :returns: Participant metadata including resolved identifiers and survey row.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">candidate_entries</span><span class="p">:</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">worker_value</span><span class="p">,</span> <span class="n">case_value</span><span class="p">,</span> <span class="n">study_label</span><span class="p">,</span> <span class="n">survey_row</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">candidate_entries</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -607,7 +631,13 @@
     <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">next_base</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a fallback title for the next video when slate metadata omits it.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a fallback title for the next video when slate metadata omits it.</span>
+
+<span class="sd">    :param context: Session context used to inspect watched details.</span>
+<span class="sd">    :param idx: Index of the current interaction step.</span>
+<span class="sd">    :param next_base: Canonical base id of the next video.</span>
+<span class="sd">    :returns: Title string to use when slate metadata lacks a title.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">watched_details</span><span class="p">):</span>
         <span class="n">candidate</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">watched_details</span><span class="p">[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
@@ -623,7 +653,15 @@
     <span class="n">state</span><span class="p">:</span> <span class="n">_SessionBuildState</span><span class="p">,</span>
     <span class="n">resources</span><span class="p">:</span> <span class="n">_SessionResources</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct a single interaction row for the given step.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct a single interaction row for the given step.</span>
+
+<span class="sd">    :param idx: Zero-based interaction index within the session.</span>
+<span class="sd">    :param context: Session context bundle with watch and slate data.</span>
+<span class="sd">    :param participant_meta: Participant metadata resolved for the session.</span>
+<span class="sd">    :param state: Mutable build state storing statistics and caches.</span>
+<span class="sd">    :param resources: Shared resources including recommendation trees and allowlists.</span>
+<span class="sd">    :returns: Row dictionary representing the interaction, or ``None`` if skipped.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">next_base</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">base_vids</span><span class="p">[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">next_base</span><span class="p">:</span>
@@ -726,7 +764,12 @@
     <span class="n">resources</span><span class="p">:</span> <span class="n">_SessionResources</span><span class="p">,</span>
     <span class="n">state</span><span class="p">:</span> <span class="n">_SessionBuildState</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Append interaction rows for the session into ``state.rows``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Append interaction rows for the session into ``state.rows``.</span>
+
+<span class="sd">    :param sess: Raw session payload.</span>
+<span class="sd">    :param resources: Shared metadata resources used during row construction.</span>
+<span class="sd">    :param state: Mutable build state capturing output rows and stats.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">context</span> <span class="o">=</span> <span class="n">_build_session_context</span><span class="p">(</span><span class="n">sess</span><span class="p">,</span> <span class="n">resources</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">context</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -752,7 +795,11 @@
 <div class="viewcode-block" id="build_codeocean_rows">
 <a class="viewcode-back" href="../../../api/clean_data.html#clean_data.codeocean.build_codeocean_rows">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_codeocean_rows</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct the full interaction dataframe from raw CodeOcean assets.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct the full interaction dataframe from raw CodeOcean assets.</span>
+
+<span class="sd">    :param data_root: Path to the CodeOcean capsule ``data`` directory.</span>
+<span class="sd">    :returns: Dataframe containing cleaned interaction rows per session pair.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">data_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span>
     <span class="n">sessions</span> <span class="o">=</span> <span class="n">load_sessions_from_capsule</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span>
@@ -788,13 +835,22 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">split_dataframe</span><span class="p">(</span>
     <span class="n">interaction_frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">validation_ratio</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Split dataframe into train/validation partitions grouped by participant.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Split dataframe into train/validation partitions grouped by participant.</span>
+
+<span class="sd">    :param interaction_frame: Full interaction dataframe produced by ``build_codeocean_rows``.</span>
+<span class="sd">    :param validation_ratio: Share of participant groups assigned to the validation split.</span>
+<span class="sd">    :returns: Mapping of split name to dataframe subset.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">interaction_frame</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;train&quot;</span><span class="p">:</span> <span class="n">interaction_frame</span><span class="p">}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_pick_group</span><span class="p">(</span><span class="n">row_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a partition key for the participant/session of ``row_idx``.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a partition key for the participant/session of ``row_idx``.</span>
+
+<span class="sd">        :param row_idx: Index of the row in ``interaction_frame``.</span>
+<span class="sd">        :returns: Stable grouping key ensuring all related rows share a split.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">urlid</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">interaction_frame</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">row_idx</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;urlid&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="n">session</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">interaction_frame</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">row_idx</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;session_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>

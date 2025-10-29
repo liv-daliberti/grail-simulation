@@ -254,7 +254,8 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for clean_data.sessions.participants</h1><div class="highlight"><pre>
-<span></span><span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
 <span class="c1">#</span>
 <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
@@ -289,7 +290,12 @@
     <span class="n">identifiers</span><span class="p">:</span> <span class="n">ParticipantIdentifiers</span><span class="p">,</span>
     <span class="n">fallback_counter</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Choose the canonical participant identifier for deduplication.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Choose the canonical participant identifier for deduplication.</span>
+
+<span class="sd">    :param identifiers: Structured participant identifiers collected from a session.</span>
+<span class="sd">    :param fallback_counter: Monotonic counter used when no identifiers are present.</span>
+<span class="sd">    :returns: Tuple of canonical participant token and updated fallback counter.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="p">(</span>
         <span class="n">identifiers</span><span class="o">.</span><span class="n">worker_id</span><span class="p">,</span>
@@ -306,7 +312,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_candidate_start_timestamp</span><span class="p">(</span><span class="n">candidate_row</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the earliest available nanosecond timestamp for the row.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the earliest available nanosecond timestamp for the row.</span>
+
+<span class="sd">    :param candidate_row: Survey row candidate under evaluation.</span>
+<span class="sd">    :returns: Integer nanosecond timestamp used for ordering.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;start_time2&quot;</span><span class="p">,</span> <span class="s2">&quot;start_time&quot;</span><span class="p">,</span> <span class="s2">&quot;start_time_w2&quot;</span><span class="p">):</span>
         <span class="n">start_ns</span> <span class="o">=</span> <span class="n">_parse_timestamp_ns</span><span class="p">(</span><span class="n">candidate_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field_name</span><span class="p">))</span>
@@ -316,7 +326,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_candidate_identifiers</span><span class="p">(</span><span class="n">candidate_row</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract normalized worker and case identifiers.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract normalized worker and case identifiers.</span>
+
+<span class="sd">    :param candidate_row: Survey row candidate under evaluation.</span>
+<span class="sd">    :returns: Tuple of normalized ``(worker_id, case_id)`` strings.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">worker_candidate</span> <span class="o">=</span> <span class="n">_normalize_identifier</span><span class="p">(</span>
         <span class="n">candidate_row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;worker_id&quot;</span><span class="p">)</span>
@@ -336,7 +350,15 @@
     <span class="n">worker_candidate</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">case_candidate</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``(study_label, participant_token, valid)`` for the row.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``(study_label, participant_token, valid)`` for the row.</span>
+
+<span class="sd">    :param normalized_topic: Canonical topic label for the session.</span>
+<span class="sd">    :param urlid: URL identifier associated with the participant.</span>
+<span class="sd">    :param allowlist: Allowlist state used to validate identifiers.</span>
+<span class="sd">    :param worker_candidate: Candidate worker identifier from the survey row.</span>
+<span class="sd">    :param case_candidate: Candidate case identifier from the survey row.</span>
+<span class="sd">    :returns: Tuple of study label, participant token, and validity flag.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">normalized_topic</span> <span class="o">==</span> <span class="s2">&quot;gun_control&quot;</span> <span class="ow">and</span> <span class="n">allowlist</span><span class="o">.</span><span class="n">gun_workers</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">worker_candidate</span> <span class="ow">and</span> <span class="n">worker_candidate</span> <span class="ow">in</span> <span class="n">allowlist</span><span class="o">.</span><span class="n">gun_workers</span><span class="p">:</span>
@@ -355,7 +377,12 @@
     <span class="n">study_label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">candidate_row</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure the candidate row has treatment information and responses.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure the candidate row has treatment information and responses.</span>
+
+<span class="sd">    :param study_label: Study label assigned to the candidate row.</span>
+<span class="sd">    :param candidate_row: Survey row to validate for completeness.</span>
+<span class="sd">    :returns: ``True`` when the row satisfies validation rules.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">study_label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;study1&quot;</span><span class="p">,</span> <span class="s2">&quot;study2&quot;</span><span class="p">,</span> <span class="s2">&quot;study3&quot;</span><span class="p">}:</span>
         <span class="k">return</span> <span class="kc">False</span>
@@ -377,7 +404,14 @@
     <span class="n">candidate_row</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
     <span class="n">allowlist</span><span class="p">:</span> <span class="n">AllowlistState</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a candidate tuple when the survey row is eligible.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a candidate tuple when the survey row is eligible.</span>
+
+<span class="sd">    :param normalized_topic: Canonical topic label for the session.</span>
+<span class="sd">    :param urlid: URL identifier associated with the participant.</span>
+<span class="sd">    :param candidate_row: Survey row candidate under evaluation.</span>
+<span class="sd">    :param allowlist: Allowlist state used to validate the candidate.</span>
+<span class="sd">    :returns: Candidate tuple containing ordering key, identifiers, and survey row or ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">worker_candidate</span><span class="p">,</span> <span class="n">case_candidate</span> <span class="o">=</span> <span class="n">_candidate_identifiers</span><span class="p">(</span><span class="n">candidate_row</span><span class="p">)</span>
     <span class="n">start_ns</span> <span class="o">=</span> <span class="n">_candidate_start_timestamp</span><span class="p">(</span><span class="n">candidate_row</span><span class="p">)</span>
@@ -408,7 +442,14 @@
     <span class="n">survey_rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
     <span class="n">allowlist</span><span class="p">:</span> <span class="n">AllowlistState</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create candidate tuples ordered by survey timestamp.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create candidate tuples ordered by survey timestamp.</span>
+
+<span class="sd">    :param topic: Topic identifier associated with the session.</span>
+<span class="sd">    :param urlid: URL identifier for the session participant.</span>
+<span class="sd">    :param survey_rows: Survey rows returned for the participant.</span>
+<span class="sd">    :param allowlist: Allowlist configuration used to validate candidates.</span>
+<span class="sd">    :returns: Sorted list of candidate tuples ranked by survey timestamp.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">normalized_topic</span> <span class="o">=</span> <span class="n">topic</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="n">entries</span> <span class="o">=</span> <span class="p">[</span>

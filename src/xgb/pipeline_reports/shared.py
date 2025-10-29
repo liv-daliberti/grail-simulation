@@ -17,7 +17,7 @@
 
 from __future__ import annotations
 
-from ..pipeline.reports.shared import (  # type: ignore[F401]
+from ..pipeline.reports.shared import (
     LOGGER,
     plt,
     _format_shell_command,

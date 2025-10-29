@@ -8,14 +8,33 @@ TF-IDF, and ships with automated sweeps + report generation.
 
 ```
 src/xgb/
-├── cli/                 # Single-run CLI (train, evaluate, export)
-├── core/                # Dataset loading, feature prep, models, evaluation
-├── pipeline/            # Hyper-parameter sweeps, finals, and reporting glue
-├── pipeline/reports/    # Markdown builders for reports/xgb/*
-├── pipeline_reports/    # Legacy shims pointing at pipeline/reports/*
-├── scripts/             # Backwards-compatible entry points
-└── xgboost-baseline.py  # Legacy CLI shim (invokes xgb.cli.main)
+├── cli/                         # Single-run CLI (train, evaluate, export)
+│   ├── __init__.py              # Package exports for scripting
+│   ├── __main__.py              # Enables `python -m xgb.cli`
+│   └── main.py                  # Training/evaluation argument parser
+├── core/                        # Dataset loading, feature prep, models, evaluation
+│   ├── __init__.py
+│   ├── data.py                  # Dataset loading + issue/study filtering
+│   ├── features.py              # Prompt document assembly helpers
+│   ├── vectorizers.py           # TF-IDF/Word2Vec/SentenceTransformer wrappers
+│   ├── model.py                 # Booster training + persistence helpers
+│   ├── opinion.py               # Opinion-regression fit/eval utilities
+│   └── evaluate.py              # Next-video + opinion evaluation orchestration
+├── pipeline/                    # Hyper-parameter sweeps, finals, report generation
+│   ├── __init__.py              # Orchestration entry point (python -m xgb.pipeline)
+│   ├── __main__.py              # Enables `python -m xgb.pipeline`
+│   ├── cli.py                   # Top-level pipeline CLI + default paths
+│   ├── context.py               # Path resolution + execution configuration
+│   ├── evaluate.py              # Finalization + opinion execution
+│   ├── sweeps.py                # Hyper-parameter grids and task partitioning
+│   └── reports/                 # Markdown builders for reports/xgb/*
+├── pipeline_reports/            # Legacy shims forwarding to pipeline/reports/*
+├── scripts/                     # Backwards-compatible entry points
+└── xgboost-baseline.py          # Legacy CLI shim (invokes xgb.cli.main)
 ```
+
+Existing imports that target `xgb.pipeline_reports` continue to work through the compatibility
+wrappers; new code should import from `xgb.pipeline.reports`.
 
 Set `PYTHONPATH=src` (or install the package) before invoking the CLIs.
 
@@ -73,22 +92,28 @@ as `xgb.data` and `xgb.pipeline_cli` remain available via compatibility aliases.
 
 `python -m xgb.pipeline` mirrors the multi-stage flow used for kNN:
 
-1. Hyper-parameter sweeps across learning rate, depth, estimators, regularisers,
-   and text vectorisers.
-2. Selection of the best slate configuration per study followed by final
-   evaluations (with optional checkpoint export).
-3. Opinion-regression sweeps and evaluations that reuse the winning slate
-   settings (runs by default; use `--tasks` to restrict stages).
-4. Markdown regeneration beneath `reports/xgb/`.
+1. `plan` stage enumerates sweep tasks, surfaces cached artefacts, and logs the execution blueprint.
+2. `sweeps` stage runs the hyper-parameter grid across learning rate, depth, estimators,
+   regularisers, and text vectorisers.
+3. `finalize` stage reloads the winning slate configuration per study, exports metrics,
+   and optionally checkpoints models.
+4. `reports` stage regenerates Markdown beneath `reports/xgb/`, including the opinion summaries.
+   Opinion-regression sweeps run by default; use `--tasks` to target a subset (e.g. `--tasks next_video`).
 
 Typical invocations:
 
 ```bash
-# Dry-run to inspect the execution plan
+# Emit a sweep plan summary without launching jobs
+python -m xgb.pipeline --stage plan
+
+# Dry-run to inspect cached vs pending tasks
 python -m xgb.pipeline --dry-run
 
 # Launch sweeps only with 8 parallel jobs
 python -m xgb.pipeline --stage sweeps --jobs 8
+
+# Finalize using cached sweeps (skips rerunning completed grids)
+python -m xgb.pipeline --stage finalize --reuse-sweeps
 
 # Rebuild reports from cached sweeps/finals
 python -m xgb.pipeline --stage reports --reuse-sweeps --reuse-final
@@ -125,25 +150,29 @@ The training launcher sets defaults that align with our standard sweeps:
 
 ## Feature Spaces & Vectorisers
 
-- **TF-IDF** (default) – fast, memory-light baseline built via `model.TfidfVectorizerBundle`.
-- **Word2Vec** – relies on `vectorizers.Word2VecBundle`; persisted models live
+- **TF-IDF** (default) – fast, memory-light baseline built via
+  `core.vectorizers.TfidfVectorizerWrapper` (backed by `common.text.vectorizers`).
+- **Word2Vec** – handled by `core.vectorizers.Word2VecVectorizer`; persisted models live
   under the directory supplied via `--word2vec_model_dir`.
-- **Sentence Transformer** – handled by `vectorizers.SentenceTransformerBundle`.
-  Normalisation flags are shared with the CLI via `common.cli.args`.
+- **Sentence Transformer** – implemented by `core.vectorizers.SentenceTransformerVectorizer`,
+  which reuses the shared `common.text.embeddings` stack. Normalisation flags mirror the CLI
+  options exposed through `common.cli.args`.
 
-All vectorisers reuse `features.prepare_prompt_documents` to keep prompts aligned
+All vectorisers reuse `core.features.prepare_prompt_documents` to keep prompts aligned
 with the other baselines.
 
 ## Opinion Workflow & Reports
 
-`opinion.py` reuses the selected slate configuration to train regression models
+`core.opinion` reuses the selected slate configuration to train regression models
 per opinion study. Artefacts flow to `models/xgb/opinion/*`, while
-`pipeline_reports/` produces Markdown under `reports/xgb/`:
+`pipeline/reports/` produces Markdown under `reports/xgb/` (legacy imports against
+`pipeline_reports/` continue to work via shims):
 
 - `catalog.py` builds the README summary.
 - `hyperparameter.py` publishes sweep tables and best-config recaps.
+- `features.py` summarizes feature importance across slates.
 - `opinion.py` renders opinion leadership tables and diagnostics.
-- `shared.py` houses layout helpers used across the report modules.
+- `plots.py` and `shared.py` house layout helpers used across the report modules.
 
 Regenerate reports with `python -m xgb.pipeline --stage reports`.
 
@@ -151,7 +180,8 @@ Regenerate reports with `python -m xgb.pipeline --stage reports`.
 
 - Slate metrics, predictions, and curve snapshots land in
   `models/xgb/next_video/<vectorizer>/<study>/<issue>/`.
-- Saved model bundles are serialised via `model.save_model_bundle`.
+- Saved model bundles are serialised via `core.model.save_model_bundle`
+  (still re-exported for legacy callers as `model.save_model_bundle`).
 - Opinion metrics mirror the layout under `models/xgb/opinion/<study>/`.
 - Opinion-from-next evaluations reuse the winning slate configuration; artefacts appear in
   `models/xgb/opinion/from_next/<vectorizer>/<study>/` and feed the optional

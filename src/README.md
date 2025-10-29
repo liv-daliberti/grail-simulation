@@ -6,26 +6,32 @@ single packaging story.
 
 ## Baseline Packages
 
-- `knn/` – k-nearest-neighbor slate selector with modular CLIs, TF-IDF and
-  optional Word2Vec features, and issue-aware dataset filtering. Typical run:
-  `python -m knn.cli --dataset data/cleaned_grail --out_dir models/knn/run-001 --fit-index`.
-- `xgb/` – XGBoost slate baseline that reuses the `knn` prompt/document pipeline
-  but trains a multi-class booster. Train and evaluate via
-  `python -m xgb.cli --fit_model --dataset data/cleaned_grail --out_dir models/xgb/run-001`.
-- `gpt4o/` – Azure GPT-4o powered slate selection baseline with a structured
+- `knn/` – modular k-NN slate selector split into `cli/`, `core/`, and `pipeline/`
+  packages. Run single experiments with
+  `python -m knn.cli --dataset data/cleaned_grail --out_dir models/knn/run-001 --fit_index`
+  or orchestrate the full workflow via
+  `python -m knn.pipeline --stage {plan,sweeps,finalize,reports}`.
+- `xgb/` – XGBoost slate baseline that mirrors the k-NN layout (`cli/`, `core/`,
+  `pipeline/`) while reusing the shared prompt/document pipeline. Invoke
+  `python -m xgb.cli --fit_model --dataset data/cleaned_grail --out_dir models/xgb/run-001`
+  for a single run or `python -m xgb.pipeline --stage sweeps --jobs 8` for automation.
+- `gpt4o/` – Azure GPT-4o powered slate-selection baseline with a structured
   conversation builder. After exporting API credentials, launch
-  `python -m gpt4o.cli --out_dir reports/gpt4o --eval_max 100`.
+  `python -m gpt4o.cli --out-dir reports/gpt4o --eval_max 100`
+  or run the sweep/report harness via `python -m gpt4o.pipeline`.
 - `open_r1/` – GRPO/GRAIL/SFT reinforcement-learning stack. Recipes under
   `recipes/**` feed the trainers; e.g.
   `python src/open_r1/grpo.py --config recipes/Qwen2.5-1.5B-Instruct/grpo/config_grpo.yaml`.
 
 ## Shared Utilities
 
+- `common/` – shared CLI builders, prompt/document tooling, pipeline executors,
+  reporting helpers, metrics, and text vectorisers consumed by every baseline.
 - `prompt_builder/` – canonical prompt/profile rendering helpers used by
   baselines and RL trainers (exposes `build_user_prompt`, `render_profile`, and
-  related utilities).
-- `visualization/` – lightweight plotting utilities (e.g., recommendation tree
-  rendering) imported by analysis notebooks and reporting scripts.
+  other helpers through a package namespace).
+- `visualization/` – standalone recommendation-tree renderer CLI; plotting defaults
+  shared with the baselines now live in `common/visualization/`.
 - `prompt_builder.py` – compatibility shim that re-exports the package API for
   legacy imports.
 

@@ -122,13 +122,20 @@ def extract_curve_sections(
 
     if not isinstance(curve_bundle, Mapping):
         return None
-    eval_curve = curve_bundle.get("eval")
-    if not isinstance(eval_curve, Mapping):
+    eval_curve: Optional[Mapping[str, object]] = None
+    for key in ("eval", "validation", "val"):
+        candidate = curve_bundle.get(key)
+        if isinstance(candidate, Mapping):
+            eval_curve = candidate
+            break
+    if eval_curve is None:
         return None
-    train_curve = curve_bundle.get("train")
-    train_mapping: Optional[Mapping[str, object]] = (
-        train_curve if isinstance(train_curve, Mapping) else None
-    )
+    train_mapping: Optional[Mapping[str, object]] = None
+    for key in ("train", "training"):
+        candidate = curve_bundle.get(key)
+        if isinstance(candidate, Mapping):
+            train_mapping = candidate
+            break
     return (eval_curve, train_mapping)
 
 

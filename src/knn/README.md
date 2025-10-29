@@ -10,6 +10,7 @@ while keeping a compatible CLI for ad-hoc experiments and batch jobs.
 src/knn/
 ├── cli/                           # Single-run CLI entry points
 │   ├── __init__.py                # Public exports for python -m knn.cli
+│   ├── __main__.py                # Enables `python -m knn.cli`
 │   ├── main.py                    # Argument parsing, CLI wiring, eval dispatch
 │   └── utils.py                   # Shared argparse helpers (e.g. ST flags)
 ├── core/                          # Feature extraction, indexing, evaluation
@@ -31,10 +32,14 @@ src/knn/
 │   ├── opinion_sweeps.py          # Opinion-specific sweep helpers
 │   ├── utils.py                   # Fan-out helpers shared across stages
 │   └── reports/                   # Markdown builders for reports/knn/*
+├── pipeline_reports/              # Legacy shims forwarding to pipeline/reports/*
 └── scripts/
     ├── __init__.py
     └── baseline.py                # Backwards-compatible shim for knn-baseline.py
 ```
+
+Legacy imports that still reference `knn.pipeline_reports.*` continue to work via the
+compatibility wrappers that forward to `pipeline/reports`.
 
 Set `PYTHONPATH=src` (or install the package) before invoking any module-level CLI.
 
@@ -46,9 +51,9 @@ Train and evaluate a TF-IDF index on the default cleaned dataset:
 export PYTHONPATH=src
 python -m knn.cli \
   --dataset data/cleaned_grail \
-  --out-dir models/knn/example-run \
-  --feature-space tfidf \
-  --fit-index
+  --out_dir models/knn/example-run \
+  --feature_space tfidf \
+  --fit_index
 ```
 
 Switch the feature space, limit issues, or reuse a persisted index:
@@ -56,18 +61,18 @@ Switch the feature space, limit issues, or reuse a persisted index:
 ```bash
 python -m knn.cli \
   --dataset data/cleaned_grail \
-  --out-dir models/knn/word2vec-demo \
-  --feature-space word2vec \
+  --out_dir models/knn/word2vec-demo \
+  --feature_space word2vec \
   --issues minimum_wage,gun_control \
-  --word2vec-size 256 \
-  --fit-index \
-  --save-index models/knn/word2vec-demo/index_cache
+  --word2vec_size 256 \
+  --fit_index \
+  --save_index models/knn/word2vec-demo/index_cache
 
 python -m knn.cli \
   --dataset data/cleaned_grail \
-  --load-index models/knn/word2vec-demo/index_cache \
-  --feature-space word2vec \
-  --eval-max 2000 \
+  --load_index models/knn/word2vec-demo/index_cache \
+  --feature_space word2vec \
+  --eval_max 2000 \
   --participant-studies study1,study2
 ```
 
@@ -78,22 +83,30 @@ All switches are documented via `python -m knn.cli --help`, including the
 
 `python -m knn.pipeline` drives the full workflow used in SLURM jobs and CI:
 
-1. Hyper-parameter sweeps for next-video ranking across requested feature spaces
+1. `plan` stage enumerates hyper-parameter tasks and surfaces cached metrics
+   for both next-video and opinion runs.
+2. `sweeps` stage executes the pending hyper-parameter jobs across the requested feature spaces
    (`tfidf`, `word2vec`, `sentence_transformer`).
-2. Final evaluations that reload the winning configuration per study and export
+3. `finalize` stage reloads the winning configuration per study and exports
    metrics, predictions, and elbow curves.
-3. Opinion-regression sweeps that reuse the slate configs (runs by default; use
-   `--tasks` to restrict to a subset, e.g. `--tasks next_video`).
-4. Markdown regeneration under `reports/knn/`.
+4. `reports` stage regenerates Markdown under `reports/knn/`, capturing both slate and opinion summaries.
+   Opinion-regression sweeps run alongside the next-video sweeps by default; use
+   `--tasks` to restrict to a subset (for example `--tasks next_video`).
 
 Common invocations:
 
 ```bash
-# Inspect the plan without scheduling jobs
+# Emit a sweep plan without scheduling jobs
+python -m knn.pipeline --stage plan
+
+# Dry-run to log cached vs pending tasks
 python -m knn.pipeline --dry-run
 
 # Run the sweeps stage only (results land under models/knn/next_video/sweeps)
 python -m knn.pipeline --stage sweeps --jobs 8
+
+# Finalize with cached sweeps (skips rerunning completed grids)
+python -m knn.pipeline --stage finalize --reuse-sweeps
 
 # Regenerate reports using cached sweeps/finals
 python -m knn.pipeline --stage reports --reuse-sweeps --reuse-final
@@ -131,8 +144,9 @@ The training launcher applies sensible defaults that mirror typical runs:
   `models/knn/next_video/word2vec_models/<issue>/<study>` so future runs can skip
   retraining.
 - **Sentence Transformer** – uses `sentence-transformers` to encode prompts.
-  Configure via `--sentence-transformer-*` flags in both the single-run CLI and
-  pipeline. Normalisation can be toggled with `--sentence-transformer-normalize`.
+  Configure via `--sentence_transformer_*` flags in the single-run CLI or the
+  hyphenated equivalents in the pipeline. Normalisation can be toggled with
+  `--sentence-transformer-normalize`.
 
 All spaces share the prompt builder from `common.prompts.docs` to guarantee parity
 with the GPT-4o and XGBoost baselines.

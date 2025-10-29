@@ -457,6 +457,8 @@ def _curve_metrics_from_history(eval_history: Mapping[str, Any]) -> Optional[Dic
                 str(idx + 1): float(value) for idx, value in enumerate(rmse_sequence)
             }
         curve_metrics[label] = series_bundle
+        if label == "validation":
+            curve_metrics["eval"] = series_bundle
     eval_mae_sequence = eval_history.get("validation_1", {}).get("mae", [])
     if eval_mae_sequence:
         best_round = min(

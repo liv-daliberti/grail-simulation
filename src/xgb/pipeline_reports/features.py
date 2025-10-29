@@ -17,7 +17,6 @@
 
 from __future__ import annotations
 
-from ..pipeline.reports.features import *  # type: ignore[F401,F403]
-from ..pipeline.reports.features import __all__ as _FEATURES_ALL  # type: ignore[F401]
+from ..pipeline.reports.features import _write_feature_report
 
-__all__ = list(_FEATURES_ALL)
+__all__ = ["_write_feature_report"]

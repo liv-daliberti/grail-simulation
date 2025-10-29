@@ -219,6 +219,8 @@ def _write_disabled_report(directory: Path, title: str, message: str) -> None:
     write_markdown_lines(path, lines)
 
 
+# pylint: disable=undefined-all-variable
+
 __all__ = [
     "LOGGER",
     "plt",

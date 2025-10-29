@@ -466,16 +466,22 @@ def resolve_reports_dir(out_dir: Path) -> Path:
         Path: Path pointing at the repository-level ``reports`` directory.
     """
     resolved = out_dir.resolve()
-    parents = list(resolved.parents)
-    if len(parents) >= 1 and parents[0].name == "knn":
-        resolved = parents[0]
-        parents = list(resolved.parents)
-    if len(parents) >= 1 and parents[0].name == "models":
-        root_dir = parents[0].parent
-    elif len(parents) >= 2 and parents[1].name == "models":
-        root_dir = parents[1].parent
-    else:
-        root_dir = resolved.parent
+    ancestors = [resolved, *resolved.parents]
+    root_dir: Optional[Path] = None
+
+    for ancestor in ancestors:
+        if ancestor.name == "models":
+            root_dir = ancestor.parent
+            break
+    if root_dir is None:
+        for ancestor in ancestors:
+            if ancestor.name in {"knn", "xgb"}:
+                root_dir = ancestor.parent
+                break
+    if root_dir is None and resolved.parents:
+        root_dir = resolved.parents[-1]
+    if root_dir is None:
+        root_dir = resolved
     return root_dir / "reports"
 
 def plot_elbow(

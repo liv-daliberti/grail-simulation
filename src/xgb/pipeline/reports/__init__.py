@@ -25,10 +25,19 @@ from common.pipeline.formatters import (
     format_ratio as _format_ratio,
 )
 
-from .next_video import _extract_next_video_summary
-from .opinion import _extract_opinion_summary
+from .catalog import _write_catalog_report
+from .features import _write_feature_report
+from .hyperparameter import _write_hyperparameter_report
+from .next_video import _extract_next_video_summary, _write_next_video_report
+from .opinion import _extract_opinion_summary, _write_opinion_report
 from .runner import OpinionReportData, ReportSections, SweepReportData, _write_reports
-from .shared import _write_disabled_report
+from .shared import (
+    _format_shell_command,
+    _slugify_label,
+    _write_disabled_report,
+    _xgb_next_video_command,
+    _xgb_opinion_command,
+)
 
 __all__ = [
     "_format_float",
@@ -37,8 +46,17 @@ __all__ = [
     "_format_count",
     "_format_ratio",
     "_extract_next_video_summary",
+    "_write_next_video_report",
     "_extract_opinion_summary",
+    "_write_opinion_report",
     "_write_reports",
+    "_write_catalog_report",
+    "_write_feature_report",
+    "_write_hyperparameter_report",
+    "_slugify_label",
+    "_format_shell_command",
+    "_xgb_next_video_command",
+    "_xgb_opinion_command",
     "SweepReportData",
     "OpinionReportData",
     "ReportSections",

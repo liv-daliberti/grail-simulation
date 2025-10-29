@@ -17,7 +17,6 @@
 
 from __future__ import annotations
 
-from ..pipeline.reports.catalog import *  # type: ignore[F401,F403]
-from ..pipeline.reports.catalog import __all__ as _CATALOG_ALL  # type: ignore[F401]
+from ..pipeline.reports.catalog import _write_catalog_report
 
-__all__ = list(_CATALOG_ALL)
+__all__ = ["_write_catalog_report"]

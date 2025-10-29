@@ -17,7 +17,26 @@
 
 from __future__ import annotations
 
-from ..pipeline.reports.plots import *  # type: ignore[F401,F403]
-from ..pipeline.reports.plots import __all__ as _PLOTS_ALL  # type: ignore[F401]
+from ..pipeline.reports.plots import (
+    _CurveSeries,
+    _build_curve_series,
+    _collect_curve_series,
+    _extract_accuracy_curves,
+    _extract_mae_curves,
+    _plot_curve_on_axis,
+    _plot_opinion_curve,
+    _plot_xgb_curve,
+    _plot_xgb_curve_overview,
+)
 
-__all__ = list(_PLOTS_ALL)
+__all__ = [
+    "_CurveSeries",
+    "_build_curve_series",
+    "_collect_curve_series",
+    "_extract_accuracy_curves",
+    "_extract_mae_curves",
+    "_plot_curve_on_axis",
+    "_plot_opinion_curve",
+    "_plot_xgb_curve",
+    "_plot_xgb_curve_overview",
+]

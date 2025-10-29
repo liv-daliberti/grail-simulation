@@ -13,6 +13,14 @@ This summary captures the opinion-regression baselines trained with XGBoost for 
 | Study 2 – Minimum Wage (MTurk) | 165 | 0.836 | 0.061 | +0.776 | 0.036 | +0.060 | 0.049 | 0.969 | 0.036 | 0.049 | +0.089 | 1.106 | -0.003 | 0.013 | — | 0.572 | +17.797 | 0.096 |
 | Study 3 – Minimum Wage (YouGov) | 257 | 0.739 | 0.058 | +0.681 | 0.049 | +0.036 | 0.069 | 0.930 | 0.049 | 0.069 | +0.057 | 1.064 | -0.005 | 0.008 | — | 0.788 | +15.792 | 0.084 |
 
+## Training Curves
+
+![Study 1 – Gun Control (MTurk)](curves/study_1_gun_control_mturk_mae.png)
+
+![Study 2 – Minimum Wage (MTurk)](curves/study_2_minimum_wage_mturk_mae.png)
+
+![Study 3 – Minimum Wage (YouGov)](curves/study_3_minimum_wage_yougov_mae.png)
+
 ## Cross-Study Diagnostics
 
 ### Weighted Summary

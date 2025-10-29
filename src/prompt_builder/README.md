@@ -9,15 +9,24 @@ layout while preserving the same public API.
 
 - `prompt.py` exposes the top-level `build_user_prompt(...)` helper that stitches
   together profile, current video, recently watched, and slate sections.
-- `profiles.py` synthesizes viewer sentences (`render_profile`,
-  `synthesize_viewer_sentence`) and keeps the friendly feature metadata in sync
-  with `clean_data/prompt/question_mapping.py`.
-- `formatters.py` houses generic text utilities (`clean_text`, `join_kv_section`)
-  that normalize whitespace and convert structured data into readable strings.
-- `parsers.py` provides convenience helpers (`truthy`, `secs`, `as_list_json`)
-  used throughout the codebase to safely coerce survey values.
+- `prompt_helpers.py` breaks down prompt construction into focused helpers
+  (viewer summary, stance lines, history formatting, survey highlights, etc.).
+- `prompt_options.py` renders slate options with consistent numbering and metadata.
+- `profiles.py` and `profile_helpers.py` synthesize viewer sentences (`render_profile`,
+  `synthesize_viewer_sentence`) and keep the feature metadata aligned with
+  `clean_data/prompt/question_mapping.py`.
+- `formatters.py` houses generic text utilities (`clean_text`, `join_kv_section`,
+  `human_join`) that normalize whitespace and convert structured data into readable strings.
+- `parsers.py` provides convenience helpers (`truthy`, `secs`, `as_list_json`,
+  `format_yes_no`) used throughout the codebase to safely coerce survey values.
+- `shared.py` normalizes `selected_survey_row` payloads and surfaces shared lookup
+  helpers (`first_non_nan_value`).
+- `value_maps.py` standardizes how categorical survey responses are verbalized.
 - `constants.py` defines prompt labels, ordering rules, and default limits (e.g.,
   maximum history length).
+- `video_stats.py` loads aggregate engagement metadata from `data/video_stats.json`
+  so prompts can include consistent view/comment summaries.
+- `samples.py` powers the CLI used to regenerate example prompts for documentation.
 
 The package root re-exports the public entry points so existing imports such as
 `from prompt_builder import build_user_prompt` continue to work unchanged.

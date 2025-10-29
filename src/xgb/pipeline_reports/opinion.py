@@ -17,7 +17,20 @@
 
 from __future__ import annotations
 
-from ..pipeline.reports.opinion import *  # type: ignore[F401,F403]
-from ..pipeline.reports.opinion import __all__ as _OPINION_ALL  # type: ignore[F401]
+from ..pipeline.reports.opinion import (
+    _OpinionPortfolioAccumulator,
+    _WeightedMetricAccumulator,
+    _extract_opinion_summary,
+    _opinion_cross_study_diagnostics,
+    _opinion_observations,
+    _write_opinion_report,
+)
 
-__all__ = list(_OPINION_ALL)
+__all__ = [
+    "_OpinionPortfolioAccumulator",
+    "_WeightedMetricAccumulator",
+    "_extract_opinion_summary",
+    "_opinion_cross_study_diagnostics",
+    "_opinion_observations",
+    "_write_opinion_report",
+]

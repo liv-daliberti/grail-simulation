@@ -1420,6 +1420,38 @@ def _curve_summary(
         "n_examples": int(n_examples),
     }
 
+
+def _log_validation_summary(
+    *,
+    issue_slug: str,
+    feature_space: str,
+    best_k: int,
+    accuracy_by_k: Mapping[int, float],
+    per_k_stats: Mapping[int, Mapping[str, int]],
+    n_examples: int,
+) -> None:
+    """Log the primary validation metrics captured during evaluation."""
+
+    stats = per_k_stats.get(best_k, {})
+    eligible = int(stats.get("eligible", 0))
+    correct = int(stats.get("correct", 0))
+    evaluated = int(n_examples)
+    accuracy = float(accuracy_by_k.get(best_k, 0.0))
+    coverage = safe_div(eligible, evaluated) if evaluated else 0.0
+    logging.info(
+        "[KNN][Validation] issue=%s feature=%s best_k=%d accuracy=%.3f coverage=%.3f "
+        "evaluated=%d eligible=%d correct=%d",
+        issue_slug,
+        feature_space,
+        best_k,
+        accuracy,
+        coverage,
+        evaluated,
+        eligible,
+        correct,
+    )
+
+
 def evaluate_issue(
     *,
     issue_slug: str,
@@ -1557,6 +1589,14 @@ def evaluate_issue(
         curve_metrics=curve_metrics,
         provenance=provenance,
         uncertainty=uncertainty,
+    )
+    _log_validation_summary(
+        issue_slug=issue_slug,
+        feature_space=feature_space,
+        best_k=best_k,
+        accuracy_by_k=accuracy_by_k,
+        per_k_stats=per_k_stats,
+        n_examples=eval_summary["n_examples"],
     )
 
 def bin_nopts(option_count: int) -> str:

@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+from ..pipeline.reports import plots as _plots
 from ..pipeline.reports.plots import (
     _CurveSeries,
     _build_curve_series,
@@ -29,14 +30,4 @@ from ..pipeline.reports.plots import (
     _plot_xgb_curve_overview,
 )
 
-__all__ = [
-    "_CurveSeries",
-    "_build_curve_series",
-    "_collect_curve_series",
-    "_extract_accuracy_curves",
-    "_extract_mae_curves",
-    "_plot_curve_on_axis",
-    "_plot_opinion_curve",
-    "_plot_xgb_curve",
-    "_plot_xgb_curve_overview",
-]
+__all__ = list(_plots.__all__)

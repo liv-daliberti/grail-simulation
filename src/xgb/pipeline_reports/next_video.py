@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+from ..pipeline.reports import next_video as _next_video
 from ..pipeline.reports.next_video import (
     _extract_next_video_summary,
     _next_video_dataset_info,
@@ -25,10 +26,4 @@ from ..pipeline.reports.next_video import (
     _write_next_video_report,
 )
 
-__all__ = [
-    "_extract_next_video_summary",
-    "_next_video_dataset_info",
-    "_next_video_observations",
-    "_next_video_portfolio_summary",
-    "_write_next_video_report",
-]
+__all__ = list(_next_video.__all__)

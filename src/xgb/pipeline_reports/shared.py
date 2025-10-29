@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+from ..pipeline.reports import shared as _shared
 from ..pipeline.reports.shared import (
     LOGGER,
     plt,
@@ -27,12 +28,4 @@ from ..pipeline.reports.shared import (
     _xgb_opinion_command,
 )
 
-__all__ = [
-    "LOGGER",
-    "plt",
-    "_slugify_label",
-    "_format_shell_command",
-    "_xgb_next_video_command",
-    "_xgb_opinion_command",
-    "_write_disabled_report",
-]
+__all__ = list(_shared.__all__)

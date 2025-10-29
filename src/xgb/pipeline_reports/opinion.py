@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+from ..pipeline.reports import opinion as _opinion
 from ..pipeline.reports.opinion import (
     _OpinionPortfolioAccumulator,
     _WeightedMetricAccumulator,
@@ -26,11 +27,4 @@ from ..pipeline.reports.opinion import (
     _write_opinion_report,
 )
 
-__all__ = [
-    "_OpinionPortfolioAccumulator",
-    "_WeightedMetricAccumulator",
-    "_extract_opinion_summary",
-    "_opinion_cross_study_diagnostics",
-    "_opinion_observations",
-    "_write_opinion_report",
-]
+__all__ = list(_opinion.__all__)

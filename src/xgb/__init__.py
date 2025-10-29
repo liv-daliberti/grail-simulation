@@ -21,26 +21,20 @@ slate-ranking and opinion-regression experiments."""
 from __future__ import annotations
 
 from common.import_utils import install_package_aliases
+from common.package_baseline import BASELINE_PUBLIC_API, build_alias_map
 
 from . import cli, core, pipeline, scripts
 
-__all__ = ["cli", "core", "pipeline", "scripts"]
+__all__ = list(BASELINE_PUBLIC_API)
 
-_ALIAS_MODULES = {
-    "data": ".core.data",
-    "evaluate": ".core.evaluate",
-    "features": ".core.features",
-    "model": ".core.model",
-    "opinion": ".core.opinion",
-    "utils": ".core.utils",
-    "vectorizers": ".core.vectorizers",
-    "_optional": ".core._optional",
-    "pipeline_cli": ".pipeline.cli",
-    "pipeline_context": ".pipeline.context",
-    "pipeline_evaluate": ".pipeline.evaluate",
-    "pipeline_sweeps": ".pipeline.sweeps",
-}
+_ALIAS_MODULES = build_alias_map(
+    {
+        "model": ".core.model",
+        "vectorizers": ".core.vectorizers",
+        "_optional": ".core._optional",
+    }
+)
 
 install_package_aliases(__name__, _ALIAS_MODULES)
 
-del install_package_aliases, _ALIAS_MODULES
+del install_package_aliases, _ALIAS_MODULES, BASELINE_PUBLIC_API, build_alias_map

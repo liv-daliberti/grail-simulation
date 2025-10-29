@@ -139,22 +139,14 @@ def participant_bootstrap_summary(
     *,
     model_samples: Sequence[float],
     baseline_samples: Sequence[float] | None,
-    grouped_count: int,
-    row_count: int,
-    replicates: int,
-    seed: int,
+    summary_config: BootstrapSummaryConfig,
 ) -> Dict[str, Any]:
     """Summarise participant bootstrap samples using the shared helper."""
     return summarise_bootstrap_samples(
         model_samples=model_samples,
         baseline_samples=baseline_samples,
         method="participant_bootstrap",
-        config=BootstrapSummaryConfig(
-            n_groups=grouped_count,
-            n_rows=row_count,
-            n_bootstrap=replicates,
-            seed=seed,
-        ),
+        config=summary_config,
     )
 
 

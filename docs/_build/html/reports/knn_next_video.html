@@ -295,8 +295,15 @@
 <td class="text-right"><p>3</p></td>
 </tr>
 <tr class="row-odd"><td><p>WORD2VEC</p></td>
-<td class="text-right"><p>0.280</p></td>
-<td class="text-right"><p>-0.182</p></td>
+<td class="text-right"><p>0.306</p></td>
+<td class="text-right"><p>-0.156</p></td>
+<td class="text-right"><p>0.271</p></td>
+<td class="text-right"><p>2,419</p></td>
+<td class="text-right"><p>3</p></td>
+</tr>
+<tr class="row-even"><td><p>SENTENCE_TRANSFORMER</p></td>
+<td class="text-right"><p>0.305</p></td>
+<td class="text-right"><p>-0.158</p></td>
 <td class="text-right"><p>0.271</p></td>
 <td class="text-right"><p>2,419</p></td>
 <td class="text-right"><p>3</p></td>
@@ -380,10 +387,10 @@
 </thead>
 <tbody>
 <tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
-<td class="text-right"><p>0.290</p></td>
-<td class="text-right"><p>0.290</p></td>
-<td><p>[0.257, 0.323]</p></td>
-<td class="text-right"><p>-0.250</p></td>
+<td class="text-right"><p>0.407</p></td>
+<td class="text-right"><p>0.407</p></td>
+<td><p>[0.371, 0.444]</p></td>
+<td class="text-right"><p>-0.133</p></td>
 <td class="text-right"><p>0.540</p></td>
 <td class="text-right"><p>0.326</p></td>
 <td class="text-right"><p>2</p></td>
@@ -391,10 +398,10 @@
 <td class="text-right"><p>548</p></td>
 </tr>
 <tr class="row-odd"><td><p>Study 2 – Minimum Wage (MTurk)</p></td>
-<td class="text-right"><p>0.295</p></td>
-<td class="text-right"><p>0.295</p></td>
-<td><p>[0.260, 0.330]</p></td>
-<td class="text-right"><p>-0.073</p></td>
+<td class="text-right"><p>0.291</p></td>
+<td class="text-right"><p>0.291</p></td>
+<td><p>[0.259, 0.325]</p></td>
+<td class="text-right"><p>-0.077</p></td>
 <td class="text-right"><p>0.368</p></td>
 <td class="text-right"><p>0.255</p></td>
 <td class="text-right"><p>2</p></td>
@@ -404,8 +411,63 @@
 <tr class="row-even"><td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td class="text-right"><p>0.268</p></td>
 <td class="text-right"><p>0.268</p></td>
-<td><p>[0.245, 0.291]</p></td>
-<td class="text-right"><p>-0.212</p></td>
+<td><p>[0.245, 0.293]</p></td>
+<td class="text-right"><p>-0.211</p></td>
+<td class="text-right"><p>0.479</p></td>
+<td class="text-right"><p>0.255</p></td>
+<td class="text-right"><p>2</p></td>
+<td class="text-right"><p>1,200</p></td>
+<td class="text-right"><p>1,200</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="sentence-transformer-feature-space">
+<h2>Sentence-Transformer Feature Space<a class="headerlink" href="#sentence-transformer-feature-space" title="Link to this heading">¶</a></h2>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Study</p></th>
+<th class="head text-right"><p>Accuracy ↑</p></th>
+<th class="head text-right"><p>Accuracy (all rows) ↑</p></th>
+<th class="head"><p>95% CI</p></th>
+<th class="head text-right"><p>Δ vs baseline ↑</p></th>
+<th class="head text-right"><p>Baseline ↑</p></th>
+<th class="head text-right"><p>Random ↑</p></th>
+<th class="head text-right"><p>Best k</p></th>
+<th class="head text-right"><p>Eligible</p></th>
+<th class="head text-right"><p>Total</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
+<td class="text-right"><p>0.276</p></td>
+<td class="text-right"><p>0.276</p></td>
+<td><p>[0.241, 0.314]</p></td>
+<td class="text-right"><p>-0.265</p></td>
+<td class="text-right"><p>0.540</p></td>
+<td class="text-right"><p>0.326</p></td>
+<td class="text-right"><p>2</p></td>
+<td class="text-right"><p>548</p></td>
+<td class="text-right"><p>548</p></td>
+</tr>
+<tr class="row-odd"><td><p>Study 2 – Minimum Wage (MTurk)</p></td>
+<td class="text-right"><p>0.301</p></td>
+<td class="text-right"><p>0.301</p></td>
+<td><p>[0.271, 0.341]</p></td>
+<td class="text-right"><p>-0.067</p></td>
+<td class="text-right"><p>0.368</p></td>
+<td class="text-right"><p>0.255</p></td>
+<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>671</p></td>
+<td class="text-right"><p>671</p></td>
+</tr>
+<tr class="row-even"><td><p>Study 3 – Minimum Wage (YouGov)</p></td>
+<td class="text-right"><p>0.320</p></td>
+<td class="text-right"><p>0.320</p></td>
+<td><p>[0.291, 0.346]</p></td>
+<td class="text-right"><p>-0.159</p></td>
 <td class="text-right"><p>0.479</p></td>
 <td class="text-right"><p>0.255</p></td>
 <td class="text-right"><p>2</p></td>
@@ -442,12 +504,25 @@
 <h3>Study 3 – Minimum Wage (YouGov) (WORD2VEC)<a class="headerlink" href="#study-3-minimum-wage-yougov-word2vec" title="Link to this heading">¶</a></h3>
 <p><img alt="Accuracy curve" src="../_images/study31.png" /></p>
 </section>
+<section id="study-1-gun-control-mturk-sentence-transformer">
+<h3>Study 1 – Gun Control (MTurk) (SENTENCE_TRANSFORMER)<a class="headerlink" href="#study-1-gun-control-mturk-sentence-transformer" title="Link to this heading">¶</a></h3>
+<p><img alt="Accuracy curve" src="../_images/study12.png" /></p>
+</section>
+<section id="study-2-minimum-wage-mturk-sentence-transformer">
+<h3>Study 2 – Minimum Wage (MTurk) (SENTENCE_TRANSFORMER)<a class="headerlink" href="#study-2-minimum-wage-mturk-sentence-transformer" title="Link to this heading">¶</a></h3>
+<p><img alt="Accuracy curve" src="../_images/study22.png" /></p>
+</section>
+<section id="study-3-minimum-wage-yougov-sentence-transformer">
+<h3>Study 3 – Minimum Wage (YouGov) (SENTENCE_TRANSFORMER)<a class="headerlink" href="#study-3-minimum-wage-yougov-sentence-transformer" title="Link to this heading">¶</a></h3>
+<p><img alt="Accuracy curve" src="../_images/study32.png" /></p>
+</section>
 </section>
 <section id="observations">
 <h2>Observations<a class="headerlink" href="#observations" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>TFIDF: Study 1 – Gun Control (MTurk): 0.763 (baseline 0.540, Δ +0.223, k=2, eligible 548); Study 2 – Minimum Wage (MTurk): 0.355 (baseline 0.368, Δ -0.013, k=2, eligible 671); Study 3 – Minimum Wage (YouGov): 0.309 (baseline 0.479, Δ -0.170, k=2, eligible 1,200); averages: mean Δ +0.013, mean random 0.279.</p></li>
-<li><p>WORD2VEC: Study 1 – Gun Control (MTurk): 0.290 (baseline 0.540, Δ -0.250, k=2, eligible 548); Study 2 – Minimum Wage (MTurk): 0.295 (baseline 0.368, Δ -0.073, k=2, eligible 671); Study 3 – Minimum Wage (YouGov): 0.268 (baseline 0.479, Δ -0.212, k=2, eligible 1,200); averages: mean Δ -0.178, mean random 0.279.</p></li>
+<li><p>WORD2VEC: Study 1 – Gun Control (MTurk): 0.407 (baseline 0.540, Δ -0.133, k=2, eligible 548); Study 2 – Minimum Wage (MTurk): 0.291 (baseline 0.368, Δ -0.077, k=2, eligible 671); Study 3 – Minimum Wage (YouGov): 0.268 (baseline 0.479, Δ -0.211, k=2, eligible 1,200); averages: mean Δ -0.141, mean random 0.279.</p></li>
+<li><p>SENTENCE_TRANSFORMER: Study 1 – Gun Control (MTurk): 0.276 (baseline 0.540, Δ -0.265, k=2, eligible 548); Study 2 – Minimum Wage (MTurk): 0.301 (baseline 0.368, Δ -0.067, k=3, eligible 671); Study 3 – Minimum Wage (YouGov): 0.320 (baseline 0.479, Δ -0.159, k=2, eligible 1,200); averages: mean Δ -0.164, mean random 0.279.</p></li>
 <li><p>Random values approximate the accuracy from uniformly guessing across the slate.</p></li>
 </ul>
 </section>
@@ -478,9 +553,9 @@
 <td class="text-right"><p>0.329</p></td>
 </tr>
 <tr class="row-even"><td><p>Study 3 – Minimum Wage (YouGov)</p></td>
-<td class="text-right"><p>0.309 (TFIDF)</p></td>
+<td class="text-right"><p>0.320 (ST)</p></td>
 <td class="text-right"><p>0.359</p></td>
-<td class="text-right"><p>0.309</p></td>
+<td class="text-right"><p>0.320</p></td>
 <td class="text-right"><p>0.359</p></td>
 </tr>
 </tbody>
@@ -641,6 +716,7 @@
 <li><a class="reference internal" href="#portfolio-summary">Portfolio Summary</a></li>
 <li><a class="reference internal" href="#tf-idf-feature-space">TF-IDF Feature Space</a></li>
 <li><a class="reference internal" href="#word2vec-feature-space">Word2Vec Feature Space</a></li>
+<li><a class="reference internal" href="#sentence-transformer-feature-space">Sentence-Transformer Feature Space</a></li>
 <li><a class="reference internal" href="#accuracy-curves">Accuracy Curves</a><ul>
 <li><a class="reference internal" href="#study-1-gun-control-mturk-tfidf">Study 1 – Gun Control (MTurk) (TFIDF)</a></li>
 <li><a class="reference internal" href="#study-2-minimum-wage-mturk-tfidf">Study 2 – Minimum Wage (MTurk) (TFIDF)</a></li>
@@ -648,6 +724,9 @@
 <li><a class="reference internal" href="#study-1-gun-control-mturk-word2vec">Study 1 – Gun Control (MTurk) (WORD2VEC)</a></li>
 <li><a class="reference internal" href="#study-2-minimum-wage-mturk-word2vec">Study 2 – Minimum Wage (MTurk) (WORD2VEC)</a></li>
 <li><a class="reference internal" href="#study-3-minimum-wage-yougov-word2vec">Study 3 – Minimum Wage (YouGov) (WORD2VEC)</a></li>
+<li><a class="reference internal" href="#study-1-gun-control-mturk-sentence-transformer">Study 1 – Gun Control (MTurk) (SENTENCE_TRANSFORMER)</a></li>
+<li><a class="reference internal" href="#study-2-minimum-wage-mturk-sentence-transformer">Study 2 – Minimum Wage (MTurk) (SENTENCE_TRANSFORMER)</a></li>
+<li><a class="reference internal" href="#study-3-minimum-wage-yougov-sentence-transformer">Study 3 – Minimum Wage (YouGov) (SENTENCE_TRANSFORMER)</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#observations">Observations</a></li>

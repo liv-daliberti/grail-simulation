@@ -28,8 +28,7 @@ import os
 from pathlib import Path
 from typing import List, Sequence, Tuple
 
-from common.cli.args import add_comma_separated_argument
-from common.cli.options import add_jobs_argument, add_stage_arguments
+from common.cli.options import add_jobs_argument, add_stage_arguments, add_studies_argument
 
 from ..cli.utils import add_sentence_transformer_normalize_flags
 from .context import PipelineContext
@@ -102,10 +101,8 @@ def parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[str
         default="",
         help="Comma-separated list of issues to evaluate. Defaults to all issues in the dataset.",
     )
-    add_comma_separated_argument(
+    add_studies_argument(
         parser,
-        flags="--studies",
-        dest="studies",
         help_text=(
             "Comma-separated list of participant study keys (study1,study2,study3). "
             "Defaults to all studies."

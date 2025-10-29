@@ -768,6 +768,8 @@
             <span class="n">include_next_video</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">run_next_video</span><span class="p">,</span>
             <span class="n">include_opinion</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">run_opinion</span><span class="p">,</span>
             <span class="n">include_opinion_from_next</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">run_next_video</span> <span class="ow">and</span> <span class="nb">bool</span><span class="p">(</span><span class="n">opinion_from_next_metrics</span><span class="p">),</span>
+            <span class="n">opinion_predictions_root</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">opinion_dir</span><span class="p">,</span>
+            <span class="n">opinion_from_next_predictions_root</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">opinion_dir</span> <span class="o">/</span> <span class="s2">&quot;from_next&quot;</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">_generate_reports</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">report_bundle</span><span class="p">)</span>
         <span class="k">return</span>
@@ -843,6 +845,8 @@
         <span class="n">include_next_video</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">run_next_video</span><span class="p">,</span>
         <span class="n">include_opinion</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">run_opinion</span><span class="p">,</span>
         <span class="n">include_opinion_from_next</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">run_next_video</span> <span class="ow">and</span> <span class="nb">bool</span><span class="p">(</span><span class="n">opinion_from_next_metrics</span><span class="p">),</span>
+        <span class="n">opinion_predictions_root</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">opinion_dir</span><span class="p">,</span>
+        <span class="n">opinion_from_next_predictions_root</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">opinion_dir</span> <span class="o">/</span> <span class="s2">&quot;from_next&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">_generate_reports</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">report_bundle</span><span class="p">)</span></div>
 

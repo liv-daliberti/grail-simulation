@@ -26,12 +26,13 @@ from common.pipeline.io import load_metrics_json
 from common.opinion.metrics import compute_opinion_metrics
 
 from .pipeline_models import PipelinePaths, SweepOutcome, coerce_float, parse_config_label
-from .pipeline_reports import generate_reports
+from .pipeline_reports import ReportContext, generate_reports
 from .opinion import (
     OpinionArtifacts,
     OpinionEvaluationResult,
     OpinionMetricBundle,
     OpinionStudyResult,
+    OpinionEvaluationRunner,
 )
 from .utils import qa_log_path_for
 
@@ -156,44 +157,7 @@ def _load_selected_outcome_from_disk(
     return selected, final_metrics
 
 
-def _load_prediction_vectors(
-    predictions_path: Path,
-) -> Tuple[List[float], List[float], List[float]]:
-    """
-    Return opinion prediction vectors parsed from ``predictions_path``.
-
-    :param predictions_path: Path to the JSONL predictions file.
-    :returns: Tuple of ``(truth_before, truth_after, pred_after)`` vectors.
-    """
-    truth_before: List[float] = []
-    truth_after: List[float] = []
-    pred_after: List[float] = []
-    if not predictions_path.exists():
-        return truth_before, truth_after, pred_after
-    try:
-        with predictions_path.open("r", encoding="utf-8") as handle:
-            for line in handle:
-                try:
-                    row = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-                try:
-                    before = float(row.get("before"))
-                    after = float(row.get("after"))
-                    predicted = float(row.get("predicted_after"))
-                except (TypeError, ValueError):
-                    continue
-                truth_before.append(before)
-                truth_after.append(after)
-                pred_after.append(predicted)
-    except OSError:
-        LOGGER.warning(
-            "[REPORTS] Unable to read opinion predictions at %s.", predictions_path
-        )
-    return truth_before, truth_after, pred_after
-
-
-def _load_opinion_result_from_disk(
+def _load_opinion_result_from_disk(  # pylint: disable=too-many-locals
     paths: PipelinePaths, config_label: str
 ) -> OpinionEvaluationResult | None:
     """
@@ -237,18 +201,21 @@ def _load_opinion_result_from_disk(
         eligible = int(metrics.get("eligible", participants))
 
         predictions_path = study_dir / "predictions.jsonl"
-        before_vals, after_vals, pred_vals = _load_prediction_vectors(predictions_path)
-        if before_vals:
-            combined_before.extend(before_vals)
-        if after_vals:
-            combined_after.extend(after_vals)
-        if pred_vals:
-            combined_pred.extend(pred_vals)
+        vectors = OpinionEvaluationRunner.load_cached_prediction_vectors(
+            predictions_path,
+            study_key=study_key,
+        )
+        vector_len = 0
+        if vectors:
+            combined_before.extend(vectors.truth_before)
+            combined_after.extend(vectors.truth_after)
+            combined_pred.extend(vectors.pred_after)
+            vector_len = len(vectors.truth_after)
 
-        if not participants and after_vals:
-            participants = len(after_vals)
-        if not eligible and after_vals:
-            eligible = len(after_vals)
+        if not participants and vector_len:
+            participants = vector_len
+        if not eligible and vector_len:
+            eligible = vector_len
 
         artifacts = OpinionArtifacts(
             metrics=metrics_path,
@@ -304,13 +271,13 @@ def run_reports_stage(paths: PipelinePaths, *, repo_root: Path) -> None:
     selected, final_metrics = _load_selected_outcome_from_disk(paths, outcomes)
     opinion_result = _load_opinion_result_from_disk(paths, selected.config.label())
 
+    context = ReportContext(reports_dir=paths.reports_dir, repo_root=repo_root)
     generate_reports(
-        reports_dir=paths.reports_dir,
+        context=context,
         outcomes=outcomes,
         selected=selected,
         final_metrics=final_metrics,
         opinion_result=opinion_result,
-        repo_root=repo_root,
     )
     LOGGER.info("GPT-4o reports refreshed at %s.", paths.reports_dir)
 

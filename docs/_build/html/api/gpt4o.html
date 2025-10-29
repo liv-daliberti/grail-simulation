@@ -1149,11 +1149,9 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <section id="module-gpt4o.pipeline">
 <span id="pipeline-orchestration"></span><h2>Pipeline Orchestration<a class="headerlink" href="#module-gpt4o.pipeline" title="Link to this heading">¶</a></h2>
 <p>Pipeline runner for the GPT-4o slate baseline.</p>
-<p>It assembles sweep planning, evaluation, and report-generation steps for
-the GPT-4o workflow used in Grail Simulation experiments.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.pipeline.PipelinePaths">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">PipelinePaths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">final_out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opinion_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sweep_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reports_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline.html#PipelinePaths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">PipelinePaths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">final_out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opinion_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sweep_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reports_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline_models.html#PipelinePaths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Convenience container aggregating resolved output directories.</p>
 <dl class="field-list simple">
@@ -1202,7 +1200,7 @@ the GPT-4o workflow used in Grail Simulation experiments.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.pipeline.SweepConfig">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">SweepConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tokens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top_p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline.html#SweepConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepConfig" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">SweepConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tokens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top_p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline_models.html#SweepConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepConfig" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Describe a GPT-4o configuration evaluated during sweeps.</p>
 <dl class="field-list simple">
@@ -1216,22 +1214,28 @@ the GPT-4o workflow used in Grail Simulation experiments.</p>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="gpt4o.pipeline.SweepConfig.cli_args">
-<span class="sig-name descname"><span class="pre">cli_args</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline.html#SweepConfig.cli_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepConfig.cli_args" title="Link to this definition">¶</a></dt>
-<dd><p>Return CLI overrides encoding this configuration.</p>
+<span class="sig-name descname"><span class="pre">cli_args</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline_models.html#SweepConfig.cli_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepConfig.cli_args" title="Link to this definition">¶</a></dt>
+<dd><p>Produce CLI arguments that represent this configuration.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>List</em>[str]</p>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Sequence of argument tokens suitable for <code class="docutils literal notranslate"><span class="pre">gpt4o.cli</span></code>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>List</em>[str]</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="gpt4o.pipeline.SweepConfig.label">
-<span class="sig-name descname"><span class="pre">label</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline.html#SweepConfig.label"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepConfig.label" title="Link to this definition">¶</a></dt>
-<dd><p>Return a filesystem-friendly identifier.</p>
+<span class="sig-name descname"><span class="pre">label</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline_models.html#SweepConfig.label"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepConfig.label" title="Link to this definition">¶</a></dt>
+<dd><p>Build a filesystem-friendly identifier that encodes the configuration.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Label composed of temperature, max tokens, and top-p values.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1255,13 +1259,13 @@ the GPT-4o workflow used in Grail Simulation experiments.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.pipeline.SweepOutcome">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">SweepOutcome</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parsed_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline.html#SweepOutcome"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepOutcome" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">SweepOutcome</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parsed_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline_models.html#SweepOutcome"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepOutcome" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Capture metrics gathered during a sweep run.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>config</strong> (<a class="reference internal" href="#gpt4o.pipeline.SweepConfig" title="gpt4o.pipeline.SweepConfig"><em>gpt4o.pipeline.SweepConfig</em></a>)</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="#gpt4o.pipeline.SweepConfig" title="gpt4o.pipeline_models.SweepConfig"><em>gpt4o.pipeline_models.SweepConfig</em></a>)</p></li>
 <li><p><strong>accuracy</strong> (<em>float</em>)</p></li>
 <li><p><strong>parsed_rate</strong> (<em>float</em>)</p></li>
 <li><p><strong>format_rate</strong> (<em>float</em>)</p></li>
@@ -1277,7 +1281,7 @@ the GPT-4o workflow used in Grail Simulation experiments.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="gpt4o.pipeline.SweepOutcome.config">
-<span class="sig-name descname"><span class="pre">config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#gpt4o.pipeline.SweepConfig" title="gpt4o.pipeline.SweepConfig"><span class="pre">gpt4o.pipeline.SweepConfig</span></a></em><a class="headerlink" href="#gpt4o.pipeline.SweepOutcome.config" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#gpt4o.pipeline.SweepConfig" title="gpt4o.pipeline_models.SweepConfig"><span class="pre">gpt4o.pipeline_models.SweepConfig</span></a></em><a class="headerlink" href="#gpt4o.pipeline.SweepOutcome.config" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -1305,7 +1309,7 @@ the GPT-4o workflow used in Grail Simulation experiments.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="gpt4o.pipeline.main">
 <span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">argv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.main" title="Link to this definition">¶</a></dt>
-<dd><p>Execute sweeps, selection, final evaluation, and report regeneration.</p>
+<dd><p>Entry point that orchestrates sweep execution and report generation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>argv</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Optional CLI argument sequence supplied by callers.</p>

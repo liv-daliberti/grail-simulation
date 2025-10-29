@@ -51,7 +51,13 @@ def ensure_azure_env() -> None:
 # ---------------------------------------------------------------------------
 # Dataset paths / column definitions
 # ---------------------------------------------------------------------------
-DATASET_NAME: str = os.environ.get("GPT4O_DATASET", "od2961/grail-interactions")
+_LOCAL_DATASET = Path(__file__).resolve().parents[2] / "data" / "cleaned_grail"
+if "GPT4O_DATASET" in os.environ:
+    DATASET_NAME: str = os.environ["GPT4O_DATASET"]
+elif _LOCAL_DATASET.exists():
+    DATASET_NAME = str(_LOCAL_DATASET)
+else:
+    DATASET_NAME = "od2961/grail-interactions"
 TRAIN_SPLIT: str = os.environ.get("GPT4O_TRAIN_SPLIT", "train")
 EVAL_SPLIT: str = os.environ.get("GPT4O_EVAL_SPLIT", "validation")
 PROMPT_COLUMN: str = os.environ.get("GPT4O_PROMPT_COLUMN", "state_text")

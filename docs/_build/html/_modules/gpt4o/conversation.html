@@ -1007,8 +1007,39 @@
     <span class="p">)</span>
 
     <span class="n">slate_pairs</span> <span class="o">=</span> <span class="n">_PROMPT_DOC_BUILDER</span><span class="o">.</span><span class="n">extract_slate_items</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
-    <span class="n">gold_raw</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SOLUTION_COLUMN</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_coerce_positive_index</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a strictly positive integer parsed from ``value``.&quot;&quot;&quot;</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">candidate</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">return</span> <span class="n">candidate</span> <span class="k">if</span> <span class="n">candidate</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
+
+    <span class="n">candidate_keys</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+        <span class="n">key</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="n">SOLUTION_COLUMN</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">SOLUTION_COLUMN</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;gold_id&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;next_video_id&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">key</span>
+    <span class="p">)</span>
     <span class="n">gold_index</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">gold_raw</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">candidate_keys</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">cleaned</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">cleaned</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">gold_raw</span> <span class="o">=</span> <span class="n">cleaned</span>
+        <span class="k">break</span>
+
     <span class="k">if</span> <span class="n">gold_raw</span> <span class="ow">and</span> <span class="n">slate_pairs</span><span class="p">:</span>
         <span class="n">gold_id_canon</span> <span class="o">=</span> <span class="n">canon_video_id</span><span class="p">(</span><span class="n">gold_raw</span><span class="p">)</span>
         <span class="n">gold_title_canon</span> <span class="o">=</span> <span class="n">canon_text</span><span class="p">(</span><span class="n">gold_raw</span><span class="p">)</span>
@@ -1022,6 +1053,14 @@
             <span class="p">):</span>
                 <span class="n">gold_index</span> <span class="o">=</span> <span class="n">idx</span>
                 <span class="k">break</span>
+    <span class="k">if</span> <span class="n">gold_index</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">dataset_index</span> <span class="o">=</span> <span class="n">_coerce_positive_index</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gold_index&quot;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">dataset_index</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">slate_pairs</span> <span class="ow">or</span> <span class="n">dataset_index</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">slate_pairs</span><span class="p">)):</span>
+            <span class="n">gold_index</span> <span class="o">=</span> <span class="n">dataset_index</span>
+    <span class="k">if</span> <span class="n">gold_index</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">answer_index</span> <span class="o">=</span> <span class="n">_coerce_positive_index</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;answer&quot;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">answer_index</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">slate_pairs</span> <span class="ow">or</span> <span class="n">answer_index</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">slate_pairs</span><span class="p">)):</span>
+            <span class="n">gold_index</span> <span class="o">=</span> <span class="n">answer_index</span>
 
     <span class="n">now_watching</span> <span class="o">=</span> <span class="n">_PROMPT_DOC_BUILDER</span><span class="o">.</span><span class="n">extract_now_watching</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">now_watching</span><span class="p">:</span>

@@ -510,6 +510,8 @@ def main(argv: Sequence[str] | None = None) -> None:
             include_next_video=context.run_next_video,
             include_opinion=context.run_opinion,
             include_opinion_from_next=context.run_next_video and bool(opinion_from_next_metrics),
+            opinion_predictions_root=context.opinion_dir,
+            opinion_from_next_predictions_root=context.opinion_dir / "from_next",
         )
         _generate_reports(root, report_bundle)
         return
@@ -585,6 +587,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         include_next_video=context.run_next_video,
         include_opinion=context.run_opinion,
         include_opinion_from_next=context.run_next_video and bool(opinion_from_next_metrics),
+        opinion_predictions_root=context.opinion_dir,
+        opinion_from_next_predictions_root=context.opinion_dir / "from_next",
     )
     _generate_reports(root, report_bundle)
 

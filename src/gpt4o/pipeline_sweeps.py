@@ -179,4 +179,10 @@ def run_final_evaluation(
     return run_dir, metrics
 
 
-__all__ = ["run_sweeps", "select_best", "promote_sweep_results", "run_final_evaluation", "run_gpt_cli"]
+__all__ = [
+    "run_sweeps",
+    "select_best",
+    "promote_sweep_results",
+    "run_final_evaluation",
+    "run_gpt_cli",
+]

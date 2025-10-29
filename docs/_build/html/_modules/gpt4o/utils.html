@@ -287,6 +287,8 @@
     <span class="n">split_env_list</span> <span class="k">as</span> <span class="n">_split_env_list</span><span class="p">,</span>
 <span class="p">)</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">.client</span><span class="w"> </span><span class="kn">import</span> <span class="n">ds_call</span>
+
 <span class="n">ANS_TAG</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(?si)&lt;answer&gt;\s*([^&lt;\n]+?)\s*&lt;/answer&gt;&quot;</span><span class="p">)</span>
 <span class="n">THINK_BLOCK</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(?si)&lt;think&gt;.+?&lt;/think&gt;&quot;</span><span class="p">)</span>
 <span class="n">ANSWER_BLOCK</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(?si)&lt;answer&gt;.+?&lt;/answer&gt;&quot;</span><span class="p">)</span>
@@ -476,8 +478,6 @@
 <span class="sd">    :returns: Model response text when successful.</span>
 <span class="sd">    :raises RuntimeError: After exhausting retries without a non-empty response.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="kn">from</span><span class="w"> </span><span class="nn">.client</span><span class="w"> </span><span class="kn">import</span> <span class="n">ds_call</span>  <span class="c1"># lazy import to avoid circulars</span>
 
     <span class="n">policy</span> <span class="o">=</span> <span class="n">retry</span> <span class="ow">or</span> <span class="n">RetryPolicy</span><span class="p">()</span>
     <span class="n">attempts</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">policy</span><span class="o">.</span><span class="n">attempts</span> <span class="ow">or</span> <span class="mi">1</span><span class="p">))</span>

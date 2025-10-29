@@ -284,8 +284,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">common.cli.args</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_comma_separated_argument</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">common.cli.options</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_jobs_argument</span><span class="p">,</span> <span class="n">add_stage_arguments</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.cli.options</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_jobs_argument</span><span class="p">,</span> <span class="n">add_stage_arguments</span><span class="p">,</span> <span class="n">add_studies_argument</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">..cli.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_sentence_transformer_normalize_flags</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">PipelineContext</span>
@@ -360,10 +359,8 @@
         <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Comma-separated list of issues to evaluate. Defaults to all issues in the dataset.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">add_comma_separated_argument</span><span class="p">(</span>
+    <span class="n">add_studies_argument</span><span class="p">(</span>
         <span class="n">parser</span><span class="p">,</span>
-        <span class="n">flags</span><span class="o">=</span><span class="s2">&quot;--studies&quot;</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;studies&quot;</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
             <span class="s2">&quot;Comma-separated list of participant study keys (study1,study2,study3). &quot;</span>
             <span class="s2">&quot;Defaults to all studies.&quot;</span>

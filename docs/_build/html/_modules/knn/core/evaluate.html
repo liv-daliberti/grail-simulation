@@ -289,7 +289,14 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.text.embeddings</span><span class="w"> </span><span class="kn">import</span> <span class="n">SentenceTransformerConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.visualization.matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">plt</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">common.evaluation.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">compose_issue_slug</span><span class="p">,</span> <span class="n">prepare_dataset</span><span class="p">,</span> <span class="n">safe_div</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.evaluation.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BootstrapSummaryConfig</span><span class="p">,</span>
+    <span class="n">compose_issue_slug</span><span class="p">,</span>
+    <span class="n">group_key_for_example</span><span class="p">,</span>
+    <span class="n">participant_bootstrap_summary</span><span class="p">,</span>
+    <span class="n">prepare_dataset</span><span class="p">,</span>
+    <span class="n">safe_div</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.prompts.docs</span><span class="w"> </span><span class="kn">import</span> <span class="n">merge_default_extra_fields</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -467,34 +474,6 @@
         <span class="s2">&quot;splits&quot;</span><span class="p">:</span> <span class="n">splits</span><span class="p">,</span>
     <span class="p">}</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_group_key_for_example</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">fallback_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Return a stable grouping key used for bootstrap resampling.</span>
-
-<span class="sd">    :param example: Single dataset example under inspection.</span>
-
-<span class="sd">    :type example: Mapping[str, Any]</span>
-
-<span class="sd">    :param fallback_index: Secondary index consulted when the primary lookup fails.</span>
-
-<span class="sd">    :type fallback_index: int</span>
-
-<span class="sd">    :returns: a stable grouping key used for bootstrap resampling</span>
-
-<span class="sd">    :rtype: str</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">urlid</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;urlid&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">urlid</span> <span class="ow">and</span> <span class="n">urlid</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;nan&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;urlid::</span><span class="si">{</span><span class="n">urlid</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="n">participant</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;participant_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">participant</span> <span class="ow">and</span> <span class="n">participant</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;nan&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;participant::</span><span class="si">{</span><span class="n">participant</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="n">session</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;session_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">session</span> <span class="ow">and</span> <span class="n">session</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;nan&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;session::</span><span class="si">{</span><span class="n">session</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;row::</span><span class="si">{</span><span class="n">fallback_index</span><span class="si">}</span><span class="s2">&quot;</span>
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_accuracy_for_rows</span><span class="p">(</span><span class="n">rows</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">k_val</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Return accuracy for ``rows`` using predictions at ``k_val``.</span>
@@ -599,7 +578,7 @@
         <span class="k">return</span> <span class="kc">None</span>
     <span class="n">grouped</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">eligible_rows</span><span class="p">):</span>
-        <span class="n">group_key</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;group_key&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">_group_key_for_example</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
+        <span class="n">group_key</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;group_key&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">group_key_for_example</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
         <span class="n">grouped</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">group_key</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">grouped</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
@@ -617,32 +596,17 @@
         <span class="k">if</span> <span class="n">baseline_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">baseline_samples</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_baseline_accuracy_for_rows</span><span class="p">(</span><span class="n">sampled_rows</span><span class="p">,</span> <span class="n">baseline_index</span><span class="p">))</span>
 
-    <span class="n">model_ci</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;low&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">model_samples</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">)),</span>
-        <span class="s2">&quot;high&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">model_samples</span><span class="p">,</span> <span class="mf">97.5</span><span class="p">)),</span>
-    <span class="p">}</span>
-    <span class="n">model_mean</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">model_samples</span><span class="p">))</span>
-    <span class="n">result</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;participant_bootstrap&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;n_groups&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">grouped</span><span class="p">),</span>
-        <span class="s2">&quot;n_rows&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">eligible_rows</span><span class="p">),</span>
-        <span class="s2">&quot;n_bootstrap&quot;</span><span class="p">:</span> <span class="n">replicates</span><span class="p">,</span>
-        <span class="s2">&quot;seed&quot;</span><span class="p">:</span> <span class="n">seed</span><span class="p">,</span>
-        <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="n">model_mean</span><span class="p">,</span>
-            <span class="s2">&quot;ci95&quot;</span><span class="p">:</span> <span class="n">model_ci</span><span class="p">,</span>
-        <span class="p">},</span>
-    <span class="p">}</span>
-    <span class="k">if</span> <span class="n">baseline_samples</span><span class="p">:</span>
-        <span class="n">baseline_ci</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;low&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">baseline_samples</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">)),</span>
-            <span class="s2">&quot;high&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">baseline_samples</span><span class="p">,</span> <span class="mf">97.5</span><span class="p">)),</span>
-        <span class="p">}</span>
-        <span class="n">result</span><span class="p">[</span><span class="s2">&quot;baseline&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">baseline_samples</span><span class="p">)),</span>
-            <span class="s2">&quot;ci95&quot;</span><span class="p">:</span> <span class="n">baseline_ci</span><span class="p">,</span>
-        <span class="p">}</span>
-    <span class="k">return</span> <span class="n">result</span>
+    <span class="n">summary_config</span> <span class="o">=</span> <span class="n">BootstrapSummaryConfig</span><span class="p">(</span>
+        <span class="n">n_groups</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">grouped</span><span class="p">),</span>
+        <span class="n">n_rows</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">eligible_rows</span><span class="p">),</span>
+        <span class="n">n_bootstrap</span><span class="o">=</span><span class="n">replicates</span><span class="p">,</span>
+        <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">participant_bootstrap_summary</span><span class="p">(</span>
+        <span class="n">model_samples</span><span class="o">=</span><span class="n">model_samples</span><span class="p">,</span>
+        <span class="n">baseline_samples</span><span class="o">=</span><span class="n">baseline_samples</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">summary_config</span><span class="o">=</span><span class="n">summary_config</span><span class="p">,</span>
+    <span class="p">)</span>
 
 <div class="viewcode-block" id="parse_k_values">
 <a class="viewcode-back" href="../../../api/knn.html#knn.evaluate.parse_k_values">[docs]</a>
@@ -1475,7 +1439,7 @@
             <span class="k">if</span> <span class="n">pred</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">int</span><span class="p">(</span><span class="n">pred</span><span class="p">)</span> <span class="o">==</span> <span class="n">gold_index</span><span class="p">:</span>
                 <span class="n">k_stats</span><span class="p">[</span><span class="s2">&quot;correct&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
 
-    <span class="n">group_key</span> <span class="o">=</span> <span class="n">_group_key_for_example</span><span class="p">(</span><span class="n">example</span><span class="p">,</span> <span class="n">row_index</span><span class="p">)</span>
+    <span class="n">group_key</span> <span class="o">=</span> <span class="n">group_key_for_example</span><span class="p">(</span><span class="n">example</span><span class="p">,</span> <span class="n">row_index</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">&quot;predictions_by_k&quot;</span><span class="p">:</span> <span class="n">predictions</span><span class="p">,</span>

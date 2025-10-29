@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import List, Sequence, Tuple
 
 from common.cli.args import add_comma_separated_argument
-from common.cli.options import add_log_level_argument, add_overwrite_argument
+from common.cli.options import add_log_level_argument, add_overwrite_argument, add_studies_argument
 
 from .opinion import OpinionEvaluationResult, run_opinion_evaluations
 from .pipeline_cache import run_reports_stage
@@ -87,10 +87,8 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
         default="",
         help="Comma-separated issue labels to filter (defaults to all issues).",
     )
-    add_comma_separated_argument(
+    add_studies_argument(
         parser,
-        flags="--studies",
-        dest="studies",
         help_text=(
             "Comma-separated participant study identifiers to filter (defaults to all studies)."
         ),
@@ -122,14 +120,18 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
         "--opinion-max-participants",
         type=int,
         default=0,
-        help="Optional cap on participants per opinion study during GPT-4o evaluation (0 keeps all).",
+        help=(
+            "Optional cap on participants per opinion study during GPT-4o evaluation "
+            "(0 keeps all)."
+        ),
     )
     parser.add_argument(
         "--opinion-direction-tolerance",
         type=float,
         default=1e-6,
         help=(
-            "Tolerance for treating opinion deltas as no-change when computing direction accuracy."
+            "Tolerance for treating opinion deltas as no-change when computing "
+            "direction accuracy."
         ),
     )
     parser.add_argument(

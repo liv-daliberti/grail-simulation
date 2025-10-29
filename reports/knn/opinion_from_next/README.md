@@ -34,7 +34,47 @@ This section reuses the selected next-video recommendation configuration to esti
 
 ### Opinion Change Heatmaps
 
-Plots are refreshed under `reports/knn/<feature-space>/opinion/` including MAE vs. k (`mae_<study>.png`), R² vs. k (`r2_<study>.png`), and change heatmaps (`change_heatmap_<study>.png`).
+#### SENTENCE_TRANSFORMER
+
+![Mae Study1](/n/fs/similarity/grail-simulation/reports/knn/sentence_transformer/opinion/mae_study1.png)
+
+![Mae Study2](/n/fs/similarity/grail-simulation/reports/knn/sentence_transformer/opinion/mae_study2.png)
+
+![Mae Study3](/n/fs/similarity/grail-simulation/reports/knn/sentence_transformer/opinion/mae_study3.png)
+
+![R2 Study1](/n/fs/similarity/grail-simulation/reports/knn/sentence_transformer/opinion/r2_study1.png)
+
+![R2 Study2](/n/fs/similarity/grail-simulation/reports/knn/sentence_transformer/opinion/r2_study2.png)
+
+![R2 Study3](/n/fs/similarity/grail-simulation/reports/knn/sentence_transformer/opinion/r2_study3.png)
+
+#### TFIDF
+
+![Mae Study1](/n/fs/similarity/grail-simulation/reports/knn/tfidf/opinion/mae_study1.png)
+
+![Mae Study2](/n/fs/similarity/grail-simulation/reports/knn/tfidf/opinion/mae_study2.png)
+
+![Mae Study3](/n/fs/similarity/grail-simulation/reports/knn/tfidf/opinion/mae_study3.png)
+
+![R2 Study1](/n/fs/similarity/grail-simulation/reports/knn/tfidf/opinion/r2_study1.png)
+
+![R2 Study2](/n/fs/similarity/grail-simulation/reports/knn/tfidf/opinion/r2_study2.png)
+
+![R2 Study3](/n/fs/similarity/grail-simulation/reports/knn/tfidf/opinion/r2_study3.png)
+
+#### WORD2VEC
+
+![Mae Study1](/n/fs/similarity/grail-simulation/reports/knn/word2vec/opinion/mae_study1.png)
+
+![Mae Study2](/n/fs/similarity/grail-simulation/reports/knn/word2vec/opinion/mae_study2.png)
+
+![Mae Study3](/n/fs/similarity/grail-simulation/reports/knn/word2vec/opinion/mae_study3.png)
+
+![R2 Study1](/n/fs/similarity/grail-simulation/reports/knn/word2vec/opinion/r2_study1.png)
+
+![R2 Study2](/n/fs/similarity/grail-simulation/reports/knn/word2vec/opinion/r2_study2.png)
+
+![R2 Study3](/n/fs/similarity/grail-simulation/reports/knn/word2vec/opinion/r2_study3.png)
 
 ## Cross-Study Diagnostics
 

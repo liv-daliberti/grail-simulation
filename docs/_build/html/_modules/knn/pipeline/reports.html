@@ -394,6 +394,7 @@
             <span class="n">studies</span><span class="o">=</span><span class="n">report_bundle</span><span class="o">.</span><span class="n">studies</span><span class="p">,</span>
             <span class="n">options</span><span class="o">=</span><span class="n">OpinionReportOptions</span><span class="p">(</span>
                 <span class="n">allow_incomplete</span><span class="o">=</span><span class="n">allow_incomplete</span><span class="p">,</span>
+                <span class="n">predictions_root</span><span class="o">=</span><span class="n">report_bundle</span><span class="o">.</span><span class="n">opinion_predictions_root</span><span class="p">,</span>
             <span class="p">),</span>
         <span class="p">)</span>
     <span class="k">if</span> <span class="n">report_bundle</span><span class="o">.</span><span class="n">include_opinion_from_next</span><span class="p">:</span>
@@ -408,6 +409,7 @@
                     <span class="s2">&quot;This section reuses the selected next-video recommendation configuration &quot;</span>
                     <span class="s2">&quot;to estimate post-study opinion change.&quot;</span><span class="p">,</span>
                 <span class="p">],</span>
+                <span class="n">predictions_root</span><span class="o">=</span><span class="n">report_bundle</span><span class="o">.</span><span class="n">opinion_from_next_predictions_root</span><span class="p">,</span>
             <span class="p">),</span>
         <span class="p">)</span>
     <span class="n">build_feature_report</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="n">report_bundle</span><span class="p">)</span></div>

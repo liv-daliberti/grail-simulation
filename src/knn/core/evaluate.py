@@ -34,6 +34,7 @@ from numpy.random import default_rng
 from common.text.embeddings import SentenceTransformerConfig
 from common.visualization.matplotlib import plt
 from common.evaluation.utils import (
+    BootstrapSummaryConfig,
     compose_issue_slug,
     group_key_for_example,
     participant_bootstrap_summary,
@@ -339,13 +340,16 @@ def _bootstrap_uncertainty(
         if baseline_index is not None:
             baseline_samples.append(_baseline_accuracy_for_rows(sampled_rows, baseline_index))
 
+    summary_config = BootstrapSummaryConfig(
+        n_groups=len(grouped),
+        n_rows=len(eligible_rows),
+        n_bootstrap=replicates,
+        seed=seed,
+    )
     return participant_bootstrap_summary(
         model_samples=model_samples,
         baseline_samples=baseline_samples or None,
-        grouped_count=len(grouped),
-        row_count=len(eligible_rows),
-        replicates=replicates,
-        seed=seed,
+        summary_config=summary_config,
     )
 
 def parse_k_values(k_default: int, sweep: str) -> List[int]:

@@ -177,6 +177,32 @@ def _build_sweep_table(
     return lines
 
 
+def _format_filter_summary(filters: object) -> str | None:
+    """
+    Return a Markdown bullet describing applied filters, if any.
+
+    :param filters: Raw filters payload returned in the metrics mapping.
+    :returns: Markdown bullet summarising filters or ``None``.
+    """
+
+    if not isinstance(filters, Mapping):
+        return None
+    entries: List[str] = []
+    issues = filters.get("issues", [])
+    studies = filters.get("studies", [])
+    if isinstance(issues, Sequence):
+        issue_filter = ", ".join(str(item) for item in issues if item)
+        if issue_filter:
+            entries.append(f"issues: {issue_filter}")
+    if isinstance(studies, Sequence):
+        study_filter = ", ".join(str(item) for item in studies if item)
+        if study_filter:
+            entries.append(f"studies: {study_filter}")
+    if not entries:
+        return None
+    return "- **Filters:** " + ", ".join(entries)
+
+
 def _write_next_video_report(
     directory: Path,
     selected: SweepOutcome,
@@ -192,30 +218,26 @@ def _write_next_video_report(
     """
 
     path, lines = start_markdown_report(directory, title="GPT-4o Next-Video Baseline")
-    lines.append(
-        f"- **Selected configuration:** `{selected.config.label()}` "
-        f"(temperature={selected.config.temperature:.2f}, top_p={selected.config.top_p:.2f}, "
-        f"max_tokens={selected.config.max_tokens})"
-    )
-    lines.append(
-        f"- **Accuracy:** {_format_rate(float(metrics.get('accuracy_overall', 0.0)))} "
-        f"on {int(metrics.get('n_eligible', 0))} eligible slates "
-        f"out of {int(metrics.get('n_total', 0))} processed."
-    )
-    lines.append(
-        f"- **Parsed rate:** {_format_rate(float(metrics.get('parsed_rate', 0.0)))}  "
-        f"**Formatted rate:** {_format_rate(float(metrics.get('format_rate', 0.0)))}"
-    )
-    filters = metrics.get("filters", {})
-    issue_filter = ", ".join(filters.get("issues", [])) if isinstance(filters, Mapping) else ""
-    study_filter = ", ".join(filters.get("studies", [])) if isinstance(filters, Mapping) else ""
-    filter_parts: List[str] = []
-    if issue_filter:
-        filter_parts.append(f"issues: {issue_filter}")
-    if study_filter:
-        filter_parts.append(f"studies: {study_filter}")
-    if filter_parts:
-        lines.append("- **Filters:** " + ", ".join(filter_parts))
+    summary_lines = [
+        (
+            f"- **Selected configuration:** `{selected.config.label()}` "
+            f"(temperature={selected.config.temperature:.2f}, "
+            f"top_p={selected.config.top_p:.2f}, max_tokens={selected.config.max_tokens})"
+        ),
+        (
+            f"- **Accuracy:** {_format_rate(float(metrics.get('accuracy_overall', 0.0)))} "
+            f"on {int(metrics.get('n_eligible', 0))} eligible slates "
+            f"out of {int(metrics.get('n_total', 0))} processed."
+        ),
+        (
+            f"- **Parsed rate:** {_format_rate(float(metrics.get('parsed_rate', 0.0)))}  "
+            f"**Formatted rate:** {_format_rate(float(metrics.get('format_rate', 0.0)))}"
+        ),
+    ]
+    filter_line = _format_filter_summary(metrics.get("filters"))
+    if filter_line:
+        summary_lines.append(filter_line)
+    lines.extend(summary_lines)
     lines.append("")
     group_metrics = metrics.get("group_metrics", {})
 
@@ -530,7 +552,8 @@ def _relative_path(base: Path, target: Path) -> Path:
 
     :param base: Base directory representing the repository root.
     :param target: Destination path to normalise.
-    :returns: ``target`` relative to ``base`` when both share a prefix; otherwise ``target`` unchanged.
+    :returns: ``target`` relative to ``base`` when both share a prefix; otherwise
+        ``target`` unchanged.
     """
 
     try:

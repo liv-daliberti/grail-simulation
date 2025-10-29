@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# pylint: disable=too-many-lines
 """Opinion-shift evaluation for the GPT-4o baseline."""
 
 from __future__ import annotations
@@ -218,6 +219,24 @@ class CachedPredictionVectors:
     truth_before: List[float]
     truth_after: List[float]
     pred_after: List[float]
+
+
+@dataclass(frozen=True)
+class QALogEntry:
+    """Payload describing a single QA log record."""
+
+    idx: int
+    spec: OpinionSpec
+    messages: Sequence[Mapping[str, object]]
+    raw_output: str
+
+
+@dataclass(frozen=True)
+class ExampleProcessingContext:
+    """Resources shared by per-example processing helpers."""
+
+    qa_log: IO[str]
+    batch: StudyPredictionBatch
 
 
 def _parse_tokens(raw: str) -> Tuple[List[str], set[str]]:
@@ -751,7 +770,7 @@ class OpinionEvaluationRunner:
         )
 
     @staticmethod
-    def _load_cached_prediction_vectors(
+    def load_cached_prediction_vectors(
         predictions_path: Path,
         *,
         study_key: str,
@@ -826,7 +845,7 @@ class OpinionEvaluationRunner:
         if metrics_payload is None:
             return None
 
-        vectors = self._load_cached_prediction_vectors(
+        vectors = self.load_cached_prediction_vectors(
             artifacts.predictions,
             study_key=spec.key,
         )
@@ -854,25 +873,17 @@ class OpinionEvaluationRunner:
             metric_bundle=bundle,
         )
 
-    def _write_qa_log_entry(
-        self,
-        qa_log: IO[str],
-        *,
-        idx: int,
-        spec: OpinionSpec,
-        messages: Sequence[Mapping[str, object]],
-        raw_output: str,
-    ) -> None:
+    def _write_qa_log_entry(self, qa_log: IO[str], entry: QALogEntry) -> None:
         """Write a single QA log entry for the participant."""
-        system_prompt, question = self._extract_log_messages(messages)
-        qa_log.write(f"### Participant {idx}\n")
-        qa_log.write(f"Study: {spec.key} | Issue: {spec.issue}\n")
+        system_prompt, question = self._extract_log_messages(entry.messages)
+        qa_log.write(f"### Participant {entry.idx}\n")
+        qa_log.write(f"Study: {entry.spec.key} | Issue: {entry.spec.issue}\n")
         qa_log.write("SYSTEM:\n")
         qa_log.write(f"{system_prompt}\n")
         qa_log.write("QUESTION:\n")
         qa_log.write(f"{question}\n")
         qa_log.write("ANSWER:\n")
-        qa_log.write(f"{raw_output.strip()}\n\n")
+        qa_log.write(f"{entry.raw_output.strip()}\n\n")
         qa_log.flush()
 
     def _process_example(
@@ -881,8 +892,7 @@ class OpinionEvaluationRunner:
         spec: OpinionSpec,
         example: Mapping[str, object],
         idx: int,
-        qa_log: IO[str],
-        batch: StudyPredictionBatch,
+        context: ExampleProcessingContext,
     ) -> None:
         """Run inference for a single participant example and update artefacts."""
         messages = self._build_messages(spec, example)
@@ -891,7 +901,7 @@ class OpinionEvaluationRunner:
             prediction = example["before"]
         prediction = _clip_prediction(prediction)
 
-        batch.payloads.append(
+        context.batch.payloads.append(
             {
                 "participant_id": example["participant_id"],
                 "study": spec.key,
@@ -903,16 +913,18 @@ class OpinionEvaluationRunner:
                 "raw_output": raw_output,
             }
         )
-        batch.truth_before.append(float(example["before"]))
-        batch.truth_after.append(float(example["after"]))
-        batch.pred_after.append(float(prediction))
+        context.batch.truth_before.append(float(example["before"]))
+        context.batch.truth_after.append(float(example["after"]))
+        context.batch.pred_after.append(float(prediction))
 
         self._write_qa_log_entry(
-            qa_log,
-            idx=idx,
-            spec=spec,
-            messages=messages,
-            raw_output=raw_output,
+            context.qa_log,
+            QALogEntry(
+                idx=idx,
+                spec=spec,
+                messages=messages,
+                raw_output=raw_output,
+            ),
         )
 
     def _gather_predictions(
@@ -929,13 +941,13 @@ class OpinionEvaluationRunner:
             pred_after=[],
         )
         with qa_log_path.open("w", encoding="utf-8") as qa_log:
+            processing_context = ExampleProcessingContext(qa_log=qa_log, batch=batch)
             for idx, example in enumerate(examples, start=1):
                 self._process_example(
                     spec=spec,
                     example=example,
                     idx=idx,
-                    qa_log=qa_log,
-                    batch=batch,
+                    context=processing_context,
                 )
 
         return batch

@@ -15,6 +15,8 @@
 
 """Shared data models and parsing utilities for the GPT-4o pipeline."""
 
+# pylint: disable=duplicate-code  # Utilities mirror other pipeline modules by design.
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -97,7 +99,12 @@ def coerce_float(value: object, default: float = 0.0) -> float:
         return default
 
 
-def _decode_label_token(token: str, prefix: str, *, cast: Callable[[str], float | int]) -> float | int:
+def _decode_label_token(
+    token: str,
+    prefix: str,
+    *,
+    cast: Callable[[str], float | int],
+) -> float | int:
     """
     Parse a token extracted from a configuration label.
 

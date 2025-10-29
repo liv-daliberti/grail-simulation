@@ -19,6 +19,8 @@ from __future__ import annotations
 
 import argparse
 
+from .args import add_comma_separated_argument
+
 
 def add_jobs_argument(parser: argparse.ArgumentParser) -> None:
     """
@@ -88,4 +90,29 @@ def add_overwrite_argument(parser: argparse.ArgumentParser) -> None:
         "--overwrite",
         action="store_true",
         help="Allow overwriting metrics/prediction files in --out_dir.",
+    )
+
+
+def add_studies_argument(
+    parser: argparse.ArgumentParser,
+    *,
+    help_text: str,
+    flags: str = "--studies",
+    dest: str = "studies",
+) -> None:
+    """
+    Register the shared ``--studies`` argument used across pipelines.
+
+    :param parser: Argument parser receiving the studies filter option.
+    :param help_text: Help text describing the accepted study identifiers.
+    :param flags: CLI flag name (defaults to ``--studies``).
+    :param dest: Destination attribute name (defaults to ``studies``).
+    :returns: ``None``.
+    """
+
+    add_comma_separated_argument(
+        parser,
+        flags=flags,
+        dest=dest,
+        help_text=help_text,
     )

@@ -273,11 +273,24 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">TypeVar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">TypeVar</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 
 <span class="n">_Dataset</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;_Dataset&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BootstrapSummaryConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Metadata describing the bootstrap resampling configuration.&quot;&quot;&quot;</span>
+
+    <span class="n">n_groups</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_rows</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_bootstrap</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span>
 
 
 <div class="viewcode-block" id="safe_div">
@@ -360,7 +373,99 @@
     <span class="k">return</span> <span class="n">base_slug</span>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;compose_issue_slug&quot;</span><span class="p">,</span> <span class="s2">&quot;ensure_hf_cache&quot;</span><span class="p">,</span> <span class="s2">&quot;prepare_dataset&quot;</span><span class="p">,</span> <span class="s2">&quot;safe_div&quot;</span><span class="p">]</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">group_key_for_example</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">fallback_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a stable grouping key used for bootstrap resampling.</span>
+
+<span class="sd">    :param example: Dataset row containing participant/session hints.</span>
+<span class="sd">    :param fallback_index: Fallback index used when identifiers are absent.</span>
+<span class="sd">    :returns: Group key derived from ``urlid``, ``participant_id``, ``session_id``, or row index.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">urlid</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;urlid&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">urlid</span> <span class="ow">and</span> <span class="n">urlid</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;nan&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;urlid::</span><span class="si">{</span><span class="n">urlid</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">participant</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;participant_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">participant</span> <span class="ow">and</span> <span class="n">participant</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;nan&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;participant::</span><span class="si">{</span><span class="n">participant</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">session</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;session_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">session</span> <span class="ow">and</span> <span class="n">session</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;nan&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;session::</span><span class="si">{</span><span class="n">session</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;row::</span><span class="si">{</span><span class="n">fallback_index</span><span class="si">}</span><span class="s2">&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">participant_bootstrap_summary</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">model_samples</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="n">baseline_samples</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">summary_config</span><span class="p">:</span> <span class="n">BootstrapSummaryConfig</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Summarise participant bootstrap samples using the shared helper.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">summarise_bootstrap_samples</span><span class="p">(</span>
+        <span class="n">model_samples</span><span class="o">=</span><span class="n">model_samples</span><span class="p">,</span>
+        <span class="n">baseline_samples</span><span class="o">=</span><span class="n">baseline_samples</span><span class="p">,</span>
+        <span class="n">method</span><span class="o">=</span><span class="s2">&quot;participant_bootstrap&quot;</span><span class="p">,</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">summary_config</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">summarise_bootstrap_samples</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">model_samples</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="n">baseline_samples</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">BootstrapSummaryConfig</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a standardised summary dictionary for bootstrap accuracy samples.</span>
+
+<span class="sd">    Consolidates identical aggregation logic used across evaluation pipelines.</span>
+
+<span class="sd">    :param model_samples: Bootstrap samples for the primary model accuracy.</span>
+<span class="sd">    :param baseline_samples: Optional bootstrap samples for the baseline accuracy.</span>
+<span class="sd">    :param method: Human-readable description of the uncertainty estimation method.</span>
+<span class="sd">    :param config: Bootstrap resampling metadata (group count, rows, replicates, seed).</span>
+<span class="sd">    :returns: Dictionary containing summary statistics for model and baseline samples.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">model_samples</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;model_samples must contain at least one element.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_ci95</span><span class="p">(</span><span class="n">samples</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;low&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">)),</span>
+            <span class="s2">&quot;high&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="mf">97.5</span><span class="p">)),</span>
+        <span class="p">}</span>
+
+    <span class="n">summary</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="n">method</span><span class="p">,</span>
+        <span class="s2">&quot;n_groups&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">n_groups</span><span class="p">),</span>
+        <span class="s2">&quot;n_rows&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">n_rows</span><span class="p">),</span>
+        <span class="s2">&quot;n_bootstrap&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">n_bootstrap</span><span class="p">),</span>
+        <span class="s2">&quot;seed&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">seed</span><span class="p">),</span>
+        <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">model_samples</span><span class="p">)),</span>
+            <span class="s2">&quot;ci95&quot;</span><span class="p">:</span> <span class="n">_ci95</span><span class="p">(</span><span class="n">model_samples</span><span class="p">),</span>
+        <span class="p">},</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="n">baseline_samples</span><span class="p">:</span>
+        <span class="n">summary</span><span class="p">[</span><span class="s2">&quot;baseline&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">baseline_samples</span><span class="p">)),</span>
+            <span class="s2">&quot;ci95&quot;</span><span class="p">:</span> <span class="n">_ci95</span><span class="p">(</span><span class="n">baseline_samples</span><span class="p">),</span>
+        <span class="p">}</span>
+    <span class="k">return</span> <span class="n">summary</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;BootstrapSummaryConfig&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;compose_issue_slug&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ensure_hf_cache&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;group_key_for_example&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;participant_bootstrap_summary&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;prepare_dataset&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;safe_div&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;summarise_bootstrap_samples&quot;</span><span class="p">,</span>
+<span class="p">]</span>
 </pre></div>
         </article>
       </div>

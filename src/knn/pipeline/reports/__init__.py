@@ -136,6 +136,7 @@ def generate_reports(repo_root: Path, report_bundle: ReportBundle) -> None:
             studies=report_bundle.studies,
             options=OpinionReportOptions(
                 allow_incomplete=allow_incomplete,
+                predictions_root=report_bundle.opinion_predictions_root,
             ),
         )
     if report_bundle.include_opinion_from_next:
@@ -150,6 +151,7 @@ def generate_reports(repo_root: Path, report_bundle: ReportBundle) -> None:
                     "This section reuses the selected next-video recommendation configuration "
                     "to estimate post-study opinion change.",
                 ],
+                predictions_root=report_bundle.opinion_from_next_predictions_root,
             ),
         )
     build_feature_report(repo_root, report_bundle)

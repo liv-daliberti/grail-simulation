@@ -1029,6 +1029,10 @@
 <span class="sd">    :type opinion_metrics: Mapping[str, Mapping[str, Mapping[str, object]]]</span>
 <span class="sd">    :param opinion_from_next_metrics: Opinion metrics computed using the next-video configuration.</span>
 <span class="sd">    :type opinion_from_next_metrics: Mapping[str, Mapping[str, Mapping[str, object]]]</span>
+<span class="sd">    :param opinion_predictions_root: Root directory containing opinion prediction artefacts.</span>
+<span class="sd">    :type opinion_predictions_root: Optional[Path]</span>
+<span class="sd">    :param opinion_from_next_predictions_root: Root directory for opinion-from-next artefacts.</span>
+<span class="sd">    :type opinion_from_next_predictions_root: Optional[Path]</span>
 <span class="sd">    :param k_sweep: Textual representation of the ``k`` sweep grid.</span>
 <span class="sd">    :type k_sweep: str</span>
 <span class="sd">    :param loso_metrics: Optional leave-one-study-out metrics aggregated by feature/study.</span>
@@ -1067,7 +1071,9 @@
     <span class="n">allow_incomplete</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">include_next_video</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">include_opinion</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="n">include_opinion_from_next</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
+    <span class="n">include_opinion_from_next</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">opinion_predictions_root</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">opinion_from_next_predictions_root</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
 <div class="viewcode-block" id="MetricSummary">

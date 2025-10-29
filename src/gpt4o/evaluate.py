@@ -586,7 +586,19 @@ class EvaluationRunner:
                 qa_log.write("QUESTION:\n")
                 qa_log.write(f"{question}\n")
                 qa_log.write("ANSWER:\n")
-                qa_log.write(f"{answer}\n\n")
+                qa_log.write(f"{answer}\n")
+                parsed_index = payload.get("parsed_index")
+                gold_index = payload.get("gold_index")
+                eligible = bool(payload.get("eligible"))
+                correct = bool(payload.get("correct"))
+                result_status = "ineligible"
+                if eligible:
+                    result_status = "correct" if correct else "wrong"
+                pred_display = str(parsed_index) if parsed_index is not None else "None"
+                gold_display = str(gold_index) if gold_index is not None else "None"
+                qa_log.write(
+                    f"RESULT: {result_status} (pred={pred_display}, gold={gold_display})\n\n"
+                )
                 qa_log.flush()
 
                 self._maybe_log_progress(seen_rows, start_time, accumulator)
@@ -595,6 +607,12 @@ class EvaluationRunner:
         with open(self.output.metrics, "w", encoding="utf-8") as handle:
             serialised = json.dumps(metrics, ensure_ascii=False, indent=2)
             handle.write(serialised)
+
+        if accumulator.eligible_overall == 0:
+            logging.warning(
+                "Completed evaluation with zero eligible examples. "
+                "Verify that the dataset includes gold annotations and the correct split."
+            )
 
         self._print_summary(accumulator)
 

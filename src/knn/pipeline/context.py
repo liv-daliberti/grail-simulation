@@ -732,6 +732,10 @@ class ReportBundle:  # pylint: disable=too-many-instance-attributes
     :type opinion_metrics: Mapping[str, Mapping[str, Mapping[str, object]]]
     :param opinion_from_next_metrics: Opinion metrics computed using the next-video configuration.
     :type opinion_from_next_metrics: Mapping[str, Mapping[str, Mapping[str, object]]]
+    :param opinion_predictions_root: Root directory containing opinion prediction artefacts.
+    :type opinion_predictions_root: Optional[Path]
+    :param opinion_from_next_predictions_root: Root directory for opinion-from-next artefacts.
+    :type opinion_from_next_predictions_root: Optional[Path]
     :param k_sweep: Textual representation of the ``k`` sweep grid.
     :type k_sweep: str
     :param loso_metrics: Optional leave-one-study-out metrics aggregated by feature/study.
@@ -771,6 +775,8 @@ class ReportBundle:  # pylint: disable=too-many-instance-attributes
     include_next_video: bool = True
     include_opinion: bool = True
     include_opinion_from_next: bool = False
+    opinion_predictions_root: Path | None = None
+    opinion_from_next_predictions_root: Path | None = None
 
 @dataclass(frozen=True)
 class MetricSummary:  # pylint: disable=too-many-instance-attributes

@@ -180,12 +180,33 @@ if ! find "${XGB_OUT_DIR}" -name "metrics.json" -path "*/next_video/*" -print -q
     exit 1
   fi
 fi
+
+# Align the report stage CLI with the sweep configuration so cached artefacts are reused.
+: "${XGB_LEARNING_RATE_GRID:=0.03,0.06}"
+: "${XGB_MAX_DEPTH_GRID:=3,4}"
+: "${XGB_N_ESTIMATORS_GRID:=250,350}"
+: "${XGB_SUBSAMPLE_GRID:=0.8,0.9}"
+: "${XGB_COLSAMPLE_GRID:=0.7}"
+: "${XGB_REG_LAMBDA_GRID:=0.7}"
+: "${XGB_REG_ALPHA_GRID:=0.1}"
+: "${XGB_TEXT_VECTORIZER_GRID:=tfidf,word2vec,sentence_transformer}"
+declare -a XGB_SWEEP_FLAGS=(
+  "--learning-rate-grid" "${XGB_LEARNING_RATE_GRID}"
+  "--max-depth-grid" "${XGB_MAX_DEPTH_GRID}"
+  "--n-estimators-grid" "${XGB_N_ESTIMATORS_GRID}"
+  "--subsample-grid" "${XGB_SUBSAMPLE_GRID}"
+  "--colsample-grid" "${XGB_COLSAMPLE_GRID}"
+  "--reg-lambda-grid" "${XGB_REG_LAMBDA_GRID}"
+  "--reg-alpha-grid" "${XGB_REG_ALPHA_GRID}"
+  "--text-vectorizer-grid" "${XGB_TEXT_VECTORIZER_GRID}"
+)
 "${PYTHON_BIN}" -m xgb.pipeline \
   --dataset "${DATASET}" \
   --out-dir "${XGB_OUT_DIR}" \
   --cache-dir "${XGB_CACHE_DIR}" \
   --reports-dir "${XGB_REPORTS_DIR}" \
   --stage reports \
+  "${XGB_SWEEP_FLAGS[@]}" \
   "${XGB_ALLOW_FLAG}"
 
 log "Report refresh completed."

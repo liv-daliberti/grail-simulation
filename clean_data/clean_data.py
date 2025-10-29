@@ -13,17 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Top-level orchestration helpers for the ``clean_data`` package.
-
-This module stitches together the key pieces of the cleaning pipeline:
-loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,
-converting interactions into prompt-ready examples, validating schema
-requirements, saving artifacts, and dispatching prompt statistics reports.
-It is the public surface that downstream tooling should import when they
-need to build or persist cleaned prompt datasets. All functionality here is
-distributed under the repository's Apache 2.0 license; see LICENSE for
-details.
-"""
+"""Orchestrates loading, filtering, validation, persistence, and reporting for ``clean_data`` datasets (Apache 2.0; see LICENSE)."""
 
 from __future__ import annotations
 
@@ -34,11 +24,18 @@ import importlib
 import io
 import logging
 import lzma
+import sys
+import types
 import zipfile
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple
+
+try:  # pragma: no cover - optional dependency
+    import torch  # type: ignore
+except (ImportError, OSError, RuntimeError, ValueError):
+    torch = None  # type: ignore[assignment]
 
 from clean_data.filters import compute_issue_counts, filter_prompt_ready
 from clean_data.prompt.constants import REQUIRED_PROMPT_COLUMNS
@@ -54,11 +51,7 @@ def _ensure_torch_env_compat() -> None:
     ensures the minimal attributes exist when a ``torch`` module is present.
     """
 
-    try:  # pragma: no cover - environment dependent safeguard
-        import sys
-        import types
-        import torch  # type: ignore
-    except Exception:  # noqa: BLE001 - best-effort guard
+    if torch is None:
         return
 
     # Guarantee class-like attributes expected by datasets' dill integration

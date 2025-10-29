@@ -1,0 +1,2 @@
+feature_space,study,accuracy,accuracy_all_rows,baseline_accuracy,random_baseline_accuracy,best_k,eligible,total,accuracy_ci_low,accuracy_ci_high
+tfidf,Study 1 – Gun Control (MTurk),0.7627737226277372,0.7627737226277372,0.5401459854014599,0.32563868613138586,2,548,548,0.7265970388776725,0.7994539965185823

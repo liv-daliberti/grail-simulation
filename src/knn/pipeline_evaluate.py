@@ -104,16 +104,10 @@ def run_final_evaluations(
             cli_args.extend(selection.config.cli_args(word2vec_model_dir=model_dir))
             cli_args.extend(["--issues", study.issue])
             cli_args.extend(["--participant-studies", study.key])
-            # Train on companion studies (exclude the evaluation study itself)
-            # so the index does not include evaluation participants.
-            train_studies = [spec.key for spec in studies if spec.key != study.key]
-            if train_studies:
-                cli_args.extend(["--train-participant-studies", ",".join(train_studies)])
+            # Allow the training split to inherit the participant-study restriction
+            # from ``--participant-studies`` so evaluation remains strictly within-study.
             cli_args.extend(["--out-dir", str(feature_out_dir)])
             cli_args.extend(["--knn-k", str(selection.best_k)])
-            # Restrict training to the same study and its issue only.
-            # Keep train_issues aligned with --issues (implicit default); we only override
-            # participant studies as per tests/training design.
             cli_args.extend(context.extra_cli)
             run_knn_cli(cli_args)
             metrics, _ = load_metrics(feature_out_dir, issue_slug)
@@ -252,8 +246,10 @@ def run_cross_study_evaluations(
     context: EvaluationContext,
 ) -> Dict[str, Dict[str, Mapping[str, object]]]:
     """
-    Run leave-one-study-out evaluations and return metrics grouped by feature space.
+    Run per-study evaluation sweeps grouped by feature space.
 
+    Historically this stage performed leave-one-study-out (LOSO) checks, but the
+    training split is now restricted to the holdout study to avoid cross-study mixtures.
     This implementation supports reuse of cached metrics only (sufficient for tests).
     """
 
@@ -278,7 +274,7 @@ def run_cross_study_evaluations(
         )
         return cached
 
-    # Execute LOSO runs: train on companion studies, evaluate on the holdout.
+    # Execute per-study runs while keeping training and evaluation aligned.
     cross_metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}
     for feature_space, per_study in selections.items():
         LOGGER.info("[LOSO] feature=%s", feature_space)
@@ -331,14 +327,7 @@ def run_cross_study_evaluations(
             cli_args.extend(["--issues", holdout.issue])
             # Evaluate on the holdout only
             cli_args.extend(["--participant-studies", holdout.key])
-            # Train on other studies that share the SAME issue as the holdout.
-            train_studies = [
-                spec.key
-                for spec in studies
-                if spec.key != holdout.key and spec.issue == holdout.issue
-            ]
-            if train_studies:
-                cli_args.extend(["--train-participant-studies", ",".join(train_studies)])
+            # Leave training scoped to the holdout study to avoid cross-study combinations.
             cli_args.extend(["--out-dir", str(loso_root)])
             cli_args.extend(["--knn-k", str(selection.best_k)])
             cli_args.extend(context.extra_cli)

@@ -265,7 +265,7 @@ def test_prepare_sweep_tasks_word2vec_without_cached_metrics(tmp_path: Path) -> 
     assert task.train_participant_studies == ()
 
 
-def test_prepare_sweep_tasks_sets_training_cohort(tmp_path: Path) -> None:
+def test_prepare_sweep_tasks_restricts_training_to_eval_study(tmp_path: Path) -> None:
     study_a = _make_study("study1", "gun_control", "Study 1 – Gun Control (MTurk)")
     study_b = _make_study("study2", "minimum_wage", "Study 2 – Minimum Wage (YouGov)")
     config = _make_sweep_config("tfidf")
@@ -287,8 +287,8 @@ def test_prepare_sweep_tasks_sets_training_cohort(tmp_path: Path) -> None:
     assert len(pending) == 2
     task_for_a = next(task for task in pending if task.study.key == study_a.key)
     task_for_b = next(task for task in pending if task.study.key == study_b.key)
-    assert task_for_a.train_participant_studies == (study_b.key,)
-    assert task_for_b.train_participant_studies == (study_a.key,)
+    assert task_for_a.train_participant_studies == ()
+    assert task_for_b.train_participant_studies == ()
 
 
 def test_sweep_outcome_from_metrics_handles_legacy_payload(tmp_path: Path) -> None:
@@ -565,7 +565,7 @@ def test_run_final_evaluations_reuses_cached_metrics(monkeypatch: pytest.MonkeyP
     assert (context.word2vec_model_dir / study.study_slug).exists()
 
 
-def test_run_final_evaluations_executes_with_training_filters(
+def test_run_final_evaluations_avoids_cross_study_training(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     study = _make_study("study1", "gun_control", "Study 1 – Gun Control (MTurk)")
@@ -624,8 +624,10 @@ def test_run_final_evaluations_executes_with_training_filters(
     assert results == {"tfidf": {study.key: stub_metrics}}
     assert call_args, "Expected run_knn_cli to be invoked"
     cli_invocation = call_args[0]
-    train_idx = cli_invocation.index("--train-participant-studies") + 1
-    assert cli_invocation[train_idx] == companion.key
+    assert "--participant-studies" in cli_invocation
+    participant_idx = cli_invocation.index("--participant-studies") + 1
+    assert cli_invocation[participant_idx] == study.key
+    assert "--train-participant-studies" not in cli_invocation
 
 def test_run_opinion_evaluations_reuses_cached_metrics(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     study = _make_study("study1", "gun_control", "Study 1 – Gun Control (MTurk)")
@@ -783,6 +785,93 @@ def test_run_cross_study_evaluations_reuses_cached_metrics(monkeypatch: pytest.M
 
     assert results == cached_metrics
 
+
+def test_run_cross_study_evaluations_avoids_cross_study_training(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    study_a = _make_study("study1", "gun_control", "Study 1 – Gun Control (MTurk)")
+    study_b = _make_study("study2", "gun_control", "Study 2 – Gun Control (YouGov)")
+    config = _make_sweep_config("tfidf")
+    outcome_a = SweepOutcome(
+        order_index=0,
+        study=study_a,
+        feature_space="tfidf",
+        config=config,
+        accuracy=0.71,
+        best_k=5,
+        eligible=80,
+        metrics_path=tmp_path / "a.json",
+        metrics={"accuracy_overall": 0.71},
+    )
+    outcome_b = SweepOutcome(
+        order_index=1,
+        study=study_b,
+        feature_space="tfidf",
+        config=config,
+        accuracy=0.69,
+        best_k=7,
+        eligible=76,
+        metrics_path=tmp_path / "b.json",
+        metrics={"accuracy_overall": 0.69},
+    )
+
+    selections = {
+        "tfidf": {
+            study_a.key: StudySelection(study=study_a, outcome=outcome_a),
+            study_b.key: StudySelection(study=study_b, outcome=outcome_b),
+        }
+    }
+
+    context = EvaluationContext.from_args(
+        base_cli=["--dataset", "stub"],
+        extra_cli=["--seed", "13"],
+        out_dir=tmp_path / "out",
+        word2vec_model_dir=tmp_path / "word2vec_models",
+        reuse_existing=False,
+    )
+
+    call_args: List[List[str]] = []
+    studies_by_key = {study_a.key: study_a, study_b.key: study_b}
+    stub_metrics = {
+        study_a.key: {"accuracy_overall": 0.61},
+        study_b.key: {"accuracy_overall": 0.59},
+    }
+
+    def fake_run(args: List[str]) -> None:
+        cli = list(args)
+        call_args.append(cli)
+        participant_idx = cli.index("--participant-studies") + 1
+        holdout_key = cli[participant_idx]
+        holdout = studies_by_key[holdout_key]
+        issue_slug = data.issue_slug_for_study(holdout)
+        out_dir = Path(cli[cli.index("--out-dir") + 1])
+        metrics_dir = out_dir / issue_slug
+        metrics_dir.mkdir(parents=True, exist_ok=True)
+        metrics_path = metrics_dir / f"knn_eval_{issue_slug}_validation_metrics.json"
+        metrics_path.write_text(json.dumps(stub_metrics[holdout_key]), encoding="utf-8")
+
+    def fake_load(run_dir: Path, slug: str) -> tuple[dict, Path]:
+        metrics_path = run_dir / slug / f"knn_eval_{slug}_validation_metrics.json"
+        payload = json.loads(metrics_path.read_text(encoding="utf-8"))
+        return payload, metrics_path
+
+    monkeypatch.setattr(evaluate, "run_knn_cli", fake_run)
+    monkeypatch.setattr(evaluate, "load_metrics", fake_load)
+    monkeypatch.setattr(evaluate, "load_loso_metrics_from_disk", lambda **_kwargs: {})
+
+    results = evaluate.run_cross_study_evaluations(
+        selections=selections,
+        studies=[study_a, study_b],
+        context=context,
+    )
+
+    assert results == {"tfidf": stub_metrics}
+    assert len(call_args) == 2
+    assert {
+        cli[cli.index("--participant-studies") + 1] for cli in call_args
+    } == {study_a.key, study_b.key}
+    for cli in call_args:
+        assert "--train-participant-studies" not in cli
 
 def test_generate_reports_creates_expected_sections(tmp_path: Path) -> None:
     repo_root = tmp_path

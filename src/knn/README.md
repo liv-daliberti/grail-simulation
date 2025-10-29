@@ -19,7 +19,7 @@ src/knn/
 ├── pipeline_cli.py                # Top-level pipeline CLI + default paths
 ├── pipeline_context.py            # Path resolution + execution configuration
 ├── pipeline_data.py               # Study/issue metadata helpers
-├── pipeline_evaluate.py           # Cross-study + opinion evaluation orchestration
+├── pipeline_evaluate.py           # Per-study + opinion evaluation orchestration
 ├── pipeline_io.py                 # Sweep/final metrics loading + JSON writers
 ├── pipeline_reports/              # Markdown builders for reports/knn/*
 ├── pipeline_sweeps.py             # Hyper-parameter grids and task partitioning

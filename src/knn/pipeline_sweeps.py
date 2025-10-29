@@ -380,11 +380,12 @@ def prepare_sweep_tasks(
     base_cli_tuple = tuple(context.base_cli)
     extra_cli_tuple = tuple(context.extra_cli)
 
-    # Train on companion studies (exclude the evaluation study itself).
-    # This mirrors leave-one-study-out style training during sweeps so the
-    # index does not include evaluation participants.
+    # Restrict training to the evaluation study. Passing an empty tuple allows
+    # the CLI to inherit the participant study filter from ``--participant-studies``
+    # so no cross-study combinations are introduced during the sweep.
     def _train_keys_for(_study_key: str) -> tuple[str, ...]:
-        return tuple(spec.key for spec in studies if spec.key != _study_key)
+        _ = _study_key  # satisfy lint; the value is implicit via participant-studies
+        return tuple()
 
     return prepare_task_grid(
         configs,

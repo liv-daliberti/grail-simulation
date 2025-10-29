@@ -433,14 +433,40 @@
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;StageOverwriteContext&quot;</span><span class="p">,</span>
     <span class="s2">&quot;merge_ordered&quot;</span><span class="p">,</span>
     <span class="s2">&quot;make_duplicate_warning&quot;</span><span class="p">,</span>
     <span class="s2">&quot;merge_ordered_with_warning&quot;</span><span class="p">,</span>
     <span class="s2">&quot;merge_indexed_outcomes&quot;</span><span class="p">,</span>
     <span class="s2">&quot;OpinionStudySelection&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;compose_cli_args&quot;</span><span class="p">,</span>
     <span class="s2">&quot;make_placeholder_metrics&quot;</span><span class="p">,</span>
     <span class="s2">&quot;ensure_overwrite_flag&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ensure_stage_overwrite_flag&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ensure_final_stage_overwrite&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ensure_final_stage_overwrite_with_context&quot;</span><span class="p">,</span>
 <span class="p">]</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">StageOverwriteContext</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration bundle for stage-specific overwrite logging.&quot;&quot;&quot;</span>
+
+    <span class="n">stage</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">labels</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">noun</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;outputs&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">compose_cli_args</span><span class="p">(</span><span class="o">*</span><span class="n">segments</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a flattened list of CLI arguments from multiple segments.&quot;&quot;&quot;</span>
+
+    <span class="n">cli_args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">segment</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">cli_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">segment</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cli_args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">segment</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cli_args</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">make_placeholder_metrics</span><span class="p">(</span>
@@ -527,6 +553,88 @@
 
     <span class="n">cli_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;--overwrite&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="kc">True</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">ensure_stage_overwrite_flag</span><span class="p">(</span>
+    <span class="n">cli_args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">metrics_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">StageOverwriteContext</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Apply :func:`ensure_overwrite_flag` using standardised stage-aware log messages.</span>
+
+<span class="sd">    :param cli_args: Mutable list of CLI arguments that may require ``--overwrite``.</span>
+<span class="sd">    :param metrics_path: Expected metrics file within the evaluation directory.</span>
+<span class="sd">    :param logger: Logger used when emitting informational or recovery messages.</span>
+<span class="sd">    :param context: Bundled stage metadata (token, labels, noun).</span>
+<span class="sd">    :returns: ``True`` when ``--overwrite`` was appended to ``cli_args``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">stage_token</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">stage</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+    <span class="n">label_fmt</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">=%s&quot;</span> <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">context</span><span class="o">.</span><span class="n">labels</span><span class="p">)</span>
+    <span class="n">context_values</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">value</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">context</span><span class="o">.</span><span class="n">labels</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">label_fmt</span><span class="p">:</span>
+        <span class="n">label_fmt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label_fmt</span><span class="si">}</span><span class="s2"> &quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_args_factory</span><span class="p">(</span><span class="n">evaluation_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">context_values</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="o">*</span><span class="n">context_values</span><span class="p">,</span> <span class="n">evaluation_dir</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">evaluation_dir</span><span class="p">,)</span>
+
+    <span class="n">recover_message</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">stage_token</span><span class="si">}</span><span class="s2">][RECOVER] </span><span class="si">{</span><span class="n">label_fmt</span><span class="si">}</span><span class="s2">detected partial </span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">noun</span><span class="si">}</span><span class="s2"> at %s; &quot;</span>
+        <span class="s2">&quot;automatically enabling overwrite for rerun.&quot;</span>
+    <span class="p">)</span>
+    <span class="n">overwrite_message</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">stage_token</span><span class="si">}</span><span class="s2">][OVERWRITE] </span><span class="si">{</span><span class="n">label_fmt</span><span class="si">}</span><span class="s2">existing </span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">noun</span><span class="si">}</span><span class="s2"> at %s; &quot;</span>
+        <span class="s2">&quot;enabling overwrite to refresh metrics.&quot;</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ensure_overwrite_flag</span><span class="p">(</span>
+        <span class="n">cli_args</span><span class="p">,</span>
+        <span class="n">metrics_path</span><span class="p">,</span>
+        <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
+        <span class="n">recover_log</span><span class="o">=</span><span class="p">(</span><span class="n">recover_message</span><span class="p">,</span> <span class="n">_args_factory</span><span class="p">),</span>
+        <span class="n">overwrite_log</span><span class="o">=</span><span class="p">(</span><span class="n">overwrite_message</span><span class="p">,</span> <span class="n">_args_factory</span><span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">ensure_final_stage_overwrite</span><span class="p">(</span>
+    <span class="n">cli_args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">metrics_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span>
+    <span class="n">context_labels</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">|</span> <span class="n">Tuple</span><span class="p">[()],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convenience wrapper for ``ensure_stage_overwrite_flag`` when ``stage=&#39;FINAL&#39;``.&quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">ensure_stage_overwrite_flag</span><span class="p">(</span>
+        <span class="n">cli_args</span><span class="p">,</span>
+        <span class="n">metrics_path</span><span class="p">,</span>
+        <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
+        <span class="n">context</span><span class="o">=</span><span class="n">StageOverwriteContext</span><span class="p">(</span><span class="n">stage</span><span class="o">=</span><span class="s2">&quot;FINAL&quot;</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">context_labels</span><span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">ensure_final_stage_overwrite_with_context</span><span class="p">(</span>
+    <span class="n">cli_args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">metrics_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">context_labels</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Call :func:`ensure_final_stage_overwrite` with keyword context labels.&quot;&quot;&quot;</span>
+
+    <span class="n">labels</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">context_labels</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">ensure_final_stage_overwrite</span><span class="p">(</span>
+        <span class="n">cli_args</span><span class="p">,</span>
+        <span class="n">metrics_path</span><span class="p">,</span>
+        <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
+        <span class="n">context_labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span>
+    <span class="p">)</span>
 </pre></div>
         </article>
       </div>

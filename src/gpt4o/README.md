@@ -47,7 +47,10 @@ focused modules so it mirrors the structure of the `knn/` and `xgb/` baselines.
    by the other baselines. The pipeline mirrors the KNN/XGBoost workflows,
    sweeping temperatures, top-p values, and max-token caps, selecting the best
    configuration based on validation accuracy, and regenerating Markdown
-   summaries (including fairness cuts by issue and participant study).
+   summaries (including fairness cuts by issue and participant study). After the
+   next-video evaluation finishes, the same configuration is reused to score
+   change-of-opinion at the participant level; the resulting artefacts live under
+   `models/gpt-4o/opinion/<config>/` with summaries in `reports/gpt4o/opinion/`.
 
 `gpt4o.cli` downloads the cleaned dataset from Hugging Face (see
 `config.DATASET_NAME`). Use `--cache_dir` to point at an existing HF cache or a
@@ -65,7 +68,7 @@ that backs every downstream baseline.
 
 - `client.py` — thin wrapper around the Azure OpenAI client plus the `ds_call`
   helper used during evaluation.
-- `config.py` — centralized configuration, dataset identifiers, and prompt
+ - `config.py` — centralized configuration, dataset identifiers, and prompt
   template defaults.
 - `conversation.py` — constructs messages from cleaned rows, including option
   formatting and answer-tag insertion for reliable parsing.
@@ -73,7 +76,12 @@ that backs every downstream baseline.
   buckets, and the retry loop around API calls. It now records accuracy and
   formatting rates by issue and participant study for downstream fairness checks.
 - `cli.py` — argument parser and runtime entry point (mirrors `knn`/`xgb` CLIs).
-- `pipeline.py` — orchestrates sweeps, selection, final evaluation, and report
+  Pass `--opinion_studies`, `--opinion_max_participants`, or
+  `--opinion_direction_tolerance` to customise the opinion stage.
+- `config.py` — aggregates shared settings, including the system prompts used for
+  next-video ranking (`SYSTEM_PROMPT`) and opinion shift (`OPINION_SYSTEM_PROMPT`).
+- `opinion.py` — GPT-4o opinion-shift evaluation runner shared by the pipeline.
+- `pipeline.py` — orchestrates sweeps, selection, opinion evaluation, and report
   regeneration for the GPT-4o baseline.
 - `titles.py` / `utils.py` — shared helpers for title resolution, text
   canonicalization, and response parsing.

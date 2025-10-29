@@ -284,6 +284,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_CACHE_DIR</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.evaluate</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_eval</span>
 
+<span class="n">DEFAULT_OUT_DIR</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="s2">&quot;models&quot;</span> <span class="o">/</span> <span class="s2">&quot;gpt-4o&quot;</span>
+
 
 <div class="viewcode-block" id="build_parser">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.cli.build_parser">[docs]</a>
@@ -319,9 +321,35 @@
             <span class="s2">&quot;Comma-separated participant study identifiers to filter (defaults to all studies).&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
+    <span class="n">add_comma_separated_argument</span><span class="p">(</span>
+        <span class="n">parser</span><span class="p">,</span>
+        <span class="n">flags</span><span class="o">=</span><span class="s2">&quot;--opinion_studies&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;opinion_studies&quot;</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Comma-separated opinion study keys to evaluate (defaults to all &quot;</span>
+            <span class="s2">&quot;opinion studies).&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--opinion_max_participants&quot;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Optional cap on participants per opinion study (0 keeps all).&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--opinion_direction_tolerance&quot;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Tolerance for treating opinion deltas as no-change when measuring &quot;</span>
+            <span class="s2">&quot;direction accuracy.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--out_dir&quot;</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;models&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;gpt4o&quot;</span><span class="p">),</span>
+        <span class="n">default</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">DEFAULT_OUT_DIR</span><span class="p">),</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Directory for predictions and metrics.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
@@ -340,6 +368,24 @@
         <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Maximum number of tokens in the model response.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--top_p&quot;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Nucleus sampling probability mass forwarded to GPT-4o.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--request_retries&quot;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Maximum GPT-4o attempts per request (default: 5).&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--request_retry_delay&quot;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Seconds to wait between GPT-4o request retries (default: 1.0).&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--cache_dir&quot;</span><span class="p">,</span>

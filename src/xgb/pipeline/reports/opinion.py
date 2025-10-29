@@ -541,9 +541,19 @@ def _extract_opinion_summary(data: Mapping[str, object]) -> OpinionSummary:
     baseline_block = baseline_raw if isinstance(baseline_raw, Mapping) else {}
 
     def metric_value(name: str) -> Optional[float]:
+        """Fetch a metric float from the summary block when available.
+
+        :param name: Metric identifier inside the ``metrics`` payload.
+        :returns: Parsed float value or ``None`` if missing/unparseable.
+        """
         return _safe_float(metrics_block.get(name))
 
     def baseline_value(*names: str) -> Optional[float]:
+        """Fetch a baseline float from the summary block when available.
+
+        :param names: Candidate baseline keys to attempt in order.
+        :returns: Parsed float value or ``None`` if no key is present.
+        """
         for candidate in names:
             if candidate in baseline_block:
                 return _safe_float(baseline_block.get(candidate))

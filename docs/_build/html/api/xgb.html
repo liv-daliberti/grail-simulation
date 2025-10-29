@@ -1410,16 +1410,16 @@ per-video probabilities.</p>
 <p id="module-xgb.evaluate">Evaluation loop and metrics for the XGBoost slate baseline.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="xgb.evaluate.EvaluationConfig">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.evaluate.</span></span><span class="sig-name descname"><span class="pre">EvaluationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">participant_studies</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/core/evaluate.html#EvaluationConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.evaluate.EvaluationConfig" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.evaluate.</span></span><span class="sig-name descname"><span class="pre">EvaluationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">participant_studies</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/core/evaluation_types.html#EvaluationConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.evaluate.EvaluationConfig" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Configuration bundle shared across evaluation helpers.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>dataset_source</strong> (<em>str</em>) – Identifier for the dataset source (path or HF id).</p></li>
-<li><p><strong>extra_fields</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Additional column names appended to prompt documents.</p></li>
-<li><p><strong>eval_max</strong> (<em>int</em>) – Optional cap on the number of evaluation rows (0 evaluates all).</p></li>
-<li><p><strong>participant_studies</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Tokenised participant study filters applied to the splits.</p></li>
+<li><p><strong>dataset_source</strong> – Identifier for the dataset source (path or Hub id).</p></li>
+<li><p><strong>extra_fields</strong> – Additional column names appended to prompt documents.</p></li>
+<li><p><strong>eval_max</strong> – Maximum number of evaluation rows to process (0 keeps all).</p></li>
+<li><p><strong>participant_studies</strong> – Participant study filters applied to evaluation splits.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Parameters<span class="colon">:</span></dt>
@@ -1455,14 +1455,42 @@ per-video probabilities.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="xgb.evaluate.IssueMetrics">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.evaluate.</span></span><span class="sig-name descname"><span class="pre">IssueMetrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">participant_studies</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluated</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correct</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">known_candidate_hits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">known_candidate_total</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avg_probability</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eligible</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xgboost_params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correct_eligible=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_eligible=0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">known_accuracy=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">known_availability=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluated_predicted=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_predicted=0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseline_most_frequent_gold_index=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_baseline_expected_accuracy=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">curve_metrics=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">curve_metrics_path=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_ci_95=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_uncertainty=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/core/evaluate.html#IssueMetrics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.evaluate.IssueMetrics" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.evaluate.</span></span><span class="sig-name descname"><span class="pre">IssueMetrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">participant_studies</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluated</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correct</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">known_candidate_hits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">known_candidate_total</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avg_probability</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eligible</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xgboost_params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correct_eligible=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_eligible=0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">known_accuracy=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">known_availability=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluated_predicted=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_predicted=0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseline_most_frequent_gold_index=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_baseline_expected_accuracy=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">curve_metrics=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">curve_metrics_path=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_ci_95=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_uncertainty=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/core/evaluation_types.html#IssueMetrics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.evaluate.IssueMetrics" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Container describing evaluation metrics for a single issue.</p>
-<p>Note: In dataclasses, all non-default fields must precede any fields with
-defaults. The ordering here ensures that rule is respected.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>issue</strong> – Human-readable issue label.</p></li>
+<li><p><strong>participant_studies</strong> – Participant study filters applied to evaluation rows.</p></li>
+<li><p><strong>dataset_source</strong> – Identifier of the dataset (path or Hub id).</p></li>
+<li><p><strong>evaluated</strong> – Number of evaluation rows processed.</p></li>
+<li><p><strong>correct</strong> – Count of correct slate selections.</p></li>
+<li><p><strong>accuracy</strong> – Overall accuracy across all evaluated rows.</p></li>
+<li><p><strong>known_candidate_hits</strong> – Correct selections where the candidate was seen during training.</p></li>
+<li><p><strong>known_candidate_total</strong> – Evaluations containing at least one known candidate.</p></li>
+<li><p><strong>coverage</strong> – Fraction of evaluations with at least one known candidate.</p></li>
+<li><p><strong>avg_probability</strong> – Mean probability assigned to known predictions.</p></li>
+<li><p><strong>eligible</strong> – Count of slates containing the gold option.</p></li>
+<li><p><strong>timestamp</strong> – UNIX timestamp when the metrics were produced.</p></li>
+<li><p><strong>extra_fields</strong> – Extra prompt fields incorporated during evaluation.</p></li>
+<li><p><strong>xgboost_params</strong> – Serialised model parameter summary.</p></li>
+<li><p><strong>correct_eligible</strong> – Correct selections restricted to eligible slates.</p></li>
+<li><p><strong>accuracy_eligible</strong> – Accuracy among eligible slates.</p></li>
+<li><p><strong>known_accuracy</strong> – Accuracy on rows with known candidates.</p></li>
+<li><p><strong>known_availability</strong> – Ratio of rows with known candidates to those evaluated.</p></li>
+<li><p><strong>evaluated_predicted</strong> – Evaluations where the model emitted a prediction.</p></li>
+<li><p><strong>accuracy_predicted</strong> – Accuracy among rows with predictions.</p></li>
+<li><p><strong>baseline_most_frequent_gold_index</strong> – Baseline statistics for the most frequent gold index.</p></li>
+<li><p><strong>random_baseline_expected_accuracy</strong> – Expected accuracy of a random chooser baseline.</p></li>
+<li><p><strong>curve_metrics</strong> – Learning-curve payload summarising cumulative accuracy trends.</p></li>
+<li><p><strong>curve_metrics_path</strong> – Optional filesystem path where curve metrics were persisted.</p></li>
+<li><p><strong>accuracy_ci_95</strong> – Bootstrap 95% confidence interval for eligible-only accuracy.</p></li>
+<li><p><strong>accuracy_uncertainty</strong> – Full bootstrap payload including model/baseline statistics.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>issue</strong> (<em>str</em>)</p></li>
 <li><p><strong>participant_studies</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
 <li><p><strong>dataset_source</strong> (<em>str</em>)</p></li>
@@ -1620,6 +1648,107 @@ defaults. The ordering here ensures that rule is respected.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="xgb.evaluate.IssueMetrics.xgboost_params">
 <span class="sig-name descname"><span class="pre">xgboost_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.evaluate.IssueMetrics.xgboost_params" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="xgb.evaluate.PredictionOutcome">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.evaluate.</span></span><span class="sig-name descname"><span class="pre">PredictionOutcome</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prediction_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predicted_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gold_video_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">candidate_probs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">best_probability</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">known_candidate_seen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">known_candidate_hit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">record_probability</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correct</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">option_count</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gold_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eligible</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/core/evaluation_types.html#PredictionOutcome"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.evaluate.PredictionOutcome" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Result bundle for a single evaluation example.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prediction_index</strong> – 1-based predicted option index (<code class="docutils literal notranslate"><span class="pre">None</span></code> when abstaining).</p></li>
+<li><p><strong>predicted_id</strong> – Video identifier returned by the model.</p></li>
+<li><p><strong>gold_video_id</strong> – Ground-truth video identifier.</p></li>
+<li><p><strong>candidate_probs</strong> – Mapping of slate indices to predicted probabilities.</p></li>
+<li><p><strong>best_probability</strong> – Probability associated with the predicted option.</p></li>
+<li><p><strong>known_candidate_seen</strong> – Flag indicating at least one known candidate was present.</p></li>
+<li><p><strong>known_candidate_hit</strong> – Flag indicating the prediction matched a known candidate.</p></li>
+<li><p><strong>record_probability</strong> – Flag controlling whether the probability contributes to aggregates.</p></li>
+<li><p><strong>correct</strong> – <code class="docutils literal notranslate"><span class="pre">True</span></code> when the predicted candidate matches the gold id.</p></li>
+<li><p><strong>option_count</strong> – Number of slate options presented to the model.</p></li>
+<li><p><strong>gold_index</strong> – 1-based index of the gold candidate (when present).</p></li>
+<li><p><strong>eligible</strong> – <code class="docutils literal notranslate"><span class="pre">True</span></code> when the slate contained the gold candidate.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>prediction_index</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>predicted_id</strong> (<em>str</em>)</p></li>
+<li><p><strong>gold_video_id</strong> (<em>str</em>)</p></li>
+<li><p><strong>candidate_probs</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>best_probability</strong> (<em>float</em>)</p></li>
+<li><p><strong>known_candidate_seen</strong> (<em>bool</em>)</p></li>
+<li><p><strong>known_candidate_hit</strong> (<em>bool</em>)</p></li>
+<li><p><strong>record_probability</strong> (<em>bool</em>)</p></li>
+<li><p><strong>correct</strong> (<em>bool</em>)</p></li>
+<li><p><strong>option_count</strong> (<em>int</em>)</p></li>
+<li><p><strong>gold_index</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>eligible</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.evaluate.PredictionOutcome.best_probability">
+<span class="sig-name descname"><span class="pre">best_probability</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#xgb.evaluate.PredictionOutcome.best_probability" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.evaluate.PredictionOutcome.candidate_probs">
+<span class="sig-name descname"><span class="pre">candidate_probs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.evaluate.PredictionOutcome.candidate_probs" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.evaluate.PredictionOutcome.correct">
+<span class="sig-name descname"><span class="pre">correct</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#xgb.evaluate.PredictionOutcome.correct" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.evaluate.PredictionOutcome.eligible">
+<span class="sig-name descname"><span class="pre">eligible</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#xgb.evaluate.PredictionOutcome.eligible" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.evaluate.PredictionOutcome.gold_index">
+<span class="sig-name descname"><span class="pre">gold_index</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.evaluate.PredictionOutcome.gold_index" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.evaluate.PredictionOutcome.gold_video_id">
+<span class="sig-name descname"><span class="pre">gold_video_id</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.evaluate.PredictionOutcome.gold_video_id" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.evaluate.PredictionOutcome.known_candidate_hit">
+<span class="sig-name descname"><span class="pre">known_candidate_hit</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#xgb.evaluate.PredictionOutcome.known_candidate_hit" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.evaluate.PredictionOutcome.known_candidate_seen">
+<span class="sig-name descname"><span class="pre">known_candidate_seen</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#xgb.evaluate.PredictionOutcome.known_candidate_seen" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.evaluate.PredictionOutcome.option_count">
+<span class="sig-name descname"><span class="pre">option_count</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#xgb.evaluate.PredictionOutcome.option_count" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.evaluate.PredictionOutcome.predicted_id">
+<span class="sig-name descname"><span class="pre">predicted_id</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#xgb.evaluate.PredictionOutcome.predicted_id" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.evaluate.PredictionOutcome.prediction_index">
+<span class="sig-name descname"><span class="pre">prediction_index</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.evaluate.PredictionOutcome.prediction_index" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.evaluate.PredictionOutcome.record_probability">
+<span class="sig-name descname"><span class="pre">record_probability</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#xgb.evaluate.PredictionOutcome.record_probability" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -2969,6 +3098,21 @@ stages can select the best configurations.</p>
 <li><a class="reference internal" href="#xgb.evaluate.IssueMetrics.random_baseline_expected_accuracy"><code class="docutils literal notranslate"><span class="pre">IssueMetrics.random_baseline_expected_accuracy</span></code></a></li>
 <li><a class="reference internal" href="#xgb.evaluate.IssueMetrics.timestamp"><code class="docutils literal notranslate"><span class="pre">IssueMetrics.timestamp</span></code></a></li>
 <li><a class="reference internal" href="#xgb.evaluate.IssueMetrics.xgboost_params"><code class="docutils literal notranslate"><span class="pre">IssueMetrics.xgboost_params</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xgb.evaluate.PredictionOutcome"><code class="docutils literal notranslate"><span class="pre">PredictionOutcome</span></code></a><ul>
+<li><a class="reference internal" href="#xgb.evaluate.PredictionOutcome.best_probability"><code class="docutils literal notranslate"><span class="pre">PredictionOutcome.best_probability</span></code></a></li>
+<li><a class="reference internal" href="#xgb.evaluate.PredictionOutcome.candidate_probs"><code class="docutils literal notranslate"><span class="pre">PredictionOutcome.candidate_probs</span></code></a></li>
+<li><a class="reference internal" href="#xgb.evaluate.PredictionOutcome.correct"><code class="docutils literal notranslate"><span class="pre">PredictionOutcome.correct</span></code></a></li>
+<li><a class="reference internal" href="#xgb.evaluate.PredictionOutcome.eligible"><code class="docutils literal notranslate"><span class="pre">PredictionOutcome.eligible</span></code></a></li>
+<li><a class="reference internal" href="#xgb.evaluate.PredictionOutcome.gold_index"><code class="docutils literal notranslate"><span class="pre">PredictionOutcome.gold_index</span></code></a></li>
+<li><a class="reference internal" href="#xgb.evaluate.PredictionOutcome.gold_video_id"><code class="docutils literal notranslate"><span class="pre">PredictionOutcome.gold_video_id</span></code></a></li>
+<li><a class="reference internal" href="#xgb.evaluate.PredictionOutcome.known_candidate_hit"><code class="docutils literal notranslate"><span class="pre">PredictionOutcome.known_candidate_hit</span></code></a></li>
+<li><a class="reference internal" href="#xgb.evaluate.PredictionOutcome.known_candidate_seen"><code class="docutils literal notranslate"><span class="pre">PredictionOutcome.known_candidate_seen</span></code></a></li>
+<li><a class="reference internal" href="#xgb.evaluate.PredictionOutcome.option_count"><code class="docutils literal notranslate"><span class="pre">PredictionOutcome.option_count</span></code></a></li>
+<li><a class="reference internal" href="#xgb.evaluate.PredictionOutcome.predicted_id"><code class="docutils literal notranslate"><span class="pre">PredictionOutcome.predicted_id</span></code></a></li>
+<li><a class="reference internal" href="#xgb.evaluate.PredictionOutcome.prediction_index"><code class="docutils literal notranslate"><span class="pre">PredictionOutcome.prediction_index</span></code></a></li>
+<li><a class="reference internal" href="#xgb.evaluate.PredictionOutcome.record_probability"><code class="docutils literal notranslate"><span class="pre">PredictionOutcome.record_probability</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#xgb.evaluate.evaluate_issue"><code class="docutils literal notranslate"><span class="pre">evaluate_issue()</span></code></a></li>

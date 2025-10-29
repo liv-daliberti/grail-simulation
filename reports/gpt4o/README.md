@@ -14,6 +14,9 @@ for the session-ingestion reference.
 - `next_video/` – overall accuracy, formatting/parse rates, and fairness cuts by
   issue and participant study for the promoted configuration. The directory also
   captures the raw `metrics.json` emitted by the evaluation stage.
+- `opinion/` – change-of-opinion metrics evaluated per participant study, including
+  MAE/RMSE, direction accuracy, and calibration summaries plus the corresponding
+  prediction traces.
 - `hyperparameter_tuning/` – leaderboard of the sweep runs, including the
   deployment parameters and validation metrics (validation split only) that
   drove the selection.

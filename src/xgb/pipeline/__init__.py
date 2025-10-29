@@ -169,6 +169,10 @@ def _discover_cached_word2vec_workers(
     counts: Counter[int] = Counter()
 
     def _record(value: int) -> None:
+        """Count a positive Word2Vec worker observation.
+
+        :param value: Observed worker count to include in the frequency tally.
+        """
         if value > 0:
             counts[value] += 1
 

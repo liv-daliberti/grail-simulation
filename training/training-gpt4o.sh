@@ -40,6 +40,9 @@ fi
 if [[ -n "${STUDIES:-}" ]]; then
   ARGS+=(--studies "$STUDIES")
 fi
+if [[ -n "${OPINION_STUDIES:-}" ]]; then
+  ARGS+=(--opinion-studies "$OPINION_STUDIES")
+fi
 if [[ -n "${EVAL_MAX:-}" ]]; then
   ARGS+=(--eval-max "$EVAL_MAX")
 fi
@@ -51,6 +54,18 @@ if [[ -n "${MAX_TOKENS_GRID:-}" ]]; then
 fi
 if [[ -n "${TOP_P_GRID:-}" ]]; then
   ARGS+=(--top-p-grid "$TOP_P_GRID")
+fi
+if [[ -n "${OPINION_MAX_PARTICIPANTS:-}" ]]; then
+  ARGS+=(--opinion-max-participants "$OPINION_MAX_PARTICIPANTS")
+fi
+if [[ -n "${OPINION_DIRECTION_TOLERANCE:-}" ]]; then
+  ARGS+=(--opinion-direction-tolerance "$OPINION_DIRECTION_TOLERANCE")
+fi
+if [[ -n "${REQUEST_RETRIES:-}" ]]; then
+  ARGS+=(--request-retries "$REQUEST_RETRIES")
+fi
+if [[ -n "${REQUEST_RETRY_DELAY:-}" ]]; then
+  ARGS+=(--request-retry-delay "$REQUEST_RETRY_DELAY")
 fi
 if [[ "${OVERWRITE:-0}" != "0" ]]; then
   ARGS+=(--overwrite)

@@ -3,7 +3,8 @@
 # Apache License, Version 2.0; see the LICENSE file or
 # https://www.apache.org/licenses/LICENSE-2.0 for details.
 
-# pylint: disable=too-many-branches,too-many-locals,too-many-statements,broad-exception-caught,duplicate-code
+# pylint: disable=too-many-branches,too-many-locals,too-many-statements
+# pylint: disable=broad-exception-caught,duplicate-code
 
 """Evaluation routines for the GPT-4o slate-ranking baseline.
 
@@ -36,6 +37,8 @@ else:  # pragma: no cover - runtime fallback for type hints
     Namespace = object  # type: ignore[misc]
 
 DOWNLOAD_CONFIG_CLS, LOAD_DATASET, LOAD_FROM_DISK = _hf_datasets.get_dataset_loaders()
+
+LOGGER = logging.getLogger("gpt4o.evaluate")
 
 
 def _parse_index_from_output(raw: str) -> int | None:
@@ -94,7 +97,11 @@ class FilterSet(t.NamedTuple):
     active_keys: set[str]
 
     def allows(self, candidate: str) -> bool:
-        """Return ``True`` when the candidate is not filtered out."""
+        """Return ``True`` when the candidate is not filtered out.
+
+        :param candidate: Candidate key to check against the active filter set.
+        :returns: ``True`` if the candidate is allowed; ``False`` otherwise.
+        """
         return not self.active_keys or candidate in self.active_keys
 
 
@@ -105,7 +112,11 @@ class FilterState(t.NamedTuple):
     studies: FilterSet
 
     def allows(self, labels: ExampleLabels) -> bool:
-        """Check whether an example passes the configured filters."""
+        """Check whether an example passes the configured filters.
+
+        :param labels: Issue and study labels associated with the example.
+        :returns: ``True`` when the example should be evaluated.
+        """
         return self.issues.allows(labels.issue_key) and self.studies.allows(
             labels.study_key
         )
@@ -117,16 +128,24 @@ class OutputPaths(t.NamedTuple):
     root: pathlib.Path
     predictions: pathlib.Path
     metrics: pathlib.Path
+    qa_log: pathlib.Path
 
     @classmethod
     def build(cls, out_dir: str | pathlib.Path, overwrite: bool) -> "OutputPaths":
-        """Validate and construct the output directory structure."""
+        """Validate and construct the output directory structure.
+
+        :param out_dir: Target output directory (string or pathlike).
+        :param overwrite: Whether existing directories may be reused.
+        :returns: Populated ``OutputPaths`` instance.
+        """
         root = pathlib.Path(out_dir)
         _ensure_output_dir(root, overwrite)
+        qa_log_path = _utils.qa_log_path_for(root)
         return cls(
             root=root,
             predictions=root / "predictions.jsonl",
             metrics=root / "metrics.json",
+            qa_log=qa_log_path,
         )
 
 
@@ -138,7 +157,11 @@ class EvaluationLimits(t.NamedTuple):
 
     @classmethod
     def from_arg(cls, raw_eval_max: int) -> "EvaluationLimits":
-        """Create limits from the CLI ``eval_max`` argument."""
+        """Create limits from the CLI ``eval_max`` argument.
+
+        :param raw_eval_max: Raw CLI ``eval_max`` value (0 keeps every row).
+        :returns: Populated ``EvaluationLimits`` instance.
+        """
         eval_max = int(raw_eval_max or 0)
         target = eval_max or None
         return cls(eval_max=eval_max, target=target)
@@ -152,12 +175,20 @@ class EvaluationState:
     streaming: bool = False
 
     def set_split(self, split: str) -> None:
-        """Update the active evaluation split."""
+        """Update the active evaluation split.
+
+        :param split: Dataset split identifier.
+        :returns: ``None``.
+        """
 
         self.split = split
 
     def set_streaming(self, streaming: bool) -> None:
-        """Mark whether streaming mode is active."""
+        """Mark whether streaming mode is active.
+
+        :param streaming: Flag indicating streaming mode usage.
+        :returns: ``None``.
+        """
 
         self.streaming = streaming
 
@@ -166,6 +197,10 @@ class EvaluationRunner:
     """Stateful helper that orchestrates GPT-4o evaluation."""
 
     def __init__(self, args: Namespace) -> None:
+        """Initialise the runner with CLI arguments and derived configuration.
+
+        :param args: Parsed command-line arguments produced by ``cli.build_parser``.
+        """
         self.args = args
         self.dataset_name = str(getattr(args, "dataset", "") or _config.DATASET_NAME)
         logging.info("Loading dataset %s", self.dataset_name)
@@ -188,6 +223,12 @@ class EvaluationRunner:
 
     @staticmethod
     def _parse_filter(raw: str) -> t.Tuple[list[str], set[str]]:
+        """Normalise a comma-separated CLI filter.
+
+        :param raw: Raw string supplied on the command line.
+        :returns: Ordered tokens and the lowercase set used for filtering logic.
+        :rtype: tuple[list[str], set[str]]
+        """
         tokens: list[str] = []
         for segment in raw.split(","):
             candidate = segment.strip()
@@ -199,6 +240,12 @@ class EvaluationRunner:
         return tokens, lowered
 
     def _load_dataset_iter(self) -> t.Iterable[dict[str, object]]:
+        """Load the evaluation dataset, falling back to streaming when required.
+
+        :returns: Iterable over dataset rows ready for evaluation.
+        :rtype: collections.abc.Iterable[dict[str, object]]
+        :raises RuntimeError: When neither local nor remote datasets can be loaded.
+        """
         dataset_path = pathlib.Path(self.dataset_name)
         dataset = None
 
@@ -237,6 +284,12 @@ class EvaluationRunner:
         return self._load_materialised_split(dataset)
 
     def _load_streaming_split(self) -> t.Iterable[dict[str, object]]:
+        """Stream the evaluation split directly from Hugging Face datasets.
+
+        :returns: Iterable delivering rows lazily without full materialisation.
+        :rtype: collections.abc.Iterable[dict[str, object]]
+        :raises RuntimeError: If the evaluation split cannot be streamed.
+        """
         eval_split = _config.EVAL_SPLIT
         try:
             data_iter = LOAD_DATASET(  # type: ignore[misc]
@@ -267,6 +320,13 @@ class EvaluationRunner:
         return data_iter
 
     def _load_materialised_split(self, dataset: object) -> t.Iterable[dict[str, object]]:
+        """Materialise the evaluation split from an in-memory dataset object.
+
+        :param dataset: Dataset or DatasetDict object returned by ``datasets``.
+        :returns: Iterable of rows suitable for evaluation.
+        :rtype: collections.abc.Iterable[dict[str, object]]
+        :raises RuntimeError: If ``dataset`` is missing when streaming is disabled.
+        """
         if dataset is None:
             raise RuntimeError("Expected dataset object when not streaming.")
 
@@ -303,6 +363,12 @@ class EvaluationRunner:
 
     @staticmethod
     def _prepare_labels(example: dict[str, object]) -> ExampleLabels:
+        """Extract normalised issue and study labels from an example row.
+
+        :param example: Dataset row containing issue and participant metadata.
+        :returns: Lowercased and human-readable label bundle.
+        :rtype: ExampleLabels
+        """
         issue_raw = str(example.get("issue", "") or "").strip()
         issue_label = issue_raw if issue_raw else "unspecified"
         study_raw = str(example.get("participant_study", "") or "").strip()
@@ -315,23 +381,54 @@ class EvaluationRunner:
         )
 
     def _passes_filters(self, labels: ExampleLabels) -> bool:
+        """Return ``True`` when the example satisfies issue and study filters.
+
+        :param labels: Label bundle produced by ``_prepare_labels``.
+        :returns: Boolean indicating whether the example should be evaluated.
+        :rtype: bool
+        """
         return self.filters.allows(labels)
 
     def _invoke_model(self, messages: list[dict[str, object]]) -> str:
+        """Execute a GPT-4o call with retry semantics.
+
+        :param messages: Chat completion payload produced for the example.
+        :returns: Raw model output, or an error stub when retries fail.
+        :rtype: str
+        """
+        retries = max(1, int(getattr(self.args, "request_retries", 5) or 5))
+        delay = max(0.0, float(getattr(self.args, "request_retry_delay", 1.0) or 0.0))
+        invocation = _utils.InvocationParams(
+            max_tokens=self.args.max_tokens,
+            temperature=self.args.temperature,
+            top_p=getattr(self.args, "top_p", None),
+            deployment=getattr(self.args, "deployment", None),
+        )
+        policy = _utils.RetryPolicy(attempts=retries, delay=delay)
         try:
-            return _client.ds_call(
+            return _utils.call_gpt4o_with_retries(
                 messages,
-                max_tokens=self.args.max_tokens,
-                temperature=self.args.temperature,
-                top_p=getattr(self.args, "top_p", None),
-                deployment=getattr(self.args, "deployment", None),
+                invocation=invocation,
+                retry=policy,
+                logger=LOGGER,
             )
         except Exception as exc:  # pragma: no cover - best effort logging
-            return f"(error: {exc})"
+            LOGGER.error(
+                "GPT-4o call failed after %d attempts; returning error stub: %s",
+                policy.attempts,
+                exc,
+            )
+            return f"(error after {policy.attempts} attempts: {exc})"
 
     def _evaluate_example(
         self, example: dict[str, object]
     ) -> t.Tuple[slate_eval.Observation, dict[str, object]] | None:
+        """Evaluate a single example and return observation metrics plus payloads.
+
+        :param example: Dataset row containing slate information.
+        :returns: Observation/payload tuple, or ``None`` when filtered.
+        :rtype: tuple[slate_eval.Observation, dict[str, object]] | None
+        """
         labels = self._prepare_labels(example)
         if not self._passes_filters(labels):
             return None
@@ -386,6 +483,12 @@ class EvaluationRunner:
         start_time: float,
         accumulator: slate_eval.EvaluationAccumulator,
     ) -> None:
+        """Emit periodic progress logs during evaluation.
+
+        :param seen_rows: Number of rows processed so far.
+        :param start_time: Epoch timestamp marking the evaluation start.
+        :param accumulator: Aggregator containing current metric totals.
+        """
         if seen_rows == 0 or seen_rows % 25:
             return
         elapsed = time.time() - start_time
@@ -401,7 +504,10 @@ class EvaluationRunner:
         )
 
     def metrics_request(self) -> slate_eval.SlateMetricsRequest:
-        """Construct the payload used when serialising evaluation metrics."""
+        """Construct the payload used when serialising evaluation metrics.
+
+        :returns: Metrics request capturing model, dataset, split, and filters.
+        """
         model_name = getattr(self.args, "deployment", None) or _config.DEPLOYMENT_NAME
         return slate_eval.SlateMetricsRequest(
             model_name=model_name,
@@ -414,6 +520,11 @@ class EvaluationRunner:
         )
 
     def _print_summary(self, accumulator: slate_eval.EvaluationAccumulator) -> None:
+        """Print a concise evaluation summary and output file paths.
+
+        :param accumulator: Aggregated evaluation metrics.
+        :returns: ``None``.
+        """
         summary_bits = [
             f"[DONE] dataset={self.dataset_name}",
             f"split={self.state.split}",
@@ -427,15 +538,21 @@ class EvaluationRunner:
         print(summary)
         print(f"[WROTE] per-example: {self.output.predictions}")
         print(f"[WROTE] metrics:     {self.output.metrics}")
+        print(f"[WROTE] QA log:      {self.output.qa_log}")
 
     def run(self) -> None:
-        """Execute the full evaluation workflow."""
+        """Execute the full evaluation workflow.
+
+        :returns: ``None``.
+        """
         data_iter = self._load_dataset_iter()
         accumulator = slate_eval.EvaluationAccumulator()
         start_time = time.time()
         seen_rows = 0
 
-        with open(self.output.predictions, "w", encoding="utf-8") as writer:
+        with open(self.output.predictions, "w", encoding="utf-8") as writer, open(
+            self.output.qa_log, "w", encoding="utf-8"
+        ) as qa_log:
             for example in data_iter:
                 result = self._evaluate_example(example)
                 if result is None:
@@ -444,6 +561,34 @@ class EvaluationRunner:
                 seen_rows += 1
                 accumulator.observe(observation)
                 writer.write(json.dumps(payload, ensure_ascii=False) + "\n")
+
+                question = ""
+                for message in reversed(payload.get("messages", [])):
+                    if isinstance(message, dict) and message.get("role") == "user":
+                        question = str(message.get("content", "")).strip()
+                        break
+                answer = str(payload.get("gpt_output", "")).strip()
+                issue_label = payload.get("issue")
+                study_label = payload.get("participant_study")
+                qa_log.write(f"### Example {seen_rows}\n")
+                qa_log.write(f"Issue: {issue_label} | Study: {study_label}\n")
+                system_prompt = ""
+                for message in payload.get("messages", []):
+                    if (
+                        isinstance(message, dict)
+                        and message.get("role") == "system"
+                        and message.get("content")
+                    ):
+                        system_prompt = str(message["content"]).strip()
+                        break
+                qa_log.write("SYSTEM:\n")
+                qa_log.write(f"{system_prompt}\n")
+                qa_log.write("QUESTION:\n")
+                qa_log.write(f"{question}\n")
+                qa_log.write("ANSWER:\n")
+                qa_log.write(f"{answer}\n\n")
+                qa_log.flush()
+
                 self._maybe_log_progress(seen_rows, start_time, accumulator)
 
         metrics = accumulator.metrics_payload(self.metrics_request())

@@ -18,7 +18,9 @@
 from __future__ import annotations
 
 import os
-from typing import Callable, Optional, Sequence, Tuple, TypeVar
+from typing import Any, Callable, Mapping, Optional, Sequence, Tuple, TypeVar, Dict
+
+import numpy as np
 
 
 _Dataset = TypeVar("_Dataset")
@@ -101,4 +103,85 @@ def compose_issue_slug(issue: str, study_tokens: Sequence[str]) -> str:
     return base_slug
 
 
-__all__ = ["compose_issue_slug", "ensure_hf_cache", "prepare_dataset", "safe_div"]
+def group_key_for_example(example: Mapping[str, Any], fallback_index: int) -> str:
+    """
+    Return a stable grouping key used for bootstrap resampling.
+
+    :param example: Dataset row containing participant/session hints.
+    :param fallback_index: Fallback index used when identifiers are absent.
+    :returns: Group key derived from ``urlid``, ``participant_id``, ``session_id``, or row index.
+    """
+
+    urlid = str(example.get("urlid") or "").strip()
+    if urlid and urlid.lower() != "nan":
+        return f"urlid::{urlid}"
+    participant = str(example.get("participant_id") or "").strip()
+    if participant and participant.lower() != "nan":
+        return f"participant::{participant}"
+    session = str(example.get("session_id") or "").strip()
+    if session and session.lower() != "nan":
+        return f"session::{session}"
+    return f"row::{fallback_index}"
+
+
+def summarise_bootstrap_samples(
+    *,
+    model_samples: Sequence[float],
+    baseline_samples: Sequence[float] | None,
+    method: str,
+    n_groups: int,
+    n_rows: int,
+    n_bootstrap: int,
+    seed: int,
+) -> Dict[str, Any]:
+    """
+    Return a standardised summary dictionary for bootstrap accuracy samples.
+
+    Consolidates identical aggregation logic used across evaluation pipelines.
+
+    :param model_samples: Bootstrap samples for the primary model accuracy.
+    :param baseline_samples: Optional bootstrap samples for the baseline accuracy.
+    :param method: Human-readable description of the uncertainty estimation method.
+    :param n_groups: Number of grouped resampling buckets.
+    :param n_rows: Number of eligible rows considered during bootstrapping.
+    :param n_bootstrap: Number of bootstrap replicates executed.
+    :param seed: Random seed used during resampling.
+    :returns: Dictionary containing summary statistics for model and baseline samples.
+    """
+
+    if not model_samples:
+        raise ValueError("model_samples must contain at least one element.")
+
+    def _ci95(samples: Sequence[float]) -> Dict[str, float]:
+        return {
+            "low": float(np.percentile(samples, 2.5)),
+            "high": float(np.percentile(samples, 97.5)),
+        }
+
+    summary: Dict[str, Any] = {
+        "method": method,
+        "n_groups": int(n_groups),
+        "n_rows": int(n_rows),
+        "n_bootstrap": int(n_bootstrap),
+        "seed": int(seed),
+        "model": {
+            "mean": float(np.mean(model_samples)),
+            "ci95": _ci95(model_samples),
+        },
+    }
+    if baseline_samples:
+        summary["baseline"] = {
+            "mean": float(np.mean(baseline_samples)),
+            "ci95": _ci95(baseline_samples),
+        }
+    return summary
+
+
+__all__ = [
+    "compose_issue_slug",
+    "ensure_hf_cache",
+    "group_key_for_example",
+    "prepare_dataset",
+    "safe_div",
+    "summarise_bootstrap_samples",
+]

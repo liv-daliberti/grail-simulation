@@ -33,7 +33,13 @@ from numpy.random import default_rng
 
 from common.text.embeddings import SentenceTransformerConfig
 from common.visualization.matplotlib import plt
-from common.evaluation.utils import compose_issue_slug, prepare_dataset, safe_div
+from common.evaluation.utils import (
+    compose_issue_slug,
+    group_key_for_example,
+    prepare_dataset,
+    safe_div,
+    summarise_bootstrap_samples,
+)
 from common.prompts.docs import merge_default_extra_fields
 
 from .data import (
@@ -211,34 +217,6 @@ def _collect_dataset_provenance(dataset: Mapping[str, Any]) -> Dict[str, Any]:
         "splits": splits,
     }
 
-def _group_key_for_example(example: Mapping[str, Any], fallback_index: int) -> str:
-    """
-    Return a stable grouping key used for bootstrap resampling.
-
-    :param example: Single dataset example under inspection.
-
-    :type example: Mapping[str, Any]
-
-    :param fallback_index: Secondary index consulted when the primary lookup fails.
-
-    :type fallback_index: int
-
-    :returns: a stable grouping key used for bootstrap resampling
-
-    :rtype: str
-
-    """
-    urlid = str(example.get("urlid") or "").strip()
-    if urlid and urlid.lower() != "nan":
-        return f"urlid::{urlid}"
-    participant = str(example.get("participant_id") or "").strip()
-    if participant and participant.lower() != "nan":
-        return f"participant::{participant}"
-    session = str(example.get("session_id") or "").strip()
-    if session and session.lower() != "nan":
-        return f"session::{session}"
-    return f"row::{fallback_index}"
-
 def _accuracy_for_rows(rows: Sequence[Mapping[str, Any]], k_val: int) -> float:
     """
     Return accuracy for ``rows`` using predictions at ``k_val``.
@@ -343,7 +321,7 @@ def _bootstrap_uncertainty(
         return None
     grouped: Dict[str, List[Mapping[str, Any]]] = {}
     for idx, row in enumerate(eligible_rows):
-        group_key = row.get("group_key") or _group_key_for_example(row, idx)
+        group_key = row.get("group_key") or group_key_for_example(row, idx)
         grouped.setdefault(group_key, []).append(row)
     if len(grouped) < 2:
         return None
@@ -361,32 +339,15 @@ def _bootstrap_uncertainty(
         if baseline_index is not None:
             baseline_samples.append(_baseline_accuracy_for_rows(sampled_rows, baseline_index))
 
-    model_ci = {
-        "low": float(np.percentile(model_samples, 2.5)),
-        "high": float(np.percentile(model_samples, 97.5)),
-    }
-    model_mean = float(np.mean(model_samples))
-    result: Dict[str, Any] = {
-        "method": "participant_bootstrap",
-        "n_groups": len(grouped),
-        "n_rows": len(eligible_rows),
-        "n_bootstrap": replicates,
-        "seed": seed,
-        "model": {
-            "mean": model_mean,
-            "ci95": model_ci,
-        },
-    }
-    if baseline_samples:
-        baseline_ci = {
-            "low": float(np.percentile(baseline_samples, 2.5)),
-            "high": float(np.percentile(baseline_samples, 97.5)),
-        }
-        result["baseline"] = {
-            "mean": float(np.mean(baseline_samples)),
-            "ci95": baseline_ci,
-        }
-    return result
+    return summarise_bootstrap_samples(
+        model_samples=model_samples,
+        baseline_samples=baseline_samples or None,
+        method="participant_bootstrap",
+        n_groups=len(grouped),
+        n_rows=len(eligible_rows),
+        n_bootstrap=replicates,
+        seed=seed,
+    )
 
 def parse_k_values(k_default: int, sweep: str) -> List[int]:
     """Derive the sorted set of ``k`` values requested for evaluation.
@@ -1201,7 +1162,7 @@ def _accumulate_row(
             if pred is not None and int(pred) == gold_index:
                 k_stats["correct"] += 1
 
-    group_key = _group_key_for_example(example, row_index)
+    group_key = group_key_for_example(example, row_index)
 
     return {
         "predictions_by_k": predictions,

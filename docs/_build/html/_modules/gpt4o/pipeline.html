@@ -279,20 +279,23 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.cli.args</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_comma_separated_argument</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.cli.options</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_log_level_argument</span><span class="p">,</span> <span class="n">add_overwrite_argument</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">common.pipeline.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">write_markdown_lines</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">common.pipeline.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_metrics_json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.pipeline.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_metrics_json</span><span class="p">,</span> <span class="n">write_markdown_lines</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.reports.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">start_markdown_report</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.cli</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_parser</span> <span class="k">as</span> <span class="n">build_gpt_parser</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.evaluate</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_eval</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.opinion</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpinionEvaluationResult</span><span class="p">,</span> <span class="n">run_opinion_evaluations</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;gpt4o.pipeline&quot;</span><span class="p">)</span>
 
@@ -310,6 +313,7 @@
 
     <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">max_tokens</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">top_p</span><span class="p">:</span> <span class="nb">float</span>
 
 <div class="viewcode-block" id="SweepConfig.label">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.pipeline.SweepConfig.label">[docs]</a>
@@ -317,7 +321,9 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a filesystem-friendly identifier.&quot;&quot;&quot;</span>
 
         <span class="n">temp_token</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;temp</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">temperature</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="s2">&quot;p&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">temp_token</span><span class="si">}</span><span class="s2">_tok</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">max_tokens</span><span class="si">}</span><span class="s2">&quot;</span></div>
+        <span class="n">tok_token</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;tok</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">max_tokens</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">top_p_token</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;tp</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">top_p</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="s2">&quot;p&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">temp_token</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">tok_token</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">top_p_token</span><span class="si">}</span><span class="s2">&quot;</span></div>
 
 
 <div class="viewcode-block" id="SweepConfig.cli_args">
@@ -330,6 +336,8 @@
             <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">temperature</span><span class="p">),</span>
             <span class="s2">&quot;--max_tokens&quot;</span><span class="p">,</span>
             <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_tokens</span><span class="p">),</span>
+            <span class="s2">&quot;--top_p&quot;</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">top_p</span><span class="p">),</span>
         <span class="p">]</span></div>
 </div>
 
@@ -358,6 +366,7 @@
 
     <span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span>
     <span class="n">final_out_dir</span><span class="p">:</span> <span class="n">Path</span>
+    <span class="n">opinion_dir</span><span class="p">:</span> <span class="n">Path</span>
     <span class="n">sweep_dir</span><span class="p">:</span> <span class="n">Path</span>
     <span class="n">reports_dir</span><span class="p">:</span> <span class="n">Path</span>
     <span class="n">cache_dir</span><span class="p">:</span> <span class="nb">str</span></div>
@@ -370,7 +379,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse pipeline arguments while preserving additional CLI options.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse pipeline arguments while preserving additional CLI options.</span>
+
+<span class="sd">    :param argv: Optional iterable of CLI tokens to parse (defaults to ``sys.argv``).</span>
+<span class="sd">    :returns: ``(namespace, extra_args)`` tuple containing parsed options and leftovers.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
         <span class="n">description</span><span class="o">=</span><span class="p">(</span>
@@ -381,7 +394,7 @@
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--out-dir&quot;</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Root directory for GPT-4o outputs (default: &lt;repo&gt;/models/gpt4o).&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Root directory for GPT-4o outputs (default: &lt;repo&gt;/models/gpt-4o).&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--cache-dir&quot;</span><span class="p">,</span>
@@ -417,6 +430,14 @@
             <span class="s2">&quot;Comma-separated participant study identifiers to filter (defaults to all studies).&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
+    <span class="n">add_comma_separated_argument</span><span class="p">(</span>
+        <span class="n">parser</span><span class="p">,</span>
+        <span class="n">flags</span><span class="o">=</span><span class="s2">&quot;--opinion-studies&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;opinion_studies&quot;</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Comma-separated opinion study keys to evaluate (defaults to all opinion studies).&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--temperature-grid&quot;</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="s2">&quot;0.0,0.2,0.4&quot;</span><span class="p">,</span>
@@ -426,6 +447,43 @@
         <span class="s2">&quot;--max-tokens-grid&quot;</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="s2">&quot;32,48&quot;</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Comma-separated max_token values explored during sweeps.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--top-p-grid&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Comma-separated top_p values explored during sweeps.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--opinion-max-participants&quot;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Optional cap on participants per opinion study during GPT-4o &quot;</span>
+            <span class="s2">&quot;evaluation (0 keeps all).&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--opinion-direction-tolerance&quot;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Tolerance for treating opinion deltas as no-change when computing &quot;</span>
+            <span class="s2">&quot;direction accuracy.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--request-retries&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;request_retries&quot;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Maximum GPT-4o attempts per request (default: 5).&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--request-retry-delay&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;request_retry_delay&quot;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Seconds to wait between GPT-4o request retries (default: 1.0).&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">add_log_level_argument</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
     <span class="n">add_overwrite_argument</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
@@ -439,31 +497,50 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_repo_root</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the repository root used to derive default directories.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the repository root used to derive default directories.</span>
+
+<span class="sd">    :returns: Absolute path to the repository root.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_default_out_dir</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the default pipeline output directory rooted at ``root``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the default pipeline output directory rooted at ``root``.</span>
 
-    <span class="k">return</span> <span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;models&quot;</span> <span class="o">/</span> <span class="s2">&quot;gpt4o&quot;</span>
+<span class="sd">    :param root: Repository root path.</span>
+<span class="sd">    :returns: Path to the default GPT-4o output directory.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;models&quot;</span> <span class="o">/</span> <span class="s2">&quot;gpt-4o&quot;</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_default_cache_dir</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the default Hugging Face cache location under ``root``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the default Hugging Face cache location under ``root``.</span>
+
+<span class="sd">    :param root: Repository root path.</span>
+<span class="sd">    :returns: Path to the Hugging Face cache directory.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;.cache&quot;</span> <span class="o">/</span> <span class="s2">&quot;huggingface&quot;</span> <span class="o">/</span> <span class="s2">&quot;gpt4o&quot;</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_default_reports_dir</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the default reports directory rooted at ``root``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the default reports directory rooted at ``root``.</span>
+
+<span class="sd">    :param root: Repository root path.</span>
+<span class="sd">    :returns: Path to the reports directory.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;reports&quot;</span> <span class="o">/</span> <span class="s2">&quot;gpt4o&quot;</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_split_tokens</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Split a comma-separated string into trimmed, non-empty tokens.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Split a comma-separated string into trimmed, non-empty tokens.</span>
+
+<span class="sd">    :param raw: Raw comma-delimited input string.</span>
+<span class="sd">    :returns: Ordered list of trimmed tokens.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">raw</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
@@ -471,7 +548,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_float_grid</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fallback</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse a comma-separated list of floats, falling back to ``fallback``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse a comma-separated list of floats, falling back to ``fallback``.</span>
+
+<span class="sd">    :param raw: Raw comma-separated string of floats.</span>
+<span class="sd">    :param fallback: Value to use when parsing yields no valid entries.</span>
+<span class="sd">    :returns: List of parsed float values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">tokens</span> <span class="o">=</span> <span class="n">_split_tokens</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
     <span class="n">values</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -484,7 +566,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_int_grid</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fallback</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse a comma-separated list of integers, falling back to ``fallback``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse a comma-separated list of integers, falling back to ``fallback``.</span>
+
+<span class="sd">    :param raw: Raw comma-separated string of integers.</span>
+<span class="sd">    :param fallback: Value to use when parsing yields no valid entries.</span>
+<span class="sd">    :returns: List of parsed integer values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">tokens</span> <span class="o">=</span> <span class="n">_split_tokens</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
     <span class="n">values</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -497,19 +584,26 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_paths</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PipelinePaths</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the resolved output/report directories for the pipeline run.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the resolved output/report directories for the pipeline run.</span>
+
+<span class="sd">    :param args: Parsed CLI arguments supplied to ``main``.</span>
+<span class="sd">    :returns: Aggregated pipeline path configuration.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">root</span> <span class="o">=</span> <span class="n">_repo_root</span><span class="p">()</span>
     <span class="n">out_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">out_dir</span> <span class="ow">or</span> <span class="n">_default_out_dir</span><span class="p">(</span><span class="n">root</span><span class="p">))</span>
     <span class="n">reports_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">reports_dir</span> <span class="ow">or</span> <span class="n">_default_reports_dir</span><span class="p">(</span><span class="n">root</span><span class="p">))</span>
     <span class="n">sweep_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">sweep_dir</span> <span class="ow">or</span> <span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="s2">&quot;sweeps&quot;</span><span class="p">))</span>
     <span class="n">final_out_dir</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="s2">&quot;next_video&quot;</span>
+    <span class="n">opinion_dir</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="s2">&quot;opinion&quot;</span>
     <span class="n">final_out_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">opinion_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">sweep_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">cache_dir</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">cache_dir</span> <span class="ow">or</span> <span class="n">_default_cache_dir</span><span class="p">(</span><span class="n">root</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">PipelinePaths</span><span class="p">(</span>
         <span class="n">out_dir</span><span class="o">=</span><span class="n">out_dir</span><span class="p">,</span>
         <span class="n">final_out_dir</span><span class="o">=</span><span class="n">final_out_dir</span><span class="p">,</span>
+        <span class="n">opinion_dir</span><span class="o">=</span><span class="n">opinion_dir</span><span class="p">,</span>
         <span class="n">sweep_dir</span><span class="o">=</span><span class="n">sweep_dir</span><span class="p">,</span>
         <span class="n">reports_dir</span><span class="o">=</span><span class="n">reports_dir</span><span class="p">,</span>
         <span class="n">cache_dir</span><span class="o">=</span><span class="n">cache_dir</span><span class="p">,</span>
@@ -517,14 +611,23 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_configure_environment</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure HuggingFace caches default to ``cache_dir``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure HuggingFace caches default to ``cache_dir``.</span>
+
+<span class="sd">    :param cache_dir: Filesystem location used as the HF cache.</span>
+<span class="sd">    :returns: ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;HF_DATASETS_CACHE&quot;</span><span class="p">,</span> <span class="n">cache_dir</span><span class="p">)</span>
     <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;HF_HOME&quot;</span><span class="p">,</span> <span class="n">cache_dir</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_base_cli_args</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">cache_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return common CLI arguments forwarded to ``gpt4o.cli``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return common CLI arguments forwarded to ``gpt4o.cli``.</span>
+
+<span class="sd">    :param args: Parsed pipeline namespace.</span>
+<span class="sd">    :param cache_dir: Resolved Hugging Face cache directory.</span>
+<span class="sd">    :returns: Flat list of CLI argument tokens.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">base_cli</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s2">&quot;--cache_dir&quot;</span><span class="p">,</span>
@@ -541,20 +644,42 @@
         <span class="n">base_cli</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s2">&quot;--issues&quot;</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">issues</span><span class="p">])</span>
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">studies</span><span class="p">:</span>
         <span class="n">base_cli</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s2">&quot;--studies&quot;</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">studies</span><span class="p">])</span>
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;opinion_studies&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">):</span>
+        <span class="n">base_cli</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s2">&quot;--opinion_studies&quot;</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">opinion_studies</span><span class="p">])</span>
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;opinion_max_participants&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="n">base_cli</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+            <span class="p">[</span><span class="s2">&quot;--opinion_max_participants&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">opinion_max_participants</span><span class="p">)]</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;opinion_direction_tolerance&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">base_cli</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+            <span class="p">[</span><span class="s2">&quot;--opinion_direction_tolerance&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">opinion_direction_tolerance</span><span class="p">)]</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;request_retries&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">base_cli</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s2">&quot;--request_retries&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">request_retries</span><span class="p">)])</span>
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;request_retry_delay&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">base_cli</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s2">&quot;--request_retry_delay&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">request_retry_delay</span><span class="p">)])</span>
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">overwrite</span><span class="p">:</span>
         <span class="n">base_cli</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;--overwrite&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">base_cli</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_sweep_configs</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SweepConfig</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct the Cartesian product of temperature and max-token sweeps.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct the Cartesian product of temperature, max-token, and top-p sweeps.</span>
+
+<span class="sd">    :param args: Parsed pipeline namespace containing grid definitions.</span>
+<span class="sd">    :returns: List of sweep configurations to evaluate.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">temperatures</span> <span class="o">=</span> <span class="n">_parse_float_grid</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">temperature_grid</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
     <span class="n">max_tokens_values</span> <span class="o">=</span> <span class="n">_parse_int_grid</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">max_tokens_grid</span><span class="p">,</span> <span class="mi">32</span><span class="p">)</span>
+    <span class="n">top_p_values</span> <span class="o">=</span> <span class="n">_parse_float_grid</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">top_p_grid</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
     <span class="n">configs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SweepConfig</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">temp</span> <span class="ow">in</span> <span class="n">temperatures</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">max_tokens</span> <span class="ow">in</span> <span class="n">max_tokens_values</span><span class="p">:</span>
-            <span class="n">configs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">SweepConfig</span><span class="p">(</span><span class="n">temperature</span><span class="o">=</span><span class="n">temp</span><span class="p">,</span> <span class="n">max_tokens</span><span class="o">=</span><span class="n">max_tokens</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">top_p</span> <span class="ow">in</span> <span class="n">top_p_values</span><span class="p">:</span>
+                <span class="n">configs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">SweepConfig</span><span class="p">(</span><span class="n">temperature</span><span class="o">=</span><span class="n">temp</span><span class="p">,</span> <span class="n">max_tokens</span><span class="o">=</span><span class="n">max_tokens</span><span class="p">,</span> <span class="n">top_p</span><span class="o">=</span><span class="n">top_p</span><span class="p">)</span>
+                <span class="p">)</span>
     <span class="k">return</span> <span class="n">configs</span>
 
 
@@ -564,11 +689,52 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_run_gpt_cli</span><span class="p">(</span><span class="n">cli_args</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Invoke the GPT-4o CLI entry point with the provided arguments.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Invoke the GPT-4o CLI entry point with the provided arguments.</span>
+
+<span class="sd">    :param cli_args: Iterable of CLI tokens forwarded to ``gpt4o.cli``.</span>
+<span class="sd">    :returns: ``None``. Exceptions propagate to the caller.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">parser</span> <span class="o">=</span> <span class="n">build_gpt_parser</span><span class="p">()</span>
     <span class="n">namespace</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">cli_args</span><span class="p">))</span>
     <span class="n">run_eval</span><span class="p">(</span><span class="n">namespace</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_promote_sweep_results</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">selected</span><span class="p">:</span> <span class="n">SweepOutcome</span><span class="p">,</span>
+    <span class="n">sweep_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">final_out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Copy the best sweep artefacts into the final directory.</span>
+
+<span class="sd">    :param selected: Sweep outcome chosen for promotion.</span>
+<span class="sd">    :param sweep_dir: Root directory containing per-configuration artefacts.</span>
+<span class="sd">    :param final_out_dir: Destination directory for promoted results.</span>
+<span class="sd">    :param overwrite: Whether existing final directories should be replaced.</span>
+<span class="sd">    :returns: Tuple of destination directory and loaded metrics payload.</span>
+<span class="sd">    :raises FileNotFoundError: If the selected sweep directory is missing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">source_dir</span> <span class="o">=</span> <span class="n">sweep_dir</span> <span class="o">/</span> <span class="n">selected</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">source_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sweep artefacts not found at </span><span class="si">{</span><span class="n">source_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">dest_dir</span> <span class="o">=</span> <span class="n">final_out_dir</span> <span class="o">/</span> <span class="n">selected</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">dest_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">overwrite</span><span class="p">:</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[PROMOTE] Overwrite enabled; clearing </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">dest_dir</span><span class="p">)</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">dest_dir</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[PROMOTE] Reusing existing final directory </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">dest_dir</span><span class="p">)</span>
+            <span class="n">metrics_path</span> <span class="o">=</span> <span class="n">dest_dir</span> <span class="o">/</span> <span class="s2">&quot;metrics.json&quot;</span>
+            <span class="k">return</span> <span class="n">dest_dir</span><span class="p">,</span> <span class="n">load_metrics_json</span><span class="p">(</span><span class="n">metrics_path</span><span class="p">)</span>
+
+    <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[PROMOTE] Copying sweep artefacts </span><span class="si">%s</span><span class="s2"> -&gt; </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">source_dir</span><span class="p">,</span> <span class="n">dest_dir</span><span class="p">)</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copytree</span><span class="p">(</span><span class="n">source_dir</span><span class="p">,</span> <span class="n">dest_dir</span><span class="p">)</span>
+    <span class="n">metrics_path</span> <span class="o">=</span> <span class="n">dest_dir</span> <span class="o">/</span> <span class="s2">&quot;metrics.json&quot;</span>
+    <span class="n">metrics</span> <span class="o">=</span> <span class="n">load_metrics_json</span><span class="p">(</span><span class="n">metrics_path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dest_dir</span><span class="p">,</span> <span class="n">metrics</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_run_sweeps</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
@@ -577,7 +743,14 @@
     <span class="n">extra_cli</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">sweep_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SweepOutcome</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run GPT-4o sweeps for each configuration and collect outcomes.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run GPT-4o sweeps for each configuration and collect outcomes.</span>
+
+<span class="sd">    :param configs: Iterable of sweep configurations to evaluate.</span>
+<span class="sd">    :param base_cli: CLI tokens shared by every sweep invocation.</span>
+<span class="sd">    :param extra_cli: Additional CLI tokens preserved from ``main``.</span>
+<span class="sd">    :param sweep_dir: Root directory receiving sweep outputs.</span>
+<span class="sd">    :returns: Ordered list of sweep outcomes with metrics metadata.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">outcomes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SweepOutcome</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">configs</span><span class="p">:</span>
@@ -605,7 +778,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_select_best</span><span class="p">(</span><span class="n">outcomes</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">SweepOutcome</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">SweepOutcome</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the best sweep outcome by accuracy, parsed rate, then format rate.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the best sweep outcome by accuracy, parsed rate, then format rate.</span>
+
+<span class="sd">    :param outcomes: Sequence of evaluated sweep outcomes.</span>
+<span class="sd">    :returns: Selected outcome achieving the best metrics.</span>
+<span class="sd">    :raises RuntimeError: If ``outcomes`` is empty.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">outcomes</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No sweep outcomes available for selection.&quot;</span><span class="p">)</span>
@@ -631,7 +809,15 @@
     <span class="n">extra_cli</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run a final evaluation for the selected configuration.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run a final evaluation for the selected configuration.</span>
+
+<span class="sd">    :param config: Winning sweep configuration.</span>
+<span class="sd">    :param base_cli: CLI tokens shared between sweep and final invocations.</span>
+<span class="sd">    :param extra_cli: Additional CLI tokens supplied by the user.</span>
+<span class="sd">    :param out_dir: Directory where final evaluation results are written.</span>
+<span class="sd">    :returns: Tuple of run directory and loaded metrics payload.</span>
+<span class="sd">    :rtype: tuple[pathlib.Path, collections.abc.Mapping[str, object]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">run_dir</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">()</span>
     <span class="n">cli_args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -647,13 +833,21 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_format_rate</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Format a numeric rate with three decimal places.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Format a numeric rate with three decimal places.</span>
+
+<span class="sd">    :param value: Raw numeric rate.</span>
+<span class="sd">    :returns: String representation with three decimal places.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_group_highlights</span><span class="p">(</span><span class="n">payload</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return bullet highlights for group-level accuracy extremes.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return bullet highlights for group-level accuracy extremes.</span>
+
+<span class="sd">    :param payload: Mapping of group identifiers to metrics payloads.</span>
+<span class="sd">    :returns: Markdown bullet lines highlighting best/worst accuracy groups.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">entries</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">raw_group</span><span class="p">,</span> <span class="n">stats</span> <span class="ow">in</span> <span class="n">payload</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -686,7 +880,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_write_catalog_report</span><span class="p">(</span><span class="n">reports_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create the top-level GPT-4o report catalog README.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create the top-level GPT-4o report catalog README.</span>
+
+<span class="sd">    :param reports_dir: Directory that will contain the catalog README.</span>
+<span class="sd">    :returns: ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">reports_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">path</span> <span class="o">=</span> <span class="n">reports_dir</span> <span class="o">/</span> <span class="s2">&quot;README.md&quot;</span>
@@ -696,9 +894,10 @@
         <span class="s2">&quot;Generated artifacts for the GPT-4o slate-selection baseline:&quot;</span><span class="p">,</span>
         <span class="s2">&quot;&quot;</span><span class="p">,</span>
         <span class="s2">&quot;- `next_video/` – summary metrics and fairness cuts for the selected configuration.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;- `opinion/` – opinion-shift regression metrics across participant studies.&quot;</span><span class="p">,</span>
         <span class="s2">&quot;- `hyperparameter_tuning/` – sweep results across temperature and max token settings.&quot;</span><span class="p">,</span>
         <span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;Model predictions and metrics JSON files live under `models/gpt4o/`.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Model predictions and metrics JSON files live under `models/gpt-4o/`.&quot;</span><span class="p">,</span>
         <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="p">]</span>
     <span class="n">write_markdown_lines</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">lines</span><span class="p">)</span>
@@ -709,7 +908,13 @@
     <span class="n">outcomes</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">SweepOutcome</span><span class="p">],</span>
     <span class="n">selected</span><span class="p">:</span> <span class="n">SweepOutcome</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write the hyper-parameter sweep report summarising all outcomes.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write the hyper-parameter sweep report summarising all outcomes.</span>
+
+<span class="sd">    :param directory: Destination directory for the sweep report.</span>
+<span class="sd">    :param outcomes: All observed sweep outcomes.</span>
+<span class="sd">    :param selected: Outcome chosen as the final configuration.</span>
+<span class="sd">    :returns: ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">path</span><span class="p">,</span> <span class="n">lines</span> <span class="o">=</span> <span class="n">start_markdown_report</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;GPT-4o Hyper-parameter Sweep&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">outcomes</span><span class="p">:</span>
@@ -718,13 +923,15 @@
         <span class="n">write_markdown_lines</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">lines</span><span class="p">)</span>
         <span class="k">return</span>
     <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-        <span class="s2">&quot;The table below captures accuracy on eligible slates plus formatting/parse rates for &quot;</span>
-        <span class="s2">&quot;each temperature/max-token configuration. The selected configuration is marked with ✓.&quot;</span>
+        <span class="s2">&quot;The table below captures validation accuracy on eligible slates plus &quot;</span>
+        <span class="s2">&quot;formatting/parse rates for each temperature/top-p/max-token configuration. &quot;</span>
+        <span class="s2">&quot;The selected configuration is marked with ✓.&quot;</span>
     <span class="p">)</span>
     <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
     <span class="n">header_cells</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s2">&quot;Config&quot;</span><span class="p">,</span>
         <span class="s2">&quot;Temperature&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Top-p&quot;</span><span class="p">,</span>
         <span class="s2">&quot;Max tokens&quot;</span><span class="p">,</span>
         <span class="s2">&quot;Accuracy ↑&quot;</span><span class="p">,</span>
         <span class="s2">&quot;Parsed ↑&quot;</span><span class="p">,</span>
@@ -737,8 +944,10 @@
         <span class="n">mark</span> <span class="o">=</span> <span class="s2">&quot;✓&quot;</span> <span class="k">if</span> <span class="n">outcome</span><span class="o">.</span><span class="n">config</span> <span class="o">==</span> <span class="n">selected</span><span class="o">.</span><span class="n">config</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
         <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;| `</span><span class="si">{</span><span class="n">outcome</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">()</span><span class="si">}</span><span class="s2">` | </span><span class="si">{</span><span class="n">outcome</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">temperature</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> | &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">outcome</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">max_tokens</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">_format_rate</span><span class="p">(</span><span class="n">outcome</span><span class="o">.</span><span class="n">accuracy</span><span class="p">)</span><span class="si">}</span><span class="s2"> | &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_rate</span><span class="p">(</span><span class="n">outcome</span><span class="o">.</span><span class="n">parsed_rate</span><span class="p">)</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">_format_rate</span><span class="p">(</span><span class="n">outcome</span><span class="o">.</span><span class="n">format_rate</span><span class="p">)</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">mark</span><span class="si">}</span><span class="s2"> |&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">outcome</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">top_p</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">outcome</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">max_tokens</span><span class="si">}</span><span class="s2"> | &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_rate</span><span class="p">(</span><span class="n">outcome</span><span class="o">.</span><span class="n">accuracy</span><span class="p">)</span><span class="si">}</span><span class="s2"> | &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_rate</span><span class="p">(</span><span class="n">outcome</span><span class="o">.</span><span class="n">parsed_rate</span><span class="p">)</span><span class="si">}</span><span class="s2"> | &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_format_rate</span><span class="p">(</span><span class="n">outcome</span><span class="o">.</span><span class="n">format_rate</span><span class="p">)</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">mark</span><span class="si">}</span><span class="s2"> |&quot;</span>
         <span class="p">)</span>
     <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
     <span class="n">write_markdown_lines</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">lines</span><span class="p">)</span>
@@ -749,12 +958,19 @@
     <span class="n">selected</span><span class="p">:</span> <span class="n">SweepOutcome</span><span class="p">,</span>
     <span class="n">metrics</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write the next-video evaluation report for the selected configuration.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write the next-video evaluation report for the selected configuration.</span>
+
+<span class="sd">    :param directory: Destination directory for the report.</span>
+<span class="sd">    :param selected: Winning sweep outcome metadata.</span>
+<span class="sd">    :param metrics: Final evaluation metrics payload.</span>
+<span class="sd">    :returns: ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">path</span><span class="p">,</span> <span class="n">lines</span> <span class="o">=</span> <span class="n">start_markdown_report</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;GPT-4o Next-Video Baseline&quot;</span><span class="p">)</span>
     <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
         <span class="sa">f</span><span class="s2">&quot;- **Selected configuration:** `</span><span class="si">{</span><span class="n">selected</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">()</span><span class="si">}</span><span class="s2">` &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;(temperature=</span><span class="si">{</span><span class="n">selected</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">temperature</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, max_tokens=</span><span class="si">{</span><span class="n">selected</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">max_tokens</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;(temperature=</span><span class="si">{</span><span class="n">selected</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">temperature</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, top_p=</span><span class="si">{</span><span class="n">selected</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">top_p</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;max_tokens=</span><span class="si">{</span><span class="n">selected</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">max_tokens</span><span class="si">}</span><span class="s2">)&quot;</span>
     <span class="p">)</span>
     <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
         <span class="sa">f</span><span class="s2">&quot;- **Accuracy:** </span><span class="si">{</span><span class="n">_format_rate</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">metrics</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;accuracy_overall&#39;</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)))</span><span class="si">}</span><span class="s2"> &quot;</span>
@@ -779,7 +995,12 @@
     <span class="n">group_metrics</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;group_metrics&quot;</span><span class="p">,</span> <span class="p">{})</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_render_group_table</span><span class="p">(</span><span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Append a Markdown table capturing group-level metrics.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Append a Markdown table capturing group-level metrics.</span>
+
+<span class="sd">        :param title: Section title used in the report.</span>
+<span class="sd">        :param payload: Mapping of group identifiers to metric dictionaries.</span>
+<span class="sd">        :returns: ``None``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">payload</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;## </span><span class="si">{</span><span class="n">title</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -824,18 +1045,256 @@
     <span class="n">write_markdown_lines</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">lines</span><span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_fmt_opinion_value</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="n">digits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Format opinion metrics with a consistent fallback.</span>
+
+<span class="sd">    :param value: Raw opinion metric value.</span>
+<span class="sd">    :param digits: Number of decimal places to display.</span>
+<span class="sd">    :returns: Stringified metric or ``&quot;n/a&quot;`` if unavailable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">numeric</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;n/a&quot;</span>
+    <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">numeric</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;n/a&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">numeric</span><span class="si">:</span><span class="s2">.</span><span class="si">{</span><span class="n">digits</span><span class="si">}</span><span class="s2">f</span><span class="si">}</span><span class="s2">&quot;</span>
+
+
+<span class="n">OPINION_CSV_FIELDS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;study&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;issue&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;participants&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;eligible&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;mae_after&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;rmse_after&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;direction_accuracy&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;baseline_direction_accuracy&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;mae_change&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;rmse_change&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_opinion_summary_lines</span><span class="p">(</span>
+    <span class="n">selected</span><span class="p">:</span> <span class="n">SweepOutcome</span><span class="p">,</span> <span class="n">opinion</span><span class="p">:</span> <span class="n">OpinionEvaluationResult</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return headline opinion metrics for the report introduction.</span>
+
+<span class="sd">    :param selected: Winning sweep configuration.</span>
+<span class="sd">    :param opinion: Aggregated opinion evaluation results.</span>
+<span class="sd">    :returns: Markdown bullet lines describing the evaluation summary.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;- **Selected configuration:** `</span><span class="si">{</span><span class="n">selected</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">()</span><span class="si">}</span><span class="s2">` &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;(temperature=</span><span class="si">{</span><span class="n">selected</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">temperature</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;top_p=</span><span class="si">{</span><span class="n">selected</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">top_p</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, max_tokens=&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">selected</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">max_tokens</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="p">)</span>
+    <span class="p">]</span>
+    <span class="n">total_participants</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">participants</span> <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">opinion</span><span class="o">.</span><span class="n">studies</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- **Participants evaluated:** </span><span class="si">{</span><span class="n">total_participants</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">combined</span> <span class="o">=</span> <span class="n">opinion</span><span class="o">.</span><span class="n">combined_metrics</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">combined</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="s2">&quot;- **Overall metrics:** &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;MAE=</span><span class="si">{</span><span class="n">_fmt_opinion_value</span><span class="p">(</span><span class="n">combined</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;mae_after&#39;</span><span class="p">))</span><span class="si">}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;RMSE=</span><span class="si">{</span><span class="n">_fmt_opinion_value</span><span class="p">(</span><span class="n">combined</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;rmse_after&#39;</span><span class="p">))</span><span class="si">}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Direction accuracy=</span><span class="si">{</span><span class="n">_fmt_opinion_value</span><span class="p">(</span><span class="n">combined</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;direction_accuracy&#39;</span><span class="p">))</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">lines</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_opinion_table</span><span class="p">(</span>
+    <span class="n">opinion</span><span class="p">:</span> <span class="n">OpinionEvaluationResult</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the Markdown opinion table and CSV export rows.</span>
+
+<span class="sd">    :param opinion: Aggregated opinion evaluation results.</span>
+<span class="sd">    :returns: Tuple of markdown lines and CSV row dictionaries.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">table_lines</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">csv_rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;Study&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Issue&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Participants&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Eligible&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;MAE (after)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;RMSE (after)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Direction ↑&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;No-change ↑&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Δ Accuracy&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="n">table_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;| &quot;</span> <span class="o">+</span> <span class="s2">&quot; | &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">header</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; |&quot;</span><span class="p">)</span>
+    <span class="n">table_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">opinion</span><span class="o">.</span><span class="n">studies</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="n">metrics</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">metrics</span>
+        <span class="n">baseline</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">baseline</span>
+        <span class="n">direction_accuracy</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;direction_accuracy&quot;</span><span class="p">)</span>
+        <span class="n">baseline_direction</span> <span class="o">=</span> <span class="n">baseline</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;direction_accuracy&quot;</span><span class="p">)</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">float</span><span class="p">(</span><span class="n">direction_accuracy</span><span class="p">)</span> <span class="o">-</span> <span class="nb">float</span><span class="p">(</span><span class="n">baseline_direction</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">direction_accuracy</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+            <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">baseline_direction</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+        <span class="n">table_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="s2">&quot;| &quot;</span>
+            <span class="o">+</span> <span class="s2">&quot; | &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="n">result</span><span class="o">.</span><span class="n">study_label</span><span class="p">,</span>
+                    <span class="n">result</span><span class="o">.</span><span class="n">issue</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">),</span>
+                    <span class="nb">str</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">participants</span><span class="p">),</span>
+                    <span class="nb">str</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">eligible</span><span class="p">),</span>
+                    <span class="n">_fmt_opinion_value</span><span class="p">(</span><span class="n">metrics</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mae_after&quot;</span><span class="p">)),</span>
+                    <span class="n">_fmt_opinion_value</span><span class="p">(</span><span class="n">metrics</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rmse_after&quot;</span><span class="p">)),</span>
+                    <span class="n">_fmt_opinion_value</span><span class="p">(</span><span class="n">direction_accuracy</span><span class="p">),</span>
+                    <span class="n">_fmt_opinion_value</span><span class="p">(</span><span class="n">baseline_direction</span><span class="p">),</span>
+                    <span class="n">_fmt_opinion_value</span><span class="p">(</span><span class="n">delta</span><span class="p">),</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+            <span class="o">+</span> <span class="s2">&quot; |&quot;</span>
+        <span class="p">)</span>
+
+        <span class="n">csv_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;study&quot;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">study_key</span><span class="p">,</span>
+                <span class="s2">&quot;issue&quot;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">issue</span><span class="p">,</span>
+                <span class="s2">&quot;participants&quot;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">participants</span><span class="p">,</span>
+                <span class="s2">&quot;eligible&quot;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">eligible</span><span class="p">,</span>
+                <span class="s2">&quot;mae_after&quot;</span><span class="p">:</span> <span class="n">metrics</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mae_after&quot;</span><span class="p">),</span>
+                <span class="s2">&quot;rmse_after&quot;</span><span class="p">:</span> <span class="n">metrics</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rmse_after&quot;</span><span class="p">),</span>
+                <span class="s2">&quot;direction_accuracy&quot;</span><span class="p">:</span> <span class="n">direction_accuracy</span><span class="p">,</span>
+                <span class="s2">&quot;baseline_direction_accuracy&quot;</span><span class="p">:</span> <span class="n">baseline_direction</span><span class="p">,</span>
+                <span class="s2">&quot;mae_change&quot;</span><span class="p">:</span> <span class="n">metrics</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mae_change&quot;</span><span class="p">),</span>
+                <span class="s2">&quot;rmse_change&quot;</span><span class="p">:</span> <span class="n">metrics</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rmse_change&quot;</span><span class="p">),</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+    <span class="n">table_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">table_lines</span><span class="p">,</span> <span class="n">csv_rows</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_opinion_csv</span><span class="p">(</span><span class="n">directory</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">rows</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write the opinion metrics CSV and return its path.</span>
+
+<span class="sd">    :param directory: Directory where the CSV should be stored.</span>
+<span class="sd">    :param rows: Iterable of opinion metric rows to serialise.</span>
+<span class="sd">    :returns: Path to the written CSV file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">csv_path</span> <span class="o">=</span> <span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;opinion_metrics.csv&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">csv_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">csv_path</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">csv_path</span>
+    <span class="k">with</span> <span class="n">csv_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">csv_handle</span><span class="p">:</span>
+        <span class="n">writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictWriter</span><span class="p">(</span><span class="n">csv_handle</span><span class="p">,</span> <span class="n">fieldnames</span><span class="o">=</span><span class="n">OPINION_CSV_FIELDS</span><span class="p">)</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">writeheader</span><span class="p">()</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">writerows</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">csv_path</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_artifact_lines</span><span class="p">(</span><span class="n">opinion</span><span class="p">:</span> <span class="n">OpinionEvaluationResult</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return Markdown bullets linking to opinion artefacts.</span>
+
+<span class="sd">    :param opinion: Opinion evaluation payload containing artefact paths.</span>
+<span class="sd">    :param repo_root: Repository root used for relative path rendering.</span>
+<span class="sd">    :returns: Markdown bullet lines referencing metrics, predictions, and QA logs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">lines</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">opinion</span><span class="o">.</span><span class="n">studies</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="n">metrics_rel</span> <span class="o">=</span> <span class="n">_relative_path</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">metrics_path</span><span class="p">)</span>
+        <span class="n">preds_rel</span> <span class="o">=</span> <span class="n">_relative_path</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">predictions_path</span><span class="p">)</span>
+        <span class="n">qa_rel</span> <span class="o">=</span> <span class="n">_relative_path</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">qa_log_path</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;- `</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">study_label</span><span class="si">}</span><span class="s2">` metrics: `</span><span class="si">{</span><span class="n">metrics_rel</span><span class="si">}</span><span class="s2">` &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;predictions: `</span><span class="si">{</span><span class="n">preds_rel</span><span class="si">}</span><span class="s2">` QA log: `</span><span class="si">{</span><span class="n">qa_rel</span><span class="si">}</span><span class="s2">`&quot;</span>
+        <span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">lines</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_relative_path</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``target`` relative to ``root`` when possible.</span>
+
+<span class="sd">    :param root: Root directory for relative resolution.</span>
+<span class="sd">    :param target: Filesystem path to convert.</span>
+<span class="sd">    :returns: Relative path when ``target`` lives under ``root``; otherwise ``target``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">target</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">target</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_opinion_report</span><span class="p">(</span>
+    <span class="n">directory</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">selected</span><span class="p">:</span> <span class="n">SweepOutcome</span><span class="p">,</span>
+    <span class="n">opinion</span><span class="p">:</span> <span class="n">OpinionEvaluationResult</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create the opinion regression summary document.</span>
+
+<span class="sd">    :param directory: Destination directory for the opinion report.</span>
+<span class="sd">    :param selected: Winning sweep configuration.</span>
+<span class="sd">    :param opinion: Opinion evaluation payload (may be ``None``).</span>
+<span class="sd">    :returns: ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">directory</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;README.md&quot;</span>
+    <span class="n">lines</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;# GPT-4o Opinion Shift&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">opinion</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">opinion</span><span class="o">.</span><span class="n">studies</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;No opinion evaluations were produced during this pipeline invocation.&quot;</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">write_markdown_lines</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">lines</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_opinion_summary_lines</span><span class="p">(</span><span class="n">selected</span><span class="p">,</span> <span class="n">opinion</span><span class="p">))</span>
+
+    <span class="n">table_lines</span><span class="p">,</span> <span class="n">csv_rows</span> <span class="o">=</span> <span class="n">_build_opinion_table</span><span class="p">(</span><span class="n">opinion</span><span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">table_lines</span><span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;`opinion_metrics.csv` summarises per-study metrics.&quot;</span><span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">_write_opinion_csv</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">csv_rows</span><span class="p">)</span>
+
+    <span class="n">repo_root</span> <span class="o">=</span> <span class="n">_repo_root</span><span class="p">()</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;### Artefacts&quot;</span><span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_artifact_lines</span><span class="p">(</span><span class="n">opinion</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">))</span>
+
+    <span class="n">write_markdown_lines</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">lines</span><span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_write_reports</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">reports_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">outcomes</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">SweepOutcome</span><span class="p">],</span>
     <span class="n">selected</span><span class="p">:</span> <span class="n">SweepOutcome</span><span class="p">,</span>
     <span class="n">final_metrics</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span>
+    <span class="n">opinion_result</span><span class="p">:</span> <span class="n">OpinionEvaluationResult</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Regenerate catalog, sweep, and next-video reports.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Regenerate catalog, sweep, opinion, and next-video reports.</span>
+
+<span class="sd">    :param reports_dir: Root reports directory.</span>
+<span class="sd">    :param outcomes: All sweep outcomes produced during the run.</span>
+<span class="sd">    :param selected: Outcome chosen as the final configuration.</span>
+<span class="sd">    :param final_metrics: Metrics payload from the promoted evaluation.</span>
+<span class="sd">    :param opinion_result: Opinion evaluation payload (may be ``None``).</span>
+<span class="sd">    :returns: ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_write_catalog_report</span><span class="p">(</span><span class="n">reports_dir</span><span class="p">)</span>
     <span class="n">_write_sweep_report</span><span class="p">(</span><span class="n">reports_dir</span> <span class="o">/</span> <span class="s2">&quot;hyperparameter_tuning&quot;</span><span class="p">,</span> <span class="n">outcomes</span><span class="p">,</span> <span class="n">selected</span><span class="p">)</span>
     <span class="n">_write_next_video_report</span><span class="p">(</span><span class="n">reports_dir</span> <span class="o">/</span> <span class="s2">&quot;next_video&quot;</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="n">final_metrics</span><span class="p">)</span>
+    <span class="n">_write_opinion_report</span><span class="p">(</span><span class="n">reports_dir</span> <span class="o">/</span> <span class="s2">&quot;opinion&quot;</span><span class="p">,</span> <span class="n">selected</span><span class="o">=</span><span class="n">selected</span><span class="p">,</span> <span class="n">opinion</span><span class="o">=</span><span class="n">opinion_result</span><span class="p">)</span>
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
@@ -846,7 +1305,11 @@
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.pipeline.main">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute sweeps, selection, final evaluation, and report regeneration.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute sweeps, selection, final evaluation, and report regeneration.</span>
+
+<span class="sd">    :param argv: Optional CLI argument sequence supplied by callers.</span>
+<span class="sd">    :returns: ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">args</span><span class="p">,</span> <span class="n">extra_cli</span> <span class="o">=</span> <span class="n">_parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span>
@@ -859,6 +1322,7 @@
 
     <span class="n">configs</span> <span class="o">=</span> <span class="n">_build_sweep_configs</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
     <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Planned </span><span class="si">%d</span><span class="s2"> GPT-4o configurations.&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">configs</span><span class="p">))</span>
+    <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Hyper-parameter sweeps evaluate the validation split only (no training stage).&quot;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">dry_run</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">configs</span><span class="p">:</span>
@@ -876,11 +1340,18 @@
     <span class="n">selected</span> <span class="o">=</span> <span class="n">_select_best</span><span class="p">(</span><span class="n">outcomes</span><span class="p">)</span>
     <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Selected configuration: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">selected</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">())</span>
 
-    <span class="n">final_dir</span><span class="p">,</span> <span class="n">final_metrics</span> <span class="o">=</span> <span class="n">_run_final_evaluation</span><span class="p">(</span>
-        <span class="n">config</span><span class="o">=</span><span class="n">selected</span><span class="o">.</span><span class="n">config</span><span class="p">,</span>
-        <span class="n">base_cli</span><span class="o">=</span><span class="n">base_cli</span><span class="p">,</span>
-        <span class="n">extra_cli</span><span class="o">=</span><span class="n">extra_cli</span><span class="p">,</span>
-        <span class="n">out_dir</span><span class="o">=</span><span class="n">paths</span><span class="o">.</span><span class="n">final_out_dir</span><span class="p">,</span>
+    <span class="n">final_dir</span><span class="p">,</span> <span class="n">final_metrics</span> <span class="o">=</span> <span class="n">_promote_sweep_results</span><span class="p">(</span>
+        <span class="n">selected</span><span class="o">=</span><span class="n">selected</span><span class="p">,</span>
+        <span class="n">sweep_dir</span><span class="o">=</span><span class="n">paths</span><span class="o">.</span><span class="n">sweep_dir</span><span class="p">,</span>
+        <span class="n">final_out_dir</span><span class="o">=</span><span class="n">paths</span><span class="o">.</span><span class="n">final_out_dir</span><span class="p">,</span>
+        <span class="n">overwrite</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">overwrite</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Running opinion-shift evaluation for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">selected</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">())</span>
+    <span class="n">opinion_result</span> <span class="o">=</span> <span class="n">run_opinion_evaluations</span><span class="p">(</span>
+        <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+        <span class="n">config_label</span><span class="o">=</span><span class="n">selected</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">(),</span>
+        <span class="n">out_dir</span><span class="o">=</span><span class="n">paths</span><span class="o">.</span><span class="n">opinion_dir</span> <span class="o">/</span> <span class="n">selected</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">(),</span>
     <span class="p">)</span>
 
     <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Final metrics stored under </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">final_dir</span><span class="p">)</span>
@@ -889,6 +1360,7 @@
         <span class="n">outcomes</span><span class="o">=</span><span class="n">outcomes</span><span class="p">,</span>
         <span class="n">selected</span><span class="o">=</span><span class="n">selected</span><span class="p">,</span>
         <span class="n">final_metrics</span><span class="o">=</span><span class="n">final_metrics</span><span class="p">,</span>
+        <span class="n">opinion_result</span><span class="o">=</span><span class="n">opinion_result</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 

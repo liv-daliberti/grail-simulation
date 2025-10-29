@@ -425,6 +425,10 @@
     <span class="n">counts</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_record</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Count a positive Word2Vec worker observation.</span>
+
+<span class="sd">        :param value: Observed worker count to include in the frequency tally.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">counts</span><span class="p">[</span><span class="n">value</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
 

@@ -273,7 +273,12 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.text</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">canon_text</span> <span class="k">as</span> <span class="n">_canon_text</span><span class="p">,</span>
@@ -283,13 +288,44 @@
 <span class="p">)</span>
 
 <span class="n">ANS_TAG</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(?si)&lt;answer&gt;\s*([^&lt;\n]+?)\s*&lt;/answer&gt;&quot;</span><span class="p">)</span>
+<span class="n">THINK_BLOCK</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(?si)&lt;think&gt;.+?&lt;/think&gt;&quot;</span><span class="p">)</span>
+<span class="n">ANSWER_BLOCK</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(?si)&lt;answer&gt;.+?&lt;/answer&gt;&quot;</span><span class="p">)</span>
 <span class="n">INDEX_ONLY</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\s*(?:option\s*)?(\d+)\s*$&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">I</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="InvocationParams">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.utils.InvocationParams">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">InvocationParams</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameters controlling a single GPT-4o invocation.&quot;&quot;&quot;</span>
+
+    <span class="n">max_tokens</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">top_p</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">deployment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="RetryPolicy">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.utils.RetryPolicy">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RetryPolicy</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Retry behaviour applied to GPT-4o calls.&quot;&quot;&quot;</span>
+
+    <span class="n">attempts</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="n">delay</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="n">validator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
 
 
 <div class="viewcode-block" id="canon_text">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.utils.canon_text">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">canon_text</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalise ``value`` using the shared canonical text helper.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalise ``value`` using the shared canonical text helper.</span>
+
+<span class="sd">    :param value: Raw text value to canonicalise.</span>
+<span class="sd">    :returns: Canonicalised string (possibly empty).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">_canon_text</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
 
@@ -298,7 +334,11 @@
 <div class="viewcode-block" id="canon_video_id">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.utils.canon_video_id">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">canon_video_id</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract a canonical YouTube id from ``value``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract a canonical YouTube id from ``value``.</span>
+
+<span class="sd">    :param value: Raw identifier or text containing a video id.</span>
+<span class="sd">    :returns: Canonical 11-character video id or empty string.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">_canon_video_id</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
 
@@ -307,7 +347,11 @@
 <div class="viewcode-block" id="split_env_list">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.utils.split_env_list">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">split_env_list</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Split ``raw`` using the separators understood by the common helper.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Split ``raw`` using the separators understood by the common helper.</span>
+
+<span class="sd">    :param raw: Environment variable value listing multiple items.</span>
+<span class="sd">    :returns: List of trimmed tokens.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">_split_env_list</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span></div>
 
@@ -316,7 +360,11 @@
 <div class="viewcode-block" id="resolve_paths_from_env">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.utils.resolve_paths_from_env">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">resolve_paths_from_env</span><span class="p">(</span><span class="n">env_vars</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return resolved filesystem paths aggregated from ``env_vars``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return resolved filesystem paths aggregated from ``env_vars``.</span>
+
+<span class="sd">    :param env_vars: Ordered list of environment variable names.</span>
+<span class="sd">    :returns: Resolved filesystem paths aggregated from the variables.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">_resolve_paths_from_env</span><span class="p">(</span><span class="n">env_vars</span><span class="p">)</span></div>
 
@@ -325,7 +373,11 @@
 <div class="viewcode-block" id="is_nan_like">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.utils.is_nan_like">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">is_nan_like</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True when the provided value should be treated as missing.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``True`` when the provided value should be treated as missing.</span>
+
+<span class="sd">    :param value: Candidate value to inspect.</span>
+<span class="sd">    :returns: ``True`` if the value represents a missing entry.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">True</span>
@@ -338,7 +390,11 @@
 <div class="viewcode-block" id="truthy">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.utils.truthy">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">truthy</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True for typical boolean truthy values used in the dataset.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``True`` for typical boolean truthy values used in the dataset.</span>
+
+<span class="sd">    :param value: Raw value to interpret as a boolean.</span>
+<span class="sd">    :returns: Boolean interpretation of ``value``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span>
@@ -346,6 +402,118 @@
         <span class="k">return</span> <span class="n">value</span> <span class="o">!=</span> <span class="mi">0</span>
     <span class="n">string_value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">string_value</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">,</span> <span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="s2">&quot;yes&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="repo_root">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.utils.repo_root">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">repo_root</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the repository root used by the GPT-4o modules.</span>
+
+<span class="sd">    :returns: Repository root path.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="qa_log_path_for">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.utils.qa_log_path_for">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">qa_log_path_for</span><span class="p">(</span><span class="n">run_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;qa.log&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the canonical QA log path under logs/gpt mirroring ``run_dir``.</span>
+
+<span class="sd">    :param run_dir: Model output directory whose structure is mirrored.</span>
+<span class="sd">    :param filename: QA log filename to materialise.</span>
+<span class="sd">    :returns: Destination path for the QA log file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">repo</span> <span class="o">=</span> <span class="n">repo_root</span><span class="p">()</span>
+    <span class="n">logs_root</span> <span class="o">=</span> <span class="n">repo</span> <span class="o">/</span> <span class="s2">&quot;logs&quot;</span> <span class="o">/</span> <span class="s2">&quot;gpt&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">relative</span> <span class="o">=</span> <span class="n">run_dir</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">repo</span> <span class="o">/</span> <span class="s2">&quot;models&quot;</span> <span class="o">/</span> <span class="s2">&quot;gpt-4o&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">relative</span> <span class="o">=</span> <span class="n">run_dir</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">repo</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="n">relative</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">run_dir</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">destination_dir</span> <span class="o">=</span> <span class="n">logs_root</span> <span class="o">/</span> <span class="n">relative</span>
+    <span class="n">destination_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">destination_dir</span> <span class="o">/</span> <span class="n">filename</span></div>
+
+
+
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;gpt4o.utils&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_has_required_reasoning_tags</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``True`` when ``text`` includes both &lt;think&gt;…&lt;/think&gt; and &lt;answer&gt;…&lt;/answer&gt;.</span>
+
+<span class="sd">    :param text: Model response to validate.</span>
+<span class="sd">    :returns: ``True`` if the response contains the required tags.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">THINK_BLOCK</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">text</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">bool</span><span class="p">(</span><span class="n">ANSWER_BLOCK</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">text</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="call_gpt4o_with_retries">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.utils.call_gpt4o_with_retries">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">call_gpt4o_with_retries</span><span class="p">(</span>
+    <span class="n">messages</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">invocation</span><span class="p">:</span> <span class="n">InvocationParams</span><span class="p">,</span>
+    <span class="n">retry</span><span class="p">:</span> <span class="n">RetryPolicy</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Invoke GPT-4o with retry semantics, propagating the first successful response.</span>
+
+<span class="sd">    :param messages: Chat messages formatted for the Azure OpenAI API.</span>
+<span class="sd">    :param invocation: Model invocation parameters (temperature, max tokens, etc.).</span>
+<span class="sd">    :param retry: Retry policy controlling attempts and delay.</span>
+<span class="sd">    :param logger: Optional logger for warnings.</span>
+<span class="sd">    :returns: Model response text when successful.</span>
+<span class="sd">    :raises RuntimeError: After exhausting retries without a non-empty response.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.client</span><span class="w"> </span><span class="kn">import</span> <span class="n">ds_call</span>  <span class="c1"># lazy import to avoid circulars</span>
+
+    <span class="n">policy</span> <span class="o">=</span> <span class="n">retry</span> <span class="ow">or</span> <span class="n">RetryPolicy</span><span class="p">()</span>
+    <span class="n">attempts</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">policy</span><span class="o">.</span><span class="n">attempts</span> <span class="ow">or</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">sleep_seconds</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">policy</span><span class="o">.</span><span class="n">delay</span> <span class="ow">or</span> <span class="mf">0.0</span><span class="p">))</span>
+    <span class="n">log</span> <span class="o">=</span> <span class="n">logger</span> <span class="ow">or</span> <span class="n">LOGGER</span>
+    <span class="n">last_exc</span><span class="p">:</span> <span class="ne">Exception</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">check</span> <span class="o">=</span> <span class="n">policy</span><span class="o">.</span><span class="n">validator</span> <span class="ow">or</span> <span class="n">_has_required_reasoning_tags</span>
+
+    <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">attempts</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">ds_call</span><span class="p">(</span>
+                <span class="n">messages</span><span class="p">,</span>
+                <span class="n">max_tokens</span><span class="o">=</span><span class="n">invocation</span><span class="o">.</span><span class="n">max_tokens</span><span class="p">,</span>
+                <span class="n">temperature</span><span class="o">=</span><span class="n">invocation</span><span class="o">.</span><span class="n">temperature</span><span class="p">,</span>
+                <span class="n">top_p</span><span class="o">=</span><span class="n">invocation</span><span class="o">.</span><span class="n">top_p</span><span class="p">,</span>
+                <span class="n">deployment</span><span class="o">=</span><span class="n">invocation</span><span class="o">.</span><span class="n">deployment</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">response</span> <span class="ow">and</span> <span class="n">response</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">and</span> <span class="n">check</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">response</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Malformed GPT-4o response (missing required tags).&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># pylint: disable=broad-except</span>
+            <span class="n">last_exc</span> <span class="o">=</span> <span class="n">exc</span>
+            <span class="k">if</span> <span class="n">attempt</span> <span class="o">&lt;</span> <span class="n">attempts</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;GPT-4o call failed (attempt </span><span class="si">%d</span><span class="s2">/</span><span class="si">%d</span><span class="s2">): </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">attempt</span><span class="p">,</span> <span class="n">attempts</span><span class="p">,</span> <span class="n">exc</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">sleep_seconds</span><span class="p">:</span>
+                    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">sleep_seconds</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">break</span>
+
+    <span class="k">if</span> <span class="n">last_exc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">last_exc</span> <span class="o">=</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Empty response from GPT-4o.&quot;</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;GPT-4o call failed after </span><span class="si">{</span><span class="n">attempts</span><span class="si">}</span><span class="s2"> attempts: </span><span class="si">{</span><span class="n">last_exc</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">last_exc</span></div>
 
 </pre></div>
         </article>

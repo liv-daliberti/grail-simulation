@@ -20,13 +20,11 @@ from __future__ import annotations
 # pylint: disable=duplicate-code,too-many-lines
 
 import json
-import time
-from dataclasses import asdict, dataclass, field
 import os
+import time
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence
-
-import numpy as np
 
 from common.evaluation.utils import compose_issue_slug, prepare_dataset, safe_div
 from common.prompts.docs import merge_default_extra_fields
@@ -34,14 +32,12 @@ from common.prompts.docs import merge_default_extra_fields
 from .data import (
     DEFAULT_DATASET_SOURCE,
     EVAL_SPLIT,
-    SOLUTION_COLUMN,
     TRAIN_SPLIT,
     filter_dataset_for_issue,
     filter_split_for_participant_studies,
     issues_in_dataset,
     load_dataset_source,
 )
-from .features import extract_slate_items
 from .model import (
     SentenceTransformerVectorizerConfig,
     TfidfConfig,
@@ -51,10 +47,48 @@ from .model import (
     XGBoostTrainConfig,
     fit_xgboost_model,
     load_xgboost_model,
-    predict_among_slate,
     save_xgboost_model,
 )
-from .utils import canon_video_id, ensure_directory, get_logger
+from .evaluation_metrics import (
+    accuracy_curve_from_records,
+    bootstrap_uncertainty,
+    curve_metrics_for_split,
+    curve_metrics_from_training_history,
+    model_params,
+    records_to_predictions,
+    summarise_outcomes,
+    summarise_records,
+)
+from .evaluation_probabilities import candidate_probabilities, probability_context
+from .evaluation_records import (
+    collect_prediction_records,
+    compute_group_keys,
+    evaluate_single_example,
+    group_key_for_example,
+)
+from .evaluation_types import (
+    EvaluationConfig,
+    IssueEvaluationContext,
+    IssueMetrics,
+    PredictionOutcome,
+)
+from .utils import ensure_directory, get_logger
+
+# Backwards-compatible aliases for legacy imports (tests, downstream scripts).
+_candidate_probabilities = candidate_probabilities
+_probability_context = probability_context
+_collect_prediction_records = collect_prediction_records
+_evaluate_single_example = evaluate_single_example
+_group_key_for_example = group_key_for_example
+_compute_group_keys = compute_group_keys
+_records_to_predictions = records_to_predictions
+_accuracy_curve_from_records = accuracy_curve_from_records
+_curve_metrics_from_training_history = curve_metrics_from_training_history
+_curve_metrics_for_split = curve_metrics_for_split
+_summarise_outcomes = summarise_outcomes
+_summarise_records = summarise_records
+_bootstrap_uncertainty = bootstrap_uncertainty
+_model_params = model_params
 
 logger = get_logger("xgb.eval")
 
@@ -106,187 +140,6 @@ def _split_tokens(raw: Optional[str]) -> List[str]:
     if not raw:
         return []
     return [token.strip() for token in raw.split(",") if token.strip()]
-
-
-# pylint: disable=too-many-instance-attributes
-@dataclass
-class IssueMetrics:
-    """Container describing evaluation metrics for a single issue.
-
-    Note: In dataclasses, all non-default fields must precede any fields with
-    defaults. The ordering here ensures that rule is respected.
-    """
-
-    # Non-default fields
-    issue: str
-    participant_studies: Sequence[str]
-    dataset_source: str
-    evaluated: int
-    correct: int
-    accuracy: float
-    known_candidate_hits: int
-    known_candidate_total: int
-    coverage: float
-    avg_probability: float
-    eligible: int
-    timestamp: float
-    extra_fields: Sequence[str]
-    xgboost_params: Dict[str, Any]
-
-    # Defaulted fields (must come after non-default fields)
-    # Eligible-only accuracy (gold present in slate)
-    correct_eligible: int = 0
-    accuracy_eligible: float = 0.0
-    # Accuracy restricted to cases where at least one candidate was known
-    known_accuracy: Optional[float] = None
-    # Fraction of evaluations with at least one known candidate
-    known_availability: Optional[float] = None
-    # Accuracy among rows where a prediction was produced
-    evaluated_predicted: int = 0
-    accuracy_predicted: float = 0.0
-    baseline_most_frequent_gold_index: Dict[str, Any] = field(default_factory=dict)
-    random_baseline_expected_accuracy: Optional[float] = None
-    curve_metrics: Optional[Dict[str, Any]] = None
-    curve_metrics_path: Optional[str] = None
-    # Optional participant-bootstrap confidence intervals (eligible-only accuracy)
-    accuracy_ci_95: Optional[Dict[str, float]] = None
-    accuracy_uncertainty: Optional[Dict[str, Any]] = None
-
-
-@dataclass(frozen=True)
-class EvaluationConfig:
-    """
-    Configuration bundle shared across evaluation helpers.
-
-    :ivar dataset_source: Identifier for the dataset source (path or HF id).
-    :vartype dataset_source: str
-    :ivar extra_fields: Additional column names appended to prompt documents.
-    :vartype extra_fields: Sequence[str]
-    :ivar eval_max: Optional cap on the number of evaluation rows (0 evaluates all).
-    :vartype eval_max: int
-    :ivar participant_studies: Tokenised participant study filters applied to the splits.
-    :vartype participant_studies: Sequence[str]
-    """
-
-    dataset_source: str
-    extra_fields: Sequence[str]
-    eval_max: int
-    participant_studies: Sequence[str]
-
-
-@dataclass(frozen=True)
-class IssueEvaluationContext:
-    """Static context shared across issue evaluations within a single run."""
-
-    dataset_source: str
-    extra_fields: Sequence[str]
-    train_study_tokens: Sequence[str]
-    eval_study_tokens: Sequence[str]
-
-
-# pylint: disable=too-many-instance-attributes
-@dataclass(frozen=True)
-class PredictionOutcome:
-    """
-    Result bundle for a single evaluation example.
-
-    :ivar prediction_index: 1-based index of the chosen slate option (``None`` when unknown).
-    :vartype prediction_index: Optional[int]
-    :ivar predicted_id: Video identifier selected by the model.
-    :vartype predicted_id: str
-    :ivar gold_video_id: Ground-truth video identifier.
-    :vartype gold_video_id: str
-    :ivar candidate_probs: Mapping of slate positions to probabilities.
-    :vartype candidate_probs: Dict[int, float]
-    :ivar best_probability: Probability associated with the predicted option.
-    :vartype best_probability: float
-    :ivar known_candidate_seen:
-        Flag indicating whether any slate ids were present in the probability map.
-    :vartype known_candidate_seen: bool
-    :ivar known_candidate_hit:
-        Flag indicating the predicted option matched the ground-truth id and was known.
-    :vartype known_candidate_hit: bool
-    :ivar record_probability:
-        Flag indicating whether ``best_probability`` should be included in aggregates.
-    :vartype record_probability: bool
-    :ivar correct: ``True`` when the predicted option matches the gold id.
-    :vartype correct: bool
-    :ivar option_count: Number of candidates presented in the slate.
-    :vartype option_count: int
-    :ivar gold_index: 1-based index of the gold candidate when present in the slate.
-    :vartype gold_index: Optional[int]
-    :ivar eligible: ``True`` when the slate contained the gold candidate.
-    :vartype eligible: bool
-    """
-
-    prediction_index: Optional[int]
-    predicted_id: str
-    gold_video_id: str
-    candidate_probs: Dict[int, float]
-    best_probability: float
-    known_candidate_seen: bool
-    known_candidate_hit: bool
-    record_probability: bool
-    correct: bool
-    option_count: int
-    gold_index: Optional[int]
-    eligible: bool
-
-
-@dataclass(frozen=True)
-class ProbabilityContext:
-    """
-    Aggregated probability metadata for a slate prediction.
-
-    :ivar best_probability: Probability assigned to the chosen candidate.
-    :vartype best_probability: float
-    :ivar record_probability: Flag indicating whether the probability should contribute
-        to averages (only when the candidate was observed during training).
-    :vartype record_probability: bool
-    :ivar known_candidate_hit: Flag signalling that the predicted candidate matches
-        the gold label and was seen during training.
-    :vartype known_candidate_hit: bool
-    """
-
-    best_probability: float
-    record_probability: bool
-    known_candidate_hit: bool
-
-
-@dataclass(frozen=True)
-class OutcomeSummary:
-    """
-    Aggregated metrics derived from prediction outcomes.
-
-    :ivar evaluated: Number of evaluation rows processed.
-    :vartype evaluated: int
-    :ivar correct: Count of correct slate selections.
-    :vartype correct: int
-    :ivar known_hits: Count of correct selections among candidates observed during training.
-    :vartype known_hits: int
-    :ivar known_total: Count of evaluations with at least one known candidate.
-    :vartype known_total: int
-    :ivar avg_probability: Mean probability assigned to known predictions.
-    :vartype avg_probability: float
-    :ivar eligible: Count of slates where the gold option was present.
-    :vartype eligible: int
-    :ivar gold_hist: Histogram of observed gold indices for eligible slates.
-    :vartype gold_hist: Dict[int, int]
-    :ivar random_inverse_sum: Sum of ``1 / n_options`` contributions for eligible slates.
-    :vartype random_inverse_sum: float
-    :ivar random_inverse_count: Number of eligible slates contributing to the random baseline.
-    :vartype random_inverse_count: int
-    """
-
-    evaluated: int
-    correct: int
-    known_hits: int
-    known_total: int
-    avg_probability: float
-    eligible: int
-    gold_hist: Dict[int, int]
-    random_inverse_sum: float
-    random_inverse_count: int
 
 
 def run_eval(args) -> None:
@@ -433,14 +286,14 @@ def _evaluate_issue(
         issue_slug=issue_slug,
         config=eval_config,
     )
-    history_bundle = _curve_metrics_from_training_history(model.training_history)
+    history_bundle = curve_metrics_from_training_history(model.training_history)
     if history_bundle is None:
         curve_bundle: Dict[str, Any] = {
             "axis_label": "Evaluated examples",
             "y_label": "Cumulative accuracy",
             "eval": eval_curve,
         }
-        train_curve = _curve_metrics_for_split(
+        train_curve = curve_metrics_for_split(
             model=model,
             dataset=train_ds,
             extra_fields=tuple(context.extra_fields),
@@ -617,13 +470,13 @@ def evaluate_issue(
     :rtype: tuple[IssueMetrics, List[Dict[str, Any]]]
     """
 
-    records = _collect_prediction_records(model, eval_ds, config)
-    metrics = _summarise_records(records, config, issue_slug, model)
-    predictions = _records_to_predictions(records, issue_slug)
-    curve_payload = _accuracy_curve_from_records(records)
+    records = collect_prediction_records(model, eval_ds, config)
+    metrics = summarise_records(records, config, issue_slug, model)
+    predictions = records_to_predictions(records, issue_slug)
+    curve_payload = accuracy_curve_from_records(records)
     # Compute participant-bootstrap CIs for eligible-only accuracy.
     try:
-        group_keys = _compute_group_keys(eval_ds, len(records))
+        group_keys = compute_group_keys(eval_ds, len(records))
     except (TypeError, AttributeError):  # pragma: no cover - defensive fallback
         group_keys = [f"row::{i}" for i in range(len(records))]
     baseline_index = None
@@ -638,7 +491,7 @@ def evaluate_issue(
         bootstrap_seed = int(os.environ.get("XGB_BOOTSTRAP_SEED", "2024"))
     except ValueError:
         bootstrap_seed = 2024
-    uncertainty = _bootstrap_uncertainty(
+    uncertainty = bootstrap_uncertainty(
         records=records,
         group_keys=group_keys,
         baseline_index=baseline_index,
@@ -653,659 +506,11 @@ def evaluate_issue(
     return metrics, predictions, curve_payload
 
 
-def _evaluate_single_example(
-    *,
-    model: XGBoostSlateModel,
-    example: dict,
-    extra_fields: Sequence[str],
-) -> PredictionOutcome:
-    """
-    Score a single interaction and package the outcome metadata.
-
-    :param model: Trained slate model used for inference.
-    :type model: XGBoostSlateModel
-    :param example: Dataset row containing prompt text and slate candidates.
-    :type example: dict
-    :param extra_fields: Additional columns appended to the feature document.
-    :type extra_fields: Sequence[str]
-    :returns: Rich prediction bundle describing the model decision.
-    :rtype: PredictionOutcome
-    """
-    prediction_idx, probability_map = predict_among_slate(
-        model,
-        example,
-        extra_fields=extra_fields,
-    )
-    slate = extract_slate_items(example)
-    option_count = len(slate)
-    gold_id = example.get(SOLUTION_COLUMN) or ""
-    gold_id_canon = canon_video_id(gold_id)
-    raw_gold_index = example.get("gold_index")
-    gold_index: Optional[int] = None
-    if raw_gold_index is not None:
-        try:
-            parsed_index = int(raw_gold_index)
-        except (TypeError, ValueError):
-            parsed_index = None
-        if parsed_index is not None and 1 <= parsed_index <= option_count:
-            gold_index = parsed_index
-    if gold_index is None and gold_id_canon:
-        for idx, (_title, candidate_id) in enumerate(slate, start=1):
-            if canon_video_id(candidate_id) == gold_id_canon:
-                gold_index = idx
-                break
-
-    # Do not default to an arbitrary index when the model abstains.
-    # Keeping prediction_idx as None allows metrics to report unknown cases
-    # without counting them as incorrect predictions.
-
-    if prediction_idx is not None and 1 <= prediction_idx <= option_count:
-        predicted_id = slate[prediction_idx - 1][1]
-    else:
-        predicted_id = ""
-
-    candidate_probs, known_candidates = _candidate_probabilities(slate, probability_map)
-    probability_ctx = _probability_context(
-        prediction_idx=prediction_idx,
-        candidate_probs=candidate_probs,
-        known_candidates=known_candidates,
-        gold_id_canon=gold_id_canon,
-    )
-
-    predicted_id_canon = canon_video_id(predicted_id)
-    correct = predicted_id_canon == gold_id_canon and bool(predicted_id_canon)
-    eligible = bool(
-        gold_index is not None
-        and option_count > 0
-        and 1 <= gold_index <= option_count
-    )
-
-    return PredictionOutcome(
-        prediction_index=prediction_idx,
-        predicted_id=predicted_id,
-        gold_video_id=gold_id,
-        candidate_probs=candidate_probs,
-        best_probability=probability_ctx.best_probability,
-        known_candidate_seen=bool(known_candidates),
-        known_candidate_hit=probability_ctx.known_candidate_hit,
-        record_probability=probability_ctx.record_probability,
-        correct=correct,
-        option_count=option_count,
-        gold_index=gold_index,
-        eligible=eligible,
-    )
-
-
-def _collect_prediction_records(
-    model: XGBoostSlateModel,
-    eval_ds,
-    config: EvaluationConfig,
-) -> List[tuple[int, PredictionOutcome]]:
-    """
-    Collect indexed prediction outcomes for the evaluation split.
-
-    :param model: Trained slate model used to score candidate lists.
-    :type model: XGBoostSlateModel
-    :param eval_ds: Iterable of dataset rows representing the evaluation split.
-    :type eval_ds: datasets.Dataset | Sequence[dict]
-    :param config: Evaluation configuration controlling maximum rows and extra fields.
-    :type config: EvaluationConfig
-    :returns: Ordered list mapping dataset indices to :class:`PredictionOutcome`.
-    :rtype: List[tuple[int, PredictionOutcome]]
-    """
-    records: List[tuple[int, PredictionOutcome]] = []
-    correct_so_far = 0
-    elig_seen_so_far = 0
-    elig_correct_so_far = 0
-    last_log = 0
-    for index, example in enumerate(eval_ds):
-        if config.eval_max and len(records) >= config.eval_max:
-            break
-        outcome = _evaluate_single_example(
-            model=model,
-            example=example,
-            extra_fields=config.extra_fields,
-        )
-        records.append((index, outcome))
-        # Periodically log cumulative accuracy and eligible-only accuracy.
-        if outcome.correct:
-            correct_so_far += 1
-        if outcome.eligible:
-            elig_seen_so_far += 1
-            if outcome.correct:
-                elig_correct_so_far += 1
-        if len(records) - last_log >= 50:
-            last_log = len(records)
-            overall_acc = correct_so_far / len(records) if records else 0.0
-            elig_acc = (
-                (elig_correct_so_far / elig_seen_so_far) if elig_seen_so_far else 0.0
-            )
-            logger.info(
-                "[XGBoost][Eval] processed=%d overall_acc=%.4f eligible_acc=%.4f",
-                len(records),
-                overall_acc,
-                elig_acc,
-            )
-    return records
-
-
-def _group_key_for_example(example: Mapping[str, Any], fallback_index: int) -> str:
-    """Derive a stable grouping key for bootstrap resampling.
-
-    Priority order mirrors the KNN pipeline: urlid > participant_id > session_id > row index.
-    """
-    urlid = str(example.get("urlid") or "").strip()
-    if urlid and urlid.lower() != "nan":
-        return f"urlid::{urlid}"
-    participant = str(example.get("participant_id") or "").strip()
-    if participant and participant.lower() != "nan":
-        return f"participant::{participant}"
-    session = str(example.get("session_id") or "").strip()
-    if session and session.lower() != "nan":
-        return f"session::{session}"
-    return f"row::{fallback_index}"
-
-
-def _compute_group_keys(eval_ds, limit: int) -> List[str]:
-    """Compute group keys for the first ``limit`` examples in ``eval_ds``."""
-    keys: List[str] = []
-    for idx, row in enumerate(eval_ds):
-        if idx >= limit:
-            break
-        try:
-            keys.append(_group_key_for_example(row, idx))
-        except (TypeError, AttributeError):
-            keys.append(f"row::{idx}")
-    return keys
-
-
-def _bootstrap_uncertainty(
-    *,
-    records: Sequence[tuple[int, "PredictionOutcome"]],
-    group_keys: Sequence[str],
-    baseline_index: Optional[int],
-    replicates: int,
-    seed: int,
-) -> Optional[Dict[str, Any]]:
-    """Participant-bootstrap uncertainty for eligible-only accuracy.
-
-    Returns a payload mirroring KNN's structure with ``model`` and optional ``baseline``
-    keys, each containing ``mean`` and ``ci95`` bounds.
-    """
-    if replicates <= 0 or not records:
-        return None
-    # Build per-group collections of eligible rows.
-    grouped: Dict[str, List[int]] = {}
-    elig_indices: List[int] = []
-    for idx, (_index, outcome) in enumerate(records):
-        key = group_keys[idx] if idx < len(group_keys) else f"row::{idx}"
-        if outcome.eligible:
-            grouped.setdefault(key, []).append(idx)
-            elig_indices.append(idx)
-    if len(grouped) < 2 or not elig_indices:
-        return None
-    keys = list(grouped.keys())
-    rng = np.random.default_rng(seed)
-    def _acc_for_indices(indices: Sequence[int]) -> float:
-        correct = sum(1 for i in indices if records[i][1].correct)
-        return correct / len(indices) if indices else 0.0
-    def _baseline_acc_for_indices(indices: Sequence[int]) -> float:
-        if baseline_index is None:
-            return 0.0
-        correct = 0
-        for i in indices:
-            outcome = records[i][1]
-            if outcome.gold_index == baseline_index:
-                correct += 1
-        return correct / len(indices) if indices else 0.0
-    model_samples: List[float] = []
-    baseline_samples: List[float] = []
-    for _ in range(replicates):
-        sampled_rows: List[int] = []
-        sampled_group_indices = rng.integers(0, len(keys), size=len(keys))
-        for gidx in sampled_group_indices:
-            sampled_rows.extend(grouped[keys[gidx]])
-        model_samples.append(_acc_for_indices(sampled_rows))
-        if baseline_index is not None:
-            baseline_samples.append(_baseline_acc_for_indices(sampled_rows))
-    model_ci = {
-        "low": float(np.percentile(model_samples, 2.5)),
-        "high": float(np.percentile(model_samples, 97.5)),
-    }
-    result: Dict[str, Any] = {
-        "method": "participant_bootstrap",
-        "n_groups": len(grouped),
-        "n_rows": len(elig_indices),
-        "n_bootstrap": int(replicates),
-        "seed": int(seed),
-        "model": {
-            "mean": float(np.mean(model_samples)),
-            "ci95": model_ci,
-        },
-    }
-    if baseline_samples:
-        baseline_ci = {
-            "low": float(np.percentile(baseline_samples, 2.5)),
-            "high": float(np.percentile(baseline_samples, 97.5)),
-        }
-        result["baseline"] = {
-            "mean": float(np.mean(baseline_samples)),
-            "ci95": baseline_ci,
-        }
-    return result
-
-
-def _summarise_records(
-    records: List[tuple[int, PredictionOutcome]],
-    config: EvaluationConfig,
-    issue_slug: str,
-    model: XGBoostSlateModel,
-) -> IssueMetrics:
-    """
-    Aggregate prediction records into an :class:`IssueMetrics` summary.
-
-    :param records: Indexed prediction outcomes for the evaluation split.
-    :type records: List[tuple[int, PredictionOutcome]]
-    :param config: Evaluation configuration specifying dataset metadata.
-    :type config: EvaluationConfig
-    :param issue_slug: Slug identifying the evaluated issue.
-    :type issue_slug: str
-    :param model: Trained model bundle used to augment metrics with parameters.
-    :type model: XGBoostSlateModel
-    :returns: Metrics ready for serialisation to ``metrics.json``.
-    :rtype: IssueMetrics
-    """
-    summary = _summarise_outcomes(records)
-    baseline_top_index: Optional[int] = None
-    baseline_count = 0
-    if summary.gold_hist:
-        baseline_top_index, baseline_count = max(
-            summary.gold_hist.items(),
-            key=lambda item: item[1],
-        )
-    baseline_accuracy: Optional[float] = None
-    if baseline_count and summary.eligible:
-        baseline_accuracy = safe_div(baseline_count, summary.eligible)
-    random_accuracy: Optional[float] = None
-    if summary.random_inverse_count:
-        random_accuracy = safe_div(
-            summary.random_inverse_sum,
-            summary.random_inverse_count,
-        )
-    baseline_payload: Dict[str, Any] = {"accuracy": baseline_accuracy}
-    if baseline_top_index is not None:
-        baseline_payload["top_index"] = baseline_top_index
-        baseline_payload["count"] = baseline_count
-    # Eligible-only accuracy (gold present in slate)
-    correct_eligible = sum(
-        outcome.correct for _, outcome in records if outcome.eligible
-    )
-    accuracy_eligible = (
-        safe_div(correct_eligible, summary.eligible)
-        if summary.eligible
-        else 0.0
-    )
-    # Known-candidate diagnostics
-    known_accuracy = (
-        safe_div(summary.known_hits, summary.known_total)
-        if summary.known_total
-        else None
-    )
-    known_availability = (
-        safe_div(summary.known_total, summary.evaluated)
-        if summary.evaluated
-        else None
-    )
-    # Accuracy among rows where the model produced a prediction
-    evaluated_predicted = sum(
-        outcome.prediction_index is not None for _, outcome in records
-    )
-    correct_predicted = sum(
-        outcome.correct and outcome.prediction_index is not None for _, outcome in records
-    )
-    accuracy_predicted = (
-        safe_div(correct_predicted, evaluated_predicted)
-        if evaluated_predicted
-        else 0.0
-    )
-
-    return IssueMetrics(
-        issue=issue_slug,
-        participant_studies=tuple(config.participant_studies),
-        dataset_source=config.dataset_source,
-        evaluated=summary.evaluated,
-        correct=summary.correct,
-        accuracy=safe_div(summary.correct, summary.evaluated),
-        correct_eligible=int(correct_eligible),
-        accuracy_eligible=float(accuracy_eligible),
-        known_candidate_hits=summary.known_hits,
-        known_candidate_total=summary.known_total,
-        coverage=safe_div(summary.known_hits, summary.known_total),
-        known_accuracy=known_accuracy,
-        known_availability=known_availability,
-        evaluated_predicted=evaluated_predicted,
-        accuracy_predicted=accuracy_predicted,
-        avg_probability=summary.avg_probability,
-        eligible=summary.eligible,
-        timestamp=time.time(),
-        extra_fields=tuple(config.extra_fields),
-        xgboost_params=_model_params(model),
-        baseline_most_frequent_gold_index=baseline_payload,
-        random_baseline_expected_accuracy=random_accuracy,
-    )
-
-
-def _records_to_predictions(
-    records: List[tuple[int, PredictionOutcome]],
-    issue_slug: str,
-) -> List[Dict[str, Any]]:
-    """
-    Serialise prediction outcomes into JSON-friendly dictionaries.
-
-    :param records: Indexed prediction outcomes emitted by :func:`_collect_prediction_records`.
-    :type records: List[tuple[int, PredictionOutcome]]
-    :param issue_slug: Identifier describing the evaluated issue.
-    :type issue_slug: str
-    :returns: List of dictionaries mirroring the JSONL predictions format.
-    :rtype: List[Dict[str, Any]]
-    """
-    return [
-        {
-            "issue": issue_slug,
-            "index": index,
-            "prediction_index": outcome.prediction_index,
-            "predicted_video_id": outcome.predicted_id,
-            "gold_video_id": outcome.gold_video_id,
-            "correct": outcome.correct,
-            "probabilities": outcome.candidate_probs,
-        }
-        for index, outcome in records
-    ]
-
-
-def _accuracy_curve_from_records(
-    records: Sequence[tuple[int, PredictionOutcome]],
-    *,
-    target_points: int = 50,
-) -> Dict[str, Any]:
-    """
-    Build cumulative accuracy checkpoints for plotting learning curves.
-
-    :param records: Ordered prediction outcomes produced during evaluation.
-    :type records: Sequence[tuple[int, PredictionOutcome]]
-    :param target_points: Approximate number of checkpoints to retain.
-    :type target_points: int
-    :returns: Mapping containing the accuracy curve, total examples, and stride.
-    :rtype: Dict[str, Any]
-    """
-
-    total = len(records)
-    if total == 0:
-        return {
-            "accuracy_by_step": {},
-            "eligible_accuracy_by_step": {},
-            "n_examples": 0,
-            "stride": 0,
-        }
-    target_points = max(1, target_points)
-    stride = max(1, total // target_points)
-    checkpoints: Dict[str, float] = {}
-    elig_checkpoints: Dict[str, float] = {}
-    correct = 0
-    elig_correct = 0
-    elig_seen = 0
-    for idx, (_index, outcome) in enumerate(records, start=1):
-        if outcome.correct:
-            correct += 1
-        if outcome.eligible:
-            elig_seen += 1
-            if outcome.correct:
-                elig_correct += 1
-        if idx == total or idx % stride == 0:
-            checkpoints[str(idx)] = safe_div(correct, idx)
-            if elig_seen > 0:
-                elig_checkpoints[str(idx)] = safe_div(elig_correct, elig_seen)
-    if str(total) not in checkpoints:
-        checkpoints[str(total)] = safe_div(correct, total)
-        if elig_seen > 0:
-            elig_checkpoints[str(total)] = safe_div(elig_correct, elig_seen)
-    return {
-        "accuracy_by_step": checkpoints,
-        "eligible_accuracy_by_step": elig_checkpoints,
-        "n_examples": total,
-        "stride": stride,
-    }
-
-
-def _curve_metrics_from_training_history(
-    history: Optional[Mapping[str, Any]]
-) -> Optional[Dict[str, Any]]:
-    """
-    Convert XGBoost evaluation history into round-based accuracy curves.
-
-    :param history: Evaluation history returned by ``XGBClassifier.evals_result``.
-    :type history: Mapping[str, Any] | None
-    :returns: Curve payload containing per-round accuracy, or ``None`` when unavailable.
-    :rtype: Optional[Dict[str, Any]]
-    """
-
-    if not history or not isinstance(history, Mapping):
-        return None
-
-    train_payload = history.get("validation_0")
-    eval_payload = history.get("validation_1")
-    if not isinstance(train_payload, Mapping) or not isinstance(eval_payload, Mapping):
-        return None
-
-    train_errors = train_payload.get("merror")
-    eval_errors = eval_payload.get("merror")
-    if not train_errors or not eval_errors:
-        return None
-
-    def _accuracy_series(error_sequence: Sequence[Any]) -> Dict[str, float]:
-        return {
-            str(idx + 1): float(max(0.0, min(1.0, 1.0 - float(value))))
-            for idx, value in enumerate(error_sequence)
-        }
-
-    def _error_series(error_sequence: Sequence[Any]) -> Dict[str, float]:
-        return {
-            str(idx + 1): float(value)
-            for idx, value in enumerate(error_sequence)
-        }
-
-    return {
-        "metric": "merror",
-        "axis_label": "Boosting rounds",
-        "y_label": "Classification accuracy",
-        "train": {
-            "accuracy_by_round": _accuracy_series(train_errors),
-            "merror_by_round": _error_series(train_errors),
-            "n_rounds": len(train_errors),
-        },
-        "eval": {
-            "accuracy_by_round": _accuracy_series(eval_errors),
-            "merror_by_round": _error_series(eval_errors),
-            "n_rounds": len(eval_errors),
-        },
-    }
-
-
-def _curve_metrics_for_split(
-    model: XGBoostSlateModel,
-    dataset,
-    extra_fields: Sequence[str],
-    *,
-    target_points: int = 50,
-) -> Dict[str, Any]:
-    """
-    Compute cumulative accuracy metrics for an arbitrary dataset split.
-
-    :param model: Trained slate model used for inference.
-    :type model: XGBoostSlateModel
-    :param dataset: Iterable of dataset rows to evaluate.
-    :type dataset: datasets.Dataset | Sequence[dict]
-    :param extra_fields: Additional columns appended to the feature document.
-    :type extra_fields: Sequence[str]
-    :param target_points: Approximate number of checkpoints to retain.
-    :type target_points: int
-    :returns: Accuracy curve payload mirroring :func:`_accuracy_curve_from_records`.
-    :rtype: Dict[str, Any]
-    """
-
-    config = EvaluationConfig(
-        dataset_source="curve",
-        extra_fields=tuple(extra_fields),
-        eval_max=0,
-        participant_studies=(),
-    )
-    records = _collect_prediction_records(model, dataset, config)
-    return _accuracy_curve_from_records(records, target_points=target_points)
-
-
-def _candidate_probabilities(
-    slate: Sequence[tuple[str, str]],
-    probability_map: Dict[str, float],
-) -> tuple[Dict[int, float], Dict[int, str]]:
-    """Map slate indices to predicted probabilities and known candidates.
-
-    :param slate: Ordered sequence of slate options ``(title, video_id)``.
-    :param probability_map: Mapping from canonical video id to predicted probability.
-    :returns: Tuple of ``(candidate_probabilities, known_candidate_ids)`` keyed by 1-based index.
-    :rtype: tuple[Dict[int, float], Dict[int, str]]
-    """
-
-    candidate_probs = {
-        slate_idx + 1: probability_map.get(canon_video_id(candidate_id), 0.0)
-        for slate_idx, (_, candidate_id) in enumerate(slate)
-    }
-    known_candidates = {
-        slate_idx + 1: canon_video_id(candidate_id)
-        for slate_idx, (_, candidate_id) in enumerate(slate)
-        if canon_video_id(candidate_id) in probability_map
-    }
-    return candidate_probs, known_candidates
-
-
-def _probability_context(
-    *,
-    prediction_idx: Optional[int],
-    candidate_probs: Dict[int, float],
-    known_candidates: Dict[int, str],
-    gold_id_canon: str,
-) -> ProbabilityContext:
-    """Return context describing the probability associated with the prediction.
-
-    :param prediction_idx: 1-based predicted index or ``None`` when absent.
-    :param candidate_probs: Mapping from 1-based index to predicted probability.
-    :param known_candidates: Mapping from 1-based index to canonical id when seen during training.
-    :param gold_id_canon: Canonicalised gold video identifier.
-    :returns: :class:`ProbabilityContext` describing probabilities and hits.
-    :rtype: ProbabilityContext
-    """
-
-    best_probability = (
-        candidate_probs.get(prediction_idx, 0.0)
-        if prediction_idx is not None
-        else 0.0
-    )
-    record_probability = bool(prediction_idx and prediction_idx in known_candidates)
-    known_candidate_hit = bool(
-        record_probability
-        and prediction_idx is not None
-        and known_candidates[prediction_idx] == gold_id_canon
-    )
-    return ProbabilityContext(
-        best_probability=best_probability,
-        record_probability=record_probability,
-        known_candidate_hit=known_candidate_hit,
-    )
-
-
-def _summarise_outcomes(
-    records: List[tuple[int, PredictionOutcome]]
-) -> OutcomeSummary:
-    """Aggregate prediction outcomes into summary counts.
-
-    :param records: Sequence of ``(index, PredictionOutcome)`` tuples.
-    :type records: List[tuple[int, PredictionOutcome]]
-    :returns: :class:`OutcomeSummary` containing accuracy, coverage, and averages.
-    :rtype: OutcomeSummary
-    """
-
-    outcomes = [outcome for _, outcome in records]
-    evaluated = len(outcomes)
-    known_total = sum(outcome.known_candidate_seen for outcome in outcomes)
-    known_hits = sum(outcome.known_candidate_hit for outcome in outcomes)
-    eligible = 0
-    gold_hist: Dict[int, int] = {}
-    random_inverse_sum = 0.0
-    random_inverse_count = 0
-    probability_values = [
-        outcome.best_probability
-        for outcome in outcomes
-        if outcome.record_probability
-    ]
-    avg_probability = float(np.mean(probability_values)) if probability_values else 0.0
-    correct = sum(outcome.correct for outcome in outcomes)
-    for outcome in outcomes:
-        if (
-            outcome.eligible
-            and outcome.gold_index is not None
-            and outcome.option_count > 0
-        ):
-            eligible += 1
-            gold_hist[outcome.gold_index] = gold_hist.get(outcome.gold_index, 0) + 1
-            random_inverse_sum += 1.0 / outcome.option_count
-            random_inverse_count += 1
-    return OutcomeSummary(
-        evaluated=evaluated,
-        correct=correct,
-        known_hits=known_hits,
-        known_total=known_total,
-        avg_probability=avg_probability,
-        eligible=eligible,
-        gold_hist=gold_hist,
-        random_inverse_sum=random_inverse_sum,
-        random_inverse_count=random_inverse_count,
-    )
-
-
-def _model_params(model: XGBoostSlateModel) -> Dict[str, Any]:
-    """
-    Return a serialisable view of relevant XGBoost parameters.
-
-    :param model: Model bundle whose configuration should be summarised.
-    :type model: XGBoostSlateModel
-    :returns: Dictionary containing key training parameters.
-    :rtype: Dict[str, Any]
-    """
-
-    params = model.booster.get_params()
-    selected = {
-        key: params.get(key)
-        for key in [
-            "objective",
-            "eval_metric",
-            "n_estimators",
-            "max_depth",
-            "learning_rate",
-            "subsample",
-            "colsample_bytree",
-            "tree_method",
-            "reg_lambda",
-            "reg_alpha",
-        ]
-    }
-    selected["extra_fields"] = list(model.extra_fields)
-    if hasattr(model.vectorizer, "metadata"):
-        vectorizer_meta = model.vectorizer.metadata()  # type: ignore[assignment]
-        selected["vectorizer"] = vectorizer_meta
-        selected["n_features"] = int(vectorizer_meta.get("dimension", 0))
-    else:
-        selected["n_features"] = int(getattr(model.vectorizer, "max_features", 0) or 0)
-    selected["n_classes"] = int(len(model.label_encoder.classes_))
-    return selected
-
-
-__all__ = ["EvaluationConfig", "IssueMetrics", "evaluate_issue", "run_eval", "safe_div"]
+__all__ = [
+    "EvaluationConfig",
+    "IssueMetrics",
+    "PredictionOutcome",
+    "evaluate_issue",
+    "run_eval",
+    "safe_div",
+]

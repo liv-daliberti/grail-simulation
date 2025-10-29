@@ -63,6 +63,32 @@ def build_parser() -> argparse.ArgumentParser:
             "Comma-separated participant study identifiers to filter (defaults to all studies)."
         ),
     )
+    add_comma_separated_argument(
+        parser,
+        flags="--opinion_studies",
+        dest="opinion_studies",
+        help_text=(
+            "Comma-separated opinion study keys to evaluate (defaults to all "
+            "opinion studies)."
+        ),
+    )
+    parser.add_argument(
+        "--opinion_max_participants",
+        type=int,
+        default=0,
+        help=(
+            "Optional cap on participants per opinion study (0 keeps all)."
+        ),
+    )
+    parser.add_argument(
+        "--opinion_direction_tolerance",
+        type=float,
+        default=1e-6,
+        help=(
+            "Tolerance for treating opinion deltas as no-change when measuring "
+            "direction accuracy."
+        ),
+    )
     parser.add_argument(
         "--out_dir",
         default=str(DEFAULT_OUT_DIR),
@@ -82,7 +108,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--max_tokens",
         type=int,
-        default=32,
+        default=500,
         help="Maximum number of tokens in the model response.",
     )
     parser.add_argument(
@@ -90,6 +116,18 @@ def build_parser() -> argparse.ArgumentParser:
         type=float,
         default=1.0,
         help="Nucleus sampling probability mass forwarded to GPT-4o.",
+    )
+    parser.add_argument(
+        "--request_retries",
+        type=int,
+        default=5,
+        help="Maximum GPT-4o attempts per request (default: 5).",
+    )
+    parser.add_argument(
+        "--request_retry_delay",
+        type=float,
+        default=1.0,
+        help="Seconds to wait between GPT-4o request retries (default: 1.0).",
     )
     parser.add_argument(
         "--cache_dir",

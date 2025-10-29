@@ -259,7 +259,8 @@
 <span class="c1"># Apache License, Version 2.0; see the LICENSE file or</span>
 <span class="c1"># https://www.apache.org/licenses/LICENSE-2.0 for details.</span>
 
-<span class="c1"># pylint: disable=too-many-branches,too-many-locals,too-many-statements,broad-exception-caught,duplicate-code</span>
+<span class="c1"># pylint: disable=too-many-branches,too-many-locals,too-many-statements</span>
+<span class="c1"># pylint: disable=broad-exception-caught,duplicate-code</span>
 
 <span class="sd">&quot;&quot;&quot;Evaluation routines for the GPT-4o slate-ranking baseline.</span>
 
@@ -292,6 +293,8 @@
     <span class="n">Namespace</span> <span class="o">=</span> <span class="nb">object</span>  <span class="c1"># type: ignore[misc]</span>
 
 <span class="n">DOWNLOAD_CONFIG_CLS</span><span class="p">,</span> <span class="n">LOAD_DATASET</span><span class="p">,</span> <span class="n">LOAD_FROM_DISK</span> <span class="o">=</span> <span class="n">_hf_datasets</span><span class="o">.</span><span class="n">get_dataset_loaders</span><span class="p">()</span>
+
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;gpt4o.evaluate&quot;</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_index_from_output</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
@@ -357,7 +360,11 @@
 <div class="viewcode-block" id="FilterSet.allows">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.FilterSet.allows">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">allows</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidate</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return ``True`` when the candidate is not filtered out.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return ``True`` when the candidate is not filtered out.</span>
+
+<span class="sd">        :param candidate: Candidate key to check against the active filter set.</span>
+<span class="sd">        :returns: ``True`` if the candidate is allowed; ``False`` otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_keys</span> <span class="ow">or</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_keys</span></div>
 </div>
 
@@ -374,7 +381,11 @@
 <div class="viewcode-block" id="FilterState.allows">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.FilterState.allows">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">allows</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">labels</span><span class="p">:</span> <span class="n">ExampleLabels</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether an example passes the configured filters.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether an example passes the configured filters.</span>
+
+<span class="sd">        :param labels: Issue and study labels associated with the example.</span>
+<span class="sd">        :returns: ``True`` when the example should be evaluated.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">allows</span><span class="p">(</span><span class="n">labels</span><span class="o">.</span><span class="n">issue_key</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">studies</span><span class="o">.</span><span class="n">allows</span><span class="p">(</span>
             <span class="n">labels</span><span class="o">.</span><span class="n">study_key</span>
         <span class="p">)</span></div>
@@ -390,18 +401,26 @@
     <span class="n">root</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span>
     <span class="n">predictions</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span>
     <span class="n">metrics</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span>
+    <span class="n">qa_log</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span>
 
 <div class="viewcode-block" id="OutputPaths.build">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.OutputPaths.build">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;OutputPaths&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate and construct the output directory structure.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate and construct the output directory structure.</span>
+
+<span class="sd">        :param out_dir: Target output directory (string or pathlike).</span>
+<span class="sd">        :param overwrite: Whether existing directories may be reused.</span>
+<span class="sd">        :returns: Populated ``OutputPaths`` instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">root</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
         <span class="n">_ensure_output_dir</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">)</span>
+        <span class="n">qa_log_path</span> <span class="o">=</span> <span class="n">_utils</span><span class="o">.</span><span class="n">qa_log_path_for</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
             <span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">,</span>
             <span class="n">predictions</span><span class="o">=</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;predictions.jsonl&quot;</span><span class="p">,</span>
             <span class="n">metrics</span><span class="o">=</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;metrics.json&quot;</span><span class="p">,</span>
+            <span class="n">qa_log</span><span class="o">=</span><span class="n">qa_log_path</span><span class="p">,</span>
         <span class="p">)</span></div>
 </div>
 
@@ -419,7 +438,11 @@
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationLimits.from_arg">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_arg</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">raw_eval_max</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;EvaluationLimits&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create limits from the CLI ``eval_max`` argument.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create limits from the CLI ``eval_max`` argument.</span>
+
+<span class="sd">        :param raw_eval_max: Raw CLI ``eval_max`` value (0 keeps every row).</span>
+<span class="sd">        :returns: Populated ``EvaluationLimits`` instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">eval_max</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">raw_eval_max</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">target</span> <span class="o">=</span> <span class="n">eval_max</span> <span class="ow">or</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">eval_max</span><span class="o">=</span><span class="n">eval_max</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">)</span></div>
@@ -439,7 +462,11 @@
 <div class="viewcode-block" id="EvaluationState.set_split">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationState.set_split">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">set_split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">split</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the active evaluation split.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the active evaluation split.</span>
+
+<span class="sd">        :param split: Dataset split identifier.</span>
+<span class="sd">        :returns: ``None``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">split</span> <span class="o">=</span> <span class="n">split</span></div>
 
@@ -447,7 +474,11 @@
 <div class="viewcode-block" id="EvaluationState.set_streaming">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationState.set_streaming">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">set_streaming</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">streaming</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Mark whether streaming mode is active.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Mark whether streaming mode is active.</span>
+
+<span class="sd">        :param streaming: Flag indicating streaming mode usage.</span>
+<span class="sd">        :returns: ``None``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">streaming</span> <span class="o">=</span> <span class="n">streaming</span></div>
 </div>
@@ -459,7 +490,13 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">EvaluationRunner</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Stateful helper that orchestrates GPT-4o evaluation.&quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="EvaluationRunner.__init__">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationRunner.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialise the runner with CLI arguments and derived configuration.</span>
+
+<span class="sd">        :param args: Parsed command-line arguments produced by ``cli.build_parser``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">args</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;dataset&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">_config</span><span class="o">.</span><span class="n">DATASET_NAME</span><span class="p">)</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Loading dataset </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">)</span>
@@ -478,10 +515,17 @@
         <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">limits</span> <span class="o">=</span> <span class="n">EvaluationLimits</span><span class="o">.</span><span class="n">from_arg</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;eval_max&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">EvaluationState</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">EvaluationState</span><span class="p">()</span></div>
+
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_parse_filter</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Normalise a comma-separated CLI filter.</span>
+
+<span class="sd">        :param raw: Raw string supplied on the command line.</span>
+<span class="sd">        :returns: Ordered tokens and the lowercase set used for filtering logic.</span>
+<span class="sd">        :rtype: tuple[list[str], set[str]]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">tokens</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="n">raw</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">):</span>
             <span class="n">candidate</span> <span class="o">=</span> <span class="n">segment</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
@@ -493,6 +537,12 @@
         <span class="k">return</span> <span class="n">tokens</span><span class="p">,</span> <span class="n">lowered</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_load_dataset_iter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load the evaluation dataset, falling back to streaming when required.</span>
+
+<span class="sd">        :returns: Iterable over dataset rows ready for evaluation.</span>
+<span class="sd">        :rtype: collections.abc.Iterable[dict[str, object]]</span>
+<span class="sd">        :raises RuntimeError: When neither local nor remote datasets can be loaded.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">dataset_path</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">)</span>
         <span class="n">dataset</span> <span class="o">=</span> <span class="kc">None</span>
 
@@ -531,6 +581,12 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_materialised_split</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_load_streaming_split</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Stream the evaluation split directly from Hugging Face datasets.</span>
+
+<span class="sd">        :returns: Iterable delivering rows lazily without full materialisation.</span>
+<span class="sd">        :rtype: collections.abc.Iterable[dict[str, object]]</span>
+<span class="sd">        :raises RuntimeError: If the evaluation split cannot be streamed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">eval_split</span> <span class="o">=</span> <span class="n">_config</span><span class="o">.</span><span class="n">EVAL_SPLIT</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">data_iter</span> <span class="o">=</span> <span class="n">LOAD_DATASET</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
@@ -561,6 +617,13 @@
         <span class="k">return</span> <span class="n">data_iter</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_load_materialised_split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Materialise the evaluation split from an in-memory dataset object.</span>
+
+<span class="sd">        :param dataset: Dataset or DatasetDict object returned by ``datasets``.</span>
+<span class="sd">        :returns: Iterable of rows suitable for evaluation.</span>
+<span class="sd">        :rtype: collections.abc.Iterable[dict[str, object]]</span>
+<span class="sd">        :raises RuntimeError: If ``dataset`` is missing when streaming is disabled.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">dataset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Expected dataset object when not streaming.&quot;</span><span class="p">)</span>
 
@@ -597,6 +660,12 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_labels</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">ExampleLabels</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract normalised issue and study labels from an example row.</span>
+
+<span class="sd">        :param example: Dataset row containing issue and participant metadata.</span>
+<span class="sd">        :returns: Lowercased and human-readable label bundle.</span>
+<span class="sd">        :rtype: ExampleLabels</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">issue_raw</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;issue&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="n">issue_label</span> <span class="o">=</span> <span class="n">issue_raw</span> <span class="k">if</span> <span class="n">issue_raw</span> <span class="k">else</span> <span class="s2">&quot;unspecified&quot;</span>
         <span class="n">study_raw</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;participant_study&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
@@ -609,22 +678,54 @@
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_passes_filters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">labels</span><span class="p">:</span> <span class="n">ExampleLabels</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return ``True`` when the example satisfies issue and study filters.</span>
+
+<span class="sd">        :param labels: Label bundle produced by ``_prepare_labels``.</span>
+<span class="sd">        :returns: Boolean indicating whether the example should be evaluated.</span>
+<span class="sd">        :rtype: bool</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filters</span><span class="o">.</span><span class="n">allows</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_invoke_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute a GPT-4o call with retry semantics.</span>
+
+<span class="sd">        :param messages: Chat completion payload produced for the example.</span>
+<span class="sd">        :returns: Raw model output, or an error stub when retries fail.</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">retries</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;request_retries&quot;</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">5</span><span class="p">))</span>
+        <span class="n">delay</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;request_retry_delay&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="ow">or</span> <span class="mf">0.0</span><span class="p">))</span>
+        <span class="n">invocation</span> <span class="o">=</span> <span class="n">_utils</span><span class="o">.</span><span class="n">InvocationParams</span><span class="p">(</span>
+            <span class="n">max_tokens</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">max_tokens</span><span class="p">,</span>
+            <span class="n">temperature</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">temperature</span><span class="p">,</span>
+            <span class="n">top_p</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;top_p&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">deployment</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;deployment&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">policy</span> <span class="o">=</span> <span class="n">_utils</span><span class="o">.</span><span class="n">RetryPolicy</span><span class="p">(</span><span class="n">attempts</span><span class="o">=</span><span class="n">retries</span><span class="p">,</span> <span class="n">delay</span><span class="o">=</span><span class="n">delay</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">_client</span><span class="o">.</span><span class="n">ds_call</span><span class="p">(</span>
+            <span class="k">return</span> <span class="n">_utils</span><span class="o">.</span><span class="n">call_gpt4o_with_retries</span><span class="p">(</span>
                 <span class="n">messages</span><span class="p">,</span>
-                <span class="n">max_tokens</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">max_tokens</span><span class="p">,</span>
-                <span class="n">temperature</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">temperature</span><span class="p">,</span>
-                <span class="n">deployment</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;deployment&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                <span class="n">invocation</span><span class="o">=</span><span class="n">invocation</span><span class="p">,</span>
+                <span class="n">retry</span><span class="o">=</span><span class="n">policy</span><span class="p">,</span>
+                <span class="n">logger</span><span class="o">=</span><span class="n">LOGGER</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># pragma: no cover - best effort logging</span>
-            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;(error: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="s2">&quot;GPT-4o call failed after </span><span class="si">%d</span><span class="s2"> attempts; returning error stub: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">policy</span><span class="o">.</span><span class="n">attempts</span><span class="p">,</span>
+                <span class="n">exc</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;(error after </span><span class="si">{</span><span class="n">policy</span><span class="o">.</span><span class="n">attempts</span><span class="si">}</span><span class="s2"> attempts: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">)&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_evaluate_example</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">Tuple</span><span class="p">[</span><span class="n">slate_eval</span><span class="o">.</span><span class="n">Observation</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate a single example and return observation metrics plus payloads.</span>
+
+<span class="sd">        :param example: Dataset row containing slate information.</span>
+<span class="sd">        :returns: Observation/payload tuple, or ``None`` when filtered.</span>
+<span class="sd">        :rtype: tuple[slate_eval.Observation, dict[str, object]] | None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_labels</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_passes_filters</span><span class="p">(</span><span class="n">labels</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">None</span>
@@ -679,6 +780,12 @@
         <span class="n">start_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">accumulator</span><span class="p">:</span> <span class="n">slate_eval</span><span class="o">.</span><span class="n">EvaluationAccumulator</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Emit periodic progress logs during evaluation.</span>
+
+<span class="sd">        :param seen_rows: Number of rows processed so far.</span>
+<span class="sd">        :param start_time: Epoch timestamp marking the evaluation start.</span>
+<span class="sd">        :param accumulator: Aggregator containing current metric totals.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">seen_rows</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">seen_rows</span> <span class="o">%</span> <span class="mi">25</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
@@ -696,7 +803,10 @@
 <div class="viewcode-block" id="EvaluationRunner.metrics_request">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationRunner.metrics_request">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">metrics_request</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">slate_eval</span><span class="o">.</span><span class="n">SlateMetricsRequest</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct the payload used when serialising evaluation metrics.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct the payload used when serialising evaluation metrics.</span>
+
+<span class="sd">        :returns: Metrics request capturing model, dataset, split, and filters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">model_name</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;deployment&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="n">_config</span><span class="o">.</span><span class="n">DEPLOYMENT_NAME</span>
         <span class="k">return</span> <span class="n">slate_eval</span><span class="o">.</span><span class="n">SlateMetricsRequest</span><span class="p">(</span>
             <span class="n">model_name</span><span class="o">=</span><span class="n">model_name</span><span class="p">,</span>
@@ -710,6 +820,11 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_print_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">accumulator</span><span class="p">:</span> <span class="n">slate_eval</span><span class="o">.</span><span class="n">EvaluationAccumulator</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Print a concise evaluation summary and output file paths.</span>
+
+<span class="sd">        :param accumulator: Aggregated evaluation metrics.</span>
+<span class="sd">        :returns: ``None``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">summary_bits</span> <span class="o">=</span> <span class="p">[</span>
             <span class="sa">f</span><span class="s2">&quot;[DONE] dataset=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="sa">f</span><span class="s2">&quot;split=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">split</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
@@ -723,17 +838,23 @@
         <span class="nb">print</span><span class="p">(</span><span class="n">summary</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[WROTE] per-example: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">predictions</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[WROTE] metrics:     </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">metrics</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[WROTE] QA log:      </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">qa_log</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="EvaluationRunner.run">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationRunner.run">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute the full evaluation workflow.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute the full evaluation workflow.</span>
+
+<span class="sd">        :returns: ``None``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">data_iter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_dataset_iter</span><span class="p">()</span>
         <span class="n">accumulator</span> <span class="o">=</span> <span class="n">slate_eval</span><span class="o">.</span><span class="n">EvaluationAccumulator</span><span class="p">()</span>
         <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
         <span class="n">seen_rows</span> <span class="o">=</span> <span class="mi">0</span>
 
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">predictions</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">writer</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">predictions</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">writer</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">qa_log</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span>
+        <span class="p">)</span> <span class="k">as</span> <span class="n">qa_log</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">example</span> <span class="ow">in</span> <span class="n">data_iter</span><span class="p">:</span>
                 <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_example</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -742,6 +863,34 @@
                 <span class="n">seen_rows</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="n">accumulator</span><span class="o">.</span><span class="n">observe</span><span class="p">(</span><span class="n">observation</span><span class="p">)</span>
                 <span class="n">writer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+                <span class="n">question</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+                <span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;messages&quot;</span><span class="p">,</span> <span class="p">[])):</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;role&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;user&quot;</span><span class="p">:</span>
+                        <span class="n">question</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                        <span class="k">break</span>
+                <span class="n">answer</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gpt_output&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="n">issue_label</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;issue&quot;</span><span class="p">)</span>
+                <span class="n">study_label</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;participant_study&quot;</span><span class="p">)</span>
+                <span class="n">qa_log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;### Example </span><span class="si">{</span><span class="n">seen_rows</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">qa_log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Issue: </span><span class="si">{</span><span class="n">issue_label</span><span class="si">}</span><span class="s2"> | Study: </span><span class="si">{</span><span class="n">study_label</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">system_prompt</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+                <span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;messages&quot;</span><span class="p">,</span> <span class="p">[]):</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+                        <span class="ow">and</span> <span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;role&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;system&quot;</span>
+                        <span class="ow">and</span> <span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;content&quot;</span><span class="p">)</span>
+                    <span class="p">):</span>
+                        <span class="n">system_prompt</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">message</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                        <span class="k">break</span>
+                <span class="n">qa_log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;SYSTEM:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">qa_log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">system_prompt</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">qa_log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;QUESTION:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">qa_log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">question</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">qa_log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;ANSWER:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">qa_log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">answer</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">qa_log</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+
                 <span class="bp">self</span><span class="o">.</span><span class="n">_maybe_log_progress</span><span class="p">(</span><span class="n">seen_rows</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">accumulator</span><span class="p">)</span>
 
         <span class="n">metrics</span> <span class="o">=</span> <span class="n">accumulator</span><span class="o">.</span><span class="n">metrics_payload</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metrics_request</span><span class="p">())</span>

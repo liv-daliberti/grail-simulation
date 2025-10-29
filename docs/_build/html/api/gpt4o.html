@@ -299,7 +299,7 @@ preparing conversations, and rendering leaderboard titles.</p>
 <p id="module-gpt4o.client">Client helper for interacting with the Azure-hosted GPT-4o deployment.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="gpt4o.client.ds_call">
-<span class="sig-prename descclassname"><span class="pre">gpt4o.client.</span></span><span class="sig-name descname"><span class="pre">ds_call</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">messages</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tokens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deployment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/client.html#ds_call"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.client.ds_call" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">gpt4o.client.</span></span><span class="sig-name descname"><span class="pre">ds_call</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">messages</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tokens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top_p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deployment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/client.html#ds_call"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.client.ds_call" title="Link to this definition">¶</a></dt>
 <dd><p>Execute a chat completion call and return the trimmed text output.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -308,6 +308,7 @@ preparing conversations, and rendering leaderboard titles.</p>
 <li><p><strong>max_tokens</strong> (<em>int</em>) – Maximum number of tokens the model may generate.</p></li>
 <li><p><strong>temperature</strong> (<em>float</em>) – Sampling temperature forwarded to the model.</p></li>
 <li><p><strong>deployment</strong> (<em>str</em><em> | </em><em>None</em>) – Optional Azure deployment override.</p></li>
+<li><p><strong>top_p</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -337,12 +338,15 @@ preparing conversations, and rendering leaderboard titles.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="gpt4o.config.ensure_azure_env">
 <span class="sig-prename descclassname"><span class="pre">gpt4o.config.</span></span><span class="sig-name descname"><span class="pre">ensure_azure_env</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/config.html#ensure_azure_env"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.config.ensure_azure_env" title="Link to this definition">¶</a></dt>
-<dd><p>Ensure the Azure environment variables are present.</p>
-<p>The sandbox runner historically relied on these being set globally.
-We keep the behaviour but allow shell overrides to win.</p>
+<dd><p>Ensure Azure configuration defaults are present for downstream clients.</p>
+<p>The sandbox runner historically relied on these values being set globally,
+so we preserve that behaviour while still allowing explicit shell overrides.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>None</p>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code>. The module-level constants are used when variables are unset.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -351,13 +355,16 @@ We keep the behaviour but allow shell overrides to win.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="gpt4o.conversation.build_profile_block">
 <span class="sig-prename descclassname"><span class="pre">gpt4o.conversation.</span></span><span class="sig-name descname"><span class="pre">build_profile_block</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/conversation.html#build_profile_block"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.conversation.build_profile_block" title="Link to this definition">¶</a></dt>
-<dd><p>Structured key/value profile block (parity with GRPO).</p>
+<dd><p>Return the structured key/value profile block.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>) – Dataset row containing viewer metadata.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Multi-line string enumerating profile facts.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -365,13 +372,16 @@ We keep the behaviour but allow shell overrides to win.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="gpt4o.conversation.extract_income">
 <span class="sig-prename descclassname"><span class="pre">gpt4o.conversation.</span></span><span class="sig-name descname"><span class="pre">extract_income</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/conversation.html#extract_income"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.conversation.extract_income" title="Link to this definition">¶</a></dt>
-<dd><p>Mirror the income extraction used in the GRPO baseline.</p>
+<dd><p>Mirror the income extraction logic used in the GRPO baseline.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>) – Dataset row containing demographic metadata.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str | None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Income phrase or normalised descriptor, else <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -382,10 +392,13 @@ We keep the behaviour but allow shell overrides to win.</p>
 <dd><p>Extract a brief marital descriptor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>) – Dataset row containing marital-status related fields.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str | None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Normalised marital descriptor or <code class="docutils literal notranslate"><span class="pre">None</span></code> if unknown.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -396,10 +409,13 @@ We keep the behaviour but allow shell overrides to win.</p>
 <dd><p>Return a party label derived from standard survey signals.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>) – Dataset row containing partisan survey responses.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str | None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Normalised party label or <code class="docutils literal notranslate"><span class="pre">None</span></code> when absent.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -410,10 +426,13 @@ We keep the behaviour but allow shell overrides to win.</p>
 <dd><p>Extract race information following the GRPO baseline rules.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>) – Dataset row containing race attributes or textual fields.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str | None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Canonical race label or <code class="docutils literal notranslate"><span class="pre">None</span></code> when no signal is found.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -424,10 +443,13 @@ We keep the behaviour but allow shell overrides to win.</p>
 <dd><p>Convert ideology encodings to descriptive text.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>raw</strong> (<em>Any</em>)</p>
+<dd class="field-odd"><p><strong>raw</strong> (<em>Any</em>) – Raw ideology indicator (numeric or textual) from the dataset.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str | None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Canonical ideology phrase or <code class="docutils literal notranslate"><span class="pre">None</span></code> when unavailable.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -435,13 +457,16 @@ We keep the behaviour but allow shell overrides to win.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="gpt4o.conversation.humanise_profile">
 <span class="sig-prename descclassname"><span class="pre">gpt4o.conversation.</span></span><span class="sig-name descname"><span class="pre">humanise_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/conversation.html#humanise_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.conversation.humanise_profile" title="Link to this definition">¶</a></dt>
-<dd><p>Build the human-readable profile sentence.</p>
+<dd><p>Build a human-readable viewer profile sentence.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>) – Dataset row containing demographic and behavioural signals.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Comma-delimited sentence summarising the viewer.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -452,10 +477,13 @@ We keep the behaviour but allow shell overrides to win.</p>
 <dd><p>Transform a dataset row into the prompt payload consumed by GPT-4o.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>)</p>
+<dd class="field-odd"><p><strong>example</strong> (<em>dict</em>) – Dataset row containing slate options and viewer metadata.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary with prompt messages and evaluation metadata.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Dict</em>[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -463,16 +491,19 @@ We keep the behaviour but allow shell overrides to win.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="gpt4o.conversation.pick_case_insensitive">
 <span class="sig-prename descclassname"><span class="pre">gpt4o.conversation.</span></span><span class="sig-name descname"><span class="pre">pick_case_insensitive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">record</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">candidates</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/conversation.html#pick_case_insensitive"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.conversation.pick_case_insensitive" title="Link to this definition">¶</a></dt>
-<dd><p>Return the first present key (case-insensitive) value from the record.</p>
+<dd><p>Return the first matching candidate value from <code class="docutils literal notranslate"><span class="pre">record</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>record</strong> (<em>dict</em>)</p></li>
-<li><p><strong>candidates</strong> (<em>str</em>)</p></li>
+<li><p><strong>record</strong> (<em>dict</em>) – Mapping inspected for possible keys.</p></li>
+<li><p><strong>candidates</strong> (<em>str</em>) – Ordered list of candidate keys to search (case-insensitive).</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str | None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Stripped value associated with the first matching key, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -505,10 +536,13 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dd><p>Create limits from the CLI <code class="docutils literal notranslate"><span class="pre">eval_max</span></code> argument.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>raw_eval_max</strong> (<em>int</em>)</p>
+<dd class="field-odd"><p><strong>raw_eval_max</strong> (<em>int</em>) – Raw CLI <code class="docutils literal notranslate"><span class="pre">eval_max</span></code> value (0 keeps every row).</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#gpt4o.evaluate.EvaluationLimits" title="gpt4o.evaluate.EvaluationLimits">gpt4o.evaluate.EvaluationLimits</a></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Populated <code class="docutils literal notranslate"><span class="pre">EvaluationLimits</span></code> instance.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#gpt4o.evaluate.EvaluationLimits" title="gpt4o.evaluate.EvaluationLimits">gpt4o.evaluate.EvaluationLimits</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -532,12 +566,29 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 </dd>
 </dl>
 <dl class="py method">
+<dt class="sig sig-object py" id="gpt4o.evaluate.EvaluationRunner.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#EvaluationRunner.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.EvaluationRunner.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Initialise the runner with CLI arguments and derived configuration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>args</strong> (<em>object</em>) – Parsed command-line arguments produced by <code class="docutils literal notranslate"><span class="pre">cli.build_parser</span></code>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="gpt4o.evaluate.EvaluationRunner.metrics_request">
 <span class="sig-name descname"><span class="pre">metrics_request</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#EvaluationRunner.metrics_request"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.EvaluationRunner.metrics_request" title="Link to this definition">¶</a></dt>
 <dd><p>Construct the payload used when serialising evaluation metrics.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>common.evaluation.slate_eval.SlateMetricsRequest</p>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Metrics request capturing model, dataset, split, and filters.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>common.evaluation.slate_eval.SlateMetricsRequest</p>
 </dd>
 </dl>
 </dd></dl>
@@ -547,8 +598,11 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#EvaluationRunner.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.EvaluationRunner.run" title="Link to this definition">¶</a></dt>
 <dd><p>Execute the full evaluation workflow.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>None</p>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -574,10 +628,13 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dd><p>Update the active evaluation split.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>split</strong> (<em>str</em>)</p>
+<dd class="field-odd"><p><strong>split</strong> (<em>str</em>) – Dataset split identifier.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -588,10 +645,13 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dd><p>Mark whether streaming mode is active.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>streaming</strong> (<em>bool</em>)</p>
+<dd class="field-odd"><p><strong>streaming</strong> (<em>bool</em>) – Flag indicating streaming mode usage.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -674,10 +734,13 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dd><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> when the candidate is not filtered out.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>candidate</strong> (<em>str</em>)</p>
+<dd class="field-odd"><p><strong>candidate</strong> (<em>str</em>) – Candidate key to check against the active filter set.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>bool</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the candidate is allowed; <code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
@@ -709,10 +772,13 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dd><p>Check whether an example passes the configured filters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>labels</strong> (<a class="reference internal" href="#gpt4o.evaluate.ExampleLabels" title="gpt4o.evaluate.ExampleLabels"><em>gpt4o.evaluate.ExampleLabels</em></a>)</p>
+<dd class="field-odd"><p><strong>labels</strong> (<a class="reference internal" href="#gpt4o.evaluate.ExampleLabels" title="gpt4o.evaluate.ExampleLabels"><em>gpt4o.evaluate.ExampleLabels</em></a>) – Issue and study labels associated with the example.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>bool</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> when the example should be evaluated.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
@@ -733,7 +799,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.evaluate.OutputPaths">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">OutputPaths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#OutputPaths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.OutputPaths" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">OutputPaths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qa_log</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#OutputPaths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.OutputPaths" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">NamedTuple</span></code></p>
 <p>Resolved filesystem locations for evaluation artifacts.</p>
 <dl class="field-list simple">
@@ -742,6 +808,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <li><p><strong>root</strong> (<em>pathlib.Path</em>)</p></li>
 <li><p><strong>predictions</strong> (<em>pathlib.Path</em>)</p></li>
 <li><p><strong>metrics</strong> (<em>pathlib.Path</em>)</p></li>
+<li><p><strong>qa_log</strong> (<em>pathlib.Path</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -752,12 +819,15 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>out_dir</strong> (<em>str</em><em> | </em><em>pathlib.Path</em>)</p></li>
-<li><p><strong>overwrite</strong> (<em>bool</em>)</p></li>
+<li><p><strong>out_dir</strong> (<em>str</em><em> | </em><em>pathlib.Path</em>) – Target output directory (string or pathlike).</p></li>
+<li><p><strong>overwrite</strong> (<em>bool</em>) – Whether existing directories may be reused.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#gpt4o.evaluate.OutputPaths" title="gpt4o.evaluate.OutputPaths">gpt4o.evaluate.OutputPaths</a></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Populated <code class="docutils literal notranslate"><span class="pre">OutputPaths</span></code> instance.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#gpt4o.evaluate.OutputPaths" title="gpt4o.evaluate.OutputPaths">gpt4o.evaluate.OutputPaths</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -772,6 +842,12 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dt class="sig sig-object py" id="gpt4o.evaluate.OutputPaths.predictions">
 <span class="sig-name descname"><span class="pre">predictions</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></em><a class="headerlink" href="#gpt4o.evaluate.OutputPaths.predictions" title="Link to this definition">¶</a></dt>
 <dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.evaluate.OutputPaths.qa_log">
+<span class="sig-name descname"><span class="pre">qa_log</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></em><a class="headerlink" href="#gpt4o.evaluate.OutputPaths.qa_log" title="Link to this definition">¶</a></dt>
+<dd><p>Alias for field number 3</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -812,8 +888,11 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>kwargs</strong> – Optional keyword overrides forwarded to the base class.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -824,10 +903,16 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dd><p>Return a resolver overriding the default search directories.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>directories</strong> (<em>str</em>)</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>directories</strong> (<em>str</em>) – One or more directories to prioritise.</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments forwarded to <code class="docutils literal notranslate"><span class="pre">TitleResolver</span></code>.</p></li>
+</ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#gpt4o.titles.TitleResolver" title="gpt4o.titles.TitleResolver">gpt4o.titles.TitleResolver</a></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Configured <code class="docutils literal notranslate"><span class="pre">TitleResolver</span></code> instance.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#gpt4o.titles.TitleResolver" title="gpt4o.titles.TitleResolver">gpt4o.titles.TitleResolver</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -835,16 +920,109 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 </dd></dl>
 
 <p id="module-gpt4o.utils">Utility helpers shared across the GPT-4o baseline implementation.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="gpt4o.utils.InvocationParams">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">InvocationParams</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_tokens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top_p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deployment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#InvocationParams"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.InvocationParams" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Parameters controlling a single GPT-4o invocation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>max_tokens</strong> (<em>int</em>)</p></li>
+<li><p><strong>temperature</strong> (<em>float</em>)</p></li>
+<li><p><strong>top_p</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>deployment</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.utils.InvocationParams.deployment">
+<span class="sig-name descname"><span class="pre">deployment</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#gpt4o.utils.InvocationParams.deployment" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.utils.InvocationParams.max_tokens">
+<span class="sig-name descname"><span class="pre">max_tokens</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#gpt4o.utils.InvocationParams.max_tokens" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.utils.InvocationParams.temperature">
+<span class="sig-name descname"><span class="pre">temperature</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#gpt4o.utils.InvocationParams.temperature" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.utils.InvocationParams.top_p">
+<span class="sig-name descname"><span class="pre">top_p</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#gpt4o.utils.InvocationParams.top_p" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gpt4o.utils.RetryPolicy">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">RetryPolicy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attempts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#RetryPolicy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.RetryPolicy" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Retry behaviour applied to GPT-4o calls.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>attempts</strong> (<em>int</em>)</p></li>
+<li><p><strong>delay</strong> (<em>float</em>)</p></li>
+<li><p><strong>validator</strong> (<em>Callable</em><em>[</em><em>[</em><em>str</em><em>]</em><em>, </em><em>bool</em><em>] </em><em>| </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.utils.RetryPolicy.attempts">
+<span class="sig-name descname"><span class="pre">attempts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">5</span></em><a class="headerlink" href="#gpt4o.utils.RetryPolicy.attempts" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.utils.RetryPolicy.delay">
+<span class="sig-name descname"><span class="pre">delay</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></em><a class="headerlink" href="#gpt4o.utils.RetryPolicy.delay" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.utils.RetryPolicy.validator">
+<span class="sig-name descname"><span class="pre">validator</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#gpt4o.utils.RetryPolicy.validator" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.utils.call_gpt4o_with_retries">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">call_gpt4o_with_retries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">messages</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">invocation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">retry</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#call_gpt4o_with_retries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.call_gpt4o_with_retries" title="Link to this definition">¶</a></dt>
+<dd><p>Invoke GPT-4o with retry semantics, propagating the first successful response.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>messages</strong> – Chat messages formatted for the Azure OpenAI API.</p></li>
+<li><p><strong>invocation</strong> (<a class="reference internal" href="#gpt4o.utils.InvocationParams" title="gpt4o.utils.InvocationParams"><em>gpt4o.utils.InvocationParams</em></a>) – Model invocation parameters (temperature, max tokens, etc.).</p></li>
+<li><p><strong>retry</strong> (<a class="reference internal" href="#gpt4o.utils.RetryPolicy" title="gpt4o.utils.RetryPolicy"><em>gpt4o.utils.RetryPolicy</em></a><em> | </em><em>None</em>) – Retry policy controlling attempts and delay.</p></li>
+<li><p><strong>logger</strong> (<em>logging.Logger</em><em> | </em><em>None</em>) – Optional logger for warnings.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Model response text when successful.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>RuntimeError</strong> – After exhausting retries without a non-empty response.</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="gpt4o.utils.canon_text">
 <span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">canon_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#canon_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.canon_text" title="Link to this definition">¶</a></dt>
 <dd><p>Normalise <code class="docutils literal notranslate"><span class="pre">value</span></code> using the shared canonical text helper.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>value</strong> (<em>str</em><em> | </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>value</strong> (<em>str</em><em> | </em><em>None</em>) – Raw text value to canonicalise.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Canonicalised string (possibly empty).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -855,10 +1033,13 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dd><p>Extract a canonical YouTube id from <code class="docutils literal notranslate"><span class="pre">value</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>value</strong> (<em>str</em><em> | </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>value</strong> (<em>str</em><em> | </em><em>None</em>) – Raw identifier or text containing a video id.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Canonical 11-character video id or empty string.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -866,13 +1047,50 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="gpt4o.utils.is_nan_like">
 <span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">is_nan_like</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#is_nan_like"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.is_nan_like" title="Link to this definition">¶</a></dt>
-<dd><p>Return True when the provided value should be treated as missing.</p>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> when the provided value should be treated as missing.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>value</strong> (<em>object</em><em> | </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>value</strong> (<em>object</em><em> | </em><em>None</em>) – Candidate value to inspect.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the value represents a missing entry.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.utils.qa_log_path_for">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">qa_log_path_for</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">run_dir</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'qa.log'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#qa_log_path_for"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.qa_log_path_for" title="Link to this definition">¶</a></dt>
+<dd><p>Return the canonical QA log path under logs/gpt mirroring <code class="docutils literal notranslate"><span class="pre">run_dir</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>run_dir</strong> (<em>pathlib.Path</em>) – Model output directory whose structure is mirrored.</p></li>
+<li><p><strong>filename</strong> (<em>str</em>) – QA log filename to materialise.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Destination path for the QA log file.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pathlib.Path</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.utils.repo_root">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">repo_root</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#repo_root"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.repo_root" title="Link to this definition">¶</a></dt>
+<dd><p>Return the repository root used by the GPT-4o modules.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Repository root path.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>bool</p>
+<dd class="field-even"><p>pathlib.Path</p>
 </dd>
 </dl>
 </dd></dl>
@@ -883,10 +1101,13 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dd><p>Return resolved filesystem paths aggregated from <code class="docutils literal notranslate"><span class="pre">env_vars</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>env_vars</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>)</p>
+<dd class="field-odd"><p><strong>env_vars</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – Ordered list of environment variable names.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>list[str]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Resolved filesystem paths aggregated from the variables.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[str]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -897,10 +1118,13 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dd><p>Split <code class="docutils literal notranslate"><span class="pre">raw</span></code> using the separators understood by the common helper.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>raw</strong> (<em>str</em><em> | </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>raw</strong> (<em>str</em><em> | </em><em>None</em>) – Environment variable value listing multiple items.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>list[str]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of trimmed tokens.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[str]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -908,13 +1132,16 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="gpt4o.utils.truthy">
 <span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">truthy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#truthy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.truthy" title="Link to this definition">¶</a></dt>
-<dd><p>Return True for typical boolean truthy values used in the dataset.</p>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> for typical boolean truthy values used in the dataset.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>value</strong> (<em>object</em><em> | </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>value</strong> (<em>object</em><em> | </em><em>None</em>) – Raw value to interpret as a boolean.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>bool</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Boolean interpretation of <code class="docutils literal notranslate"><span class="pre">value</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
@@ -926,7 +1153,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 the GPT-4o workflow used in Grail Simulation experiments.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.pipeline.PipelinePaths">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">PipelinePaths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">final_out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sweep_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reports_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline.html#PipelinePaths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">PipelinePaths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">final_out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opinion_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sweep_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reports_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline.html#PipelinePaths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Convenience container aggregating resolved output directories.</p>
 <dl class="field-list simple">
@@ -934,6 +1161,7 @@ the GPT-4o workflow used in Grail Simulation experiments.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>out_dir</strong> (<em>pathlib.Path</em>)</p></li>
 <li><p><strong>final_out_dir</strong> (<em>pathlib.Path</em>)</p></li>
+<li><p><strong>opinion_dir</strong> (<em>pathlib.Path</em>)</p></li>
 <li><p><strong>sweep_dir</strong> (<em>pathlib.Path</em>)</p></li>
 <li><p><strong>reports_dir</strong> (<em>pathlib.Path</em>)</p></li>
 <li><p><strong>cache_dir</strong> (<em>str</em>)</p></li>
@@ -948,6 +1176,11 @@ the GPT-4o workflow used in Grail Simulation experiments.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="gpt4o.pipeline.PipelinePaths.final_out_dir">
 <span class="sig-name descname"><span class="pre">final_out_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></em><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths.final_out_dir" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.pipeline.PipelinePaths.opinion_dir">
+<span class="sig-name descname"><span class="pre">opinion_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></em><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths.opinion_dir" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -969,7 +1202,7 @@ the GPT-4o workflow used in Grail Simulation experiments.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.pipeline.SweepConfig">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">SweepConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tokens</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline.html#SweepConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepConfig" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">SweepConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tokens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top_p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline.html#SweepConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepConfig" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Describe a GPT-4o configuration evaluated during sweeps.</p>
 <dl class="field-list simple">
@@ -977,6 +1210,7 @@ the GPT-4o workflow used in Grail Simulation experiments.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>temperature</strong> (<em>float</em>)</p></li>
 <li><p><strong>max_tokens</strong> (<em>int</em>)</p></li>
+<li><p><strong>top_p</strong> (<em>float</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -1010,6 +1244,11 @@ the GPT-4o workflow used in Grail Simulation experiments.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="gpt4o.pipeline.SweepConfig.temperature">
 <span class="sig-name descname"><span class="pre">temperature</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#gpt4o.pipeline.SweepConfig.temperature" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gpt4o.pipeline.SweepConfig.top_p">
+<span class="sig-name descname"><span class="pre">top_p</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#gpt4o.pipeline.SweepConfig.top_p" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -1069,10 +1308,13 @@ the GPT-4o workflow used in Grail Simulation experiments.</p>
 <dd><p>Execute sweeps, selection, final evaluation, and report regeneration.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>argv</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>argv</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Optional CLI argument sequence supplied by callers.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1157,6 +1399,7 @@ the GPT-4o workflow used in Grail Simulation experiments.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#gpt4o.evaluate.EvaluationRunner"><code class="docutils literal notranslate"><span class="pre">EvaluationRunner</span></code></a><ul>
+<li><a class="reference internal" href="#gpt4o.evaluate.EvaluationRunner.__init__"><code class="docutils literal notranslate"><span class="pre">EvaluationRunner.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.evaluate.EvaluationRunner.metrics_request"><code class="docutils literal notranslate"><span class="pre">EvaluationRunner.metrics_request()</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.evaluate.EvaluationRunner.run"><code class="docutils literal notranslate"><span class="pre">EvaluationRunner.run()</span></code></a></li>
 </ul>
@@ -1191,6 +1434,7 @@ the GPT-4o workflow used in Grail Simulation experiments.</p>
 <li><a class="reference internal" href="#gpt4o.evaluate.OutputPaths.build"><code class="docutils literal notranslate"><span class="pre">OutputPaths.build()</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.evaluate.OutputPaths.metrics"><code class="docutils literal notranslate"><span class="pre">OutputPaths.metrics</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.evaluate.OutputPaths.predictions"><code class="docutils literal notranslate"><span class="pre">OutputPaths.predictions</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.evaluate.OutputPaths.qa_log"><code class="docutils literal notranslate"><span class="pre">OutputPaths.qa_log</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.evaluate.OutputPaths.root"><code class="docutils literal notranslate"><span class="pre">OutputPaths.root</span></code></a></li>
 </ul>
 </li>
@@ -1200,9 +1444,25 @@ the GPT-4o workflow used in Grail Simulation experiments.</p>
 <li><a class="reference internal" href="#gpt4o.titles.TitleResolver.with_directories"><code class="docutils literal notranslate"><span class="pre">TitleResolver.with_directories()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#gpt4o.utils.InvocationParams"><code class="docutils literal notranslate"><span class="pre">InvocationParams</span></code></a><ul>
+<li><a class="reference internal" href="#gpt4o.utils.InvocationParams.deployment"><code class="docutils literal notranslate"><span class="pre">InvocationParams.deployment</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.utils.InvocationParams.max_tokens"><code class="docutils literal notranslate"><span class="pre">InvocationParams.max_tokens</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.utils.InvocationParams.temperature"><code class="docutils literal notranslate"><span class="pre">InvocationParams.temperature</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.utils.InvocationParams.top_p"><code class="docutils literal notranslate"><span class="pre">InvocationParams.top_p</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#gpt4o.utils.RetryPolicy"><code class="docutils literal notranslate"><span class="pre">RetryPolicy</span></code></a><ul>
+<li><a class="reference internal" href="#gpt4o.utils.RetryPolicy.attempts"><code class="docutils literal notranslate"><span class="pre">RetryPolicy.attempts</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.utils.RetryPolicy.delay"><code class="docutils literal notranslate"><span class="pre">RetryPolicy.delay</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.utils.RetryPolicy.validator"><code class="docutils literal notranslate"><span class="pre">RetryPolicy.validator</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#gpt4o.utils.call_gpt4o_with_retries"><code class="docutils literal notranslate"><span class="pre">call_gpt4o_with_retries()</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.utils.canon_text"><code class="docutils literal notranslate"><span class="pre">canon_text()</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.utils.canon_video_id"><code class="docutils literal notranslate"><span class="pre">canon_video_id()</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.utils.is_nan_like"><code class="docutils literal notranslate"><span class="pre">is_nan_like()</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.utils.qa_log_path_for"><code class="docutils literal notranslate"><span class="pre">qa_log_path_for()</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.utils.repo_root"><code class="docutils literal notranslate"><span class="pre">repo_root()</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.utils.resolve_paths_from_env"><code class="docutils literal notranslate"><span class="pre">resolve_paths_from_env()</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.utils.split_env_list"><code class="docutils literal notranslate"><span class="pre">split_env_list()</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.utils.truthy"><code class="docutils literal notranslate"><span class="pre">truthy()</span></code></a></li>
@@ -1210,6 +1470,7 @@ the GPT-4o workflow used in Grail Simulation experiments.</p>
 <li><a class="reference internal" href="#gpt4o.pipeline.PipelinePaths"><code class="docutils literal notranslate"><span class="pre">PipelinePaths</span></code></a><ul>
 <li><a class="reference internal" href="#gpt4o.pipeline.PipelinePaths.cache_dir"><code class="docutils literal notranslate"><span class="pre">PipelinePaths.cache_dir</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.pipeline.PipelinePaths.final_out_dir"><code class="docutils literal notranslate"><span class="pre">PipelinePaths.final_out_dir</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.pipeline.PipelinePaths.opinion_dir"><code class="docutils literal notranslate"><span class="pre">PipelinePaths.opinion_dir</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.pipeline.PipelinePaths.out_dir"><code class="docutils literal notranslate"><span class="pre">PipelinePaths.out_dir</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.pipeline.PipelinePaths.reports_dir"><code class="docutils literal notranslate"><span class="pre">PipelinePaths.reports_dir</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.pipeline.PipelinePaths.sweep_dir"><code class="docutils literal notranslate"><span class="pre">PipelinePaths.sweep_dir</span></code></a></li>
@@ -1220,6 +1481,7 @@ the GPT-4o workflow used in Grail Simulation experiments.</p>
 <li><a class="reference internal" href="#gpt4o.pipeline.SweepConfig.label"><code class="docutils literal notranslate"><span class="pre">SweepConfig.label()</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.pipeline.SweepConfig.max_tokens"><code class="docutils literal notranslate"><span class="pre">SweepConfig.max_tokens</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.pipeline.SweepConfig.temperature"><code class="docutils literal notranslate"><span class="pre">SweepConfig.temperature</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.pipeline.SweepConfig.top_p"><code class="docutils literal notranslate"><span class="pre">SweepConfig.top_p</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#gpt4o.pipeline.SweepOutcome"><code class="docutils literal notranslate"><span class="pre">SweepOutcome</span></code></a><ul>

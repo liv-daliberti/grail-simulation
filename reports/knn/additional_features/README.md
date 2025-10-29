@@ -164,6 +164,9 @@ Overview of the supplementary text columns appended to the viewer prompt alongsi
 | word2vec | Study 1 – Gun Control (MTurk) | `viewer_profile`, `state_text` |
 | word2vec | Study 2 – Minimum Wage (MTurk) | `viewer_profile`, `state_text`, `religpew` |
 | word2vec | Study 3 – Minimum Wage (YouGov) | `viewer_profile`, `state_text`, `ideo1` |
+| sentence_transformer | Study 1 – Gun Control (MTurk) | `viewer_profile`, `state_text`, `ideo1` |
+| sentence_transformer | Study 2 – Minimum Wage (MTurk) | `viewer_profile`, `state_text` |
+| sentence_transformer | Study 3 – Minimum Wage (YouGov) | `viewer_profile`, `state_text` |
 
 ## Opinion Regression
 
@@ -326,6 +329,9 @@ Overview of the supplementary text columns appended to the viewer prompt alongsi
 | word2vec | Study 1 – Gun Control (MTurk) | `viewer_profile`, `state_text` |
 | word2vec | Study 2 – Minimum Wage (MTurk) | `viewer_profile`, `state_text` |
 | word2vec | Study 3 – Minimum Wage (YouGov) | `viewer_profile`, `state_text` |
+| sentence_transformer | Study 1 – Gun Control (MTurk) | `viewer_profile`, `state_text` |
+| sentence_transformer | Study 2 – Minimum Wage (MTurk) | `viewer_profile`, `state_text` |
+| sentence_transformer | Study 3 – Minimum Wage (YouGov) | `viewer_profile`, `state_text` |
 
 ## Summary
 

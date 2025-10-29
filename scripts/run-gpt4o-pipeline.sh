@@ -36,6 +36,9 @@ fi
 if [[ -n "${GPT4O_STUDIES:-}" ]]; then
   ARGS+=(--studies "${GPT4O_STUDIES}")
 fi
+if [[ -n "${GPT4O_OPINION_STUDIES:-}" ]]; then
+  ARGS+=(--opinion-studies "${GPT4O_OPINION_STUDIES}")
+fi
 if [[ -n "${GPT4O_EVAL_MAX:-}" ]]; then
   ARGS+=(--eval-max "${GPT4O_EVAL_MAX}")
 fi
@@ -47,6 +50,18 @@ if [[ -n "${GPT4O_MAX_TOKENS_GRID:-}" ]]; then
 fi
 if [[ -n "${GPT4O_TOP_P_GRID:-}" ]]; then
   ARGS+=(--top-p-grid "${GPT4O_TOP_P_GRID}")
+fi
+if [[ -n "${GPT4O_OPINION_MAX_PARTICIPANTS:-}" ]]; then
+  ARGS+=(--opinion-max-participants "${GPT4O_OPINION_MAX_PARTICIPANTS}")
+fi
+if [[ -n "${GPT4O_OPINION_DIRECTION_TOLERANCE:-}" ]]; then
+  ARGS+=(--opinion-direction-tolerance "${GPT4O_OPINION_DIRECTION_TOLERANCE}")
+fi
+if [[ -n "${GPT4O_REQUEST_RETRIES:-}" ]]; then
+  ARGS+=(--request-retries "${GPT4O_REQUEST_RETRIES}")
+fi
+if [[ -n "${GPT4O_REQUEST_RETRY_DELAY:-}" ]]; then
+  ARGS+=(--request-retry-delay "${GPT4O_REQUEST_RETRY_DELAY}")
 fi
 if [[ -n "${GPT4O_LOG_LEVEL:-}" ]]; then
   ARGS+=(--log-level "${GPT4O_LOG_LEVEL}")

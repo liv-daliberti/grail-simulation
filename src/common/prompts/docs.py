@@ -107,7 +107,7 @@ EXTRA_FIELD_LABELS: Dict[str, str] = {
 EXTRA_FIELD_LABELS.update(prompt_constants.MIN_WAGE_FIELD_LABELS)
 EXTRA_FIELD_LABELS.update(prompt_constants.GUN_FIELD_LABELS)
 
-_TITLE_RESOLVER_CACHE: Optional[TitleResolver] = None
+TITLE_RESOLVER_CACHE: Optional[TitleResolver] = None
 
 
 def merge_default_extra_fields(extra_fields: Sequence[str] | None) -> Tuple[str, ...]:
@@ -152,10 +152,10 @@ def default_title_resolver() -> TitleResolver:
 
     """
 
-    global _TITLE_RESOLVER_CACHE  # pylint: disable=global-statement
-    if _TITLE_RESOLVER_CACHE is None:
-        _TITLE_RESOLVER_CACHE = TitleResolver(default_dirs=DEFAULT_TITLE_DIRS)
-    return _TITLE_RESOLVER_CACHE
+    global TITLE_RESOLVER_CACHE  # pylint: disable=global-statement
+    if TITLE_RESOLVER_CACHE is None:
+        TITLE_RESOLVER_CACHE = TitleResolver(default_dirs=DEFAULT_TITLE_DIRS)
+    return TITLE_RESOLVER_CACHE
 
 
 def create_prompt_document_builder(

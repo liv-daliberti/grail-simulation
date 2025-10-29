@@ -16,7 +16,8 @@ This report summarises the slate-ranking KNN model that predicts the next clicke
 | Feature space | Weighted accuracy ↑ | Δ vs baseline ↑ | Random ↑ | Eligible | Studies |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | TFIDF | 0.425 | -0.038 | 0.271 | 2,419 | 3 |
-| WORD2VEC | 0.280 | -0.182 | 0.271 | 2,419 | 3 |
+| WORD2VEC | 0.306 | -0.156 | 0.271 | 2,419 | 3 |
+| SENTENCE_TRANSFORMER | 0.305 | -0.158 | 0.271 | 2,419 | 3 |
 
 Best-performing feature space: **TFIDF** with weighted accuracy 0.425 across 2,419 eligible slates (3 studies).
 
@@ -32,9 +33,17 @@ Best-performing feature space: **TFIDF** with weighted accuracy 0.425 across 2,4
 
 | Study | Accuracy ↑ | Accuracy (all rows) ↑ | 95% CI | Δ vs baseline ↑ | Baseline ↑ | Random ↑ | Best k | Eligible | Total |
 | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Study 1 – Gun Control (MTurk) | 0.290 | 0.290 | [0.257, 0.323] | -0.250 | 0.540 | 0.326 | 2 | 548 | 548 |
-| Study 2 – Minimum Wage (MTurk) | 0.295 | 0.295 | [0.260, 0.330] | -0.073 | 0.368 | 0.255 | 2 | 671 | 671 |
-| Study 3 – Minimum Wage (YouGov) | 0.268 | 0.268 | [0.245, 0.291] | -0.212 | 0.479 | 0.255 | 2 | 1,200 | 1,200 |
+| Study 1 – Gun Control (MTurk) | 0.407 | 0.407 | [0.371, 0.444] | -0.133 | 0.540 | 0.326 | 2 | 548 | 548 |
+| Study 2 – Minimum Wage (MTurk) | 0.291 | 0.291 | [0.259, 0.325] | -0.077 | 0.368 | 0.255 | 2 | 671 | 671 |
+| Study 3 – Minimum Wage (YouGov) | 0.268 | 0.268 | [0.245, 0.293] | -0.211 | 0.479 | 0.255 | 2 | 1,200 | 1,200 |
+
+## Sentence-Transformer Feature Space
+
+| Study | Accuracy ↑ | Accuracy (all rows) ↑ | 95% CI | Δ vs baseline ↑ | Baseline ↑ | Random ↑ | Best k | Eligible | Total |
+| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Study 1 – Gun Control (MTurk) | 0.276 | 0.276 | [0.241, 0.314] | -0.265 | 0.540 | 0.326 | 2 | 548 | 548 |
+| Study 2 – Minimum Wage (MTurk) | 0.301 | 0.301 | [0.271, 0.341] | -0.067 | 0.368 | 0.255 | 3 | 671 | 671 |
+| Study 3 – Minimum Wage (YouGov) | 0.320 | 0.320 | [0.291, 0.346] | -0.159 | 0.479 | 0.255 | 2 | 1,200 | 1,200 |
 
 ## Accuracy Curves
 
@@ -62,10 +71,23 @@ Best-performing feature space: **TFIDF** with weighted accuracy 0.425 across 2,4
 
 ![Accuracy curve](curves/word2vec/study3.png)
 
+### Study 1 – Gun Control (MTurk) (SENTENCE_TRANSFORMER)
+
+![Accuracy curve](curves/sentence_transformer/study1.png)
+
+### Study 2 – Minimum Wage (MTurk) (SENTENCE_TRANSFORMER)
+
+![Accuracy curve](curves/sentence_transformer/study2.png)
+
+### Study 3 – Minimum Wage (YouGov) (SENTENCE_TRANSFORMER)
+
+![Accuracy curve](curves/sentence_transformer/study3.png)
+
 ## Observations
 
 - TFIDF: Study 1 – Gun Control (MTurk): 0.763 (baseline 0.540, Δ +0.223, k=2, eligible 548); Study 2 – Minimum Wage (MTurk): 0.355 (baseline 0.368, Δ -0.013, k=2, eligible 671); Study 3 – Minimum Wage (YouGov): 0.309 (baseline 0.479, Δ -0.170, k=2, eligible 1,200); averages: mean Δ +0.013, mean random 0.279.
-- WORD2VEC: Study 1 – Gun Control (MTurk): 0.290 (baseline 0.540, Δ -0.250, k=2, eligible 548); Study 2 – Minimum Wage (MTurk): 0.295 (baseline 0.368, Δ -0.073, k=2, eligible 671); Study 3 – Minimum Wage (YouGov): 0.268 (baseline 0.479, Δ -0.212, k=2, eligible 1,200); averages: mean Δ -0.178, mean random 0.279.
+- WORD2VEC: Study 1 – Gun Control (MTurk): 0.407 (baseline 0.540, Δ -0.133, k=2, eligible 548); Study 2 – Minimum Wage (MTurk): 0.291 (baseline 0.368, Δ -0.077, k=2, eligible 671); Study 3 – Minimum Wage (YouGov): 0.268 (baseline 0.479, Δ -0.211, k=2, eligible 1,200); averages: mean Δ -0.141, mean random 0.279.
+- SENTENCE_TRANSFORMER: Study 1 – Gun Control (MTurk): 0.276 (baseline 0.540, Δ -0.265, k=2, eligible 548); Study 2 – Minimum Wage (MTurk): 0.301 (baseline 0.368, Δ -0.067, k=3, eligible 671); Study 3 – Minimum Wage (YouGov): 0.320 (baseline 0.479, Δ -0.159, k=2, eligible 1,200); averages: mean Δ -0.164, mean random 0.279.
 - Random values approximate the accuracy from uniformly guessing across the slate.
 
 ## KNN vs XGB (Matched Studies)
@@ -76,7 +98,7 @@ This section compares the eligible-only accuracy for KNN and XGB, and also shows
 | --- | ---: | ---: | ---: | ---: |
 | Study 1 – Gun Control (MTurk) | 0.763 (TFIDF) | 0.874 | 0.763 | 0.874 |
 | Study 2 – Minimum Wage (MTurk) | 0.355 (TFIDF) | 0.329 | 0.355 | 0.329 |
-| Study 3 – Minimum Wage (YouGov) | 0.309 (TFIDF) | 0.359 | 0.309 | 0.359 |
+| Study 3 – Minimum Wage (YouGov) | 0.320 (ST) | 0.359 | 0.320 | 0.359 |
 
 ## Cross-Study Holdouts
 

@@ -171,6 +171,7 @@ class OpinionStudySelection(Generic[StudyT, OutcomeT]):
 
 
 __all__ = [
+    "StageOverwriteContext",
     "merge_ordered",
     "make_duplicate_warning",
     "merge_ordered_with_warning",
@@ -183,6 +184,15 @@ __all__ = [
     "ensure_final_stage_overwrite",
     "ensure_final_stage_overwrite_with_context",
 ]
+
+
+@dataclass(frozen=True)
+class StageOverwriteContext:
+    """Configuration bundle for stage-specific overwrite logging."""
+
+    stage: str
+    labels: Sequence[Tuple[str, object]] = ()
+    noun: str = "outputs"
 
 
 def compose_cli_args(*segments: Sequence[str]) -> List[str]:
@@ -288,9 +298,7 @@ def ensure_stage_overwrite_flag(
     metrics_path: Path,
     *,
     logger: logging.Logger,
-    stage: str,
-    context_labels: Sequence[Tuple[str, object]] | Tuple[()],
-    noun: str = "outputs",
+    context: StageOverwriteContext,
 ) -> bool:
     """
     Apply :func:`ensure_overwrite_flag` using standardised stage-aware log messages.
@@ -298,15 +306,13 @@ def ensure_stage_overwrite_flag(
     :param cli_args: Mutable list of CLI arguments that may require ``--overwrite``.
     :param metrics_path: Expected metrics file within the evaluation directory.
     :param logger: Logger used when emitting informational or recovery messages.
-    :param stage: Pipeline stage label (e.g., ``\"FINAL\"``) included in log messages.
-    :param context_labels: Ordered ``(name, value)`` pairs describing the run context.
-    :param noun: Noun describing the artefacts being overwritten (default: ``\"outputs\"``).
+    :param context: Bundled stage metadata (token, labels, noun).
     :returns: ``True`` when ``--overwrite`` was appended to ``cli_args``.
     """
 
-    stage_token = stage.upper()
-    label_fmt = " ".join(f"{label}=%s" for label, _ in context_labels)
-    context_values = tuple(value for _, value in context_labels)
+    stage_token = context.stage.upper()
+    label_fmt = " ".join(f"{label}=%s" for label, _ in context.labels)
+    context_values = tuple(value for _, value in context.labels)
 
     if label_fmt:
         label_fmt = f"{label_fmt} "
@@ -317,11 +323,11 @@ def ensure_stage_overwrite_flag(
         return (evaluation_dir,)
 
     recover_message = (
-        f"[{stage_token}][RECOVER] {label_fmt}detected partial {noun} at %s; "
+        f"[{stage_token}][RECOVER] {label_fmt}detected partial {context.noun} at %s; "
         "automatically enabling overwrite for rerun."
     )
     overwrite_message = (
-        f"[{stage_token}][OVERWRITE] {label_fmt}existing {noun} at %s; "
+        f"[{stage_token}][OVERWRITE] {label_fmt}existing {context.noun} at %s; "
         "enabling overwrite to refresh metrics."
     )
 
@@ -347,8 +353,7 @@ def ensure_final_stage_overwrite(
         cli_args,
         metrics_path,
         logger=logger,
-        stage="FINAL",
-        context_labels=context_labels,
+        context=StageOverwriteContext(stage="FINAL", labels=context_labels),
     )
 
 

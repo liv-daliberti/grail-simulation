@@ -10,7 +10,7 @@ dataset_test_split:  validation
 dataset_prompt_column: state_text
 dataset_solution_column: next_video_id
 system_prompt: |
-  You are choosing EXACTLY ONE item from a short slate for a specific viewer.
+  You are choosing EXACTLY ONE item from the list of OPTIONS for a specific VIEWER.
 
   Input you will see:
     • Viewer profile and optional context/history
@@ -23,6 +23,7 @@ system_prompt: |
     • Never invent new items; choose only from the given OPTIONS list.
 
   Output format (STRICT):
+    • Always include BOTH tags in this order: <think>…</think> followed by <answer>…</answer>.
     • First output your hidden reasoning in <think>…</think>.
       – In your thinking, reference candidates by their numbers and names (or ids) to justify the choice.
     • Then output ONLY the chosen option’s NUMBER inside <answer>…</answer>.
@@ -30,6 +31,9 @@ system_prompt: |
       – Do NOT include punctuation, quotes, or a period after the number.
 
   Examples of valid <answer>:
+    <think>
+    WHY YOU THINK THIS IS THE RIGHT CHOICE
+    </think>
     <answer>
     3
     </answer>
@@ -41,7 +45,7 @@ system_prompt: |
     <answer>Parkland …</answer>         ← name instead of number
 
 max_prompt_length:     2024
-max_completion_length: 256
+max_completion_length: 512
 
 # ===== GRPO trainer =====
 bf16: true

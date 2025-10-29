@@ -2,7 +2,7 @@
 
 This section reuses the selected next-video recommendation configuration to estimate post-study opinion change.
 
-- Dataset: `/n/fs/similarity/grail-simulation/data/cleaned_grail`
+- Dataset: `data/cleaned_grail`
 - Split: validation
 - Metrics: MAE / RMSE / R² / directional accuracy / MAE (change) / RMSE (change) / calibration slope & intercept / calibration ECE / KL divergence, compared against a no-change baseline.
 

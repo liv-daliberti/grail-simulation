@@ -475,7 +475,9 @@
 <span class="sd">    :param reuse_existing: When ``True``, reuse cached results instead of recomputing.</span>
 <span class="sd">    :type reuse_existing: bool</span>
 <span class="sd">    :returns: Tasks pending execution and outcomes reconstructed from cache.</span>
-<span class="sd">    :rtype: Tuple[List[~knn.pipeline.context.OpinionSweepTask], List[~knn.pipeline.context.OpinionSweepOutcome]]</span>
+<span class="sd">    :rtype:</span>
+<span class="sd">        Tuple[List[~knn.pipeline.context.OpinionSweepTask],</span>
+<span class="sd">        List[~knn.pipeline.context.OpinionSweepOutcome]]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">prepare_task_grid</span><span class="p">(</span>
         <span class="n">configs</span><span class="p">,</span>
@@ -756,7 +758,8 @@
 <span class="sd">    :type allow_incomplete: bool</span>
 <span class="sd">    :returns: Mapping of feature spaces to their selected opinion configurations.</span>
 <span class="sd">    :rtype: Dict[str, Dict[str, ~knn.pipeline.context.OpinionStudySelection]]</span>
-<span class="sd">    :raises ValueError: Raised when mandatory selections are missing and ``allow_incomplete`` is ``False``.</span>
+<span class="sd">    :raises ValueError:</span>
+<span class="sd">        Raised when mandatory selections are missing and ``allow_incomplete`` is ``False``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">selections</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">OpinionStudySelection</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">outcome</span> <span class="ow">in</span> <span class="n">outcomes</span><span class="p">:</span>

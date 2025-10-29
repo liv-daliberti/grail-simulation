@@ -29,8 +29,10 @@ from pathlib import Path
 from typing import Dict, List, Mapping, Sequence, Set
 
 from common.pipeline.utils import (
+    StageOverwriteContext,
     compose_cli_args,
     ensure_final_stage_overwrite_with_context,
+    ensure_stage_overwrite_flag,
     make_placeholder_metrics,
 )
 
@@ -256,6 +258,18 @@ def _run_cross_study_evaluations(
         cli_args.extend(["--train_participant_studies", spec.key])
         cli_args.extend(["--out_dir", str(loso_root)])
         cli_args.extend(context.extra_cli)
+        ensure_stage_overwrite_flag(
+            cli_args,
+            metrics_path,
+            logger=LOGGER,
+            context=StageOverwriteContext(
+                stage="LOSO",
+                labels=(
+                    ("issue", spec.issue),
+                    ("holdout", spec.key),
+                ),
+            ),
+        )
         _run_xgb_cli(cli_args)
 
         try:

@@ -34,11 +34,12 @@ DEPLOYMENT_NAME: str = os.environ.get("DEPLOYMENT_NAME", "gpt-4o")
 
 
 def ensure_azure_env() -> None:
-    """
-    Ensure the Azure environment variables are present.
+    """Ensure Azure configuration defaults are present for downstream clients.
 
-    The sandbox runner historically relied on these being set globally.
-    We keep the behaviour but allow shell overrides to win.
+    The sandbox runner historically relied on these values being set globally,
+    so we preserve that behaviour while still allowing explicit shell overrides.
+
+    :returns: ``None``. The module-level constants are used when variables are unset.
     """
 
     os.environ.setdefault("SANDBOX_API_KEY", SANDBOX_API_KEY)
@@ -69,7 +70,7 @@ DEFAULT_TITLE_DIRS: list[str] = [
 # ---------------------------------------------------------------------------
 # Prompt template
 # ---------------------------------------------------------------------------
-SYSTEM_PROMPT: str = """You are choosing EXACTLY ONE item from a short slate for a specific viewer.
+SYSTEM_PROMPT: str = """You are choosing EXACTLY ONE item from the list of OPTIONS for a specific VIEWER.
 
 Input you will see:
   • Viewer profile and optional context/history
@@ -82,6 +83,7 @@ Your job:
   • Never invent new items; choose only from the given OPTIONS list.
 
 Output format (STRICT):
+  • Always include BOTH tags in this order: <think>…</think> followed by <answer>…</answer>.
   • First output your hidden reasoning in <think>…</think>.
     – In your thinking, reference candidates by their numbers and names (or ids)
       to justify the choice.
@@ -91,16 +93,33 @@ Output format (STRICT):
       or a period after the number.
 
 Examples of valid <answer>:
+  <think>
+  WHY YOU THINK THIS IS THE RIGHT CHOICE
+  </think>
   <answer>
   3
   </answer>
 
 Examples of INVALID <answer> (never do these):
-  <answer>3.</answer>                 ← trailing period
-  <answer>"3"</answer>                ← quoted
-  <answer>Option 3</answer>           ← extra words
-  <answer>Parkland …</answer>         ← name instead of number
+  <think></think><answer>3.</answer>                 ← trailing period
+  <think></think><answer>"3"</answer>                ← quoted
+  <think></think><answer>Option 3</answer>           ← extra words
+  <think></think><answer>Parkland …</answer>         ← name instead of number
   You only have 100 tokens to think and 50 tokens to answer.
+"""
+
+OPINION_SYSTEM_PROMPT: str = """You estimate how a viewer’s opinion index changes
+after watching a recommended video.
+
+Workflow:
+  • Read the viewer profile and context provided.
+  • Use <think>…</think> to reason about how the next video might shift the viewer’s opinion.
+  • Conclude with ONLY the numeric post-study opinion index (1–7) inside <answer>…</answer>.
+
+Formatting rules:
+  • <think> MUST contain the reasoning steps.
+  • <answer> MUST contain a single number with no extra words or punctuation.
+  • Never omit either tag, and never output additional tags.
 """
 
 

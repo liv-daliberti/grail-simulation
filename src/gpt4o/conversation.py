@@ -83,7 +83,12 @@ _RACE_MAP = {
 
 
 def pick_case_insensitive(record: dict, *candidates: str) -> Optional[str]:
-    """Return the first present key (case-insensitive) value from the record."""
+    """Return the first matching candidate value from ``record``.
+
+    :param record: Mapping inspected for possible keys.
+    :param candidates: Ordered list of candidate keys to search (case-insensitive).
+    :returns: Stripped value associated with the first matching key, or ``None``.
+    """
 
     if not isinstance(record, dict):
         return None
@@ -97,7 +102,11 @@ def pick_case_insensitive(record: dict, *candidates: str) -> Optional[str]:
 
 
 def extract_income(example: dict) -> Optional[str]:
-    """Mirror the income extraction used in the GRPO baseline."""
+    """Mirror the income extraction logic used in the GRPO baseline.
+
+    :param example: Dataset row containing demographic metadata.
+    :returns: Income phrase or normalised descriptor, else ``None``.
+    """
 
     for key in _INCOME_HINT_KEYS:
         value = example.get(key)
@@ -118,7 +127,11 @@ def extract_income(example: dict) -> Optional[str]:
 
 
 def extract_party(example: dict) -> Optional[str]:
-    """Return a party label derived from standard survey signals."""
+    """Return a party label derived from standard survey signals.
+
+    :param example: Dataset row containing partisan survey responses.
+    :returns: Normalised party label or ``None`` when absent.
+    """
 
     pid_text = example.get("pid")
     if isinstance(pid_text, str) and not is_nan_like(pid_text):
@@ -158,7 +171,11 @@ def extract_party(example: dict) -> Optional[str]:
 
 
 def format_ideology(raw: Any) -> Optional[str]:
-    """Convert ideology encodings to descriptive text."""
+    """Convert ideology encodings to descriptive text.
+
+    :param raw: Raw ideology indicator (numeric or textual) from the dataset.
+    :returns: Canonical ideology phrase or ``None`` when unavailable.
+    """
 
     if raw is None:
         return None
@@ -197,7 +214,11 @@ def format_ideology(raw: Any) -> Optional[str]:
 
 
 def extract_marital_status(example: dict) -> Optional[str]:
-    """Extract a brief marital descriptor."""
+    """Extract a brief marital descriptor.
+
+    :param example: Dataset row containing marital-status related fields.
+    :returns: Normalised marital descriptor or ``None`` if unknown.
+    """
 
     for key in _MARITAL_KEYS:
         value = example.get(key)
@@ -237,7 +258,11 @@ def _normalise_race_token(raw: str) -> Optional[str]:
 
 
 def extract_race(example: dict) -> Optional[str]:
-    """Extract race information following the GRPO baseline rules."""
+    """Extract race information following the GRPO baseline rules.
+
+    :param example: Dataset row containing race attributes or textual fields.
+    :returns: Canonical race label or ``None`` when no signal is found.
+    """
 
     try:
         if truthy(example.get("white")) and truthy(example.get("black")):
@@ -259,7 +284,11 @@ def extract_race(example: dict) -> Optional[str]:
 
 
 def humanise_profile(example: dict) -> str:
-    """Build the human-readable profile sentence."""
+    """Build a human-readable viewer profile sentence.
+
+    :param example: Dataset row containing demographic and behavioural signals.
+    :returns: Comma-delimited sentence summarising the viewer.
+    """
 
     fragments: list[str] = []
     age = example.get("age")
@@ -317,7 +346,11 @@ def humanise_profile(example: dict) -> str:
 
 
 def build_profile_block(example: dict) -> str:
-    """Structured key/value profile block (parity with GRPO)."""
+    """Return the structured key/value profile block.
+
+    :param example: Dataset row containing viewer metadata.
+    :returns: Multi-line string enumerating profile facts.
+    """
 
     lines: list[str] = []
     race = extract_race(example)
@@ -657,7 +690,11 @@ def _format_history_lines(sequence: List[dict]) -> List[str]:
 
 
 def make_conversation_record(example: dict) -> Dict[str, Any]:
-    """Transform a dataset row into the prompt payload consumed by GPT-4o."""
+    """Transform a dataset row into the prompt payload consumed by GPT-4o.
+
+    :param example: Dataset row containing slate options and viewer metadata.
+    :returns: Dictionary with prompt messages and evaluation metadata.
+    """
 
     max_history = int(os.environ.get("GRAIL_MAX_HISTORY", "8"))
     history_full_env = str(os.environ.get("GRAIL_HISTORY_FULL", "0")).lower()

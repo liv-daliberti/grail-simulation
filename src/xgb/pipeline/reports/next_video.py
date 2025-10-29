@@ -625,6 +625,12 @@ def _loso_entries(
     loso_metrics: Mapping[str, Mapping[str, object]],
     selections: Mapping[str, StudySelection],
 ) -> List[tuple[str, str, str, NextVideoMetricSummary]]:
+    """Build sorted leave-one-study-out entries with resolved labels.
+
+    :param loso_metrics: Raw LOSO metrics keyed by study identifier.
+    :param selections: Selected sweep outcomes providing display labels.
+    :returns: List of tuples containing study key, study label, issue label, and summary.
+    """
     ordered_keys = sorted(
         loso_metrics.keys(),
         key=lambda key: _report_study_label(key, selections).lower(),
@@ -645,6 +651,11 @@ def _loso_entries(
 def _loso_accuracy_summary(
     entries: Sequence[tuple[str, str, str, NextVideoMetricSummary]]
 ) -> List[str]:
+    """Summarise LOSO accuracy statistics into bullet-friendly strings.
+
+    :param entries: LOSO entries produced by :func:`_loso_entries`.
+    :returns: Markdown-ready bullet lines describing accuracy observations.
+    """
     lines: List[str] = []
     accuracy_values = [
         (study_label, summary.accuracy)

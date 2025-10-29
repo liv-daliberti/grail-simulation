@@ -291,11 +291,11 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.pipeline.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">merge_indexed_outcomes</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.prompts.docs</span><span class="w"> </span><span class="kn">import</span> <span class="n">merge_default_extra_fields</span>
 
+<span class="c1"># Access the sibling module through the package namespace to satisfy pylint checks.</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">knn.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">opinion_sweeps</span> <span class="k">as</span> <span class="n">_opinion_sweeps</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..cli</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_parser</span> <span class="k">as</span> <span class="n">build_knn_parser</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..core.evaluate</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_eval</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..core.opinion</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_opinion_eval</span>
-<span class="c1"># Imported lazily inside functions to avoid circular import during type checking.</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">knn.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">opinion_sweeps</span> <span class="k">as</span> <span class="n">_opinion_sweeps</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.context</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">OpinionSweepOutcome</span><span class="p">,</span>
     <span class="n">OpinionSweepTask</span><span class="p">,</span>

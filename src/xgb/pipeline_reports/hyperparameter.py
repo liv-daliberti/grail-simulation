@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
-from ..pipeline.reports.hyperparameter import _write_hyperparameter_report  # type: ignore[F401]
+from ..pipeline.reports.hyperparameter import *  # type: ignore[F401,F403]
+from ..pipeline.reports.hyperparameter import __all__ as _HYPER_ALL  # type: ignore[F401]
 
-__all__ = ["_write_hyperparameter_report"]
+__all__ = list(_HYPER_ALL)

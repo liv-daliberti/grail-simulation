@@ -201,7 +201,7 @@ def _load_local_file_dataset(path: Path) -> DatasetDict:
         try:
             loaded = datasets.load_dataset("json", data_files=str(path))
         except RuntimeError:
-            return _load_json_fallback(path, lines=(ext == ".jsonl"))
+            return _load_json_fallback(path, lines=ext == ".jsonl")
         return DatasetDict(dict(loaded.items()))
     if ext in {".csv", ".tsv"}:
         try:
@@ -244,7 +244,10 @@ def _load_json_fallback(path: Path, *, lines: bool) -> DatasetDict:
     with path.open("r", encoding="utf-8") as handle:
         payload = json.load(handle)
     if isinstance(payload, dict) and all(isinstance(value, list) for value in payload.values()):
-        mapping = {split: datasets.Dataset.from_list(_normalize_rows(rows)) for split, rows in payload.items()}
+        mapping = {
+            split: datasets.Dataset.from_list(_normalize_rows(rows))
+            for split, rows in payload.items()
+        }
         return DatasetDict(mapping)
     if isinstance(payload, list):
         return _build_dataset(_normalize_rows(payload))

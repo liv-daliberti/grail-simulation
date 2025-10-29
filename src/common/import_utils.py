@@ -32,4 +32,3 @@ def install_package_aliases(package_name: str, aliases: Mapping[str, str]) -> No
 
 
 __all__ = ["install_package_aliases"]
-

@@ -26,7 +26,7 @@ import numpy as np
 
 from common.text.embeddings import SentenceTransformerConfig, SentenceTransformerEncoder
 from common.text.vectorizers import create_tfidf_vectorizer
-from knn.features import Word2VecConfig, Word2VecFeatureBuilder
+from knn.core.features import Word2VecConfig, Word2VecFeatureBuilder
 
 from ._optional import TfidfVectorizer, joblib
 

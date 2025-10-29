@@ -97,8 +97,17 @@ def _next_video_curve_sections(
     :returns: Markdown sections that document next-video learning curves.
     """
     if plt is None:  # pragma: no cover - optional dependency
-        LOGGER.debug("Matplotlib not available; skipping KNN curve plots.")
-        return []
+        LOGGER.warning(
+            "Matplotlib not available; skipping KNN accuracy curve plots. "
+            "Install the visualization extras (pip install -e '.[visualization]') "
+            "and rerun the finalize stage to refresh them.",
+        )
+        return [
+            "_Accuracy curves skipped because matplotlib is not installed. "
+            "Install the visualization extras and rerun "
+            "`python -m knn.pipeline --stage finalize` to generate plots._",
+            "",
+        ]
 
     sections: list[str] = []
     ordered_spaces = _ordered_feature_spaces((), metrics_by_feature)

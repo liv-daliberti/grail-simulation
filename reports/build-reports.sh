@@ -240,4 +240,41 @@ declare -a XGB_SWEEP_FLAGS=(
   "${XGB_SWEEP_FLAGS[@]}" \
   "${XGB_ALLOW_FLAG}"
 
+GPT4O_OUT_DIR="${GPT4O_REPORTS_OUT_DIR:-${REPO_ROOT}/models/gpt-4o}"
+GPT4O_CACHE_DIR="${GPT4O_REPORTS_CACHE_DIR:-${REPO_ROOT}/.cache/huggingface/gpt4o}"
+GPT4O_REPORTS_DIR="${GPT4O_REPORTS_DIR:-${REPO_ROOT}/reports/gpt4o}"
+GPT4O_SWEEP_ROOT="${GPT4O_REPORTS_SWEEP_DIR:-${GPT4O_OUT_DIR}/sweeps}"
+
+log "Regenerating GPT-4o reports from existing artefacts..."
+SKIP_GPT4O="0"
+if [ ! -d "${GPT4O_SWEEP_ROOT}" ] || ! find "${GPT4O_SWEEP_ROOT}" -name "metrics.json" -print -quit | grep -q .; then
+  if [ "${ALLOW_INCOMPLETE}" = "1" ]; then
+    log "No GPT-4o sweep metrics found under ${GPT4O_SWEEP_ROOT}. Skipping GPT-4o report refresh because REPORTS_ALLOW_INCOMPLETE=1."
+    SKIP_GPT4O="1"
+  else
+    log "No GPT-4o sweep metrics found under ${GPT4O_SWEEP_ROOT}."
+    log "Run 'training/training-gpt4o.sh [pipeline args]' to populate sweeps before rebuilding reports."
+    exit 1
+  fi
+fi
+
+if [ "${SKIP_GPT4O}" != "1" ]; then
+  if [ -d "${GPT4O_REPORTS_DIR}" ]; then
+    log "Clearing existing GPT-4o reports at ${GPT4O_REPORTS_DIR}"
+    rm -rf "${GPT4O_REPORTS_DIR}"
+  fi
+
+  declare -a GPT4O_ARGS=(
+    "--out-dir" "${GPT4O_OUT_DIR}"
+    "--cache-dir" "${GPT4O_CACHE_DIR}"
+    "--reports-dir" "${GPT4O_REPORTS_DIR}"
+    "--stage" "reports"
+  )
+  if [ -n "${GPT4O_REPORTS_SWEEP_DIR:-}" ]; then
+    GPT4O_ARGS+=("--sweep-dir" "${GPT4O_REPORTS_SWEEP_DIR}")
+  fi
+
+  "${PYTHON_BIN}" -m gpt4o.pipeline "${GPT4O_ARGS[@]}"
+fi
+
 log "Report refresh completed."

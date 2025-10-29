@@ -1,0 +1,4 @@
+study,issue,accuracy,accuracy_eligible,correct,evaluated,correct_eligible,coverage,known_hits,known_total,known_availability,avg_probability,baseline_accuracy,random_baseline_accuracy
+Study 1 – Gun Control (MTurk),Gun Control,0.0,,0,0,,0.0,0,0,,,,
+Study 2 – Minimum Wage (MTurk),Minimum Wage,0.28017883755588674,0.28017883755588674,188,671,188,0.28017883755588674,188,671,1.0,0.3081951051530249,0.368107302533532,0.25541480377545955
+Study 3 – Minimum Wage (YouGov),Minimum Wage,0.31166666666666665,0.31166666666666665,374,1200,374,0.31166666666666665,374,1200,1.0,0.3070839559958161,0.4791666666666667,0.2553472222222222

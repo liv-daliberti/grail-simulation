@@ -69,12 +69,57 @@ Accuracy values reflect eligible-only accuracy on the validation split at the se
 | 59 | Study 3 – Minimum Wage (YouGov) | TFIDF | l2 | viewer_profile, state_text, pol_interest | 0.300 | 0.479 | -0.179 | 2 | 1,200 |
 | 60 | Study 1 – Gun Control (MTurk) | TFIDF | l2 | viewer_profile, state_text, religpew | 0.308 | 0.540 | -0.232 | 2 | 548 |
 | 61 | Study 2 – Minimum Wage (MTurk) | TFIDF | l2 | viewer_profile, state_text, religpew | 0.343 | 0.368 | -0.025 | 3 | 671 |
+| 62 | Study 3 – Minimum Wage (YouGov) | TFIDF | l2 | viewer_profile, state_text, religpew | 0.302 | 0.479 | -0.177 | 2 | 1,200 |
 | 93 | Study 1 – Gun Control (MTurk) | TFIDF | l2 | viewer_profile, state_text, ideo1, ideo2, pol_interest, religpew, freq_youtube, youtube_time, newsint, slate_source, educ, employ, child18, inputstate, income, participant_study | 0.301 | 0.540 | -0.239 | 2 | 548 |
 | 94 | Study 2 – Minimum Wage (MTurk) | TFIDF | l2 | viewer_profile, state_text, ideo1, ideo2, pol_interest, religpew, freq_youtube, youtube_time, newsint, slate_source, educ, employ, child18, inputstate, income, participant_study | 0.332 | 0.368 | -0.036 | 2 | 671 |
+| 95 | Study 3 – Minimum Wage (YouGov) | TFIDF | l2 | viewer_profile, state_text, ideo1, ideo2, pol_interest, religpew, freq_youtube, youtube_time, newsint, slate_source, educ, employ, child18, inputstate, income, participant_study | 0.300 | 0.479 | -0.179 | 2 | 1,200 |
 
 
 ## Post-Study Opinion Regression
 
-No opinion sweeps were available when this report was generated.
-Run the KNN pipeline with `--stage sweeps` or `--stage full` once artifacts are ready.
+Configurations are ranked by validation MAE (lower is better). Bold rows indicate the selections promoted to the finalize stage.
+
+## TF-IDF Feature Space
+
+| Study | Metric | Text fields | Model | Vec size | Window | Min count | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ | Participants |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| **Study 1 – Gun Control (MTurk)** | l2 | viewer_profile, state_text | — | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | -0.007 | 0.038 | 0.983 | 162 |
+| Study 1 – Gun Control (MTurk) | l2 | viewer_profile, state_text, ideo1 | — | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | -0.007 | 0.038 | 0.983 | 162 |
+| Study 1 – Gun Control (MTurk) | l2 | viewer_profile, state_text, ideo2 | — | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | -0.007 | 0.038 | 0.983 | 162 |
+| Study 1 – Gun Control (MTurk) | l2 | viewer_profile, state_text, pol_interest | — | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | -0.007 | 0.038 | 0.983 | 162 |
+| Study 1 – Gun Control (MTurk) | l2 | viewer_profile, state_text, religpew | — | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | -0.007 | 0.038 | 0.983 | 162 |
+| **Study 2 – Minimum Wage (MTurk)** | cosine | viewer_profile, state_text | — | — | — | — | 0.527 | 0.061 | +0.467 | 50 | 165 | 0.093 | -0.003 | 0.128 | 0.786 | 165 |
+| Study 2 – Minimum Wage (MTurk) | cosine | viewer_profile, state_text, ideo1 | — | — | — | — | 0.527 | 0.061 | +0.467 | 50 | 165 | 0.093 | -0.003 | 0.128 | 0.786 | 165 |
+| Study 2 – Minimum Wage (MTurk) | cosine | viewer_profile, state_text, ideo2 | — | — | — | — | 0.527 | 0.061 | +0.467 | 50 | 165 | 0.093 | -0.003 | 0.128 | 0.786 | 165 |
+| Study 2 – Minimum Wage (MTurk) | cosine | viewer_profile, state_text, pol_interest | — | — | — | — | 0.527 | 0.061 | +0.467 | 50 | 165 | 0.093 | -0.003 | 0.128 | 0.786 | 165 |
+| Study 2 – Minimum Wage (MTurk) | cosine | viewer_profile, state_text, religpew | — | — | — | — | 0.527 | 0.061 | +0.467 | 50 | 165 | 0.093 | -0.003 | 0.128 | 0.786 | 165 |
+| **Study 3 – Minimum Wage (YouGov)** | l2 | viewer_profile, state_text | — | — | — | — | 0.490 | 0.058 | +0.432 | 50 | 257 | 0.088 | +0.004 | 0.125 | 0.771 | 257 |
+| Study 3 – Minimum Wage (YouGov) | l2 | viewer_profile, state_text, ideo1 | — | — | — | — | 0.490 | 0.058 | +0.432 | 50 | 257 | 0.088 | +0.004 | 0.125 | 0.771 | 257 |
+| Study 3 – Minimum Wage (YouGov) | l2 | viewer_profile, state_text, ideo2 | — | — | — | — | 0.490 | 0.058 | +0.432 | 50 | 257 | 0.088 | +0.004 | 0.125 | 0.771 | 257 |
+| Study 3 – Minimum Wage (YouGov) | l2 | viewer_profile, state_text, pol_interest | — | — | — | — | 0.490 | 0.058 | +0.432 | 50 | 257 | 0.088 | +0.004 | 0.125 | 0.771 | 257 |
+| Study 3 – Minimum Wage (YouGov) | l2 | viewer_profile, state_text, religpew | — | — | — | — | 0.490 | 0.058 | +0.432 | 50 | 257 | 0.088 | +0.004 | 0.125 | 0.771 | 257 |
+
+### Portfolio Summary
+
+- Weighted MAE 0.073 across 2,920 participants.
+- Weighted baseline MAE 0.074 (+0.001 vs. final).
+- Weighted directional accuracy 0.560 across 2,920 participants.
+- Weighted baseline accuracy 0.063 (+0.497 vs. final).
+- Weighted RMSE (change) 0.102 (+0.005 vs. baseline).
+- Weighted calibration ECE 0.019 (— vs. baseline).
+- Weighted KL divergence 8.631 (+9.804 vs. baseline).
+- Largest MAE reduction: TFIDF – Study 3 – Minimum Wage (YouGov) (+0.004).
+- Largest RMSE(change) reduction: TFIDF – Study 2 – Minimum Wage (MTurk) (+0.010).
+- Lowest MAE: TFIDF – Study 1 – Gun Control (MTurk) (0.030); Highest MAE: TFIDF – Study 2 – Minimum Wage (MTurk) (0.093).
+- Biggest KL divergence reduction: TFIDF – Study 1 – Gun Control (MTurk) (+10.467).
+- Highest directional accuracy: TFIDF – Study 1 – Gun Control (MTurk) (0.704).
+- Lowest directional accuracy: TFIDF – Study 3 – Minimum Wage (YouGov) (0.490).
+- Largest accuracy gain vs. baseline: TFIDF – Study 1 – Gun Control (MTurk) (+0.630).
+
+### Opinion Reproduction Commands
+
+- TFIDF:
+  - Study 1 – Gun Control (MTurk): `python -m knn.cli --task opinion --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues gun_control --participant-studies study1 --knn-metric l2 --knn-k 50 --knn-k-sweep 50 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text`
+  - Study 2 – Minimum Wage (MTurk): `python -m knn.cli --task opinion --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study2 --knn-metric cosine --knn-k 50 --knn-k-sweep 50 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text`
+  - Study 3 – Minimum Wage (YouGov): `python -m knn.cli --task opinion --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study3 --knn-metric l2 --knn-k 50 --knn-k-sweep 50 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text`
 

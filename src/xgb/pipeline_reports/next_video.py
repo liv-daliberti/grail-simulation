@@ -287,6 +287,7 @@ def _extract_next_video_summary(data: Mapping[str, object]) -> NextVideoMetricSu
         evaluated=evaluated,
         correct=_safe_int(data.get("correct")),
         correct_eligible=_safe_int(data.get("correct_eligible")),
+        eligible=_safe_int(data.get("eligible")),
         known_hits=known_hits,
         known_total=known_total,
         known_availability=(

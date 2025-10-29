@@ -414,6 +414,8 @@ class NextVideoMetricSummary:
     :type correct: Optional[int]
     :param correct_eligible: Number of correct predictions among eligible rows.
     :type correct_eligible: Optional[int]
+    :param eligible: Total number of eligible rows contributing to eligible-only metrics.
+    :type eligible: Optional[int]
     :param known_hits: Correct predictions among known candidates.
     :type known_hits: Optional[int]
     :param known_total: Evaluations featuring at least one known candidate.
@@ -444,6 +446,7 @@ class NextVideoMetricSummary:
     evaluated: Optional[int] = None
     correct: Optional[int] = None
     correct_eligible: Optional[int] = None
+    eligible: Optional[int] = None
     known_hits: Optional[int] = None
     known_total: Optional[int] = None
     known_availability: Optional[float] = None

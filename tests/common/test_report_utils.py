@@ -1,11 +1,11 @@
-"""Unit tests for :mod:`common.report_utils`."""
+"""Unit tests for :mod:`common.reports.utils`."""
 
 from __future__ import annotations
 
 from collections import OrderedDict
 from pathlib import Path
 
-from common.report_utils import (
+from common.reports.utils import (
     extend_with_catalog_sections,
     extract_curve_sections,
     extract_numeric_series,

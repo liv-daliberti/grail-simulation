@@ -15,10 +15,10 @@ from typing import Any, Dict, List, Sequence, Tuple
 
 import pytest
 
-from common.prompt_docs import DEFAULT_EXTRA_TEXT_FIELDS
-from common.opinion_sweep_types import AccuracySummary, MetricsArtifact
+from common.prompts.docs import DEFAULT_EXTRA_TEXT_FIELDS
+from common.opinion.sweep_types import AccuracySummary, MetricsArtifact
 
-from common.pipeline_stage import prepare_sweep_execution as real_prepare_sweep_execution
+from common.pipeline.stage import prepare_sweep_execution as real_prepare_sweep_execution
 from knn import pipeline as knn_pipeline
 from knn.pipeline_context import (
     OpinionStudySelection as KnnOpinionStudySelection,
@@ -356,7 +356,7 @@ def test_knn_pipeline_reports_stage_uses_stubbed_data(monkeypatch: pytest.Monkey
         rmse=0.61,
         r2_score=0.15,
         baseline_mae=0.5,
-        mae_delta=-0.08,
+        mae_delta=0.08,
         best_k=7,
         participants=80,
         artifact=MetricsArtifact(
@@ -507,7 +507,7 @@ def test_knn_pipeline_finalize_emits_reports(monkeypatch: pytest.MonkeyPatch, tm
         rmse=0.6,
         r2_score=0.12,
         baseline_mae=0.5,
-        mae_delta=-0.08,
+        mae_delta=0.08,
         best_k=7,
         participants=75,
         artifact=MetricsArtifact(

@@ -27,12 +27,12 @@ import re
 from importlib import import_module
 from typing import Any, Dict, List, Optional, Tuple
 
-from common.prompt_docs import (
+from common.prompts.docs import (
     PromptDocumentBuilder,
     default_title_resolver,
     load_trajectory_entries,
 )
-from common.prompt_fields import (
+from common.prompts.fields import (
     NOW_PLAYING_ID_KEYS,
     NOW_PLAYING_TITLE_KEYS,
     NOW_PLAYING_TITLE_KEYS_WITH_META,

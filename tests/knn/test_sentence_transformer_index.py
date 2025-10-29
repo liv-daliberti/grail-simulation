@@ -7,15 +7,15 @@ from typing import Any, Sequence
 
 import numpy as np
 
-from common.prompt_docs import DEFAULT_EXTRA_TEXT_FIELDS
+from common.prompts.docs import DEFAULT_EXTRA_TEXT_FIELDS
 
-from knn.index import (
+from knn.core.index import (
     build_sentence_transformer_index,
     load_sentence_transformer_index,
     save_sentence_transformer_index,
 )
 from knn.pipeline import PipelineContext, _build_sweep_configs
-from common.embeddings import SentenceTransformerConfig
+from common.text.embeddings import SentenceTransformerConfig
 
 
 def _stub_prepare_documents(*_args: Any, **_kwargs: Any) -> tuple[list[str], list[str], list[str]]:
@@ -36,8 +36,8 @@ def test_build_sentence_transformer_index(monkeypatch) -> None:
         def embedding_dimension(self) -> int:
             return 5
 
-    monkeypatch.setattr("knn.index.prepare_training_documents", _stub_prepare_documents)
-    monkeypatch.setattr("knn.index.SentenceTransformerEncoder", DummyEncoder)
+    monkeypatch.setattr("knn.core.index.prepare_training_documents", _stub_prepare_documents)
+    monkeypatch.setattr("knn.core.index.SentenceTransformerEncoder", DummyEncoder)
 
     index = build_sentence_transformer_index(
         train_ds=[],
@@ -66,14 +66,14 @@ def test_save_and_load_sentence_transformer_index(monkeypatch, tmp_path: Path) -
         def embedding_dimension(self) -> int:
             return 3
 
-    monkeypatch.setattr("knn.index.prepare_training_documents", _stub_prepare_documents)
-    monkeypatch.setattr("knn.index.SentenceTransformerEncoder", DummyEncoder)
+    monkeypatch.setattr("knn.core.index.prepare_training_documents", _stub_prepare_documents)
+    monkeypatch.setattr("knn.core.index.SentenceTransformerEncoder", DummyEncoder)
 
     index = build_sentence_transformer_index(train_ds=[], config=SentenceTransformerConfig(model_name="stub"))
     save_sentence_transformer_index(index, str(tmp_path))
 
     # Ensure load also uses the dummy encoder
-    monkeypatch.setattr("knn.index.SentenceTransformerEncoder", DummyEncoder)
+    monkeypatch.setattr("knn.core.index.SentenceTransformerEncoder", DummyEncoder)
     restored = load_sentence_transformer_index(str(tmp_path))
     assert restored["feature_space"] == "sentence_transformer"
     assert restored["X"].shape == (2, 3)

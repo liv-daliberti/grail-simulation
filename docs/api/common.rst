@@ -9,7 +9,7 @@ title resolution, and safe numerical operations used across the baselines.
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: common.logging_utils
+.. automodule:: common.logging.utils
    :members:
    :undoc-members:
    :show-inheritance:
@@ -19,12 +19,12 @@ title resolution, and safe numerical operations used across the baselines.
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: common.title_index
+.. automodule:: common.text.title_index
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: common.embeddings
+.. automodule:: common.text.embeddings
    :members:
    :undoc-members:
    :show-inheritance:

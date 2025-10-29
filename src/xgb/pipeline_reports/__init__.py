@@ -13,22 +13,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Public interface for the XGBoost pipeline report builders."""
+"""Compatibility layer exposing the legacy ``xgb.pipeline_reports`` API.
+
+The production modules now live under :mod:`xgb.pipeline.reports`.  Tests and
+downstream scripts still rely on the legacy import paths, so we re-export the
+public entry points here to ease the transition to the reorganised package.
+"""
 
 from __future__ import annotations
 
-from common.pipeline_formatters import (
+from common.pipeline.formatters import (
     format_count as _format_count,
     format_delta as _format_delta,
     format_float as _format_float,
     format_optional_float as _format_optional_float,
     format_ratio as _format_ratio,
 )
-
-from .next_video import _extract_next_video_summary
-from .opinion import _extract_opinion_summary
-from .runner import OpinionReportData, ReportSections, SweepReportData, _write_reports
-from .shared import _write_disabled_report
+from ..pipeline.reports import (
+    OpinionReportData,
+    ReportSections,
+    SweepReportData,
+    _extract_next_video_summary,
+    _extract_opinion_summary,
+    _write_reports,
+)
+from ..pipeline.reports.shared import _write_disabled_report
 
 __all__ = [
     "_format_float",

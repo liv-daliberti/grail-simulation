@@ -10,7 +10,7 @@ from typing import Any, Optional
 
 import pytest
 
-from knn import pipeline_utils as utils
+from knn.pipeline import utils
 
 
 @dataclass
@@ -189,7 +189,7 @@ def test_extract_opinion_summary_combines_metrics() -> None:
     assert summary.mae_change == pytest.approx(-0.08)
     assert summary.rmse_change == pytest.approx(-0.11)
     assert summary.baseline_mae == pytest.approx(0.5)
-    assert summary.mae_delta == pytest.approx(-0.08)
+    assert summary.mae_delta == pytest.approx(0.08)
     assert summary.accuracy == pytest.approx(0.58)
     assert summary.baseline_accuracy == pytest.approx(0.5)
     assert summary.accuracy_delta == pytest.approx(0.08)

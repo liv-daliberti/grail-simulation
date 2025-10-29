@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from knn.data import SOLUTION_COLUMN
-from knn.features import (
+from knn.core.data import SOLUTION_COLUMN
+from knn.core.features import (
     CandidateMetadata,
     candidate_feature_tokens,
     selection_feature_tokens,

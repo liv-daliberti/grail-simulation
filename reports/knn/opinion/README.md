@@ -10,18 +10,18 @@ This study evaluates a second KNN baseline that predicts each participant's post
 
 | Study | Participants | Best k | Accuracy ↑ | Baseline ↑ | Δ Accuracy ↑ | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ | MAE (change) ↓ | RMSE (change) ↓ | Δ RMSE (change) ↓ | Calib slope | Calib intercept | ECE ↓ | Δ ECE ↓ | KL div ↓ | Δ KL ↓ | Baseline MAE ↓ |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Study 1 – Gun Control (MTurk) | 162 | 50 | 0.704 | 0.074 | +0.630 | 0.030 | -0.007 | 0.038 | 0.983 | 0.030 | 0.038 | +0.008 | 0.238 | 0.019 | 0.009 | — | 10.978 | +10.467 | 0.037 |
-| Study 2 – Minimum Wage (MTurk) | 165 | 50 | 0.527 | 0.061 | +0.467 | 0.093 | -0.003 | 0.128 | 0.786 | 0.093 | 0.128 | +0.010 | 1.079 | 0.007 | 0.018 | — | 8.264 | +10.105 | 0.096 |
-| Study 3 – Minimum Wage (YouGov) | 257 | 50 | 0.490 | 0.058 | +0.432 | 0.088 | +0.004 | 0.125 | 0.771 | 0.088 | 0.125 | +0.001 | 0.163 | 0.018 | 0.027 | — | 7.386 | +9.194 | 0.084 |
+| Study 1 – Gun Control (MTurk) | 162 | 50 | 0.704 | 0.074 | +0.630 | 0.030 | +0.007 | 0.038 | 0.983 | 0.030 | 0.038 | +0.008 | 0.238 | 0.019 | 0.009 | — | 10.978 | +10.467 | 0.037 |
+| Study 2 – Minimum Wage (MTurk) | 165 | 50 | 0.527 | 0.061 | +0.467 | 0.093 | +0.003 | 0.128 | 0.786 | 0.093 | 0.128 | +0.010 | 1.079 | 0.007 | 0.018 | — | 8.264 | +10.105 | 0.096 |
+| Study 3 – Minimum Wage (YouGov) | 257 | 50 | 0.490 | 0.058 | +0.432 | 0.088 | -0.004 | 0.125 | 0.771 | 0.088 | 0.125 | +0.001 | 0.163 | 0.018 | 0.027 | — | 7.386 | +9.194 | 0.084 |
 *Assets:* [MAE / R² curves and heatmaps](../tfidf/opinion/)
 
 ## Word2Vec Feature Space
 
 | Study | Participants | Best k | Accuracy ↑ | Baseline ↑ | Δ Accuracy ↑ | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ | MAE (change) ↓ | RMSE (change) ↓ | Δ RMSE (change) ↓ | Calib slope | Calib intercept | ECE ↓ | Δ ECE ↓ | KL div ↓ | Δ KL ↓ | Baseline MAE ↓ |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Study 1 – Gun Control (MTurk) | 162 | 50 | 0.704 | 0.074 | +0.630 | 0.030 | -0.007 | 0.038 | 0.982 | 0.030 | 0.038 | +0.008 | -0.436 | 0.039 | 0.010 | — | 11.226 | +10.220 | 0.037 |
-| Study 2 – Minimum Wage (MTurk) | 165 | 50 | 0.582 | 0.061 | +0.521 | 0.090 | -0.006 | 0.126 | 0.792 | 0.090 | 0.126 | +0.012 | 1.205 | 0.005 | 0.029 | — | 8.128 | +10.241 | 0.096 |
-| Study 3 – Minimum Wage (YouGov) | 257 | 50 | 0.482 | 0.058 | +0.424 | 0.088 | +0.004 | 0.126 | 0.766 | 0.088 | 0.126 | -0.001 | -0.050 | 0.022 | 0.023 | — | 7.358 | +9.222 | 0.084 |
+| Study 1 – Gun Control (MTurk) | 162 | 50 | 0.704 | 0.074 | +0.630 | 0.030 | +0.007 | 0.038 | 0.982 | 0.030 | 0.038 | +0.008 | -0.436 | 0.039 | 0.010 | — | 11.226 | +10.220 | 0.037 |
+| Study 2 – Minimum Wage (MTurk) | 165 | 50 | 0.582 | 0.061 | +0.521 | 0.090 | +0.006 | 0.126 | 0.792 | 0.090 | 0.126 | +0.012 | 1.205 | 0.005 | 0.029 | — | 8.128 | +10.241 | 0.096 |
+| Study 3 – Minimum Wage (YouGov) | 257 | 50 | 0.482 | 0.058 | +0.424 | 0.088 | -0.004 | 0.126 | 0.766 | 0.088 | 0.126 | -0.001 | -0.050 | 0.022 | 0.023 | — | 7.358 | +9.222 | 0.084 |
 *Assets:* [MAE / R² curves and heatmaps](../word2vec/opinion/)
 
 ### Opinion Change Heatmaps
@@ -41,7 +41,7 @@ Plots are refreshed under `reports/knn/<feature-space>/opinion/` including MAE v
 - Weighted RMSE (change) 0.102 (+0.005 vs. baseline).
 - Weighted calibration ECE 0.019 (— vs. baseline).
 - Weighted KL divergence 8.631 (+9.804 vs. baseline).
-- Largest MAE reduction: Study 3 – Minimum Wage (YouGov) (TFIDF) (+0.004).
+- Largest MAE reduction: Study 1 – Gun Control (MTurk) (TFIDF) (+0.007).
 - Largest RMSE(change) reduction: Study 2 – Minimum Wage (MTurk) (TFIDF) (+0.010).
 - Lowest MAE: Study 1 – Gun Control (MTurk) (TFIDF) (0.030); Highest MAE: Study 2 – Minimum Wage (MTurk) (TFIDF) (0.093).
 - Biggest KL divergence reduction: Study 1 – Gun Control (MTurk) (TFIDF) (+10.467).
@@ -50,7 +50,7 @@ Plots are refreshed under `reports/knn/<feature-space>/opinion/` including MAE v
 - Largest accuracy gain vs. baseline: Study 1 – Gun Control (MTurk) (TFIDF) (+0.630).
 
 - Unweighted MAE 0.070 (σ 0.028, range 0.030 – 0.093).
-- MAE delta mean -0.002 (σ 0.004, range -0.007 – 0.004).
+- MAE delta mean 0.002 (σ 0.004, range -0.004 – 0.007).
 - Unweighted directional accuracy 0.574 (σ 0.093, range 0.490 – 0.704).
 - Accuracy delta mean 0.509 (σ 0.086, range 0.432 – 0.630).
 - RMSE (change) 0.097 (σ 0.042, range 0.038 – 0.128).
@@ -70,7 +70,7 @@ Plots are refreshed under `reports/knn/<feature-space>/opinion/` including MAE v
 - Weighted RMSE (change) 0.102 (+0.005 vs. baseline).
 - Weighted calibration ECE 0.021 (— vs. baseline).
 - Weighted KL divergence 8.648 (+9.787 vs. baseline).
-- Largest MAE reduction: Study 3 – Minimum Wage (YouGov) (WORD2VEC) (+0.004).
+- Largest MAE reduction: Study 1 – Gun Control (MTurk) (WORD2VEC) (+0.007).
 - Largest RMSE(change) reduction: Study 2 – Minimum Wage (MTurk) (WORD2VEC) (+0.012).
 - Lowest MAE: Study 1 – Gun Control (MTurk) (WORD2VEC) (0.030); Highest MAE: Study 2 – Minimum Wage (MTurk) (WORD2VEC) (0.090).
 - Biggest KL divergence reduction: Study 2 – Minimum Wage (MTurk) (WORD2VEC) (+10.241).
@@ -79,7 +79,7 @@ Plots are refreshed under `reports/knn/<feature-space>/opinion/` including MAE v
 - Largest accuracy gain vs. baseline: Study 1 – Gun Control (MTurk) (WORD2VEC) (+0.630).
 
 - Unweighted MAE 0.070 (σ 0.028, range 0.030 – 0.090).
-- MAE delta mean -0.003 (σ 0.005, range -0.007 – 0.004).
+- MAE delta mean 0.003 (σ 0.005, range -0.004 – 0.007).
 - Unweighted directional accuracy 0.589 (σ 0.090, range 0.482 – 0.704).
 - Accuracy delta mean 0.525 (σ 0.084, range 0.424 – 0.630).
 - RMSE (change) 0.097 (σ 0.041, range 0.038 – 0.126).
@@ -90,6 +90,6 @@ Plots are refreshed under `reports/knn/<feature-space>/opinion/` including MAE v
 
 ## Takeaways
 
-- Study 1 – Gun Control (MTurk): best R² 0.983 with TFIDF (k=50); largest MAE reduction -0.007 via WORD2VEC.
-- Study 2 – Minimum Wage (MTurk): best R² 0.792 with WORD2VEC (k=50); largest MAE reduction -0.003 via TFIDF.
-- Study 3 – Minimum Wage (YouGov): best R² 0.771 with TFIDF (k=50); largest MAE reduction +0.004 via WORD2VEC.
+- Study 1 – Gun Control (MTurk): best R² 0.983 with TFIDF (k=50); largest MAE reduction +0.007 via TFIDF.
+- Study 2 – Minimum Wage (MTurk): best R² 0.792 with WORD2VEC (k=50); largest MAE reduction +0.006 via WORD2VEC.
+- Study 3 – Minimum Wage (YouGov): best R² 0.771 with TFIDF (k=50); largest MAE reduction -0.004 via TFIDF.

@@ -1,4 +1,4 @@
-"""Unit tests for :mod:`common.pipeline_stage`."""
+"""Unit tests for :mod:`common.pipeline.stage`."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from common.pipeline_stage import (
+from common.pipeline.stage import (
     DryRunSummary,
     SweepPartitionExecutors,
     SweepPartitionSpec,
@@ -105,7 +105,7 @@ def test_dispatch_sweep_task_invokes_expected_partition(tmp_path: Path, caplog) 
             prefix="second",
         )
     )
-    logger = logging.getLogger("tests.common.pipeline_stage.dispatch")
+    logger = logging.getLogger("tests.common.pipeline.stage.dispatch")
 
     with caplog.at_level(logging.INFO, logger=logger.name):
         dispatch_sweep_task(
@@ -131,14 +131,14 @@ def test_dispatch_sweep_task_raises_for_out_of_range(tmp_path: Path) -> None:
             executors=_executors("Only", []),
         )
     )
-    logger = logging.getLogger("tests.common.pipeline_stage.range")
+    logger = logging.getLogger("tests.common.pipeline.stage.range")
 
     with pytest.raises(RuntimeError, match="beyond partitioned workload"):
         dispatch_sweep_task([partition], task_id=3, logger=logger)
 
 
 def test_prepare_sweep_execution_reads_env_and_warns(monkeypatch, caplog) -> None:
-    logger = logging.getLogger("tests.common.pipeline_stage.prepare.env")
+    logger = logging.getLogger("tests.common.pipeline.stage.prepare.env")
     monkeypatch.setenv("CUSTOM_TASK_ID", "2")
 
     with caplog.at_level(logging.WARNING, logger=logger.name):
@@ -155,7 +155,7 @@ def test_prepare_sweep_execution_reads_env_and_warns(monkeypatch, caplog) -> Non
 
 
 def test_prepare_sweep_execution_skips_when_cli_count_exceeds_total(caplog) -> None:
-    logger = logging.getLogger("tests.common.pipeline_stage.prepare.skip")
+    logger = logging.getLogger("tests.common.pipeline.stage.prepare.skip")
 
     with caplog.at_level(logging.INFO, logger=logger.name):
         task_id = prepare_sweep_execution(
@@ -171,7 +171,7 @@ def test_prepare_sweep_execution_skips_when_cli_count_exceeds_total(caplog) -> N
 
 
 def test_prepare_sweep_execution_requires_env(monkeypatch) -> None:
-    logger = logging.getLogger("tests.common.pipeline_stage.prepare.required")
+    logger = logging.getLogger("tests.common.pipeline.stage.prepare.required")
     monkeypatch.delenv("MISSING_TASK_ID", raising=False)
 
     with pytest.raises(RuntimeError, match="requires --sweep-task-id"):
@@ -185,7 +185,7 @@ def test_prepare_sweep_execution_requires_env(monkeypatch) -> None:
 
 
 def test_log_dry_run_summary_formats_entries(caplog) -> None:
-    logger = logging.getLogger("tests.common.pipeline_stage.dryrun")
+    logger = logging.getLogger("tests.common.pipeline.stage.dryrun")
     entries = [
         DryRunSummary(label="alpha", pending=2, cached=1),
         DryRunSummary(label="beta", pending=0, cached=3),

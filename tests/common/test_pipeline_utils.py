@@ -1,11 +1,11 @@
-"""Unit tests for :mod:`common.pipeline_utils`."""
+"""Unit tests for :mod:`common.pipeline.utils`."""
 
 from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
 
-from common.pipeline_utils import (
+from common.pipeline.utils import (
     merge_indexed_outcomes,
     merge_ordered,
     merge_ordered_with_warning,
@@ -43,7 +43,7 @@ def test_merge_ordered_prefers_executed_and_invokes_callback() -> None:
 
 
 def test_merge_ordered_with_warning_logs_duplicates(caplog) -> None:
-    logger = logging.getLogger("tests.common.pipeline_utils.warning")
+    logger = logging.getLogger("tests.common.pipeline.utils.warning")
     cached = [DummyItem(index=5, label="cached-five")]
     executed = [DummyItem(index=5, label="executed-five")]
 
@@ -62,7 +62,7 @@ def test_merge_ordered_with_warning_logs_duplicates(caplog) -> None:
 
 
 def test_merge_indexed_outcomes_replaces_cached_entries(caplog) -> None:
-    logger = logging.getLogger("tests.common.pipeline_utils.indexed")
+    logger = logging.getLogger("tests.common.pipeline.utils.indexed")
     cached = [
         DummyOutcome(order_index=0, label="cached-0"),
         DummyOutcome(order_index=3, label="cached-3"),

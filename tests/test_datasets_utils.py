@@ -189,7 +189,8 @@ def test_load_dataset_with_column_union_invokes_loader(tmp_path, monkeypatch):
     monkeypatch.setattr(datasets_mod, "_ColumnUnionLoader", RecordingLoader)
 
     result = datasets_mod.load_dataset_with_column_union("dummy/dataset")
-    assert result == captured_splits
+    assert isinstance(result, datasets_mod.DatasetDict)
+    assert dict(result.items()) == captured_splits
 
 
 def test_load_dataset_with_column_union_missing_data_files(monkeypatch):

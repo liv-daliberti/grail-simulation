@@ -29,11 +29,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Mapping, Sequence, Tuple
 
-from common.cli_args import add_comma_separated_argument
-from common.cli_options import add_log_level_argument, add_overwrite_argument
-from common.pipeline_io import write_markdown_lines
-from common.pipeline_io import load_metrics_json
-from common.report_utils import start_markdown_report
+from common.cli.args import add_comma_separated_argument
+from common.cli.options import add_log_level_argument, add_overwrite_argument
+from common.pipeline.io import write_markdown_lines
+from common.pipeline.io import load_metrics_json
+from common.reports.utils import start_markdown_report
 
 from .cli import build_parser as build_gpt_parser
 from .evaluate import run_eval

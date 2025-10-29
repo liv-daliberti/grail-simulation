@@ -32,7 +32,7 @@ except ImportError:  # pragma: no cover - optional dependency
     get_peft_config = None  # type: ignore[assignment]
     GRPOTrainer = None  # type: ignore[assignment]
 
-from common.hf_datasets import DatasetDict
+from common.data.hf_datasets import DatasetDict
 
 from open_r1.configs import GRPOConfig, GRPOScriptArguments
 from open_r1.dataset_utils import drop_marked_rows, make_slate_validator

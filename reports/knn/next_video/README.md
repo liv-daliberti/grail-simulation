@@ -85,11 +85,26 @@ This section compares the eligible-only accuracy for KNN and XGB, and also shows
 Key holdout takeaways:
 
 - Highest holdout accuracy: Study 1 – Gun Control (MTurk) (0.763) +0.223 vs. baseline.
-- Lowest holdout accuracy: Study 2 – Minimum Wage (MTurk) (0.355) -0.013 vs. baseline.
-- Average accuracy delta across holdouts: +0.105.
+- Lowest holdout accuracy: Study 3 – Minimum Wage (YouGov) (0.309) -0.170 vs. baseline.
+- Average accuracy delta across holdouts: +0.013.
 
 | Holdout study | Accuracy ↑ | Δ vs baseline ↑ | Baseline ↑ | Best k | Eligible |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Study 1 – Gun Control (MTurk) | 0.763 | +0.223 | 0.540 | 2 | 548 |
 | Study 2 – Minimum Wage (MTurk) | 0.355 | -0.013 | 0.368 | 2 | 671 |
+| Study 3 – Minimum Wage (YouGov) | 0.309 | -0.170 | 0.479 | 2 | 1,200 |
+
+## Word2Vec Feature Space
+
+Key holdout takeaways:
+
+- Highest holdout accuracy: Study 2 – Minimum Wage (MTurk) (0.311) -0.057 vs. baseline.
+- Lowest holdout accuracy: Study 3 – Minimum Wage (YouGov) (0.267) -0.213 vs. baseline.
+- Average accuracy delta across holdouts: -0.174.
+
+| Holdout study | Accuracy ↑ | Δ vs baseline ↑ | Baseline ↑ | Best k | Eligible |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Study 1 – Gun Control (MTurk) | 0.288 | -0.252 | 0.540 | 2 | 548 |
+| Study 2 – Minimum Wage (MTurk) | 0.311 | -0.057 | 0.368 | 4 | 671 |
+| Study 3 – Minimum Wage (YouGov) | 0.267 | -0.213 | 0.479 | 2 | 1,200 |
 

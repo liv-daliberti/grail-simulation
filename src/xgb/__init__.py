@@ -13,8 +13,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Grail Simulation XGBoost baseline package."""
+"""Grail Simulation XGBoost baseline package.
+
+Exposes CLI utilities, pipeline orchestration, and reporting helpers for the
+slate-ranking and opinion-regression experiments."""
 
 from __future__ import annotations
 
-__all__: list[str] = []
+from common.import_utils import install_package_aliases
+
+from . import cli, core, pipeline, scripts
+
+__all__ = ["cli", "core", "pipeline", "scripts"]
+
+_ALIAS_MODULES = {
+    "data": ".core.data",
+    "evaluate": ".core.evaluate",
+    "features": ".core.features",
+    "model": ".core.model",
+    "opinion": ".core.opinion",
+    "utils": ".core.utils",
+    "vectorizers": ".core.vectorizers",
+    "_optional": ".core._optional",
+    "pipeline_cli": ".pipeline.cli",
+    "pipeline_context": ".pipeline.context",
+    "pipeline_evaluate": ".pipeline.evaluate",
+    "pipeline_sweeps": ".pipeline.sweeps",
+}
+
+install_package_aliases(__name__, _ALIAS_MODULES)
+
+del install_package_aliases, _ALIAS_MODULES

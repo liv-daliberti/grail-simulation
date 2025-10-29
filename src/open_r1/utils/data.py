@@ -27,7 +27,7 @@ try:  # pragma: no cover - optional dependency
 except ImportError:  # pragma: no cover - optional dependency
     concatenate_datasets = None  # type: ignore
 
-from common.hf_datasets import DatasetDict
+from common.data.hf_datasets import DatasetDict
 
 from ..configs import ScriptArguments
 

@@ -20,4 +20,31 @@ the slate-ranking and opinion-regression experiments."""
 
 from __future__ import annotations
 
-__all__: list[str] = []
+from common.import_utils import install_package_aliases
+
+from . import cli, core, pipeline, scripts
+
+__all__ = ["cli", "core", "pipeline", "scripts"]
+
+_ALIAS_MODULES = {
+    "data": ".core.data",
+    "evaluate": ".core.evaluate",
+    "features": ".core.features",
+    "index": ".core.index",
+    "opinion": ".core.opinion",
+    "utils": ".core.utils",
+    "cli_utils": ".cli.utils",
+    "opinion_sweeps": ".pipeline.opinion_sweeps",
+    "pipeline_cli": ".pipeline.cli",
+    "pipeline_context": ".pipeline.context",
+    "pipeline_data": ".pipeline.data",
+    "pipeline_evaluate": ".pipeline.evaluate",
+    "pipeline_io": ".pipeline.io",
+    "pipeline_reports": ".pipeline.reports",
+    "pipeline_sweeps": ".pipeline.sweeps",
+    "pipeline_utils": ".pipeline.utils",
+}
+
+install_package_aliases(__name__, _ALIAS_MODULES)
+
+del install_package_aliases, _ALIAS_MODULES

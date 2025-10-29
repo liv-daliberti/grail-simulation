@@ -8,14 +8,14 @@ This section reuses the selected next-video configuration to estimate post-study
 - Δ columns capture improvements relative to that baseline when available.
 
 | Study | Participants | Accuracy ↑ | Baseline ↑ | Δ Accuracy ↑ | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ | MAE (change) ↓ | RMSE (change) ↓ | Δ RMSE (change) ↓ | Calib slope | Calib intercept | ECE ↓ | Δ ECE ↓ | KL div ↓ | Δ KL ↓ | Baseline MAE ↓ |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | Study 1 – Gun Control (MTurk) | 162 | 0.759 | 0.074 | +0.685 | 0.026 | +0.011 | 0.035 | 0.985 | 0.026 | 0.035 | +0.010 | 0.744 | 0.005 | 0.008 | — | 4.400 | +17.046 | 0.037 |
 | Study 2 – Minimum Wage (MTurk) | 165 | 0.558 | 0.061 | +0.497 | 0.090 | +0.006 | 0.124 | 0.798 | 0.090 | 0.124 | +0.014 | 0.984 | 0.009 | 0.029 | — | 5.175 | +13.194 | 0.096 |
 | Study 3 – Minimum Wage (YouGov) | 257 | 0.549 | 0.058 | +0.490 | 0.083 | +0.001 | 0.113 | 0.811 | 0.083 | 0.113 | +0.012 | 0.912 | 0.001 | 0.020 | — | 2.759 | +13.821 | 0.084 |
 
 ## Cross-Study Diagnostics
 
-### Weighted Summary Portfolio Summary
+### Weighted Summary
 
 - Weighted MAE 0.069 across 584 participants.
 - Weighted baseline MAE 0.074 (+0.005 vs. final).

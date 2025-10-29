@@ -1,0 +1,744 @@
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Opinion-regression workflow powering the XGBoost baseline."""
+
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass, field, replace
+from pathlib import Path
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+
+import numpy as np
+try:  # pragma: no cover - optional sparse support for feature stacking
+    from scipy import sparse as SP  # type: ignore,invalid-name
+except ImportError:  # pragma: no cover - optional fallback when scipy is unavailable
+    SP = None  # type: ignore,invalid-name
+
+from common.opinion import (
+    DEFAULT_SPECS,
+    OpinionExample,
+    OpinionSpec,
+    float_or_none,
+    make_opinion_example_from_values,
+)
+from common.opinion import log_participant_counts
+from common.opinion.metrics import compute_opinion_metrics
+from common.ml.xgb.callbacks import build_fit_callbacks
+from common.ml.xgb.fit_utils import harmonize_fit_kwargs
+from common.evaluation.matrix_summary import log_single_embedding
+
+try:  # pragma: no cover - optional dependency
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.metrics import mean_absolute_error
+except ImportError:  # pragma: no cover - optional dependency
+    TfidfVectorizer = None  # type: ignore[assignment]
+    mean_absolute_error = None  # type: ignore[assignment]
+
+try:  # pragma: no cover - optional dependency
+    from xgboost import XGBRegressor  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    XGBRegressor = None  # type: ignore[assignment]
+
+from .data import (
+    DEFAULT_DATASET_SOURCE,
+    EVAL_SPLIT,
+    TRAIN_SPLIT,
+    load_dataset_source,
+)
+from .features import assemble_document
+from .model import XGBoostBoosterParams
+from .vectorizers import (
+    SentenceTransformerVectorizerConfig,
+    TfidfConfig,
+    Word2VecVectorizerConfig,
+    create_vectorizer,
+)
+from .utils import get_logger
+
+LOGGER = get_logger("xgb.opinion")
+
+
+@dataclass(frozen=True)
+class OpinionTrainConfig:
+    """
+    Training options shared across the opinion pipeline.
+
+    :ivar max_participants: Optional cap on the number of participants (0 keeps all).
+    :vartype max_participants: int
+    :ivar seed: Random seed applied to participant sampling.
+    :vartype seed: int
+    :ivar max_features: Maximum TF-IDF features (``None`` allows full vocabulary).
+    :vartype max_features: Optional[int]
+    :ivar booster: Booster hyper-parameters reused for the regressor.
+    :vartype booster: XGBoostBoosterParams
+    :ivar predict_change: Train on opinion change (after - before) and anchor
+        predictions by adding back the initial opinion. When False, trains to
+        predict the post-study index directly.
+    :vartype predict_change: bool
+    :ivar include_before_feature: Append the numeric pre-study opinion index as
+        an additional input feature column.
+    :vartype include_before_feature: bool
+    """
+
+    max_participants: int = 0
+    seed: int = 42
+    max_features: Optional[int] = None
+    booster: XGBoostBoosterParams = field(default_factory=XGBoostBoosterParams)
+    predict_change: bool = True
+    include_before_feature: bool = True
+
+
+@dataclass(frozen=True)
+class OpinionVectorizerConfig:
+    """Feature extraction parameters for opinion regression."""
+
+    feature_space: str
+    extra_fields: Sequence[str] = field(default_factory=tuple)
+    tfidf: TfidfConfig | None = None
+    word2vec: Word2VecVectorizerConfig | None = None
+    sentence_transformer: SentenceTransformerVectorizerConfig | None = None
+
+
+@dataclass(frozen=True)
+class OpinionEvalRequest:
+    """Inputs required to execute the opinion regression workflow."""
+
+    dataset: str | None
+    cache_dir: str | None
+    out_dir: Path
+    train_config: OpinionTrainConfig
+    vectorizer: OpinionVectorizerConfig
+    overwrite: bool = True
+
+    @property
+    def feature_space(self) -> str:
+        """Return the configured feature space identifier."""
+        return self.vectorizer.feature_space
+
+    @property
+    def extra_fields(self) -> Sequence[str]:
+        """Return additional text fields appended during document assembly."""
+        return self.vectorizer.extra_fields
+
+    @property
+    def tfidf_config(self) -> TfidfConfig | None:
+        """Return the TF-IDF configuration used for vectorisation."""
+        return self.vectorizer.tfidf
+
+    @property
+    def word2vec_config(self) -> Word2VecVectorizerConfig | None:
+        """Return the Word2Vec configuration used for vectorisation."""
+        return self.vectorizer.word2vec
+
+    @property
+    def sentence_transformer_config(self) -> SentenceTransformerVectorizerConfig | None:
+        """Return the sentence-transformer configuration used for vectorisation."""
+        return self.vectorizer.sentence_transformer
+
+
+def _vectorizer_available() -> None:
+    """
+    Validate that optional dependencies required for opinion regression are installed.
+
+    :raises ImportError: If either scikit-learn or XGBoost is unavailable.
+    """
+
+    if TfidfVectorizer is None or mean_absolute_error is None:  # pragma: no cover
+        raise ImportError("Install scikit-learn to run the XGBoost opinion pipeline.")
+    if XGBRegressor is None:  # pragma: no cover
+        raise ImportError("Install xgboost to train the opinion regressor.")
+
+
+# pylint: disable=too-many-locals, too-many-branches, too-many-statements
+def collect_examples(
+    dataset,
+    *,
+    spec: OpinionSpec,
+    extra_fields: Sequence[str],
+    max_participants: int,
+    seed: int,
+) -> List[OpinionExample]:
+    """
+    Collapse dataset rows down to one opinion example per participant.
+
+    :param dataset: Dataset split providing raw interaction rows.
+    :type dataset: datasets.Dataset | Sequence[dict]
+    :param spec: Opinion study specification describing the target columns.
+    :type spec: OpinionSpec
+    :param extra_fields: Additional prompt columns appended to the document.
+    :type extra_fields: Sequence[str]
+    :param max_participants: Optional cap on the number of participants (0 keeps all).
+    :type max_participants: int
+    :param seed: Random seed used when subsampling participants.
+    :type seed: int
+    :returns: Participant-level examples combining prompts and opinion indices.
+    :rtype: List[OpinionExample]
+    """
+
+    LOGGER.info(
+        "[OPINION] Collapsing dataset for study=%s issue=%s rows=%d",
+        spec.key,
+        spec.issue,
+        len(dataset),
+    )
+    per_participant: Dict[str, Tuple[OpinionExample, int]] = {}
+    sample_doc: Optional[str] = None
+
+    for raw in dataset:
+        if raw.get("issue") != spec.issue or raw.get("participant_study") != spec.key:
+            continue
+        before = float_or_none(raw.get(spec.before_column))
+        after = float_or_none(raw.get(spec.after_column))
+        if before is None or after is None:
+            continue
+        # Assemble the participant document using the shared prompt builder.
+        # Honour the provided ``extra_fields`` so tests and configuration can
+        # control which text columns are included in the document. This also
+        # allows monkeypatching ``assemble_document`` in tests to return stub
+        # content (e.g., the latest step's ``doc`` field).
+        document = assemble_document(raw, extra_fields)
+        if not document:
+            continue
+        if sample_doc is None:
+            sample_doc = document
+        participant_id = str(raw.get("participant_id") or "")
+        try:
+            step_index = int(raw.get("step_index"))  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            step_index = -1
+        example = make_opinion_example_from_values(
+            spec,
+            participant_id,
+            document,
+            scores=(before, after),
+        )
+        existing = per_participant.get(participant_id)
+        if existing is None or step_index >= existing[1]:
+            per_participant[participant_id] = (example, step_index)
+
+    collapsed = [example for example, _ in per_participant.values()]
+    LOGGER.info("[OPINION] Retained %d unique participants.", len(collapsed))
+    if sample_doc:
+        LOGGER.info("[OPINION] Example prompt: %r", sample_doc)
+
+    if max_participants and len(collapsed) > max_participants:
+        rng = np.random.default_rng(seed)
+        order = rng.permutation(len(collapsed))[:max_participants]
+        collapsed = [collapsed[i] for i in order]
+        LOGGER.info("[OPINION] Sampled %d participants.", len(collapsed))
+    return collapsed
+
+
+def _train_regressor(
+    *,
+    features,
+    targets: np.ndarray,
+    config: OpinionTrainConfig,
+    eval_features=None,
+   eval_targets: np.ndarray | None = None,
+) -> Tuple[XGBRegressor, Dict[str, Dict[str, List[float]]]]:
+    """
+    Train an :class:`xgboost.XGBRegressor` and capture optional evaluation metrics.
+
+    :param features: Training feature matrix.
+    :type features: Any
+    :param targets: Training target vector.
+    :type targets: numpy.ndarray
+    :param config: Training configuration containing booster hyper-parameters.
+    :type config: OpinionTrainConfig
+    :param eval_features: Optional validation feature matrix.
+    :type eval_features: Any, optional
+    :param eval_targets: Optional validation target vector.
+    :type eval_targets: Optional[numpy.ndarray]
+    :returns: Tuple of ``(regressor, eval_history)`` where ``eval_history`` mirrors
+        :meth:`xgboost.XGBRegressor.evals_result`.
+    :rtype: Tuple[XGBRegressor, Dict[str, Dict[str, List[float]]]]
+    """
+
+    booster = config.booster
+    regressor = XGBRegressor(
+        objective="reg:squarederror",
+        learning_rate=booster.learning_rate,
+        max_depth=booster.max_depth,
+        n_estimators=booster.n_estimators,
+        subsample=booster.subsample,
+        colsample_bytree=booster.colsample_bytree,
+        reg_lambda=booster.reg_lambda,
+        reg_alpha=booster.reg_alpha,
+        tree_method=booster.tree_method,
+        n_jobs=-1,
+        random_state=config.seed,
+    )
+
+    eval_set = []
+    if eval_features is not None and eval_targets is not None:
+        eval_set = [(features, targets), (eval_features, eval_targets)]
+    if eval_set:
+        regressor.set_params(eval_metric=["mae", "rmse"])
+    fit_kwargs = {
+        "eval_set": eval_set if eval_set else None,
+        "verbose": False,
+    }
+    # Attach callbacks + harmonise kwargs only when we have evaluation.
+    if eval_set:
+        _attach_regression_callbacks(fit_kwargs)
+        _harmonize_regressor_fit_kwargs(regressor, fit_kwargs, has_eval=True)
+    else:
+        # Still prune None values for consistency when no eval set is present.
+        _harmonize_regressor_fit_kwargs(regressor, fit_kwargs, has_eval=False)
+
+    regressor.fit(features, targets, **fit_kwargs)
+    history = regressor.evals_result() if eval_set else {}
+    return regressor, history
+
+
+def _attach_regression_callbacks(fit_kwargs: Dict[str, Any]) -> None:
+    """Attach logging and EarlyStopping callbacks when available.
+
+    Best effort: if callbacks are unavailable, no-op.
+    """
+
+    callbacks = build_fit_callbacks(
+        objective="regression",
+        logger=LOGGER,
+        prefix="[OPINION][Train]",
+        has_eval=True,
+        interval=25,
+        early_stopping_metric="mae",
+    )
+    if callbacks:
+        fit_kwargs["callbacks"] = callbacks
+
+
+def _harmonize_regressor_fit_kwargs(
+    regressor: Any,
+    fit_kwargs: Dict[str, Any],
+    *,
+    has_eval: bool,
+) -> None:
+    """Prune unsupported kwargs and add legacy early stopping when appropriate."""
+    harmonize_fit_kwargs(regressor, fit_kwargs, has_eval=has_eval)
+
+
+def _baseline_metrics(
+    *,
+    before: np.ndarray,
+    after: np.ndarray,
+) -> Dict[str, float]:
+    """
+    Compute baseline metrics assuming the post-study index equals the pre-study value.
+
+    :param before: Baseline opinion indices.
+    :type before: numpy.ndarray
+    :param after: Post-study opinion indices.
+    :type after: numpy.ndarray
+    :returns: Dictionary containing MAE, RMSE, and R² for the baseline predictor.
+    :rtype: Dict[str, float]
+    """
+
+    metrics = compute_opinion_metrics(
+        truth_after=after,
+        truth_before=before,
+        pred_after=before,
+    )
+    direction_accuracy = metrics.get("direction_accuracy")
+    if direction_accuracy is not None:
+        direction_accuracy = float(direction_accuracy)
+    return {
+        "mae_before": float(metrics["mae_after"]),
+        "rmse_before": float(metrics["rmse_after"]),
+        "r2_before": float(metrics["r2_after"]),
+        "direction_accuracy": direction_accuracy,
+        "mae_change_zero": float(metrics["mae_change"]),
+        "rmse_change_zero": float(metrics["rmse_change"]),
+        "calibration_slope_change_zero": metrics.get("calibration_slope"),
+        "calibration_intercept_change_zero": metrics.get("calibration_intercept"),
+        "calibration_ece_change_zero": metrics.get("calibration_ece"),
+        "calibration_bins_change_zero": metrics.get("calibration_bins"),
+        "kl_divergence_change_zero": metrics.get("kl_divergence_change"),
+    }
+
+
+def _model_metrics(
+    *,
+    predictions: np.ndarray,
+    after: np.ndarray,
+    before: np.ndarray,
+) -> Dict[str, float]:
+    """
+    Compute evaluation metrics comparing model predictions to ground truth.
+
+    :param predictions: Predicted post-study opinion indices.
+    :type predictions: numpy.ndarray
+    :param after: Actual post-study opinion indices.
+    :type after: numpy.ndarray
+    :param before: Pre-study opinion indices (baseline values).
+    :type before: numpy.ndarray
+    :returns: Dictionary containing MAE, RMSE, and R² metrics.
+    :rtype: Dict[str, float]
+    """
+
+    return compute_opinion_metrics(
+        truth_after=after,
+        truth_before=before,
+        pred_after=predictions,
+    )
+
+
+def _resolve_studies(tokens: Sequence[str]) -> List[OpinionSpec]:
+    """
+    Resolve CLI tokens into the corresponding opinion study specifications.
+
+    :param tokens: Collection of study identifiers provided by the user.
+    :type tokens: Sequence[str]
+    :returns: Ordered list of matching :class:`OpinionSpec` definitions.
+    :rtype: List[OpinionSpec]
+    :raises ValueError: If an unknown study key is requested.
+    """
+
+    if not tokens:
+        return list(DEFAULT_SPECS)
+    resolved: List[OpinionSpec] = []
+    valid = {spec.key.lower(): spec for spec in DEFAULT_SPECS}
+    for token in tokens:
+        normalised = token.strip().lower()
+        if not normalised or normalised == "all":
+            return list(DEFAULT_SPECS)
+        try:
+            resolved.append(valid[normalised])
+        except KeyError as exc:  # pragma: no cover - defensive
+            raise ValueError(
+                f"Unknown opinion study '{token}'. Expected one of {sorted(valid)}."
+            ) from exc
+    return resolved
+
+
+def _curve_metrics_from_history(eval_history: Mapping[str, Any]) -> Optional[Dict[str, Any]]:
+    """
+    Build per-round metric curves from the evaluation history, if available.
+
+    :param eval_history: Training history captured by XGBoost.
+    :type eval_history: Mapping[str, Any]
+    :returns: Nested metric structure compatible with downstream reporting.
+    :rtype: Optional[Dict[str, Any]]
+    """
+
+    if not eval_history:
+        return None
+    curve_metrics: Dict[str, Any] = {"metric": "mae"}
+    dataset_map = {"validation_0": "train", "validation_1": "validation"}
+    for history_key, label in dataset_map.items():
+        history = eval_history.get(history_key, {})
+        mae_sequence = history.get("mae", [])
+        rmse_sequence = history.get("rmse", [])
+        if not mae_sequence and not rmse_sequence:
+            continue
+        series_bundle: Dict[str, Dict[str, float]] = {}
+        if mae_sequence:
+            series_bundle["mae_by_round"] = {
+                str(idx + 1): float(value) for idx, value in enumerate(mae_sequence)
+            }
+        if rmse_sequence:
+            series_bundle["rmse_by_round"] = {
+                str(idx + 1): float(value) for idx, value in enumerate(rmse_sequence)
+            }
+        curve_metrics[label] = series_bundle
+    eval_mae_sequence = eval_history.get("validation_1", {}).get("mae", [])
+    if eval_mae_sequence:
+        best_round = min(
+            range(len(eval_mae_sequence)),
+            key=lambda idx: eval_mae_sequence[idx],
+        )
+        curve_metrics["best_round"] = int(best_round + 1)
+        curve_metrics["best_mae"] = float(eval_mae_sequence[best_round])
+    return curve_metrics
+
+
+def _evaluate_spec(  # pylint: disable=too-many-locals,too-many-statements
+    *,
+    dataset,
+    spec: OpinionSpec,
+    base_dir: Path,
+    dataset_source: str,
+    request: OpinionEvalRequest,
+) -> Optional[Dict[str, Any]]:
+    """
+    Evaluate a single opinion study and persist metrics plus predictions.
+
+    :param dataset: Dataset dictionary containing train/eval splits.
+    :type dataset: Mapping[str, Sequence[dict]]
+    :param spec: Opinion study specification to evaluate.
+    :type spec: OpinionSpec
+    :param base_dir: Base output directory for study artefacts.
+    :type base_dir: Path
+    :param dataset_source: Human-readable dataset identifier for reporting.
+    :type dataset_source: str
+    :param request: Evaluation request describing feature space and configuration.
+    :type request: OpinionEvalRequest
+    :returns: Metrics payload summarising the evaluation, or ``None`` when skipped.
+    :rtype: Optional[Dict[str, Any]]
+    :raises FileExistsError: If outputs already exist and overwriting is disabled.
+    """
+
+    train_examples = collect_examples(
+        dataset[TRAIN_SPLIT],
+        spec=spec,
+        extra_fields=request.extra_fields,
+        max_participants=request.train_config.max_participants,
+        seed=request.train_config.seed,
+    )
+    eval_examples = collect_examples(
+        dataset[EVAL_SPLIT],
+        spec=spec,
+        extra_fields=request.extra_fields,
+        max_participants=request.train_config.max_participants,
+        seed=request.train_config.seed,
+    )
+    # Log participant counts for sweep visibility
+    log_participant_counts(
+        LOGGER, study_key=spec.key,
+        train_count=len(train_examples), eval_count=len(eval_examples)
+    )
+    if not train_examples or not eval_examples:
+        LOGGER.warning(
+            "[OPINION] Skipping study=%s (train=%d eval=%d).",
+            spec.key,
+            len(train_examples),
+            len(eval_examples),
+        )
+        return None
+
+    feature_space = request.feature_space.lower()
+    train_docs = [example.document for example in train_examples]
+    eval_docs = [example.document for example in eval_examples]
+
+    if feature_space == "word2vec":
+        base_word2vec_config = request.word2vec_config or Word2VecVectorizerConfig()
+        model_dir = base_word2vec_config.model_dir
+        if not model_dir:
+            model_dir = str((base_dir / spec.key / "word2vec_model").resolve())
+        word2vec_config = replace(
+            base_word2vec_config,
+            model_dir=model_dir,
+            seed=request.train_config.seed,
+        )
+        vectorizer = create_vectorizer("word2vec", word2vec=word2vec_config)
+    elif feature_space == "sentence_transformer":
+        sentence_config = (
+            request.sentence_transformer_config or SentenceTransformerVectorizerConfig()
+        )
+        vectorizer = create_vectorizer(
+            "sentence_transformer",
+            sentence_transformer=sentence_config,
+        )
+    else:
+        feature_space = "tfidf"
+        tfidf_config = request.tfidf_config or TfidfConfig(
+            max_features=request.train_config.max_features,
+        )
+        vectorizer = create_vectorizer("tfidf", tfidf=tfidf_config)
+
+    train_features = vectorizer.fit_transform(train_docs)
+    eval_features = vectorizer.transform(eval_docs)
+    # Emit a concise embedding summary for visibility (opinion docs have no selection tokens).
+    if train_docs:
+        # log_single_embedding is defensive and swallows its own errors.
+        log_single_embedding(train_features[0], logger=LOGGER, tag="[OPINION][Embed]")
+
+    # Prepare targets and optionally append the initial opinion index as a feature.
+    train_after = np.array([ex.after for ex in train_examples], dtype=float)
+    train_before = np.array([ex.before for ex in train_examples], dtype=float)
+    eval_after = np.array([ex.after for ex in eval_examples], dtype=float)
+    eval_before = np.array([ex.before for ex in eval_examples], dtype=float)
+
+    if request.train_config.include_before_feature:
+        train_before_col = train_before.reshape(-1, 1)
+        eval_before_col = eval_before.reshape(-1, 1)
+        try:
+            if SP is not None and hasattr(train_features, "shape"):
+                if hasattr(SP, "issparse") and SP.issparse(
+                    train_features
+                ):  # type: ignore[attr-defined]
+                    train_features = SP.hstack(  # type: ignore[attr-defined]
+                        [train_features, SP.csr_matrix(train_before_col)]
+                    )
+                else:
+                    train_features = np.hstack(
+                        [np.asarray(train_features), train_before_col]
+                    )
+                if hasattr(SP, "issparse") and SP.issparse(
+                    eval_features
+                ):  # type: ignore[attr-defined]
+                    eval_features = SP.hstack(  # type: ignore[attr-defined]
+                        [eval_features, SP.csr_matrix(eval_before_col)]
+                    )
+                else:
+                    eval_features = np.hstack(
+                        [np.asarray(eval_features), eval_before_col]
+                    )
+            else:
+                train_features = np.hstack([np.asarray(train_features), train_before_col])
+                eval_features = np.hstack([np.asarray(eval_features), eval_before_col])
+        except (TypeError, ValueError, AttributeError):  # pragma: no cover - defensive
+            train_features = np.hstack([np.asarray(train_features), train_before_col])
+            eval_features = np.hstack([np.asarray(eval_features), eval_before_col])
+
+    if request.train_config.predict_change:
+        train_targets = train_after - train_before
+        eval_targets_for_fit = eval_after - eval_before
+    else:
+        train_targets = train_after
+        eval_targets_for_fit = eval_after
+
+    regressor, eval_history = _train_regressor(
+        features=train_features,
+        targets=train_targets,
+        config=request.train_config,
+        eval_features=eval_features,
+        eval_targets=eval_targets_for_fit,
+    )
+
+    raw_predictions = regressor.predict(eval_features)
+    predictions_after = (
+        eval_before + raw_predictions if request.train_config.predict_change else raw_predictions
+    )
+    metrics = _model_metrics(predictions=predictions_after, after=eval_after, before=eval_before)
+    baseline = _baseline_metrics(
+        before=eval_before,
+        after=eval_after,
+    )
+
+    study_dir = base_dir / spec.key
+    if study_dir.exists() and not request.overwrite:
+        raise FileExistsError(
+            f"{study_dir} already exists. Use overwrite=True to replace outputs."
+        )
+    study_dir.mkdir(parents=True, exist_ok=True)
+
+    curve_metrics = _curve_metrics_from_history(eval_history)
+
+    payload: Dict[str, Any] = {
+        "model": "xgb_opinion",
+        "feature_space": feature_space,
+        "dataset": dataset_source,
+        "study": spec.key,
+        "issue": spec.issue,
+        "label": spec.label,
+        "split": "validation",
+        "n_participants": len(eval_examples),
+        "train_participants": len(train_examples),
+        "metrics": metrics,
+        "baseline": baseline,
+        "config": {
+            "max_participants": request.train_config.max_participants,
+            "max_features": request.train_config.max_features,
+            "learning_rate": request.train_config.booster.learning_rate,
+            "max_depth": request.train_config.booster.max_depth,
+            "n_estimators": request.train_config.booster.n_estimators,
+            "subsample": request.train_config.booster.subsample,
+            "colsample_bytree": request.train_config.booster.colsample_bytree,
+            "reg_lambda": request.train_config.booster.reg_lambda,
+            "reg_alpha": request.train_config.booster.reg_alpha,
+            "tree_method": request.train_config.booster.tree_method,
+            "predict_change": request.train_config.predict_change,
+            "include_before_feature": request.train_config.include_before_feature,
+        },
+    }
+    if curve_metrics:
+        payload["curve_metrics"] = curve_metrics
+    eligible = metrics.get("eligible")
+    if eligible is not None:
+        payload["eligible"] = int(eligible)
+
+    metrics_path = study_dir / f"opinion_xgb_{spec.key}_validation_metrics.json"
+    with open(metrics_path, "w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2)
+
+    predictions_path = study_dir / f"opinion_xgb_{spec.key}_validation_predictions.jsonl"
+    with open(predictions_path, "w", encoding="utf-8") as handle:
+        for idx, example in enumerate(eval_examples):
+            pred_after = float(predictions_after[idx])
+            pred_change = float(pred_after - example.before)
+            handle.write(
+                json.dumps(
+                    {
+                        "participant_id": example.participant_id,
+                        "study": spec.key,
+                        "issue": spec.issue,
+                        "before": example.before,
+                        "after": example.after,
+                        "prediction": pred_after,
+                        "prediction_change": pred_change,
+                        "error": float(abs(pred_after - example.after)),
+                    }
+                )
+                + "\n"
+            )
+
+    return payload
+
+
+def run_opinion_eval(
+    *,
+    request: OpinionEvalRequest,
+    studies: Sequence[str] | None = None,
+) -> Dict[str, Dict[str, Any]]:
+    """
+    Execute the opinion regression workflow and persist artefacts under ``request.out_dir``.
+
+    :param request: Evaluation request describing dataset and training configuration.
+    :type request: OpinionEvalRequest
+    :param studies: Optional subset of study keys to process (defaults to all).
+    :type studies: Sequence[str] | None
+    :returns: Mapping of study key to metric summary.
+    :rtype: Dict[str, Dict[str, Any]]
+    """
+
+    _vectorizer_available()
+
+    dataset_source = request.dataset or DEFAULT_DATASET_SOURCE
+    dataset_bundle = load_dataset_source(dataset_source, request.cache_dir or "")
+    selected_specs = _resolve_studies(studies or ())
+    results: Dict[str, Dict[str, Any]] = {}
+
+    feature_space = request.feature_space.lower()
+    base_dir = request.out_dir / feature_space
+    base_dir.mkdir(parents=True, exist_ok=True)
+
+    for spec in selected_specs:
+        payload = _evaluate_spec(
+            dataset=dataset_bundle,
+            spec=spec,
+            base_dir=base_dir,
+            dataset_source=dataset_source,
+            request=request,
+        )
+        if payload:
+            results[spec.key] = payload
+    return results
+
+
+__all__ = [
+    "OpinionSpec",
+    "OpinionExample",
+    "OpinionTrainConfig",
+    "OpinionVectorizerConfig",
+    "OpinionEvalRequest",
+    "DEFAULT_SPECS",
+    "collect_examples",
+    "run_opinion_eval",
+]

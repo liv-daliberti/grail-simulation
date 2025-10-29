@@ -8,21 +8,13 @@ TF-IDF, and ships with automated sweeps + report generation.
 
 ```
 src/xgb/
-├── cli.py / xgboost-baseline.py   # Single-run CLI (train, evaluate, export)
-├── data.py                        # Dataset loading + issue/study filtering
-├── evaluate.py                    # Training loop, metrics writer, CLI orchestration
-├── features.py                    # Prompt assembly + slate extraction utilities
-├── model.py                       # TF-IDF vectoriser + XGBoost wrappers
-├── vectorizers.py                 # Word2Vec + SentenceTransformer adapters
-├── opinion.py                     # Opinion-regression training/evaluation
-├── pipeline.py                    # End-to-end sweeps, finals, and reports
-├── pipeline_cli.py                # Pipeline argument parsing + default directories
-├── pipeline_context.py            # Execution context (datasets, reports, sweeps)
-├── pipeline_evaluate.py           # Final evaluation orchestration
-├── pipeline_reports/              # Markdown builders for reports/xgb/*
-├── pipeline_sweeps.py             # Hyper-parameter grids + job fan-out
-├── pipeline_utils.py              # Shared helpers and cache management
-└── utils.py                       # Logging, canonicalisation, prompt helpers
+├── cli/                 # Single-run CLI (train, evaluate, export)
+├── core/                # Dataset loading, feature prep, models, evaluation
+├── pipeline/            # Hyper-parameter sweeps, finals, and reporting glue
+├── pipeline/reports/    # Markdown builders for reports/xgb/*
+├── pipeline_reports/    # Legacy shims pointing at pipeline/reports/*
+├── scripts/             # Backwards-compatible entry points
+└── xgboost-baseline.py  # Legacy CLI shim (invokes xgb.cli.main)
 ```
 
 Set `PYTHONPATH=src` (or install the package) before invoking the CLIs.
@@ -74,7 +66,8 @@ python -m xgb.cli \
 ```
 
 Run `python -m xgb.cli --help` to inspect all arguments (including `--extra_text_fields`
-for prompt augmentation and the `--xgb_*` hyper-parameters).
+for prompt augmentation and the `--xgb_*` hyper-parameters). Legacy import paths such
+as `xgb.data` and `xgb.pipeline_cli` remain available via compatibility aliases.
 
 ## Pipeline Automation
 
@@ -136,7 +129,7 @@ The training launcher sets defaults that align with our standard sweeps:
 - **Word2Vec** – relies on `vectorizers.Word2VecBundle`; persisted models live
   under the directory supplied via `--word2vec_model_dir`.
 - **Sentence Transformer** – handled by `vectorizers.SentenceTransformerBundle`.
-  Normalisation flags are shared with the CLI via `common.cli_args`.
+  Normalisation flags are shared with the CLI via `common.cli.args`.
 
 All vectorisers reuse `features.prepare_prompt_documents` to keep prompts aligned
 with the other baselines.

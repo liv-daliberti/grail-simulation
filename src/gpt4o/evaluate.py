@@ -21,9 +21,9 @@ from dataclasses import dataclass
 from importlib import import_module
 import typing as t
 
-import common.eval_utils as _eval_utils
-import common.hf_datasets as _hf_datasets
-from common import slate_eval
+import common.evaluation.utils as _eval_utils
+import common.data.hf_datasets as _hf_datasets
+from common.evaluation import slate_eval
 
 _client = import_module("gpt4o.client")
 _config = import_module("gpt4o.config")

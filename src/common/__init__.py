@@ -17,14 +17,19 @@
 
 from __future__ import annotations
 
-from .cli_args import add_comma_separated_argument, add_sentence_transformer_normalise_flags
-from .eval_utils import safe_div
-from .logging_utils import ensure_directory, get_logger
+from .cli import add_comma_separated_argument, add_sentence_transformer_normalise_flags
+from .evaluation import safe_div
+from .logging import ensure_directory, get_logger
 from .opinion import build_opinion_example, opinion_example_kwargs
-from .pipeline_utils import OpinionStudySelection, merge_ordered
-from .text import canon_text, canon_video_id, resolve_paths_from_env, split_env_list
-from .title_index import TitleResolver
-from .vectorizers import create_tfidf_vectorizer
+from .pipeline.utils import OpinionStudySelection, merge_ordered
+from .text import (
+    TitleResolver,
+    canon_text,
+    canon_video_id,
+    create_tfidf_vectorizer,
+    resolve_paths_from_env,
+    split_env_list,
+)
 
 __all__ = [
     "OpinionStudySelection",

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from common.prompt_docs import DEFAULT_EXTRA_TEXT_FIELDS
+from common.prompts.docs import DEFAULT_EXTRA_TEXT_FIELDS
 
 from xgb import opinion
 

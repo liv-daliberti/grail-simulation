@@ -23,7 +23,7 @@ import argparse
 import logging
 from pathlib import Path
 
-from common.cli_args import add_comma_separated_argument
+from common.cli.args import add_comma_separated_argument
 
 from .config import DEFAULT_CACHE_DIR
 from .evaluate import run_eval

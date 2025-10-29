@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.common.opinion_sweep_types import AccuracySummary, MetricsArtifact
+from src.common.opinion.sweep_types import AccuracySummary, MetricsArtifact
 from src.xgb.pipeline_context import (
     OpinionStudySelection,
     OpinionSweepOutcome,

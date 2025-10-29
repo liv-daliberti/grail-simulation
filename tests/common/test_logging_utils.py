@@ -1,11 +1,11 @@
-"""Unit tests for :mod:`common.logging_utils`."""
+"""Unit tests for :mod:`common.logging.utils`."""
 
 from __future__ import annotations
 
 import logging
 from pathlib import Path
 
-from common.logging_utils import ensure_directory, get_logger
+from common.logging.utils import ensure_directory, get_logger
 
 
 def _reset_logger(name: str) -> logging.Logger:

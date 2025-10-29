@@ -216,7 +216,7 @@ _nitpick_targets = {
         "argparse.Namespace",
         "abc.ABC",
         "collections.Counter",
-        "common.title_index.TitleResolver",
+        "common.text.title_index.TitleResolver",
         "concurrent.futures._base.Future",
         "concurrent.futures.Future",
         "datasets.Dataset",

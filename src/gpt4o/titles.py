@@ -17,7 +17,7 @@
 
 from __future__ import annotations
 
-from common.title_index import TitleResolver as _BaseTitleResolver
+from common.text.title_index import TitleResolver as _BaseTitleResolver
 
 from .config import DEFAULT_TITLE_DIRS
 

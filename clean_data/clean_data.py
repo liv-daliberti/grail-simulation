@@ -22,7 +22,9 @@ LICENSE for terms and conditions.
 
 from __future__ import annotations
 
+import csv
 import importlib
+import json
 import logging
 import sys
 import types
@@ -177,18 +179,7 @@ def load_raw(dataset_name: str, validation_ratio: float = 0.1) -> DatasetDict:
                 return loaded_dataset
             return DatasetDict({"train": loaded_dataset})
         if path.is_file():
-            ext = path.suffix.lower()
-            if ext in {".json", ".jsonl"}:
-                loaded = datasets.load_dataset("json", data_files=str(path))
-            elif ext in {".csv", ".tsv"}:
-                loaded = datasets.load_dataset(
-                    "csv",
-                    data_files=str(path),
-                    delimiter="," if ext == ".csv" else "\t",
-                )
-            else:
-                raise ValueError(f"Unsupported file type: {path}")
-            return DatasetDict(dict(loaded.items()))
+            return _load_local_file_dataset(path)
     log.info("Loading dataset from hub: %s", dataset_name)
     try:
         loaded = datasets.load_dataset(dataset_name)
@@ -200,6 +191,71 @@ def load_raw(dataset_name: str, validation_ratio: float = 0.1) -> DatasetDict:
         )
         return _load_dataset_with_column_union(dataset_name)
     return DatasetDict(dict(loaded.items()))
+
+
+def _load_local_file_dataset(path: Path) -> DatasetDict:
+    """Load a local dataset file, falling back to manual parsing when needed."""
+
+    ext = path.suffix.lower()
+    if ext in {".json", ".jsonl"}:
+        try:
+            loaded = datasets.load_dataset("json", data_files=str(path))
+        except RuntimeError:
+            return _load_json_fallback(path, lines=(ext == ".jsonl"))
+        return DatasetDict(dict(loaded.items()))
+    if ext in {".csv", ".tsv"}:
+        try:
+            loaded = datasets.load_dataset(
+                "csv",
+                data_files=str(path),
+                delimiter="," if ext == ".csv" else "\t",
+            )
+        except RuntimeError:
+            return _load_delimited_fallback(path, delimiter="," if ext == ".csv" else "\t")
+        return DatasetDict(dict(loaded.items()))
+    raise ValueError(f"Unsupported file type: {path}")
+
+
+def _build_dataset(rows: list[dict[str, object]]) -> DatasetDict:
+    dataset = datasets.Dataset.from_list(rows)
+    return DatasetDict({"train": dataset})
+
+
+def _normalize_rows(raw_rows: list[object]) -> list[dict[str, object]]:
+    normalized: list[dict[str, object]] = []
+    for entry in raw_rows:
+        if isinstance(entry, dict):
+            normalized.append(entry)
+        else:
+            normalized.append({"value": entry})
+    return normalized
+
+
+def _load_json_fallback(path: Path, *, lines: bool) -> DatasetDict:
+    if lines:
+        rows = []
+        with path.open("r", encoding="utf-8") as handle:
+            for line in handle:
+                line = line.strip()
+                if not line:
+                    continue
+                rows.append(json.loads(line))
+        return _build_dataset(_normalize_rows(rows))
+    with path.open("r", encoding="utf-8") as handle:
+        payload = json.load(handle)
+    if isinstance(payload, dict) and all(isinstance(value, list) for value in payload.values()):
+        mapping = {split: datasets.Dataset.from_list(_normalize_rows(rows)) for split, rows in payload.items()}
+        return DatasetDict(mapping)
+    if isinstance(payload, list):
+        return _build_dataset(_normalize_rows(payload))
+    raise ValueError(f"Unsupported JSON structure in dataset file: {path}")
+
+
+def _load_delimited_fallback(path: Path, *, delimiter: str) -> DatasetDict:
+    with path.open("r", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle, delimiter=delimiter)
+        rows = [dict(row) for row in reader]
+    return _build_dataset(_normalize_rows(rows))
 
 
 

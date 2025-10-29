@@ -8,23 +8,32 @@ while keeping a compatible CLI for ad-hoc experiments and batch jobs.
 
 ```
 src/knn/
-├── cli.py / knn-baseline.py       # Single-run CLI (train, evaluate, export artefacts)
-├── cli_utils.py                   # Shared argparse helpers (e.g. ST embedding flags)
-├── data.py                        # Dataset loading + issue/study filtering
-├── features.py                    # Prompt document assembly + TF-IDF/Word2Vec glue
-├── index.py                       # Index builders + persistence for TF-IDF/W2V/ST
-├── evaluate.py                    # Training/eval loop, metrics, elbow selection
-├── opinion.py / opinion_sweeps.py # Opinion-regression fit/eval + sweep definitions
-├── pipeline.py                    # End-to-end sweeps, finals, and report generation
-├── pipeline_cli.py                # Top-level pipeline CLI + default paths
-├── pipeline_context.py            # Path resolution + execution configuration
-├── pipeline_data.py               # Study/issue metadata helpers
-├── pipeline_evaluate.py           # Per-study + opinion evaluation orchestration
-├── pipeline_io.py                 # Sweep/final metrics loading + JSON writers
-├── pipeline_reports/              # Markdown builders for reports/knn/*
-├── pipeline_sweeps.py             # Hyper-parameter grids and task partitioning
-├── pipeline_utils.py              # Fan-out helpers shared across stages
-└── utils.py                       # Logging, canonicalisation, slate utilities
+├── cli/                           # Single-run CLI entry points
+│   ├── __init__.py                # Public exports for python -m knn.cli
+│   ├── main.py                    # Argument parsing, CLI wiring, eval dispatch
+│   └── utils.py                   # Shared argparse helpers (e.g. ST flags)
+├── core/                          # Feature extraction, indexing, evaluation
+│   ├── __init__.py
+│   ├── data.py                    # Dataset loading + issue/study filtering
+│   ├── evaluate.py                # Training/eval loop, metrics, elbow selection
+│   ├── features.py                # Prompt document assembly + TF-IDF/W2V glue
+│   ├── index.py                   # Index builders + persistence for TF-IDF/W2V/ST
+│   ├── opinion.py                 # Opinion-regression fit/eval helpers
+│   └── utils.py                   # Logging + filesystem shims
+├── pipeline/                      # End-to-end sweeps, finals, report generation
+│   ├── __init__.py                # Orchestration entry point (python -m knn.pipeline)
+│   ├── cli.py                     # Top-level pipeline CLI + default paths
+│   ├── context.py                 # Path resolution + execution configuration
+│   ├── data.py                    # Study/issue metadata helpers
+│   ├── evaluate.py                # Final + opinion evaluation orchestration
+│   ├── io.py                      # Sweep/final metrics loading + JSON writers
+│   ├── sweeps.py                  # Hyper-parameter grids and task partitioning
+│   ├── opinion_sweeps.py          # Opinion-specific sweep helpers
+│   ├── utils.py                   # Fan-out helpers shared across stages
+│   └── reports/                   # Markdown builders for reports/knn/*
+└── scripts/
+    ├── __init__.py
+    └── baseline.py                # Backwards-compatible shim for knn-baseline.py
 ```
 
 Set `PYTHONPATH=src` (or install the package) before invoking any module-level CLI.
@@ -125,22 +134,22 @@ The training launcher applies sensible defaults that mirror typical runs:
   Configure via `--sentence-transformer-*` flags in both the single-run CLI and
   pipeline. Normalisation can be toggled with `--sentence-transformer-normalize`.
 
-All spaces share the prompt builder from `common.prompt_docs` to guarantee parity
+All spaces share the prompt builder from `common.prompts.docs` to guarantee parity
 with the GPT-4o and XGBoost baselines.
 
 ## Evaluation Outputs
 
-`evaluate.py` computes accuracy and slate coverage plus elbow diagnostics. Expect:
+`core/evaluate.py` computes accuracy and slate coverage plus elbow diagnostics. Expect:
 
 - Metrics JSON/CSV under `models/knn/next_video/<feature>/<study>/<issue>/`.
 - Per-`k` curves (`knn_curves_<issue>.json`) and elbow PNGs in the same folder.
 - Opinion pipelines emit regression summaries beneath `models/knn/opinion/*` and
-  populate `reports/knn/opinion/*.md` via the builders in `pipeline_reports/`.
+  populate `reports/knn/opinion/*.md` via the builders in `pipeline/reports/`.
 - Opinion-from-next evaluations reuse the selected next-video configuration to score
   opinion change; metrics live under `models/knn/opinions/from_next/*` and drive the
   optional `reports/knn/opinion_from_next/` section.
 
-`pipeline_reports/catalog.py` regenerates the top-level README, while the
+`pipeline/reports/catalog.py` regenerates the top-level README, while the
 issue-specific modules handle table/plot assembly.
 
 ## Testing

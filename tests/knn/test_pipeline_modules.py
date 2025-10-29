@@ -8,15 +8,15 @@ from typing import Dict, List, Mapping
 
 import pytest
 
-from common.prompt_docs import DEFAULT_EXTRA_TEXT_FIELDS
-from common.opinion_sweep_types import AccuracySummary, MetricsArtifact
+from common.prompts.docs import DEFAULT_EXTRA_TEXT_FIELDS
+from common.opinion.sweep_types import AccuracySummary, MetricsArtifact
 
-from knn import pipeline_cli
-from knn import pipeline_data as data
-from knn import pipeline_evaluate as evaluate
-from knn import pipeline_reports as reports
-from knn import pipeline_sweeps as sweeps
-from knn.pipeline_context import (
+from knn.pipeline import cli as pipeline_cli
+from knn.pipeline import data
+from knn.pipeline import evaluate
+from knn.pipeline import reports
+from knn.pipeline import sweeps
+from knn.pipeline.context import (
     EvaluationContext,
     OpinionStudySelection,
     OpinionSweepOutcome,

@@ -10,12 +10,13 @@ pytest.importorskip("sklearn")
 pytest.importorskip("joblib")
 pytest.importorskip("gensim")
 
-from common.prompt_docs import DEFAULT_EXTRA_TEXT_FIELDS
+from common.prompts.docs import DEFAULT_EXTRA_TEXT_FIELDS
 
-from knn import cli, evaluate
-from knn.data import DEFAULT_DATASET_SOURCE
-from knn.features import Word2VecConfig, prepare_training_documents
-from knn.index import (
+from knn.cli import build_parser
+from knn.core import evaluate
+from knn.core.data import DEFAULT_DATASET_SOURCE
+from knn.core.features import Word2VecConfig, prepare_training_documents
+from knn.core.index import (
     SlateQueryConfig,
     build_tfidf_index,
     build_word2vec_index,
@@ -77,7 +78,7 @@ def test_build_tfidf_index_and_predict() -> None:
 
 
 def test_cli_parser_defaults() -> None:
-    parser = cli.build_parser()
+    parser = build_parser()
     args = parser.parse_args([])
     assert args.dataset == DEFAULT_DATASET_SOURCE
     assert Path(args.out_dir).name == "knn"
@@ -88,7 +89,7 @@ def test_cli_parser_defaults() -> None:
 
 
 def test_cli_parser_hyphenated_options() -> None:
-    parser = cli.build_parser()
+    parser = build_parser()
     args = parser.parse_args(
         [
             "--feature-space",

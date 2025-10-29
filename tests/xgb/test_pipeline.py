@@ -9,8 +9,8 @@ from typing import Dict, List
 
 import pytest
 
-from common.prompt_docs import DEFAULT_EXTRA_TEXT_FIELDS
-from common.opinion_sweep_types import AccuracySummary, MetricsArtifact
+from common.prompts.docs import DEFAULT_EXTRA_TEXT_FIELDS
+from common.opinion.sweep_types import AccuracySummary, MetricsArtifact
 
 from xgb import pipeline as pipeline_module
 from xgb import pipeline_cli as cli

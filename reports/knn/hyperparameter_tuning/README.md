@@ -215,61 +215,61 @@ Configurations are ranked by validation MAE (lower is better). Bold rows indicat
 
 | Study | Metric | Text fields | Model | Vec size | Window | Min count | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ | Participants |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| **Study 1 – Gun Control (MTurk)** | l2 | viewer_profile, state_text | — | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | -0.007 | 0.038 | 0.983 | 162 |
-| Study 1 – Gun Control (MTurk) | l2 | viewer_profile, state_text, ideo1 | — | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | -0.007 | 0.038 | 0.983 | 162 |
-| Study 1 – Gun Control (MTurk) | l2 | viewer_profile, state_text, ideo2 | — | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | -0.007 | 0.038 | 0.983 | 162 |
-| Study 1 – Gun Control (MTurk) | l2 | viewer_profile, state_text, pol_interest | — | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | -0.007 | 0.038 | 0.983 | 162 |
-| Study 1 – Gun Control (MTurk) | l2 | viewer_profile, state_text, religpew | — | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | -0.007 | 0.038 | 0.983 | 162 |
-| **Study 2 – Minimum Wage (MTurk)** | cosine | viewer_profile, state_text | — | — | — | — | 0.527 | 0.061 | +0.467 | 50 | 165 | 0.093 | -0.003 | 0.128 | 0.786 | 165 |
-| Study 2 – Minimum Wage (MTurk) | cosine | viewer_profile, state_text, ideo1 | — | — | — | — | 0.527 | 0.061 | +0.467 | 50 | 165 | 0.093 | -0.003 | 0.128 | 0.786 | 165 |
-| Study 2 – Minimum Wage (MTurk) | cosine | viewer_profile, state_text, ideo2 | — | — | — | — | 0.527 | 0.061 | +0.467 | 50 | 165 | 0.093 | -0.003 | 0.128 | 0.786 | 165 |
-| Study 2 – Minimum Wage (MTurk) | cosine | viewer_profile, state_text, pol_interest | — | — | — | — | 0.527 | 0.061 | +0.467 | 50 | 165 | 0.093 | -0.003 | 0.128 | 0.786 | 165 |
-| Study 2 – Minimum Wage (MTurk) | cosine | viewer_profile, state_text, religpew | — | — | — | — | 0.527 | 0.061 | +0.467 | 50 | 165 | 0.093 | -0.003 | 0.128 | 0.786 | 165 |
-| **Study 3 – Minimum Wage (YouGov)** | l2 | viewer_profile, state_text | — | — | — | — | 0.490 | 0.058 | +0.432 | 50 | 257 | 0.088 | +0.004 | 0.125 | 0.771 | 257 |
-| Study 3 – Minimum Wage (YouGov) | l2 | viewer_profile, state_text, ideo1 | — | — | — | — | 0.490 | 0.058 | +0.432 | 50 | 257 | 0.088 | +0.004 | 0.125 | 0.771 | 257 |
-| Study 3 – Minimum Wage (YouGov) | l2 | viewer_profile, state_text, ideo2 | — | — | — | — | 0.490 | 0.058 | +0.432 | 50 | 257 | 0.088 | +0.004 | 0.125 | 0.771 | 257 |
-| Study 3 – Minimum Wage (YouGov) | l2 | viewer_profile, state_text, pol_interest | — | — | — | — | 0.490 | 0.058 | +0.432 | 50 | 257 | 0.088 | +0.004 | 0.125 | 0.771 | 257 |
-| Study 3 – Minimum Wage (YouGov) | l2 | viewer_profile, state_text, religpew | — | — | — | — | 0.490 | 0.058 | +0.432 | 50 | 257 | 0.088 | +0.004 | 0.125 | 0.771 | 257 |
+| **Study 1 – Gun Control (MTurk)** | l2 | viewer_profile, state_text | — | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | +0.007 | 0.038 | 0.983 | 162 |
+| Study 1 – Gun Control (MTurk) | l2 | viewer_profile, state_text, ideo1 | — | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | +0.007 | 0.038 | 0.983 | 162 |
+| Study 1 – Gun Control (MTurk) | l2 | viewer_profile, state_text, ideo2 | — | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | +0.007 | 0.038 | 0.983 | 162 |
+| Study 1 – Gun Control (MTurk) | l2 | viewer_profile, state_text, pol_interest | — | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | +0.007 | 0.038 | 0.983 | 162 |
+| Study 1 – Gun Control (MTurk) | l2 | viewer_profile, state_text, religpew | — | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | +0.007 | 0.038 | 0.983 | 162 |
+| **Study 2 – Minimum Wage (MTurk)** | cosine | viewer_profile, state_text | — | — | — | — | 0.527 | 0.061 | +0.467 | 50 | 165 | 0.093 | +0.003 | 0.128 | 0.786 | 165 |
+| Study 2 – Minimum Wage (MTurk) | cosine | viewer_profile, state_text, ideo1 | — | — | — | — | 0.527 | 0.061 | +0.467 | 50 | 165 | 0.093 | +0.003 | 0.128 | 0.786 | 165 |
+| Study 2 – Minimum Wage (MTurk) | cosine | viewer_profile, state_text, ideo2 | — | — | — | — | 0.527 | 0.061 | +0.467 | 50 | 165 | 0.093 | +0.003 | 0.128 | 0.786 | 165 |
+| Study 2 – Minimum Wage (MTurk) | cosine | viewer_profile, state_text, pol_interest | — | — | — | — | 0.527 | 0.061 | +0.467 | 50 | 165 | 0.093 | +0.003 | 0.128 | 0.786 | 165 |
+| Study 2 – Minimum Wage (MTurk) | cosine | viewer_profile, state_text, religpew | — | — | — | — | 0.527 | 0.061 | +0.467 | 50 | 165 | 0.093 | +0.003 | 0.128 | 0.786 | 165 |
+| **Study 3 – Minimum Wage (YouGov)** | l2 | viewer_profile, state_text | — | — | — | — | 0.490 | 0.058 | +0.432 | 50 | 257 | 0.088 | -0.004 | 0.125 | 0.771 | 257 |
+| Study 3 – Minimum Wage (YouGov) | l2 | viewer_profile, state_text, ideo1 | — | — | — | — | 0.490 | 0.058 | +0.432 | 50 | 257 | 0.088 | -0.004 | 0.125 | 0.771 | 257 |
+| Study 3 – Minimum Wage (YouGov) | l2 | viewer_profile, state_text, ideo2 | — | — | — | — | 0.490 | 0.058 | +0.432 | 50 | 257 | 0.088 | -0.004 | 0.125 | 0.771 | 257 |
+| Study 3 – Minimum Wage (YouGov) | l2 | viewer_profile, state_text, pol_interest | — | — | — | — | 0.490 | 0.058 | +0.432 | 50 | 257 | 0.088 | -0.004 | 0.125 | 0.771 | 257 |
+| Study 3 – Minimum Wage (YouGov) | l2 | viewer_profile, state_text, religpew | — | — | — | — | 0.490 | 0.058 | +0.432 | 50 | 257 | 0.088 | -0.004 | 0.125 | 0.771 | 257 |
 
 ## Word2Vec Feature Space
 
 | Study | Metric | Text fields | Model | Vec size | Window | Min count | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ | Participants |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| **Study 1 – Gun Control (MTurk)** | cosine | viewer_profile, state_text, ideo1 | — | 128 | 5 | 1 | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | -0.007 | 0.038 | 0.983 | 162 |
-| Study 1 – Gun Control (MTurk) | l2 | viewer_profile, state_text, ideo2 | — | 256 | 5 | 1 | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | -0.007 | 0.038 | 0.983 | 162 |
-| Study 1 – Gun Control (MTurk) | l2 | viewer_profile, state_text | — | 256 | 5 | 1 | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | -0.007 | 0.038 | 0.983 | 162 |
-| Study 1 – Gun Control (MTurk) | l2 | viewer_profile, state_text, ideo1 | — | 128 | 5 | 1 | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | -0.007 | 0.038 | 0.983 | 162 |
-| Study 1 – Gun Control (MTurk) | l2 | viewer_profile, state_text, ideo2 | — | 128 | 5 | 1 | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | -0.007 | 0.038 | 0.983 | 162 |
-| **Study 2 – Minimum Wage (MTurk)** | l2 | viewer_profile, state_text, ideo2 | — | 128 | 5 | 1 | 0.558 | 0.061 | +0.497 | 50 | 165 | 0.090 | -0.006 | 0.125 | 0.796 | 165 |
-| Study 2 – Minimum Wage (MTurk) | l2 | viewer_profile, state_text, religpew | — | 128 | 5 | 1 | 0.552 | 0.061 | +0.491 | 50 | 165 | 0.090 | -0.006 | 0.126 | 0.793 | 165 |
-| Study 2 – Minimum Wage (MTurk) | cosine | viewer_profile, state_text, ideo1, ideo2, pol_interest, religpew, freq_youtube, youtube_time, newsint, slate_source, educ, employ, child18, inputstate, income, participant_study | — | 128 | 5 | 1 | 0.558 | 0.061 | +0.497 | 50 | 165 | 0.090 | -0.006 | 0.126 | 0.794 | 165 |
-| Study 2 – Minimum Wage (MTurk) | cosine | viewer_profile, state_text, ideo2 | — | 256 | 5 | 1 | 0.570 | 0.061 | +0.509 | 50 | 165 | 0.090 | -0.006 | 0.126 | 0.793 | 165 |
-| Study 2 – Minimum Wage (MTurk) | l2 | viewer_profile, state_text | — | 128 | 5 | 1 | 0.552 | 0.061 | +0.491 | 50 | 165 | 0.090 | -0.006 | 0.126 | 0.793 | 165 |
-| **Study 3 – Minimum Wage (YouGov)** | cosine | viewer_profile, state_text, religpew | — | 256 | 5 | 1 | 0.475 | 0.058 | +0.416 | 50 | 257 | 0.088 | +0.004 | 0.126 | 0.767 | 257 |
-| Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile, state_text, ideo1, ideo2, pol_interest, religpew, freq_youtube, youtube_time, newsint, slate_source, educ, employ, child18, inputstate, income, participant_study | — | 256 | 5 | 1 | 0.510 | 0.058 | +0.451 | 50 | 257 | 0.088 | +0.004 | 0.126 | 0.767 | 257 |
-| Study 3 – Minimum Wage (YouGov) | l2 | viewer_profile, state_text, pol_interest | — | 256 | 5 | 1 | 0.502 | 0.058 | +0.444 | 50 | 257 | 0.088 | +0.004 | 0.126 | 0.768 | 257 |
-| Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile, state_text, religpew | — | 128 | 5 | 1 | 0.475 | 0.058 | +0.416 | 50 | 257 | 0.088 | +0.004 | 0.126 | 0.765 | 257 |
-| Study 3 – Minimum Wage (YouGov) | l2 | viewer_profile, state_text, religpew | — | 128 | 5 | 1 | 0.502 | 0.058 | +0.444 | 50 | 257 | 0.088 | +0.004 | 0.126 | 0.768 | 257 |
+| **Study 1 – Gun Control (MTurk)** | cosine | viewer_profile, state_text, ideo1 | — | 128 | 5 | 1 | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | +0.007 | 0.038 | 0.983 | 162 |
+| Study 1 – Gun Control (MTurk) | l2 | viewer_profile, state_text, ideo2 | — | 256 | 5 | 1 | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | +0.007 | 0.038 | 0.983 | 162 |
+| Study 1 – Gun Control (MTurk) | l2 | viewer_profile, state_text | — | 256 | 5 | 1 | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | +0.007 | 0.038 | 0.983 | 162 |
+| Study 1 – Gun Control (MTurk) | l2 | viewer_profile, state_text, ideo1 | — | 128 | 5 | 1 | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | +0.007 | 0.038 | 0.983 | 162 |
+| Study 1 – Gun Control (MTurk) | l2 | viewer_profile, state_text, ideo2 | — | 128 | 5 | 1 | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | +0.007 | 0.038 | 0.983 | 162 |
+| **Study 2 – Minimum Wage (MTurk)** | l2 | viewer_profile, state_text, ideo2 | — | 128 | 5 | 1 | 0.558 | 0.061 | +0.497 | 50 | 165 | 0.090 | +0.006 | 0.125 | 0.796 | 165 |
+| Study 2 – Minimum Wage (MTurk) | l2 | viewer_profile, state_text, religpew | — | 128 | 5 | 1 | 0.552 | 0.061 | +0.491 | 50 | 165 | 0.090 | +0.006 | 0.126 | 0.793 | 165 |
+| Study 2 – Minimum Wage (MTurk) | cosine | viewer_profile, state_text, ideo1, ideo2, pol_interest, religpew, freq_youtube, youtube_time, newsint, slate_source, educ, employ, child18, inputstate, income, participant_study | — | 128 | 5 | 1 | 0.558 | 0.061 | +0.497 | 50 | 165 | 0.090 | +0.006 | 0.126 | 0.794 | 165 |
+| Study 2 – Minimum Wage (MTurk) | cosine | viewer_profile, state_text, ideo2 | — | 256 | 5 | 1 | 0.570 | 0.061 | +0.509 | 50 | 165 | 0.090 | +0.006 | 0.126 | 0.793 | 165 |
+| Study 2 – Minimum Wage (MTurk) | l2 | viewer_profile, state_text | — | 128 | 5 | 1 | 0.552 | 0.061 | +0.491 | 50 | 165 | 0.090 | +0.006 | 0.126 | 0.793 | 165 |
+| **Study 3 – Minimum Wage (YouGov)** | cosine | viewer_profile, state_text, religpew | — | 256 | 5 | 1 | 0.475 | 0.058 | +0.416 | 50 | 257 | 0.088 | -0.004 | 0.126 | 0.767 | 257 |
+| Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile, state_text, ideo1, ideo2, pol_interest, religpew, freq_youtube, youtube_time, newsint, slate_source, educ, employ, child18, inputstate, income, participant_study | — | 256 | 5 | 1 | 0.510 | 0.058 | +0.451 | 50 | 257 | 0.088 | -0.004 | 0.126 | 0.767 | 257 |
+| Study 3 – Minimum Wage (YouGov) | l2 | viewer_profile, state_text, pol_interest | — | 256 | 5 | 1 | 0.502 | 0.058 | +0.444 | 50 | 257 | 0.088 | -0.004 | 0.126 | 0.768 | 257 |
+| Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile, state_text, religpew | — | 128 | 5 | 1 | 0.475 | 0.058 | +0.416 | 50 | 257 | 0.088 | -0.004 | 0.126 | 0.765 | 257 |
+| Study 3 – Minimum Wage (YouGov) | l2 | viewer_profile, state_text, religpew | — | 128 | 5 | 1 | 0.502 | 0.058 | +0.444 | 50 | 257 | 0.088 | -0.004 | 0.126 | 0.768 | 257 |
 
 ## Sentence-Transformer Feature Space
 
 | Study | Metric | Text fields | Model | Vec size | Window | Min count | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ | Participants |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| **Study 1 – Gun Control (MTurk)** | cosine | viewer_profile, state_text, ideo1 | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | -0.007 | 0.038 | 0.983 | 162 |
-| Study 1 – Gun Control (MTurk) | cosine | viewer_profile, state_text, religpew | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | -0.007 | 0.038 | 0.983 | 162 |
-| Study 1 – Gun Control (MTurk) | cosine | viewer_profile, state_text | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | -0.007 | 0.038 | 0.983 | 162 |
-| Study 1 – Gun Control (MTurk) | cosine | viewer_profile, state_text, ideo2 | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | -0.007 | 0.038 | 0.983 | 162 |
-| Study 1 – Gun Control (MTurk) | cosine | viewer_profile, state_text, pol_interest | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | -0.007 | 0.038 | 0.983 | 162 |
-| **Study 2 – Minimum Wage (MTurk)** | l2 | viewer_profile, state_text | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.564 | 0.061 | +0.503 | 25 | 165 | 0.089 | -0.007 | 0.126 | 0.792 | 165 |
-| Study 2 – Minimum Wage (MTurk) | l2 | viewer_profile, state_text, ideo2 | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.564 | 0.061 | +0.503 | 25 | 165 | 0.089 | -0.007 | 0.126 | 0.792 | 165 |
-| Study 2 – Minimum Wage (MTurk) | l2 | viewer_profile, state_text, pol_interest | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.564 | 0.061 | +0.503 | 25 | 165 | 0.089 | -0.007 | 0.126 | 0.792 | 165 |
-| Study 2 – Minimum Wage (MTurk) | l2 | viewer_profile, state_text, ideo1, ideo2, pol_interest, religpew, freq_youtube, youtube_time, newsint, slate_source, educ, employ, child18, inputstate, income, participant_study | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.564 | 0.061 | +0.503 | 25 | 165 | 0.089 | -0.007 | 0.126 | 0.792 | 165 |
-| Study 2 – Minimum Wage (MTurk) | l2 | viewer_profile, state_text, ideo1 | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.564 | 0.061 | +0.503 | 25 | 165 | 0.089 | -0.007 | 0.126 | 0.792 | 165 |
-| Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile, state_text, ideo1 | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.521 | 0.058 | +0.463 | 50 | 257 | 0.089 | +0.004 | 0.125 | 0.768 | 257 |
-| Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile, state_text, pol_interest | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.521 | 0.058 | +0.463 | 50 | 257 | 0.089 | +0.004 | 0.125 | 0.768 | 257 |
-| Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile, state_text, ideo1, ideo2, pol_interest, religpew, freq_youtube, youtube_time, newsint, slate_source, educ, employ, child18, inputstate, income, participant_study | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.521 | 0.058 | +0.463 | 50 | 257 | 0.089 | +0.004 | 0.125 | 0.768 | 257 |
-| **Study 3 – Minimum Wage (YouGov)** | cosine | viewer_profile, state_text | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.521 | 0.058 | +0.463 | 50 | 257 | 0.089 | +0.004 | 0.125 | 0.768 | 257 |
-| Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile, state_text, ideo2 | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.521 | 0.058 | +0.463 | 50 | 257 | 0.089 | +0.004 | 0.125 | 0.768 | 257 |
+| **Study 1 – Gun Control (MTurk)** | cosine | viewer_profile, state_text, ideo1 | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | +0.007 | 0.038 | 0.983 | 162 |
+| Study 1 – Gun Control (MTurk) | cosine | viewer_profile, state_text, religpew | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | +0.007 | 0.038 | 0.983 | 162 |
+| Study 1 – Gun Control (MTurk) | cosine | viewer_profile, state_text | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | +0.007 | 0.038 | 0.983 | 162 |
+| Study 1 – Gun Control (MTurk) | cosine | viewer_profile, state_text, ideo2 | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | +0.007 | 0.038 | 0.983 | 162 |
+| Study 1 – Gun Control (MTurk) | cosine | viewer_profile, state_text, pol_interest | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | +0.007 | 0.038 | 0.983 | 162 |
+| **Study 2 – Minimum Wage (MTurk)** | l2 | viewer_profile, state_text | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.564 | 0.061 | +0.503 | 25 | 165 | 0.089 | +0.007 | 0.126 | 0.792 | 165 |
+| Study 2 – Minimum Wage (MTurk) | l2 | viewer_profile, state_text, ideo2 | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.564 | 0.061 | +0.503 | 25 | 165 | 0.089 | +0.007 | 0.126 | 0.792 | 165 |
+| Study 2 – Minimum Wage (MTurk) | l2 | viewer_profile, state_text, pol_interest | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.564 | 0.061 | +0.503 | 25 | 165 | 0.089 | +0.007 | 0.126 | 0.792 | 165 |
+| Study 2 – Minimum Wage (MTurk) | l2 | viewer_profile, state_text, ideo1, ideo2, pol_interest, religpew, freq_youtube, youtube_time, newsint, slate_source, educ, employ, child18, inputstate, income, participant_study | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.564 | 0.061 | +0.503 | 25 | 165 | 0.089 | +0.007 | 0.126 | 0.792 | 165 |
+| Study 2 – Minimum Wage (MTurk) | l2 | viewer_profile, state_text, ideo1 | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.564 | 0.061 | +0.503 | 25 | 165 | 0.089 | +0.007 | 0.126 | 0.792 | 165 |
+| Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile, state_text, ideo1 | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.521 | 0.058 | +0.463 | 50 | 257 | 0.089 | -0.004 | 0.125 | 0.768 | 257 |
+| Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile, state_text, pol_interest | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.521 | 0.058 | +0.463 | 50 | 257 | 0.089 | -0.004 | 0.125 | 0.768 | 257 |
+| Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile, state_text, ideo1, ideo2, pol_interest, religpew, freq_youtube, youtube_time, newsint, slate_source, educ, employ, child18, inputstate, income, participant_study | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.521 | 0.058 | +0.463 | 50 | 257 | 0.089 | -0.004 | 0.125 | 0.768 | 257 |
+| **Study 3 – Minimum Wage (YouGov)** | cosine | viewer_profile, state_text | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.521 | 0.058 | +0.463 | 50 | 257 | 0.089 | -0.004 | 0.125 | 0.768 | 257 |
+| Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile, state_text, ideo2 | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.521 | 0.058 | +0.463 | 50 | 257 | 0.089 | -0.004 | 0.125 | 0.768 | 257 |
 
 ### Portfolio Summary
 
@@ -280,7 +280,7 @@ Configurations are ranked by validation MAE (lower is better). Bold rows indicat
 - Weighted RMSE (change) 0.101 (+0.005 vs. baseline).
 - Weighted calibration ECE 0.020 (— vs. baseline).
 - Weighted KL divergence 9.562 (+8.873 vs. baseline).
-- Largest MAE reduction: SENTENCE_TRANSFORMER – Study 3 – Minimum Wage (YouGov) (+0.004).
+- Largest MAE reduction: SENTENCE_TRANSFORMER – Study 2 – Minimum Wage (MTurk) (+0.007).
 - Largest RMSE(change) reduction: WORD2VEC – Study 2 – Minimum Wage (MTurk) (+0.013).
 - Lowest MAE: WORD2VEC – Study 1 – Gun Control (MTurk) (0.030); Highest MAE: TFIDF – Study 2 – Minimum Wage (MTurk) (0.093).
 - Biggest KL divergence reduction: TFIDF – Study 1 – Gun Control (MTurk) (+10.467).

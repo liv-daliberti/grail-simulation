@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.common.pipeline_models import StudySpec
-from src.common.opinion_sweep_types import AccuracySummary, MetricsArtifact
-from src.knn.pipeline_context import (
+from src.common.pipeline.models import StudySpec
+from src.common.opinion.sweep_types import AccuracySummary, MetricsArtifact
+from src.knn.pipeline.context import (
     OpinionStudySelection,
     OpinionSweepOutcome,
     ReportBundle,
@@ -14,12 +14,12 @@ from src.knn.pipeline_context import (
     SweepConfig,
     SweepOutcome,
 )
-from src.knn.pipeline_reports import generate_reports
-from src.knn.pipeline_reports.next_video import (
+from src.knn.pipeline.reports import generate_reports
+from src.knn.pipeline.reports.next_video import (
     NextVideoReportInputs,
     _build_next_video_report,
 )
-from src.knn.pipeline_reports.shared import parse_k_sweep
+from src.knn.pipeline.reports.shared import parse_k_sweep
 
 
 def test_parse_k_sweep_handles_strings_and_iterables() -> None:
@@ -99,7 +99,7 @@ def test_generate_reports_writes_expected_markdown(tmp_path: Path, sample_png: P
         rmse=0.62,
         r2_score=0.11,
         baseline_mae=0.5,
-        mae_delta=-0.05,
+        mae_delta=0.05,
         best_k=5,
         participants=50,
         artifact=MetricsArtifact(

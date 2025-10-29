@@ -18,6 +18,7 @@ This summary lists the top-performing configurations uncovered during the hyper-
 | tfidf_lr0p1_depth4_estim300_sub0p9_col0p8_l21_l10 | 0.803 | 0.803 | 0.802 | 438/546 | 0.996 | 0.513 | 548 |
 | tfidf_lr0p05_depth3_estim300_sub0p9_col0p8_l21_l10 | 0.792 | 0.792 | 0.791 | 432/546 | 0.996 | 0.495 | 548 |
 | tfidf_lr0p05_depth4_estim300_sub0p9_col0p8_l21_l10 | 0.790 | 0.790 | 0.789 | 431/546 | 0.996 | 0.495 | 548 |
+| tfidf_lr0p03_depth3_estim300_sub0p9_col0p8_l21_l10 | 0.785 | 0.785 | 0.784 | 428/546 | 0.996 | 0.492 | 548 |
 | tfidf_lr0p03_depth4_estim300_sub0p9_col0p8_l21_l10 | 0.783 | 0.783 | 0.782 | 427/546 | 0.996 | 0.492 | 548 |
 
 ### Study 2 – Minimum Wage (MTurk)
@@ -41,6 +42,7 @@ This summary lists the top-performing configurations uncovered during the hyper-
 | --- | ---: | ---: | ---: | --- | ---: | ---: | ---: |
 | **tfidf_lr0p1_depth3_estim300_sub0p9_col0p8_l21_l10** | 0.250 | 0.250 | 0.250 | 300/1,200 | 1.000 | 0.022 | 1,200 |
 | tfidf_lr0p1_depth4_estim300_sub0p9_col0p8_l21_l10 | 0.250 | 0.250 | 0.250 | 300/1,200 | 1.000 | 0.022 | 1,200 |
+| tfidf_lr0p03_depth3_estim300_sub0p9_col0p8_l21_l10 | 0.229 | 0.229 | 0.229 | 275/1,200 | 1.000 | 0.020 | 1,200 |
 | tfidf_lr0p03_depth4_estim300_sub0p9_col0p8_l21_l10 | 0.229 | 0.229 | 0.229 | 275/1,200 | 1.000 | 0.020 | 1,200 |
 | tfidf_lr0p05_depth3_estim300_sub0p9_col0p8_l21_l10 | 0.220 | 0.220 | 0.220 | 264/1,200 | 1.000 | 0.020 | 1,200 |
 | tfidf_lr0p05_depth4_estim300_sub0p9_col0p8_l21_l10 | 0.220 | 0.220 | 0.220 | 264/1,200 | 1.000 | 0.020 | 1,200 |
@@ -55,7 +57,8 @@ This summary lists the top-performing configurations uncovered during the hyper-
 | 2 | tfidf_lr0p1_depth4_estim300_sub0p9_col0p8_l21_l10 | 0.803 | 0.000 | 0.802 | 0.000 | 548 |
 | 3 | tfidf_lr0p05_depth3_estim300_sub0p9_col0p8_l21_l10 | 0.792 | 0.011 | 0.791 | 0.011 | 548 |
 | 4 | tfidf_lr0p05_depth4_estim300_sub0p9_col0p8_l21_l10 | 0.790 | 0.013 | 0.789 | 0.013 | 548 |
-| 5 | tfidf_lr0p03_depth4_estim300_sub0p9_col0p8_l21_l10 | 0.783 | 0.020 | 0.782 | 0.020 | 548 |
+| 5 | tfidf_lr0p03_depth3_estim300_sub0p9_col0p8_l21_l10 | 0.785 | 0.018 | 0.784 | 0.018 | 548 |
+*Showing top 5 of 6 configurations.*
 
 #### Study 2 – Minimum Wage (MTurk)
 
@@ -74,9 +77,10 @@ This summary lists the top-performing configurations uncovered during the hyper-
 | ---: | --- | ---: | ---: | ---: | ---: | ---: |
 | 1 | **tfidf_lr0p1_depth3_estim300_sub0p9_col0p8_l21_l10** | 0.250 | 0.000 | 0.250 | 0.000 | 1,200 |
 | 2 | tfidf_lr0p1_depth4_estim300_sub0p9_col0p8_l21_l10 | 0.250 | 0.000 | 0.250 | 0.000 | 1,200 |
-| 3 | tfidf_lr0p03_depth4_estim300_sub0p9_col0p8_l21_l10 | 0.229 | 0.021 | 0.229 | 0.021 | 1,200 |
-| 4 | tfidf_lr0p05_depth3_estim300_sub0p9_col0p8_l21_l10 | 0.220 | 0.030 | 0.220 | 0.030 | 1,200 |
-| 5 | tfidf_lr0p05_depth4_estim300_sub0p9_col0p8_l21_l10 | 0.220 | 0.030 | 0.220 | 0.030 | 1,200 |
+| 3 | tfidf_lr0p03_depth3_estim300_sub0p9_col0p8_l21_l10 | 0.229 | 0.021 | 0.229 | 0.021 | 1,200 |
+| 4 | tfidf_lr0p03_depth4_estim300_sub0p9_col0p8_l21_l10 | 0.229 | 0.021 | 0.229 | 0.021 | 1,200 |
+| 5 | tfidf_lr0p05_depth3_estim300_sub0p9_col0p8_l21_l10 | 0.220 | 0.030 | 0.220 | 0.030 | 1,200 |
+*Showing top 5 of 6 configurations.*
 
 ### Selection Summary
 

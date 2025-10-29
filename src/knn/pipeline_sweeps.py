@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import logging
 import os
+import json
 from itertools import product
 from pathlib import Path
 from typing import Dict, List, Mapping, Optional, Sequence, Tuple
@@ -608,6 +609,14 @@ def execute_sweep_task(task: SweepTask) -> SweepOutcome:
             "skipped": True,
             "skip_reason": "No metrics written (evaluation skipped)",
         }
+        # Persist placeholder metrics so finalize/report stages and reuse logic can see the skip.
+        try:
+            metrics_dir = metrics_path.parent
+            metrics_dir.mkdir(parents=True, exist_ok=True)
+            with open(metrics_path, "w", encoding="utf-8") as handle:
+                json.dump(metrics, handle, ensure_ascii=False, indent=2)
+        except OSError as exc:  # pragma: no cover - defensive logging only
+            LOGGER.warning("Failed to write placeholder metrics at %s: %s", metrics_path, exc)
     return sweep_outcome_from_metrics(task, metrics, metrics_path)
 
 def emit_sweep_plan(tasks: Sequence[SweepTask]) -> None:

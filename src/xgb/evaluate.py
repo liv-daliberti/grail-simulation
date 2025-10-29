@@ -59,6 +59,40 @@ from .utils import canon_video_id, ensure_directory, get_logger
 logger = get_logger("xgb.eval")
 
 
+def _log_training_validation_metrics(
+    issue_slug: str,
+    history: Mapping[str, Mapping[str, Sequence[object]]] | None,
+) -> None:
+    """Emit the latest validation metrics captured during booster training."""
+
+    if not history:
+        return
+    summary_bits: List[str] = []
+    for dataset_name, metrics_map in sorted(history.items()):
+        if not isinstance(metrics_map, Mapping):
+            continue
+        if "valid" not in dataset_name.lower():
+            continue
+        metric_parts: List[str] = []
+        for metric_name, values in sorted(metrics_map.items()):
+            if not isinstance(values, Sequence) or not values:
+                continue
+            last_value = values[-1]
+            try:
+                formatted = f"{float(last_value):.4f}"
+            except (TypeError, ValueError):
+                continue
+            metric_parts.append(f"{metric_name}={formatted}")
+        if metric_parts:
+            summary_bits.append(f"{dataset_name}: " + ", ".join(metric_parts))
+    if summary_bits:
+        logger.info(
+            "[XGBoost][Train][Validation] issue=%s %s",
+            issue_slug,
+            " | ".join(summary_bits),
+        )
+
+
 def _split_tokens(raw: Optional[str]) -> List[str]:
     """
     Split a comma-delimited string into trimmed tokens.
@@ -385,6 +419,7 @@ def _evaluate_issue(
         eval_ds,
         context.extra_fields,
     )
+    _log_training_validation_metrics(issue_slug, getattr(model, "training_history", None))
 
     eval_config = EvaluationConfig(
         dataset_source=context.dataset_source,
@@ -432,6 +467,16 @@ def _evaluate_issue(
         metrics.known_candidate_hits,
         known_accuracy,
         metrics.accuracy_eligible,
+    )
+    logger.info(
+        "[XGBoost][Validation] issue=%s accuracy=%.3f eligible_accuracy=%.3f "
+        "known_accuracy=%.3f coverage=%.3f evaluated=%d",
+        issue_slug,
+        metrics.accuracy,
+        metrics.accuracy_eligible,
+        known_accuracy,
+        metrics.coverage,
+        metrics.evaluated,
     )
     logger.info(
         "[XGBoost] Issue=%s accuracy=%.3f coverage=%.3f evaluated=%d",

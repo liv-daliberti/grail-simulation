@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=knn-sweeps
-#SBATCH --cpus-per-task=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=64G
 #SBATCH --time=00:59:00
 #SBATCH --output=knn_%x_%A_%a.out
 #SBATCH --error=knn_%x_%A_%a.err
@@ -90,9 +91,11 @@ fi
 mkdir -p "${HF_HOME}" "${HF_DATASETS_CACHE}"
 
 # ---------------------------------------------------------------------------
-# Default GPU configuration (overridable via environment variables)
+# Default resource configuration (overridable via environment variables)
 # ---------------------------------------------------------------------------
 
+: "${KNN_CPU_CPUS:=4}"
+: "${KNN_CPU_MEM:=64G}"
 : "${KNN_USE_GPU:=1}"
 : "${KNN_GPU_GRES:=gpu:1}"
 : "${KNN_GPU_CPUS:=16}"
@@ -117,9 +120,9 @@ KNN_PIPELINE_TASKS=$(ensure_dual_task_string "${KNN_PIPELINE_TASKS}")
 : "${KNN_FEATURE_SPACES:=tfidf,word2vec,sentence_transformer}"
 # Broaden default k sweep to cover small and moderate neighbourhood sizes
 : "${KNN_K_SWEEP:=1,2,3,4,5,10,25,50}"
-: "${KNN_TFIDF_METRICS:=cosine}"
-: "${KNN_WORD2VEC_METRICS:=cosine}"
-: "${KNN_SENTENCE_METRICS:=cosine}"
+: "${KNN_TFIDF_METRICS:=cosine,l2}"
+: "${KNN_WORD2VEC_METRICS:=cosine,l2}"
+: "${KNN_SENTENCE_METRICS:=cosine,l2}"
 : "${KNN_TFIDF_TEXT_LIMIT:=1}"
 : "${KNN_WORD2VEC_TEXT_LIMIT:=1}"
 : "${KNN_SENTENCE_TEXT_LIMIT:=1}"
@@ -165,12 +168,14 @@ Environment overrides:
   KNN_FINAL_TIME        Wallclock time for finalize task (default: 03:00:00)
   KNN_FINAL_CPUS        CPU count for finalize task (default: 4)
   KNN_MAX_ARRAY_SIZE    Maximum tasks per SLURM array submission (default: 1000)
+  KNN_CPU_CPUS          CPU count per CPU sweep task (default: 4)
+  KNN_CPU_MEM           Memory request per CPU sweep task (default: 64G)
   KNN_GPU_FEATURES       Feature spaces that require GPU scheduling (default: * for all)
   KNN_USE_GPU            Enable GPU scheduling when set to 1 (auto-enabled if GPU options are provided)
   KNN_GPU_PARTITION      Partition name for GPU sweep chunks (default: KNN_SLURM_PARTITION)
   KNN_GPU_GRES           GPU resource specification for sweep chunks (e.g. gpu:1)
-  KNN_GPU_CPUS           CPU count per GPU sweep task (default: 4)
-  KNN_GPU_MEM            Memory request per GPU sweep task
+  KNN_GPU_CPUS           CPU count per GPU sweep task (default: 16)
+  KNN_GPU_MEM            Memory request per GPU sweep task (default: 128G)
   KNN_GPU_TIME           Wallclock limit for GPU sweep tasks (default: KNN_SWEEP_TIME)
   KNN_GPU_MAX_ARRAY_SIZE Maximum tasks per GPU array submission (default: KNN_MAX_ARRAY_SIZE)
   KNN_GPU_SBATCH_FLAGS   Additional sbatch flags appended to GPU sweep submissions
@@ -479,6 +484,8 @@ submit_jobs() {
   local global_idx=0
   local -a cpu_ranges=()
   local -a gpu_ranges=()
+  local cpu_cpus="${KNN_CPU_CPUS:-4}"
+  local cpu_mem="${KNN_CPU_MEM:-64G}"
   while IFS= read -r line; do
     [[ -z "${line}" ]] && continue
     IFS=$'	' read -r -a fields <<<"${line}"
@@ -566,7 +573,7 @@ submit_jobs() {
       --job-name="${sweep_job_name}"
       --array="${array_spec}"
       --time="${sweep_time}"
-      --cpus-per-task=1
+      --cpus-per-task="${cpu_cpus}"
       --output="${LOG_DIR}/${sweep_job_name}_%A_%a.out"
       --error="${LOG_DIR}/${sweep_job_name}_%A_%a.err"
     )
@@ -575,6 +582,9 @@ submit_jobs() {
     fi
     if [[ -n "${slurm_partition}" ]]; then
       sbatch_cmd+=(--partition "${slurm_partition}")
+    fi
+    if [[ -n "${cpu_mem}" ]]; then
+      sbatch_cmd+=(--mem "${cpu_mem}")
     fi
     sbatch_cmd+=("${SCRIPT_PATH}" sweeps "${pipeline_args[@]}")
     local sbatch_output

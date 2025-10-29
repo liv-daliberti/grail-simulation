@@ -57,6 +57,7 @@ Accuracy values reflect eligible-only accuracy on the validation split at the se
 | 47 | Study 3 – Minimum Wage (YouGov) | TFIDF | cosine | viewer_profile, state_text, ideo1, ideo2, pol_interest, religpew, freq_youtube, youtube_time, newsint, slate_source, educ, employ, child18, inputstate, income, participant_study | 0.303 | 0.479 | -0.176 | 2 | 1,200 |
 | 48 | Study 1 – Gun Control (MTurk) | TFIDF | l2 | viewer_profile, state_text | 0.308 | 0.540 | -0.232 | 2 | 548 |
 | 49 | Study 2 – Minimum Wage (MTurk) | TFIDF | l2 | viewer_profile, state_text | 0.343 | 0.368 | -0.025 | 3 | 671 |
+| 50 | Study 3 – Minimum Wage (YouGov) | TFIDF | l2 | viewer_profile, state_text | 0.305 | 0.479 | -0.174 | 2 | 1,200 |
 | 51 | Study 1 – Gun Control (MTurk) | TFIDF | l2 | viewer_profile, state_text, ideo1 | 0.307 | 0.540 | -0.234 | 2 | 548 |
 | 52 | Study 2 – Minimum Wage (MTurk) | TFIDF | l2 | viewer_profile, state_text, ideo1 | 0.332 | 0.368 | -0.036 | 2 | 671 |
 | 54 | Study 1 – Gun Control (MTurk) | TFIDF | l2 | viewer_profile, state_text, ideo2 | 0.308 | 0.540 | -0.232 | 2 | 548 |

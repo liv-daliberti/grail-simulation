@@ -154,29 +154,17 @@ def build_participant_bootstrap_summary(
     *,
     model_samples: Sequence[float],
     baseline_samples: Sequence[float] | None,
-    n_groups: int,
-    n_rows: int,
-    n_bootstrap: int,
-    seed: int,
+    summary_config: BootstrapSummaryConfig,
 ) -> Dict[str, Any]:
     """
-    Convenience wrapper that builds ``BootstrapSummaryConfig`` for participant summaries.
+    Convenience wrapper that forwards pre-built ``BootstrapSummaryConfig`` objects.
 
     :param model_samples: Bootstrap samples produced for the model accuracy.
     :param baseline_samples: Optional baseline accuracy samples.
-    :param n_groups: Number of participant groups contributing to the evaluation.
-    :param n_rows: Eligible evaluation row count across all groups.
-    :param n_bootstrap: Number of bootstrap replicates executed.
-    :param seed: Random seed used when sampling replicates.
+    :param summary_config: Resampling metadata describing the bootstrap parameters.
     :returns: Summary dictionary created by :func:`participant_bootstrap_summary`.
     """
 
-    summary_config = BootstrapSummaryConfig(
-        n_groups=int(n_groups),
-        n_rows=int(n_rows),
-        n_bootstrap=int(n_bootstrap),
-        seed=int(seed),
-    )
     return participant_bootstrap_summary(
         model_samples=model_samples,
         baseline_samples=baseline_samples,

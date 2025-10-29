@@ -540,9 +540,6 @@ __all__ = [
     "_extract_mae_curves",
     "_plot_curve_on_axis",
     "_plot_opinion_curve",
-    "_plot_opinion_change_heatmap",
-    "_plot_opinion_post_heatmap",
-    "_plot_opinion_error_histogram",
     "_plot_xgb_curve",
     "_plot_xgb_curve_overview",
 ]

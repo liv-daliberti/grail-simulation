@@ -40,8 +40,7 @@ class ReportContext:
 
 def run_report_generation(
     *,
-    paths: PipelinePaths,
-    repo_root: Path,
+    context: ReportContext,
     outcomes: Sequence[SweepOutcome],
     selected: SweepOutcome,
     final_metrics: Mapping[str, object],
@@ -50,8 +49,7 @@ def run_report_generation(
     """
     Build a :class:`ReportContext` and regenerate GPT-4o reports.
 
-    :param paths: Resolved pipeline directories for report artefacts.
-    :param repo_root: Repository root used when deriving relative paths.
+    :param context: Path metadata used when generating reports.
     :param outcomes: Sweep outcomes captured during evaluation.
     :param selected: Promoted sweep configuration outcome.
     :param final_metrics: Metrics mapping for the selected configuration.
@@ -59,7 +57,6 @@ def run_report_generation(
     :returns: ``None``.
     """
 
-    context = ReportContext(reports_dir=paths.reports_dir, repo_root=repo_root)
     generate_reports(
         context=context,
         outcomes=outcomes,

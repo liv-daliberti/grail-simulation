@@ -21,6 +21,26 @@ This summary captures the opinion-regression baselines trained with XGBoost for 
 
 ![Study 3 – Minimum Wage (YouGov)](curves/study_3_minimum_wage_yougov_mae.png)
 
+### TFIDF Opinion Plots
+
+![Change Heatmap Study1](tfidf/opinion/change_heatmap_study1.png)
+
+![Change Heatmap Study2](tfidf/opinion/change_heatmap_study2.png)
+
+![Change Heatmap Study3](tfidf/opinion/change_heatmap_study3.png)
+
+![Error Histogram Study1](tfidf/opinion/error_histogram_study1.png)
+
+![Error Histogram Study2](tfidf/opinion/error_histogram_study2.png)
+
+![Error Histogram Study3](tfidf/opinion/error_histogram_study3.png)
+
+![Post Heatmap Study1](tfidf/opinion/post_heatmap_study1.png)
+
+![Post Heatmap Study2](tfidf/opinion/post_heatmap_study2.png)
+
+![Post Heatmap Study3](tfidf/opinion/post_heatmap_study3.png)
+
 ## Cross-Study Diagnostics
 
 ### Weighted Summary

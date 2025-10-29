@@ -823,6 +823,133 @@ def _opinion_curve_lines(
     return curve_lines
 
 
+@dataclass
+class _OpinionPredictionVectors:
+    """Container for opinion prediction series extracted from cached outputs."""
+
+    actual_after: List[float]
+    predicted_after: List[float]
+    actual_changes: List[float]
+    predicted_changes: List[float]
+    errors: List[float]
+
+    def has_post_indices(self) -> bool:
+        """Return True when post-study predictions are available."""
+
+        return bool(self.actual_after and self.predicted_after)
+
+    def has_change_series(self) -> bool:
+        """Return True when change deltas are available."""
+
+        return bool(self.actual_changes and self.predicted_changes)
+
+    def has_errors(self) -> bool:
+        """Return True when prediction errors were recorded."""
+
+        return bool(self.errors)
+
+
+def _collect_opinion_prediction_vectors(
+    *,
+    predictions_path: Path,
+    feature_space: str,
+    study_key: str,
+) -> _OpinionPredictionVectors | None:
+    """
+    Load cached prediction rows and extract series needed for diagnostic plots.
+    """
+
+    def _parse_prediction_row(payload: Mapping[str, object]) -> tuple[float, float, float, float] | None:
+        before = payload.get("before")
+        after_value = payload.get("after")
+        pred_after = payload.get("prediction")
+        if before is None or after_value is None or pred_after is None:
+            return None
+        try:
+            before_f = float(before)
+            after_f = float(after_value)
+            pred_after_f = float(pred_after)
+        except (TypeError, ValueError):
+            return None
+        pred_change = payload.get("prediction_change")
+        if pred_change is None:
+            pred_change_f = pred_after_f - before_f
+        else:
+            try:
+                pred_change_f = float(pred_change)
+            except (TypeError, ValueError):
+                pred_change_f = pred_after_f - before_f
+        return (before_f, after_f, pred_after_f, pred_change_f)
+
+    actual_changes: List[float] = []
+    predicted_changes: List[float] = []
+    actual_after: List[float] = []
+    predicted_after: List[float] = []
+    errors: List[float] = []
+
+    with predictions_path.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            record = line.strip()
+            if not record:
+                continue
+            try:
+                payload = json.loads(record)
+            except json.JSONDecodeError:
+                LOGGER.debug(
+                    "[XGB][OPINION] Skipping malformed prediction row for %s/%s.",
+                    feature_space,
+                    study_key,
+                )
+                continue
+            parsed = _parse_prediction_row(payload)
+            if parsed is None:
+                continue
+            before_f, after_f, pred_after_f, pred_change_f = parsed
+            actual_after.append(after_f)
+            predicted_after.append(pred_after_f)
+            errors.append(abs(pred_after_f - after_f))
+            actual_changes.append(after_f - before_f)
+            predicted_changes.append(pred_change_f)
+
+    if not (actual_after or actual_changes or errors):
+        return None
+
+    return _OpinionPredictionVectors(
+        actual_after=actual_after,
+        predicted_after=predicted_after,
+        actual_changes=actual_changes,
+        predicted_changes=predicted_changes,
+        errors=errors,
+    )
+
+
+def _render_opinion_prediction_plots(
+    *,
+    feature_dir: Path,
+    study_key: str,
+    vectors: _OpinionPredictionVectors,
+) -> None:
+    """Dispatch plotting helpers for the supplied prediction series."""
+
+    if vectors.has_post_indices():
+        _plot_opinion_post_heatmap(
+            actual_after=vectors.actual_after,
+            predicted_after=vectors.predicted_after,
+            output_path=feature_dir / f"post_heatmap_{study_key}.png",
+        )
+    if vectors.has_change_series():
+        _plot_opinion_change_heatmap(
+            actual_changes=vectors.actual_changes,
+            predicted_changes=vectors.predicted_changes,
+            output_path=feature_dir / f"change_heatmap_{study_key}.png",
+        )
+    if vectors.has_errors():
+        _plot_opinion_error_histogram(
+            errors=vectors.errors,
+            output_path=feature_dir / f"error_histogram_{study_key}.png",
+        )
+
+
 def _regenerate_opinion_feature_plots(
     *,
     report_dir: Path,
@@ -834,90 +961,44 @@ def _regenerate_opinion_feature_plots(
     """
     if not metrics or predictions_root is None:
         return
-
-    for feature_space, per_feature in metrics.items():
-        if not per_feature:
+    for study_key, payload in metrics.items():
+        feature_space = str(payload.get("feature_space") or "").lower()
+        if not feature_space:
+            LOGGER.debug(
+                "[XGB][OPINION] Missing feature_space for study=%s; skipping plot regeneration.",
+                study_key,
+            )
             continue
         feature_dir = report_dir.parent / feature_space / "opinion"
         feature_dir.mkdir(parents=True, exist_ok=True)
-        for study_key in sorted(per_feature.keys()):
-            predictions_path = (
-                predictions_root
-                / feature_space
-                / study_key
-                / f"opinion_xgb_{study_key}_validation_predictions.jsonl"
+        predictions_path = (
+            predictions_root
+            / feature_space
+            / study_key
+            / f"opinion_xgb_{study_key}_validation_predictions.jsonl"
+        )
+        if not predictions_path.exists():
+            LOGGER.debug(
+                "[XGB][OPINION] Predictions missing for %s/%s at %s; skipping plots.",
+                feature_space,
+                study_key,
+                predictions_path,
             )
-            if not predictions_path.exists():
-                LOGGER.warning(
-                    "[XGB][OPINION] Predictions missing for %s/%s at %s; skipping plots.",
-                    feature_space,
-                    study_key,
-                    predictions_path,
-                )
-                continue
+            continue
 
-            actual_changes: List[float] = []
-            predicted_changes: List[float] = []
-            actual_after: List[float] = []
-            predicted_after: List[float] = []
-            errors: List[float] = []
+        vectors = _collect_opinion_prediction_vectors(
+            predictions_path=predictions_path,
+            feature_space=feature_space,
+            study_key=study_key,
+        )
+        if vectors is None:
+            continue
 
-            with predictions_path.open("r", encoding="utf-8") as handle:
-                for line in handle:
-                    record = line.strip()
-                    if not record:
-                        continue
-                    try:
-                        payload = json.loads(record)
-                    except json.JSONDecodeError:
-                        LOGGER.debug(
-                            "[XGB][OPINION] Skipping malformed prediction row for %s/%s.",
-                            feature_space,
-                            study_key,
-                        )
-                        continue
-                    before = payload.get("before")
-                    after_value = payload.get("after")
-                    pred_after = payload.get("prediction")
-                    pred_change = payload.get("prediction_change")
-                    if before is None or after_value is None or pred_after is None:
-                        continue
-                    try:
-                        before_f = float(before)
-                        after_f = float(after_value)
-                        pred_after_f = float(pred_after)
-                    except (TypeError, ValueError):
-                        continue
-                    actual_after.append(after_f)
-                    predicted_after.append(pred_after_f)
-                    errors.append(abs(pred_after_f - after_f))
-                    if pred_change is None:
-                        pred_change_f = pred_after_f - before_f
-                    else:
-                        try:
-                            pred_change_f = float(pred_change)
-                        except (TypeError, ValueError):
-                            pred_change_f = pred_after_f - before_f
-                    actual_changes.append(after_f - before_f)
-                    predicted_changes.append(pred_change_f)
-
-            if actual_after and predicted_after:
-                _plot_opinion_post_heatmap(
-                    actual_after=actual_after,
-                    predicted_after=predicted_after,
-                    output_path=feature_dir / f"post_heatmap_{study_key}.png",
-                )
-            if actual_changes and predicted_changes:
-                _plot_opinion_change_heatmap(
-                    actual_changes=actual_changes,
-                    predicted_changes=predicted_changes,
-                    output_path=feature_dir / f"change_heatmap_{study_key}.png",
-                )
-            if errors:
-                _plot_opinion_error_histogram(
-                    errors=errors,
-                    output_path=feature_dir / f"error_histogram_{study_key}.png",
-                )
+        _render_opinion_prediction_plots(
+            feature_dir=feature_dir,
+            study_key=study_key,
+            vectors=vectors,
+        )
 
 
 def _opinion_feature_plot_section(directory: Path) -> List[str]:

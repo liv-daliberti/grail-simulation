@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Final
 
 # ---------------------------------------------------------------------------
 # Azure OpenAI defaults (can be overridden via environment variables)
@@ -53,11 +54,12 @@ def ensure_azure_env() -> None:
 # ---------------------------------------------------------------------------
 _LOCAL_DATASET = Path(__file__).resolve().parents[2] / "data" / "cleaned_grail"
 if "GPT4O_DATASET" in os.environ:
-    DATASET_NAME: str = os.environ["GPT4O_DATASET"]
+    _dataset_name = os.environ["GPT4O_DATASET"]
 elif _LOCAL_DATASET.exists():
-    DATASET_NAME = str(_LOCAL_DATASET)
+    _dataset_name = str(_LOCAL_DATASET)
 else:
-    DATASET_NAME = "od2961/grail-interactions"
+    _dataset_name = "od2961/grail-interactions"
+DATASET_NAME: Final[str] = _dataset_name
 TRAIN_SPLIT: str = os.environ.get("GPT4O_TRAIN_SPLIT", "train")
 EVAL_SPLIT: str = os.environ.get("GPT4O_EVAL_SPLIT", "validation")
 PROMPT_COLUMN: str = os.environ.get("GPT4O_PROMPT_COLUMN", "state_text")

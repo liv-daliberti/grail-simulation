@@ -203,6 +203,7 @@ def _refresh_opinion_plots(
                 study_key=study_key,
                 payload=payload,
                 predictions_root=predictions_root,
+                asset_subdir=asset_subdir,
             )
 
 
@@ -220,15 +221,27 @@ def _refresh_study_plots(
     study_key: str,
     payload: Mapping[str, object],
     predictions_root: Optional[Path],
+    asset_subdir: str,
 ) -> None:
     """Rebuild opinion plots for a single feature-space/study pair."""
     _plot_numeric_metrics(feature_dir, study_key, payload.get("metrics_by_k"))
     best_k = _extract_best_k(payload.get("best_k"))
     if best_k is None or predictions_root is None:
         return
-    predictions_path = predictions_root / feature_space / study_key / (
-        f"opinion_knn_{study_key}_validation.jsonl"
-    )
+    filename = f"opinion_knn_{study_key}_validation.jsonl"
+    candidates = [
+        predictions_root / asset_subdir / feature_space / study_key / filename,
+        predictions_root / feature_space / study_key / filename,
+    ]
+    predictions_path = next((path for path in candidates if path.exists()), None)
+    if predictions_path is None:
+        LOGGER.debug(
+            "[KNN][OPINION] Prediction archive missing for %s/%s (checked: %s).",
+            feature_space,
+            study_key,
+            ", ".join(str(path) for path in candidates),
+        )
+        return
     rows = _load_prediction_rows(predictions_path, feature_space, study_key)
     if not rows:
         return

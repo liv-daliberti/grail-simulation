@@ -52,12 +52,15 @@ class SweepConfig:
 
     temperature: float
     max_tokens: int
+    top_p: float
 
     def label(self) -> str:
         """Return a filesystem-friendly identifier."""
 
         temp_token = f"temp{self.temperature:g}".replace(".", "p")
-        return f"{temp_token}_tok{self.max_tokens}"
+        tok_token = f"tok{self.max_tokens}"
+        top_p_token = f"tp{self.top_p:g}".replace(".", "p")
+        return f"{temp_token}_{tok_token}_{top_p_token}"
 
     def cli_args(self) -> List[str]:
         """Return CLI overrides encoding this configuration."""
@@ -67,6 +70,8 @@ class SweepConfig:
             str(self.temperature),
             "--max_tokens",
             str(self.max_tokens),
+            "--top_p",
+            str(self.top_p),
         ]
 
 
@@ -110,7 +115,7 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
     parser.add_argument(
         "--out-dir",
         default=None,
-        help="Root directory for GPT-4o outputs (default: <repo>/models/gpt4o).",
+        help="Root directory for GPT-4o outputs (default: <repo>/models/gpt-4o).",
     )
     parser.add_argument(
         "--cache-dir",
@@ -156,6 +161,11 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
         default="32,48",
         help="Comma-separated max_token values explored during sweeps.",
     )
+    parser.add_argument(
+        "--top-p-grid",
+        default="1.0",
+        help="Comma-separated top_p values explored during sweeps.",
+    )
     add_log_level_argument(parser)
     add_overwrite_argument(parser)
     parser.add_argument(
@@ -176,7 +186,7 @@ def _repo_root() -> Path:
 def _default_out_dir(root: Path) -> Path:
     """Return the default pipeline output directory rooted at ``root``."""
 
-    return root / "models" / "gpt4o"
+    return root / "models" / "gpt-4o"
 
 
 def _default_cache_dir(root: Path) -> Path:
@@ -280,10 +290,14 @@ def _build_sweep_configs(args: argparse.Namespace) -> List[SweepConfig]:
 
     temperatures = _parse_float_grid(args.temperature_grid, 0.0)
     max_tokens_values = _parse_int_grid(args.max_tokens_grid, 32)
+    top_p_values = _parse_float_grid(args.top_p_grid, 1.0)
     configs: List[SweepConfig] = []
     for temp in temperatures:
         for max_tokens in max_tokens_values:
-            configs.append(SweepConfig(temperature=temp, max_tokens=max_tokens))
+            for top_p in top_p_values:
+                configs.append(
+                    SweepConfig(temperature=temp, max_tokens=max_tokens, top_p=top_p)
+                )
     return configs
 
 
@@ -427,7 +441,7 @@ def _write_catalog_report(reports_dir: Path) -> None:
         "- `next_video/` – summary metrics and fairness cuts for the selected configuration.",
         "- `hyperparameter_tuning/` – sweep results across temperature and max token settings.",
         "",
-        "Model predictions and metrics JSON files live under `models/gpt4o/`.",
+        "Model predictions and metrics JSON files live under `models/gpt-4o/`.",
         "",
     ]
     write_markdown_lines(path, lines)
@@ -447,13 +461,15 @@ def _write_sweep_report(
         write_markdown_lines(path, lines)
         return
     lines.append(
-        "The table below captures accuracy on eligible slates plus formatting/parse rates for "
-        "each temperature/max-token configuration. The selected configuration is marked with ✓."
+        "The table below captures validation accuracy on eligible slates plus "
+        "formatting/parse rates for each temperature/top-p/max-token configuration. "
+        "The selected configuration is marked with ✓."
     )
     lines.append("")
     header_cells = [
         "Config",
         "Temperature",
+        "Top-p",
         "Max tokens",
         "Accuracy ↑",
         "Parsed ↑",
@@ -466,8 +482,10 @@ def _write_sweep_report(
         mark = "✓" if outcome.config == selected.config else ""
         lines.append(
             f"| `{outcome.config.label()}` | {outcome.config.temperature:.2f} | "
-            f"{outcome.config.max_tokens} | {_format_rate(outcome.accuracy)} | "
-            f"{_format_rate(outcome.parsed_rate)} | {_format_rate(outcome.format_rate)} | {mark} |"
+            f"{outcome.config.top_p:.2f} | {outcome.config.max_tokens} | "
+            f"{_format_rate(outcome.accuracy)} | "
+            f"{_format_rate(outcome.parsed_rate)} | "
+            f"{_format_rate(outcome.format_rate)} | {mark} |"
         )
     lines.append("")
     write_markdown_lines(path, lines)
@@ -483,7 +501,8 @@ def _write_next_video_report(  # pylint: disable=too-many-statements
     path, lines = start_markdown_report(directory, title="GPT-4o Next-Video Baseline")
     lines.append(
         f"- **Selected configuration:** `{selected.config.label()}` "
-        f"(temperature={selected.config.temperature:.2f}, max_tokens={selected.config.max_tokens})"
+        f"(temperature={selected.config.temperature:.2f}, top_p={selected.config.top_p:.2f}, "
+        f"max_tokens={selected.config.max_tokens})"
     )
     lines.append(
         f"- **Accuracy:** {_format_rate(float(metrics.get('accuracy_overall', 0.0)))} "
@@ -586,6 +605,7 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     configs = _build_sweep_configs(args)
     LOGGER.info("Planned %d GPT-4o configurations.", len(configs))
+    LOGGER.info("Hyper-parameter sweeps evaluate the validation split only (no training stage).")
 
     if args.dry_run:
         for config in configs:

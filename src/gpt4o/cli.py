@@ -28,6 +28,8 @@ from common.cli.args import add_comma_separated_argument
 from .config import DEFAULT_CACHE_DIR
 from .evaluate import run_eval
 
+DEFAULT_OUT_DIR = Path(__file__).resolve().parents[2] / "models" / "gpt-4o"
+
 
 def build_parser() -> argparse.ArgumentParser:
     """Create the CLI argument parser for the GPT-4o baseline.
@@ -63,7 +65,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--out_dir",
-        default=str(Path("models") / "gpt4o"),
+        default=str(DEFAULT_OUT_DIR),
         help="Directory for predictions and metrics.",
     )
     parser.add_argument(
@@ -82,6 +84,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=32,
         help="Maximum number of tokens in the model response.",
+    )
+    parser.add_argument(
+        "--top_p",
+        type=float,
+        default=1.0,
+        help="Nucleus sampling probability mass forwarded to GPT-4o.",
     )
     parser.add_argument(
         "--cache_dir",

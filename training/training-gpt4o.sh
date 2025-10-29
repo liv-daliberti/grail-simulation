@@ -5,7 +5,7 @@
 set -euo pipefail
 
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-OUT_DIR="${OUT_DIR:-$ROOT_DIR/models/gpt4o}"
+OUT_DIR="${OUT_DIR:-$ROOT_DIR/models/gpt-4o}"
 CACHE_DIR="${CACHE_DIR:-$ROOT_DIR/.cache/huggingface/gpt4o}"
 REPORTS_DIR="${REPORTS_DIR:-$ROOT_DIR/reports/gpt4o}"
 SWEEP_DIR="${GPT4O_SWEEP_DIR:-$OUT_DIR/sweeps}"
@@ -48,6 +48,9 @@ if [[ -n "${TEMPERATURE_GRID:-}" ]]; then
 fi
 if [[ -n "${MAX_TOKENS_GRID:-}" ]]; then
   ARGS+=(--max-tokens-grid "$MAX_TOKENS_GRID")
+fi
+if [[ -n "${TOP_P_GRID:-}" ]]; then
+  ARGS+=(--top-p-grid "$TOP_P_GRID")
 fi
 if [[ "${OVERWRITE:-0}" != "0" ]]; then
   ARGS+=(--overwrite)

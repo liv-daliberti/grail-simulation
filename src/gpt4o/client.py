@@ -89,6 +89,7 @@ def ds_call(
     messages: List[Dict[str, str]],
     max_tokens: int,
     temperature: float,
+    top_p: float | None = None,
     deployment: str | None = None,
 ) -> str:
     """Execute a chat completion call and return the trimmed text output.
@@ -106,10 +107,13 @@ def ds_call(
     """
 
     client = get_client()
-    response = client.chat.completions.create(
-        model=deployment or DEPLOYMENT_NAME,
-        temperature=temperature,
-        max_tokens=max_tokens,
-        messages=messages,
-    )
+    completion_kwargs: Dict[str, object] = {
+        "model": deployment or DEPLOYMENT_NAME,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+        "messages": messages,
+    }
+    if top_p is not None:
+        completion_kwargs["top_p"] = top_p
+    response = client.chat.completions.create(**completion_kwargs)
     return response.choices[0].message.content.strip()

@@ -176,10 +176,25 @@ __all__ = [
     "merge_ordered_with_warning",
     "merge_indexed_outcomes",
     "OpinionStudySelection",
+    "compose_cli_args",
     "make_placeholder_metrics",
     "ensure_overwrite_flag",
     "ensure_stage_overwrite_flag",
+    "ensure_final_stage_overwrite",
+    "ensure_final_stage_overwrite_with_context",
 ]
+
+
+def compose_cli_args(*segments: Sequence[str]) -> List[str]:
+    """Return a flattened list of CLI arguments from multiple segments."""
+
+    cli_args: List[str] = []
+    for segment in segments:
+        if isinstance(segment, str):
+            cli_args.append(segment)
+        else:
+            cli_args.extend(segment)
+    return cli_args
 
 
 def make_placeholder_metrics(
@@ -316,4 +331,40 @@ def ensure_stage_overwrite_flag(
         logger=logger,
         recover_log=(recover_message, _args_factory),
         overwrite_log=(overwrite_message, _args_factory),
+    )
+
+
+def ensure_final_stage_overwrite(
+    cli_args: List[str],
+    metrics_path: Path,
+    *,
+    logger: logging.Logger,
+    context_labels: Sequence[Tuple[str, object]] | Tuple[()],
+) -> bool:
+    """Convenience wrapper for ``ensure_stage_overwrite_flag`` when ``stage='FINAL'``."""
+
+    return ensure_stage_overwrite_flag(
+        cli_args,
+        metrics_path,
+        logger=logger,
+        stage="FINAL",
+        context_labels=context_labels,
+    )
+
+
+def ensure_final_stage_overwrite_with_context(
+    cli_args: List[str],
+    metrics_path: Path,
+    *,
+    logger: logging.Logger,
+    **context_labels: object,
+) -> bool:
+    """Call :func:`ensure_final_stage_overwrite` with keyword context labels."""
+
+    labels: Tuple[Tuple[str, object], ...] = tuple(context_labels.items())
+    return ensure_final_stage_overwrite(
+        cli_args,
+        metrics_path,
+        logger=logger,
+        context_labels=labels,
     )

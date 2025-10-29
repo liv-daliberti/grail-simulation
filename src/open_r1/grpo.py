@@ -44,6 +44,7 @@ from open_r1.example_utils import (
 )
 from open_r1.shared import (
     BASE_TRAIN_KEEP_COLUMNS,
+    PASSTHROUGH_FIELDS,
     collect_passthrough_fields,
     make_grpo_execute_kwargs,
     execute_grpo_pipeline,
@@ -54,6 +55,7 @@ from open_r1.rewards import get_reward_funcs
 from open_r1.utils import get_dataset, get_tokenizer
 
 KEEP_COLUMNS = BASE_TRAIN_KEEP_COLUMNS
+PASSTHROUGH_KEYS = PASSTHROUGH_FIELDS
 
 logger = logging.getLogger(__name__)
 

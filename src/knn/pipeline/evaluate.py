@@ -25,7 +25,10 @@ from __future__ import annotations
 import logging
 from typing import Dict, Mapping, Sequence
 
-from common.pipeline.utils import ensure_stage_overwrite_flag
+from common.pipeline.utils import (
+    compose_cli_args,
+    ensure_final_stage_overwrite_with_context,
+)
 
 from .context import EvaluationContext, OpinionStudySelection, StudySelection, StudySpec
 from .data import issue_slug_for_study
@@ -101,24 +104,22 @@ def run_final_evaluations(
                         study.key,
                     )
                     continue
-            cli_args: list[str] = []
-            cli_args.extend(context.base_cli)
-            cli_args.extend(selection.config.cli_args(word2vec_model_dir=model_dir))
-            cli_args.extend(["--issues", study.issue])
-            cli_args.extend(["--participant-studies", study.key])
-            cli_args.extend(["--train-participant-studies", study.key])
-            cli_args.extend(["--out-dir", str(feature_out_dir)])
-            cli_args.extend(["--knn-k", str(selection.best_k)])
-            cli_args.extend(context.extra_cli)
-            ensure_stage_overwrite_flag(
+            cli_args = compose_cli_args(
+                context.base_cli,
+                selection.config.cli_args(word2vec_model_dir=model_dir),
+                ["--issues", study.issue],
+                ["--participant-studies", study.key],
+                ["--train-participant-studies", study.key],
+                ["--out-dir", str(feature_out_dir)],
+                ["--knn-k", str(selection.best_k)],
+                context.extra_cli,
+            )
+            ensure_final_stage_overwrite_with_context(
                 cli_args,
                 metrics_path,
                 logger=LOGGER,
-                stage="FINAL",
-                context_labels=(
-                    ("feature", feature_space),
-                    ("study", study.key),
-                ),
+                feature=feature_space,
+                study=study.key,
             )
             run_knn_cli(cli_args)
             metrics, _ = load_metrics(feature_out_dir, issue_slug)

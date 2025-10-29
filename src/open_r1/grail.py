@@ -61,7 +61,7 @@ from open_r1.example_utils import (
 from open_r1.rewards import get_reward_funcs
 from open_r1.shared import (
     BASE_TRAIN_KEEP_COLUMNS,
-    PASSTHROUGH_FIELDS,
+    PASSTHROUGH_FIELDS as _SHARED_PASSTHROUGH_FIELDS,
     collect_passthrough_fields,
     make_grpo_execute_kwargs,
     build_default_component_factory,
@@ -77,6 +77,7 @@ COMPONENT_FACTORY = build_default_component_factory()
 ANS_RE = re.compile(r"(?si)<answer>\s*([^<\n]+?)\s*</answer>")
 IDX_ONLY = re.compile(r"^\s*(?:option\s*)?(\d+)\s*$", re.I)
 TRAIN_KEEP_COLUMNS = BASE_TRAIN_KEEP_COLUMNS | {"slate_items_with_meta"}
+PASSTHROUGH_FIELDS = _SHARED_PASSTHROUGH_FIELDS
 
 
 def _completion_text(payload: Any) -> str:

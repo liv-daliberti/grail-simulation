@@ -323,6 +323,7 @@ class EvaluationRunner:
                 messages,
                 max_tokens=self.args.max_tokens,
                 temperature=self.args.temperature,
+                top_p=getattr(self.args, "top_p", None),
                 deployment=getattr(self.args, "deployment", None),
             )
         except Exception as exc:  # pragma: no cover - best effort logging

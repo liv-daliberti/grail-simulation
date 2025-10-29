@@ -25,27 +25,29 @@ focused modules so it mirrors the structure of the `knn/` and `xgb/` baselines.
 3. **Launch an evaluation**:
 
    ```bash
-   python -m gpt4o.cli --out_dir models/gpt4o/debug --eval_max 100
+   python -m gpt4o.cli --out_dir models/gpt-4o/debug --eval_max 100 --top_p 0.95
    ```
 
    The CLI writes per-example predictions to `predictions.jsonl` and summary
    metrics to `metrics.json`. Pass `--deployment <name>` to override the default
    deployment configured in `config.py`. Use `--dataset`, `--issues`, or
    `--studies` to override the source data or to slice the evaluation to a
-   subset of issues/participant studies.
+   subset of issues/participant studies. Storing results in distinct subfolders
+   (as shown above) keeps runs with different temperature / top-p / max-token
+   settings from clobbering one another.
 
 4. **Run the full pipeline** (hyper-parameter sweeps, final evaluation, and
    report regeneration):
 
-   ```bash
-   python -m gpt4o.pipeline --out-dir models/gpt4o --reports-dir reports/gpt4o
+```bash
+   python -m gpt4o.pipeline --out-dir models/gpt-4o --reports-dir reports/gpt4o
    ```
 
    or invoke `bash training/training-gpt4o.sh` to reproduce the automation used
    by the other baselines. The pipeline mirrors the KNN/XGBoost workflows,
-   sweeping temperatures and max-token caps, selecting the best configuration,
-   and regenerating Markdown summaries (including fairness cuts by issue and
-   participant study).
+   sweeping temperatures, top-p values, and max-token caps, selecting the best
+   configuration based on validation accuracy, and regenerating Markdown
+   summaries (including fairness cuts by issue and participant study).
 
 `gpt4o.cli` downloads the cleaned dataset from Hugging Face (see
 `config.DATASET_NAME`). Use `--cache_dir` to point at an existing HF cache or a

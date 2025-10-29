@@ -1,7 +1,7 @@
 # GPT-4o Hyper-parameter Sweep
 
 `python -m gpt4o.pipeline --stage sweeps` records every temperature /
-max-token / top-p combination explored for the baseline. The generated Markdown
+top-p / max-token combination evaluated on the validation split. The generated Markdown
 links to the leaderboard CSV and highlights whichever configuration advanced to
 the finalize stage.
 
@@ -17,7 +17,7 @@ Refresh the sweep after updating prompt templates or the dataset:
 
 ```bash
 PYTHONPATH=src python -m gpt4o.pipeline \
-  --out-dir models/gpt4o \
+  --out-dir models/gpt-4o \
   --reports-dir reports/gpt4o \
   --stage sweeps \
   --stage reports

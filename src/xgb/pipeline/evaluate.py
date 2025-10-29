@@ -28,7 +28,11 @@ import json
 from pathlib import Path
 from typing import Dict, List, Mapping, Sequence, Set
 
-from common.pipeline.utils import ensure_stage_overwrite_flag, make_placeholder_metrics
+from common.pipeline.utils import (
+    compose_cli_args,
+    ensure_final_stage_overwrite_with_context,
+    make_placeholder_metrics,
+)
 
 from ..core.opinion import (
     DEFAULT_SPECS,
@@ -149,26 +153,25 @@ def _run_final_evaluations(
                     selection.study.key,
                 )
                 continue
-        cli_args: List[str] = []
-        cli_args.extend(context.base_cli)
-        cli_args.extend(selection.config.cli_args(context.tree_method))
-        cli_args.extend(["--issues", selection.study.issue])
-        cli_args.extend(["--participant_studies", selection.study.key])
-        # Ensure training remains scoped to the evaluation cohort.
-        cli_args.extend(["--train_participant_studies", selection.study.key])
-        cli_args.extend(["--out_dir", str(context.out_dir)])
+        cli_segments: List[Sequence[str]] = [
+            context.base_cli,
+            selection.config.cli_args(context.tree_method),
+            ["--issues", selection.study.issue],
+            ["--participant_studies", selection.study.key],
+            # Ensure training remains scoped to the evaluation cohort.
+            ["--train_participant_studies", selection.study.key],
+            ["--out_dir", str(context.out_dir)],
+        ]
         if context.save_model_dir is not None:
-            cli_args.extend(["--save_model", str(context.save_model_dir)])
-        cli_args.extend(context.extra_cli)
-        ensure_stage_overwrite_flag(
+            cli_segments.append(["--save_model", str(context.save_model_dir)])
+        cli_segments.append(context.extra_cli)
+        cli_args = compose_cli_args(*cli_segments)
+        ensure_final_stage_overwrite_with_context(
             cli_args,
             metrics_path,
             logger=LOGGER,
-            stage="FINAL",
-            context_labels=(
-                ("issue", selection.study.issue),
-                ("study", selection.study.key),
-            ),
+            issue=selection.study.issue,
+            study=selection.study.key,
         )
         LOGGER.info(
             "[FINAL] issue=%s study=%s config=%s",

@@ -106,7 +106,9 @@ The training launcher applies sensible defaults that mirror typical runs:
 - Tasks: `next_video,opinion` (set via `--tasks` or `KNN_PIPELINE_TASKS`).
 - Feature spaces: `tfidf,word2vec,sentence_transformer` (env `KNN_FEATURE_SPACES`).
 - K sweep: `1,2,3,4,5,10,25,50` (env `KNN_K_SWEEP`).
-- K selection: `max` (env `KNN_K_SELECT_METHOD`).
+- K selection: `elbow` (env `KNN_K_SELECT_METHOD`).
+- Prompt text variants: first 5 merged extra-field options plus one aggregate covering all 15 (env `KNN_*_TEXT_LIMIT`).
+- Distance metrics: TF-IDF sweeps cosine + L2; Word2Vec and Sentence Transformer default to cosine (env `KNN_*_METRICS`).
 - Sentence-Transformer device: `cuda` when GPUs are enabled; override with
   `SENTENCE_TRANSFORMER_DEVICE` or `KNN_SENTENCE_DEVICE`.
 - GPU scheduling is enabled by default in the launcher (`KNN_USE_GPU=1`); set
@@ -134,6 +136,9 @@ with the GPT-4o and XGBoost baselines.
 - Per-`k` curves (`knn_curves_<issue>.json`) and elbow PNGs in the same folder.
 - Opinion pipelines emit regression summaries beneath `models/knn/opinion/*` and
   populate `reports/knn/opinion/*.md` via the builders in `pipeline_reports/`.
+- Opinion-from-next evaluations reuse the selected next-video configuration to score
+  opinion change; metrics live under `models/knn/opinions/from_next/*` and drive the
+  optional `reports/knn/opinion_from_next/` section.
 
 `pipeline_reports/catalog.py` regenerates the top-level README, while the
 issue-specific modules handle table/plot assembly.

@@ -93,6 +93,16 @@ def _materialise_text_options(limit: int) -> Tuple[Tuple[str, ...], ...]:
         if merged not in seen:
             options.append(merged)
             seen.add(merged)
+    if BASE_EXTRA_FIELD_SETS:
+        all_extra_fields: List[str] = []
+        for extra_fields in BASE_EXTRA_FIELD_SETS:
+            for field in extra_fields:
+                if field and field not in all_extra_fields:
+                    all_extra_fields.append(field)
+        merged_all = merge_default_extra_fields(tuple(all_extra_fields))
+        if merged_all not in seen:
+            options.append(merged_all)
+            seen.add(merged_all)
     return tuple(options)
 
 

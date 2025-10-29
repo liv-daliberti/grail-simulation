@@ -107,16 +107,16 @@ export XGB_REUSE_FINAL
 DEFAULT_XGB_PIPELINE_TASKS="next_video,opinion"
 : "${XGB_PIPELINE_TASKS:=${DEFAULT_XGB_PIPELINE_TASKS}}"
 XGB_PIPELINE_TASKS=$(ensure_dual_task_string "${XGB_PIPELINE_TASKS}")
-# Expand the default sweep slightly: 3 learning rates × 2 depths
-# yields ~6 configs per vectorizer (~54 tasks/stage with 3 studies
-# and 3 vectorizers). Keep other params fixed to limit growth.
-: "${XGB_LEARNING_RATE_GRID:=0.03,0.05,0.1}"
+# Default grid keeps coverage while staying under ~400 sweep tasks
+# (2 learning rates × 2 depths × 2 estimator counts × 2 subsample values
+#  × 1 colsample × 1 lambda × 1 alpha ≈ 16 configs per vectorizer).
+: "${XGB_LEARNING_RATE_GRID:=0.03,0.06}"
 : "${XGB_MAX_DEPTH_GRID:=3,4}"
-: "${XGB_N_ESTIMATORS_GRID:=300}"
-: "${XGB_SUBSAMPLE_GRID:=0.9}"
-: "${XGB_COLSAMPLE_GRID:=0.8}"
-: "${XGB_REG_LAMBDA_GRID:=1.0}"
-: "${XGB_REG_ALPHA_GRID:=0.0}"
+: "${XGB_N_ESTIMATORS_GRID:=250,350}"
+: "${XGB_SUBSAMPLE_GRID:=0.8,0.9}"
+: "${XGB_COLSAMPLE_GRID:=0.7}"
+: "${XGB_REG_LAMBDA_GRID:=0.7}"
+: "${XGB_REG_ALPHA_GRID:=0.1}"
 : "${XGB_TEXT_VECTORIZER_GRID:=tfidf,word2vec,sentence_transformer}"
 
 export PYTHONPATH="${ROOT_DIR}/src${PYTHONPATH:+:${PYTHONPATH}}"

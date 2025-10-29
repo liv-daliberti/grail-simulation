@@ -119,9 +119,10 @@ The training launcher sets defaults that align with our standard sweeps:
 
 - Tasks: `next_video,opinion` (set via `--tasks` or `XGB_PIPELINE_TASKS`).
 - Text vectorisers: `tfidf,word2vec,sentence_transformer` (env `XGB_TEXT_VECTORIZER_GRID`).
-- Sweep grids: `--learning-rate-grid 0.03,0.05,0.1`, `--max-depth-grid 3,4`,
-  `--n-estimators-grid 300`, `--subsample-grid 0.9`, `--colsample-grid 0.8`,
-  `--reg-lambda-grid 1.0`, `--reg-alpha-grid 0.0`.
+- Sweep grids: `--learning-rate-grid 0.03,0.06`, `--max-depth-grid 3,4`,
+  `--n-estimators-grid 250,350`, `--subsample-grid 0.8,0.9`,
+  `--colsample-grid 0.7`, `--reg-lambda-grid 0.7`,
+  `--reg-alpha-grid 0.1`.
 - Tree method: uses GPU boosters by default; when GPUs are disabled or the
   installed `xgboost` lacks CUDA support, the launcher forces `--tree-method hist`.
 - Sentence-Transformer device: `cuda` when GPUs are enabled; override with
@@ -159,6 +160,9 @@ Regenerate reports with `python -m xgb.pipeline --stage reports`.
   `models/xgb/next_video/<vectorizer>/<study>/<issue>/`.
 - Saved model bundles are serialised via `model.save_model_bundle`.
 - Opinion metrics mirror the layout under `models/xgb/opinion/<study>/`.
+- Opinion-from-next evaluations reuse the winning slate configuration; artefacts appear in
+  `models/xgb/opinion/from_next/<vectorizer>/<study>/` and feed the optional
+  `reports/xgb/opinion_from_next/` summaries.
 
 Tests live in `tests/xgb/` and cover CLI glue, sweep planning, and vectoriser
 behaviour. Extend them when adding new feature spaces or pipeline stages so CI

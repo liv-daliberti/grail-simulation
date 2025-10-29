@@ -116,19 +116,19 @@ export KNN_REUSE_FINAL
 DEFAULT_KNN_PIPELINE_TASKS="next_video,opinion"
 : "${KNN_PIPELINE_TASKS:=${DEFAULT_KNN_PIPELINE_TASKS}}"
 KNN_PIPELINE_TASKS=$(ensure_dual_task_string "${KNN_PIPELINE_TASKS}")
-: "${KNN_K_SELECT_METHOD:=max}"
+: "${KNN_K_SELECT_METHOD:=elbow}"
 : "${KNN_FEATURE_SPACES:=tfidf,word2vec,sentence_transformer}"
 # Broaden default k sweep to cover small and moderate neighbourhood sizes
 : "${KNN_K_SWEEP:=1,2,3,4,5,10,25,50}"
 : "${KNN_TFIDF_METRICS:=cosine,l2}"
-: "${KNN_WORD2VEC_METRICS:=cosine,l2}"
-: "${KNN_SENTENCE_METRICS:=cosine,l2}"
-: "${KNN_TFIDF_TEXT_LIMIT:=1}"
-: "${KNN_WORD2VEC_TEXT_LIMIT:=1}"
-: "${KNN_SENTENCE_TEXT_LIMIT:=1}"
-: "${WORD2VEC_SWEEP_SIZES:=256}"
+: "${KNN_WORD2VEC_METRICS:=cosine}"
+: "${KNN_SENTENCE_METRICS:=cosine}"
+: "${KNN_TFIDF_TEXT_LIMIT:=5}"
+: "${KNN_WORD2VEC_TEXT_LIMIT:=5}"
+: "${KNN_SENTENCE_TEXT_LIMIT:=5}"
+: "${WORD2VEC_SWEEP_SIZES:=128,256}"
 : "${WORD2VEC_SWEEP_WINDOWS:=5}"
-: "${WORD2VEC_SWEEP_MIN_COUNTS:=1}"
+: "${WORD2VEC_SWEEP_MIN_COUNTS:=1,3}"
 : "${WORD2VEC_SWEEP_EPOCHS:=10}"
 : "${WORD2VEC_SWEEP_WORKERS:=8}"
 
@@ -189,7 +189,7 @@ Environment overrides:
   KNN_FINAL_SBATCH_FLAGS Additional sbatch flags appended to the finalize submission
   KNN_SLURM_ACCOUNT      SLURM account used for all submissions (default: mltheory)
   KNN_SLURM_PARTITION    SLURM partition used for CPU/finalize submissions (default: mltheory)
-  KNN_K_SELECT_METHOD    Default K selection method for next-video (max|elbow, default: max)
+  KNN_K_SELECT_METHOD    Default K selection method for next-video (max|elbow, default: elbow)
 EOF
 }
 
@@ -221,7 +221,7 @@ has_any_flag() {
 }
 
 ensure_k_select_flag() {
-  # Ensures a k-selection method is present for KNN (default: env KNN_K_SELECT_METHOD or 'max').
+  # Ensures a k-selection method is present for KNN (default: env KNN_K_SELECT_METHOD or 'elbow').
   local -n target_ref=$1
   local default_value=${2:-"${KNN_K_SELECT_METHOD}"}
   local -a aliases=("--knn-k-select" "--knn_k_select" "--k-select-method" "--k_select_method")

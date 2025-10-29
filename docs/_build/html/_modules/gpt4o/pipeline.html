@@ -287,7 +287,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.opinion</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpinionEvaluationResult</span><span class="p">,</span> <span class="n">run_opinion_evaluations</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.pipeline_cache</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_reports_stage</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.pipeline_models</span><span class="w"> </span><span class="kn">import</span> <span class="n">PipelinePaths</span><span class="p">,</span> <span class="n">SweepConfig</span><span class="p">,</span> <span class="n">SweepOutcome</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.pipeline_reports</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReportContext</span><span class="p">,</span> <span class="n">generate_reports</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.pipeline_reports</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_report_generation</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.pipeline_sweeps</span><span class="w"> </span><span class="kn">import</span> <span class="n">promote_sweep_results</span><span class="p">,</span> <span class="n">run_sweeps</span><span class="p">,</span> <span class="n">select_best</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;gpt4o.pipeline&quot;</span><span class="p">)</span>
@@ -670,9 +670,9 @@
     <span class="p">)</span>
 
     <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Final metrics stored under </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">final_dir</span><span class="p">)</span>
-    <span class="n">context</span> <span class="o">=</span> <span class="n">ReportContext</span><span class="p">(</span><span class="n">reports_dir</span><span class="o">=</span><span class="n">paths</span><span class="o">.</span><span class="n">reports_dir</span><span class="p">,</span> <span class="n">repo_root</span><span class="o">=</span><span class="n">_repo_root</span><span class="p">())</span>
-    <span class="n">generate_reports</span><span class="p">(</span>
-        <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">,</span>
+    <span class="n">run_report_generation</span><span class="p">(</span>
+        <span class="n">paths</span><span class="o">=</span><span class="n">paths</span><span class="p">,</span>
+        <span class="n">repo_root</span><span class="o">=</span><span class="n">_repo_root</span><span class="p">(),</span>
         <span class="n">outcomes</span><span class="o">=</span><span class="n">outcomes</span><span class="p">,</span>
         <span class="n">selected</span><span class="o">=</span><span class="n">selected</span><span class="p">,</span>
         <span class="n">final_metrics</span><span class="o">=</span><span class="n">final_metrics</span><span class="p">,</span>

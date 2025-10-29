@@ -2,7 +2,7 @@
 
 This summary captures the opinion-regression baselines trained with XGBoost for the selected participant studies.
 
-- Dataset: `/n/fs/similarity/grail-simulation/data/cleaned_grail`
+- Dataset: `data/cleaned_grail`
 - Split: validation
 - Metrics track MAE, RMSE, R², directional accuracy, MAE(change), RMSE(change), calibration slope/intercept, calibration ECE, and KL divergence versus the no-change baseline.
 - Δ columns capture improvements relative to that baseline when available.

@@ -31,7 +31,7 @@ from common.cli.options import add_log_level_argument, add_overwrite_argument, a
 from .opinion import OpinionEvaluationResult, run_opinion_evaluations
 from .pipeline_cache import run_reports_stage
 from .pipeline_models import PipelinePaths, SweepConfig, SweepOutcome
-from .pipeline_reports import ReportContext, generate_reports
+from .pipeline_reports import run_report_generation
 from .pipeline_sweeps import promote_sweep_results, run_sweeps, select_best
 
 LOGGER = logging.getLogger("gpt4o.pipeline")
@@ -414,9 +414,9 @@ def _run_full_pipeline(
     )
 
     LOGGER.info("Final metrics stored under %s", final_dir)
-    context = ReportContext(reports_dir=paths.reports_dir, repo_root=_repo_root())
-    generate_reports(
-        context=context,
+    run_report_generation(
+        paths=paths,
+        repo_root=_repo_root(),
         outcomes=outcomes,
         selected=selected,
         final_metrics=final_metrics,

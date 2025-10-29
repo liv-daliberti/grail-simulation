@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import List, Mapping, Optional, Tuple
 
@@ -169,13 +170,17 @@ def append_image_section(
     :returns: ``None``.
     """
 
+    rel_path: str
     try:
         if relative_root is not None:
             rel_path = image.relative_to(relative_root).as_posix()
         else:
             rel_path = image.as_posix()
     except ValueError:
-        rel_path = image.as_posix()
+        if relative_root is not None:
+            rel_path = Path(os.path.relpath(image, relative_root)).as_posix()
+        else:
+            rel_path = image.as_posix()
     label = image.stem.replace("_", " ").title()
     lines.append(f"![{label}]({rel_path})")
     lines.append("")

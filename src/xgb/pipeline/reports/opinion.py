@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import json
 import statistics
 from dataclasses import dataclass, field
 import csv
@@ -41,7 +42,14 @@ from common.opinion.metrics import (
 )
 
 from ..context import OpinionSummary
-from .plots import _plot_opinion_curve, plt
+from .plots import (
+    _plot_opinion_change_heatmap,
+    _plot_opinion_curve,
+    _plot_opinion_error_histogram,
+    _plot_opinion_post_heatmap,
+    plt,
+)
+from .shared import LOGGER
 
 
 @dataclass
@@ -815,6 +823,103 @@ def _opinion_curve_lines(
     return curve_lines
 
 
+def _regenerate_opinion_feature_plots(
+    *,
+    report_dir: Path,
+    metrics: Mapping[str, Mapping[str, object]],
+    predictions_root: Path | None,
+) -> None:
+    """
+    Rebuild supplementary opinion plots (heatmaps, error histograms) from cached predictions.
+    """
+    if not metrics or predictions_root is None:
+        return
+
+    for feature_space, per_feature in metrics.items():
+        if not per_feature:
+            continue
+        feature_dir = report_dir.parent / feature_space / "opinion"
+        feature_dir.mkdir(parents=True, exist_ok=True)
+        for study_key in sorted(per_feature.keys()):
+            predictions_path = (
+                predictions_root
+                / feature_space
+                / study_key
+                / f"opinion_xgb_{study_key}_validation_predictions.jsonl"
+            )
+            if not predictions_path.exists():
+                LOGGER.warning(
+                    "[XGB][OPINION] Predictions missing for %s/%s at %s; skipping plots.",
+                    feature_space,
+                    study_key,
+                    predictions_path,
+                )
+                continue
+
+            actual_changes: List[float] = []
+            predicted_changes: List[float] = []
+            actual_after: List[float] = []
+            predicted_after: List[float] = []
+            errors: List[float] = []
+
+            with predictions_path.open("r", encoding="utf-8") as handle:
+                for line in handle:
+                    record = line.strip()
+                    if not record:
+                        continue
+                    try:
+                        payload = json.loads(record)
+                    except json.JSONDecodeError:
+                        LOGGER.debug(
+                            "[XGB][OPINION] Skipping malformed prediction row for %s/%s.",
+                            feature_space,
+                            study_key,
+                        )
+                        continue
+                    before = payload.get("before")
+                    after_value = payload.get("after")
+                    pred_after = payload.get("prediction")
+                    pred_change = payload.get("prediction_change")
+                    if before is None or after_value is None or pred_after is None:
+                        continue
+                    try:
+                        before_f = float(before)
+                        after_f = float(after_value)
+                        pred_after_f = float(pred_after)
+                    except (TypeError, ValueError):
+                        continue
+                    actual_after.append(after_f)
+                    predicted_after.append(pred_after_f)
+                    errors.append(abs(pred_after_f - after_f))
+                    if pred_change is None:
+                        pred_change_f = pred_after_f - before_f
+                    else:
+                        try:
+                            pred_change_f = float(pred_change)
+                        except (TypeError, ValueError):
+                            pred_change_f = pred_after_f - before_f
+                    actual_changes.append(after_f - before_f)
+                    predicted_changes.append(pred_change_f)
+
+            if actual_after and predicted_after:
+                _plot_opinion_post_heatmap(
+                    actual_after=actual_after,
+                    predicted_after=predicted_after,
+                    output_path=feature_dir / f"post_heatmap_{study_key}.png",
+                )
+            if actual_changes and predicted_changes:
+                _plot_opinion_change_heatmap(
+                    actual_changes=actual_changes,
+                    predicted_changes=predicted_changes,
+                    output_path=feature_dir / f"change_heatmap_{study_key}.png",
+                )
+            if errors:
+                _plot_opinion_error_histogram(
+                    errors=errors,
+                    output_path=feature_dir / f"error_histogram_{study_key}.png",
+                )
+
+
 def _opinion_feature_plot_section(directory: Path) -> List[str]:
     """Embed static PNG assets produced outside the primary report."""
 
@@ -947,6 +1052,8 @@ def _write_opinion_report(
     allow_incomplete: bool,
     title: str = "XGBoost Opinion Regression",
     description_lines: Sequence[str] | None = None,
+    predictions_root: Path | None = None,
+    regenerate_plots: bool = True,
 ) -> None:
     """Create the opinion regression summary document."""
 
@@ -961,6 +1068,12 @@ def _write_opinion_report(
         lines.append("")
         write_markdown_lines(path, lines)
         return
+    if regenerate_plots:
+        _regenerate_opinion_feature_plots(
+            report_dir=directory,
+            metrics=metrics,
+            predictions_root=predictions_root,
+        )
     if description_lines is None:
         description_lines = [
             "This summary captures the opinion-regression baselines trained with XGBoost "

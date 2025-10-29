@@ -1,6 +1,14 @@
 #!/usr/bin/env python
 # pylint: disable=too-many-lines
-"""Opinion-shift evaluation for the GPT-4o baseline."""
+"""Opinion-shift evaluation for the GPT-4o baseline.
+
+.. currentmodule:: gpt4o.opinion
+
+This module houses the GPT-4o opinion evaluation runner along with helper
+types that encode cached artefacts, evaluation results, and reporting
+utilities. The docstrings follow Sphinx conventions so the module can be
+documented automatically via ``sphinx.ext.autodoc``.
+"""
 
 from __future__ import annotations
 
@@ -38,7 +46,13 @@ _NUMBER_PATTERN = re.compile(r"[-+]?\d+(?:\.\d+)?")
 
 @dataclass(frozen=True)
 class OpinionArtifacts:
-    """Filesystem artefacts generated for a single study."""
+    """Filesystem artefacts generated for a single study.
+
+    Attributes:
+        metrics (Path): Path to the metrics JSON payload persisted for the study.
+        predictions (Path): JSONL file containing per-participant predictions.
+        qa_log (Path): Markdown QA log capturing prompts and raw completions.
+    """
 
     metrics: Path
     predictions: Path
@@ -47,7 +61,12 @@ class OpinionArtifacts:
 
 @dataclass(frozen=True)
 class OpinionMetricBundle:
-    """Pair the computed metrics and baseline payloads."""
+    """Pair the computed metrics and baseline payloads.
+
+    Attributes:
+        metrics (Mapping[str, object]): Aggregated study metrics produced by evaluation.
+        baseline (Mapping[str, object]): Reference metrics for the simple baselines.
+    """
 
     metrics: Mapping[str, object]
     baseline: Mapping[str, object]
@@ -55,7 +74,17 @@ class OpinionMetricBundle:
 
 @dataclass(frozen=True)
 class OpinionStudyResult:
-    """Container capturing metrics and artefact paths for one opinion study."""
+    """Container capturing metrics and artefact paths for one opinion study.
+
+    Attributes:
+        study_key (str): Canonical identifier for the evaluated study.
+        study_label (str): Human-readable study label for reports.
+        issue (str): Issue category aligned with the evaluation rows.
+        participants (int): Count of participant rows processed for the study.
+        eligible (int): Number of rows considered eligible for metrics.
+        artifacts (OpinionArtifacts): Paths to artefacts persisted on disk.
+        metric_bundle (OpinionMetricBundle): Metrics bundle for the study.
+    """
 
     study_key: str
     study_label: str
@@ -93,7 +122,13 @@ class OpinionStudyResult:
 
 @dataclass(frozen=True)
 class OpinionEvaluationResult:
-    """Aggregate payload returned by the GPT-4o opinion evaluator."""
+    """Aggregate payload returned by the GPT-4o opinion evaluator.
+
+    Attributes:
+        studies (Mapping[str, OpinionStudyResult]): Per-study evaluation results.
+        combined_metrics (Mapping[str, object]): Metrics across all processed studies.
+        config_label (str): Label encoding the GPT-4o configuration used.
+    """
 
     studies: Mapping[str, OpinionStudyResult]
     combined_metrics: Mapping[str, object]
@@ -102,7 +137,12 @@ class OpinionEvaluationResult:
 
 @dataclass(frozen=True)
 class OpinionFilters:
-    """Filter configuration applied prior to evaluation."""
+    """Filter configuration applied prior to evaluation.
+
+    Attributes:
+        issues (set[str]): Lowercased issue filters; empty allows every issue.
+        studies (set[str]): Lowercased study filters; empty allows every study.
+    """
 
     issues: set[str]
     studies: set[str]
@@ -184,7 +224,14 @@ class CombinedAccumulator:
 
 @dataclass
 class StudyPredictionBatch:
-    """Capture inference artefacts for a single study evaluation."""
+    """Capture inference artefacts for a single study evaluation.
+
+    Attributes:
+        payloads (List[Mapping[str, object]]): Raw prediction rows for JSONL output.
+        truth_before (List[float]): Collected pre-study opinion indices.
+        truth_after (List[float]): Collected post-study opinion indices.
+        pred_after (List[float]): Model predictions for post-study indices.
+    """
 
     payloads: List[Mapping[str, object]]
     truth_before: List[float]
@@ -194,7 +241,13 @@ class StudyPredictionBatch:
 
 @dataclass(frozen=True)
 class StudyMetricsPayload:
-    """Bundle metrics and participant counts for artefact generation."""
+    """Bundle metrics and participant counts for artefact generation.
+
+    Attributes:
+        participants (int): Number of participants included in the metrics.
+        metrics (Mapping[str, object]): Evaluated metrics keyed by metric name.
+        baseline (Mapping[str, object]): Baseline comparison metrics.
+    """
 
     participants: int
     metrics: Mapping[str, object]
@@ -203,7 +256,15 @@ class StudyMetricsPayload:
 
 @dataclass(frozen=True)
 class CachedStudyPayload:
-    """Cached metrics payload reconstructed from disk."""
+    """Cached metrics payload reconstructed from disk.
+
+    Attributes:
+        participants (int): Participant count persisted in the cache.
+        metrics (Mapping[str, object]): Cached metrics dictionary.
+        baseline (Mapping[str, object]): Cached baseline metrics dictionary.
+        study_label (str): Friendly label for the study.
+        issue (str): Issue identifier associated with the study.
+    """
 
     participants: int
     metrics: Mapping[str, object]
@@ -214,7 +275,13 @@ class CachedStudyPayload:
 
 @dataclass(frozen=True)
 class CachedPredictionVectors:
-    """Cached prediction vectors reconstructed from disk."""
+    """Cached prediction vectors reconstructed from disk.
+
+    Attributes:
+        truth_before (List[float]): Pre-study indices from cached predictions.
+        truth_after (List[float]): Post-study indices from cached predictions.
+        pred_after (List[float]): Model predictions for post-study indices.
+    """
 
     truth_before: List[float]
     truth_after: List[float]
@@ -223,7 +290,14 @@ class CachedPredictionVectors:
 
 @dataclass(frozen=True)
 class QALogEntry:
-    """Payload describing a single QA log record."""
+    """Payload describing a single QA log record.
+
+    Attributes:
+        idx (int): Sequential participant index within the study.
+        spec (OpinionSpec): Study specification describing the participant cohort.
+        messages (Sequence[Mapping[str, object]]): Prompt messages issued to GPT-4o.
+        raw_output (str): Unmodified completion returned by GPT-4o.
+    """
 
     idx: int
     spec: OpinionSpec
@@ -233,7 +307,12 @@ class QALogEntry:
 
 @dataclass(frozen=True)
 class ExampleProcessingContext:
-    """Resources shared by per-example processing helpers."""
+    """Resources shared by per-example processing helpers.
+
+    Attributes:
+        qa_log (IO[str]): Writable QA log handle for the current study.
+        batch (StudyPredictionBatch): Batch accumulator being populated.
+    """
 
     qa_log: IO[str]
     batch: StudyPredictionBatch
@@ -460,7 +539,13 @@ def _settings_from_args(args) -> OpinionSettings:
 
 
 class OpinionEvaluationRunner:
-    """Stateful helper running GPT-4o opinion evaluations."""
+    """Stateful helper running GPT-4o opinion evaluations.
+
+    Parameters:
+        args (Any): Parsed arguments produced by :mod:`gpt4o.pipeline`.
+        config_label (str): Identifier for the temperature/top-p/max-token bundle.
+        out_dir (Path): Root directory receiving evaluation artefacts.
+    """
 
     def __init__(
         self,

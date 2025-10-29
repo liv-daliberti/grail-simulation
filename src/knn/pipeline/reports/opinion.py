@@ -60,6 +60,8 @@ class OpinionReportOptions:
     :type predictions_root: Optional[Path]
     :param regenerate_plots: Rebuild matplotlib artefacts before emitting the report.
     :type regenerate_plots: bool
+    :param asset_subdir: Subdirectory name used when storing plot artefacts.
+    :type asset_subdir: str
     """
 
     allow_incomplete: bool = False
@@ -68,6 +70,7 @@ class OpinionReportOptions:
     metrics_line: Optional[str] = None
     predictions_root: Optional[Path] = None
     regenerate_plots: bool = True
+    asset_subdir: str = "opinion"
 
 
 @dataclass
@@ -124,6 +127,7 @@ def _build_opinion_report(
             output_root=output_path.parent.parent,
             metrics=metrics,
             predictions_root=options.predictions_root,
+            asset_subdir=options.asset_subdir,
         )
     dataset_name, split = _opinion_dataset_info(metrics)
     intro_lines = options.description_lines
@@ -149,8 +153,14 @@ def _build_opinion_report(
             metrics_line=metrics_text,
         )
     )
-    lines.extend(_opinion_feature_sections(metrics, studies))
-    lines.extend(_opinion_heatmap_section(output_path, metrics))
+    lines.extend(_opinion_feature_sections(metrics, studies, asset_subdir=options.asset_subdir))
+    lines.extend(
+        _opinion_heatmap_section(
+            output_path,
+            metrics,
+            asset_subdir=options.asset_subdir,
+        )
+    )
     lines.extend(_knn_opinion_cross_study_diagnostics(metrics, studies))
     lines.extend(_opinion_takeaways(metrics, studies))
     output_path.write_text("\n".join(lines), encoding="utf-8")
@@ -163,6 +173,7 @@ def _refresh_opinion_plots(
     output_root: Path,
     metrics: Mapping[str, Mapping[str, Mapping[str, object]]],
     predictions_root: Optional[Path],
+    asset_subdir: str,
 ) -> None:
     """
     Regenerate opinion matplotlib artefacts so reports remain self-contained.
@@ -180,7 +191,11 @@ def _refresh_opinion_plots(
     for feature_space, per_feature in metrics.items():
         if not per_feature:
             continue
-        feature_dir = _ensure_feature_dir(output_root, feature_space)
+        feature_dir = _ensure_feature_dir(
+            output_root,
+            feature_space,
+            asset_subdir=asset_subdir,
+        )
         for study_key, payload in per_feature.items():
             _refresh_study_plots(
                 feature_dir=feature_dir,
@@ -191,9 +206,9 @@ def _refresh_opinion_plots(
             )
 
 
-def _ensure_feature_dir(output_root: Path, feature_space: str) -> Path:
+def _ensure_feature_dir(output_root: Path, feature_space: str, *, asset_subdir: str) -> Path:
     """Create and return the feature-specific output directory."""
-    feature_dir = output_root / feature_space / "opinion"
+    feature_dir = output_root / feature_space / asset_subdir
     feature_dir.mkdir(parents=True, exist_ok=True)
     return feature_dir
 

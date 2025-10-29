@@ -116,10 +116,13 @@ def test_generate_reports_writes_expected_markdown(tmp_path: Path, sample_png: P
     opinion_selection = OpinionStudySelection(study=study, outcome=opinion_outcome)
 
     plots_dir = repo_root / "reports" / "knn" / "tfidf" / "opinion"
+    plots_dir_next = repo_root / "reports" / "knn" / "tfidf" / "opinion_from_next"
     plots_dir.mkdir(parents=True, exist_ok=True)
+    plots_dir_next.mkdir(parents=True, exist_ok=True)
     png_bytes = sample_png.read_bytes()
     for stem in ("mae_study_a", "r2_study_a", "change_heatmap_study_a"):
         (plots_dir / f"{stem}.png").write_bytes(png_bytes)
+        (plots_dir_next / f"{stem}.png").write_bytes(png_bytes)
 
     bundle = ReportBundle(
         selections={"tfidf": {study.key: study_selection}},
@@ -171,10 +174,11 @@ def test_generate_reports_writes_expected_markdown(tmp_path: Path, sample_png: P
     assert "Study A" in opinion_text
     assert "RMSE (change)" in opinion_text
     assert "calibration slope &" in opinion_text
-    assert "![Mae Study A]" in opinion_text
+    assert "![Mae Study A](../tfidf/opinion/mae_study_a.png)" in opinion_text
 
     opinion_next_text = opinion_next_path.read_text()
     assert "Next-Video Config" in opinion_next_text
+    assert "![Mae Study A](../tfidf/opinion_from_next/mae_study_a.png)" in opinion_next_text
 
     features_text = features_path.read_text()
     assert "Additional Text Features" in features_text

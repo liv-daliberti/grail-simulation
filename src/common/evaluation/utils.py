@@ -150,6 +150,40 @@ def participant_bootstrap_summary(
     )
 
 
+def build_participant_bootstrap_summary(
+    *,
+    model_samples: Sequence[float],
+    baseline_samples: Sequence[float] | None,
+    n_groups: int,
+    n_rows: int,
+    n_bootstrap: int,
+    seed: int,
+) -> Dict[str, Any]:
+    """
+    Convenience wrapper that builds ``BootstrapSummaryConfig`` for participant summaries.
+
+    :param model_samples: Bootstrap samples produced for the model accuracy.
+    :param baseline_samples: Optional baseline accuracy samples.
+    :param n_groups: Number of participant groups contributing to the evaluation.
+    :param n_rows: Eligible evaluation row count across all groups.
+    :param n_bootstrap: Number of bootstrap replicates executed.
+    :param seed: Random seed used when sampling replicates.
+    :returns: Summary dictionary created by :func:`participant_bootstrap_summary`.
+    """
+
+    summary_config = BootstrapSummaryConfig(
+        n_groups=int(n_groups),
+        n_rows=int(n_rows),
+        n_bootstrap=int(n_bootstrap),
+        seed=int(seed),
+    )
+    return participant_bootstrap_summary(
+        model_samples=model_samples,
+        baseline_samples=baseline_samples,
+        summary_config=summary_config,
+    )
+
+
 def summarise_bootstrap_samples(
     *,
     model_samples: Sequence[float],
@@ -202,6 +236,7 @@ __all__ = [
     "compose_issue_slug",
     "ensure_hf_cache",
     "group_key_for_example",
+    "build_participant_bootstrap_summary",
     "participant_bootstrap_summary",
     "prepare_dataset",
     "safe_div",

@@ -107,6 +107,8 @@ def _opinion_dataset_info(
 def _opinion_feature_sections(
     metrics: Mapping[str, Mapping[str, Mapping[str, object]]],
     studies: Sequence[StudySpec],
+    *,
+    asset_subdir: str,
 ) -> List[str]:
     """
     Render opinion metrics tables grouped by feature space.
@@ -115,6 +117,8 @@ def _opinion_feature_sections(
     :type metrics: Mapping[str, Mapping[str, Mapping[str, object]]]
     :param studies: Sequence of study specifications targeted by the workflow.
     :type studies: Sequence[~knn.pipeline.context.StudySpec]
+    :param asset_subdir: Subdirectory containing plot artefacts for the report variant.
+    :type asset_subdir: str
     :returns: Markdown sections summarising opinion metrics per feature space.
     :rtype: List[str]
     """
@@ -147,7 +151,7 @@ def _opinion_feature_sections(
                 continue
             lines.append(_format_opinion_row(study, data))
         lines.append(
-            f"*Assets:* [MAE / R² curves and heatmaps](../{feature_space}/opinion/)"
+            f"*Assets:* [MAE / R² curves and heatmaps](../{feature_space}/{asset_subdir}/)"
         )
         lines.append("")
     return lines
@@ -211,6 +215,8 @@ def _format_opinion_row(study: StudySpec, data: Mapping[str, object]) -> str:
 def _opinion_heatmap_section(
     output_path: Path,
     metrics: Mapping[str, Mapping[str, Mapping[str, object]]],
+    *,
+    asset_subdir: str,
 ) -> List[str]:
     """
     Build the heatmap section for the opinion report.
@@ -219,6 +225,8 @@ def _opinion_heatmap_section(
     :type output_path: Path
     :param metrics: Metrics dictionary captured from a previous pipeline stage.
     :type metrics: Mapping[str, Mapping[str, Mapping[str, object]]]
+    :param asset_subdir: Subdirectory containing plot artefacts for the report variant.
+    :type asset_subdir: str
     :returns: Markdown lines referencing available heatmap images.
     :rtype: List[str]
     """
@@ -227,7 +235,7 @@ def _opinion_heatmap_section(
     sections: List[str] = ["### Opinion Change Heatmaps", ""]
     found = False
     for feature_space in sorted(metrics.keys()):
-        feature_dir = base_dir / feature_space / "opinion"
+        feature_dir = base_dir / feature_space / asset_subdir
         if not feature_dir.exists():
             continue
         images = sorted(feature_dir.glob("*.png"))
@@ -246,7 +254,7 @@ def _opinion_heatmap_section(
         sections.extend(
             [
                 (
-                    "Plots are refreshed under `reports/knn/<feature-space>/opinion/` "
+                    f"Plots are refreshed under `reports/knn/<feature-space>/{asset_subdir}/` "
                     "including MAE vs. k (`mae_<study>.png`), R² vs. k (`r2_<study>.png`), "
                     "and change heatmaps (`change_heatmap_<study>.png`)."
                 ),

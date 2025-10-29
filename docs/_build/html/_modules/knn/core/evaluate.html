@@ -290,10 +290,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.text.embeddings</span><span class="w"> </span><span class="kn">import</span> <span class="n">SentenceTransformerConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.visualization.matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">plt</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.evaluation.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">BootstrapSummaryConfig</span><span class="p">,</span>
+    <span class="n">build_participant_bootstrap_summary</span><span class="p">,</span>
     <span class="n">compose_issue_slug</span><span class="p">,</span>
     <span class="n">group_key_for_example</span><span class="p">,</span>
-    <span class="n">participant_bootstrap_summary</span><span class="p">,</span>
     <span class="n">prepare_dataset</span><span class="p">,</span>
     <span class="n">safe_div</span><span class="p">,</span>
 <span class="p">)</span>
@@ -596,16 +595,13 @@
         <span class="k">if</span> <span class="n">baseline_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">baseline_samples</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_baseline_accuracy_for_rows</span><span class="p">(</span><span class="n">sampled_rows</span><span class="p">,</span> <span class="n">baseline_index</span><span class="p">))</span>
 
-    <span class="n">summary_config</span> <span class="o">=</span> <span class="n">BootstrapSummaryConfig</span><span class="p">(</span>
+    <span class="k">return</span> <span class="n">build_participant_bootstrap_summary</span><span class="p">(</span>
+        <span class="n">model_samples</span><span class="o">=</span><span class="n">model_samples</span><span class="p">,</span>
+        <span class="n">baseline_samples</span><span class="o">=</span><span class="n">baseline_samples</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">n_groups</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">grouped</span><span class="p">),</span>
         <span class="n">n_rows</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">eligible_rows</span><span class="p">),</span>
         <span class="n">n_bootstrap</span><span class="o">=</span><span class="n">replicates</span><span class="p">,</span>
         <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">participant_bootstrap_summary</span><span class="p">(</span>
-        <span class="n">model_samples</span><span class="o">=</span><span class="n">model_samples</span><span class="p">,</span>
-        <span class="n">baseline_samples</span><span class="o">=</span><span class="n">baseline_samples</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">summary_config</span><span class="o">=</span><span class="n">summary_config</span><span class="p">,</span>
     <span class="p">)</span>
 
 <div class="viewcode-block" id="parse_k_values">

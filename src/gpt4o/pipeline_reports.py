@@ -26,7 +26,7 @@ from typing import Dict, List, Mapping, Sequence, Tuple
 from common.pipeline.io import write_markdown_lines
 from common.reports.utils import start_markdown_report
 
-from .pipeline_models import SweepOutcome
+from .pipeline_models import PipelinePaths, SweepOutcome
 from .opinion import OpinionEvaluationResult
 
 
@@ -36,6 +36,37 @@ class ReportContext:
 
     reports_dir: Path
     repo_root: Path
+
+
+def run_report_generation(
+    *,
+    paths: PipelinePaths,
+    repo_root: Path,
+    outcomes: Sequence[SweepOutcome],
+    selected: SweepOutcome,
+    final_metrics: Mapping[str, object],
+    opinion_result: OpinionEvaluationResult | None,
+) -> None:
+    """
+    Build a :class:`ReportContext` and regenerate GPT-4o reports.
+
+    :param paths: Resolved pipeline directories for report artefacts.
+    :param repo_root: Repository root used when deriving relative paths.
+    :param outcomes: Sweep outcomes captured during evaluation.
+    :param selected: Promoted sweep configuration outcome.
+    :param final_metrics: Metrics mapping for the selected configuration.
+    :param opinion_result: Opinion evaluation bundle associated with the configuration.
+    :returns: ``None``.
+    """
+
+    context = ReportContext(reports_dir=paths.reports_dir, repo_root=repo_root)
+    generate_reports(
+        context=context,
+        outcomes=outcomes,
+        selected=selected,
+        final_metrics=final_metrics,
+        opinion_result=opinion_result,
+    )
 
 
 def _format_rate(value: float) -> str:
@@ -562,4 +593,4 @@ def _relative_path(base: Path, target: Path) -> Path:
         return target
 
 
-__all__ = ["ReportContext", "generate_reports"]
+__all__ = ["ReportContext", "run_report_generation", "generate_reports"]

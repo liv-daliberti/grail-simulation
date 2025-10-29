@@ -54,6 +54,8 @@ class OpinionReportData:
     selections: Mapping[str, OpinionStudySelection] = field(default_factory=dict)
     title: str = "XGBoost Opinion Regression"
     description_lines: Sequence[str] | None = None
+    predictions_root: Path | None = None
+    regenerate_plots: bool = True
 
 
 @dataclass(frozen=True)
@@ -140,6 +142,8 @@ def _write_reports(
             allow_incomplete=allow_incomplete,
             title=opinion.title,
             description_lines=opinion.description_lines,
+            predictions_root=opinion.predictions_root,
+            regenerate_plots=opinion.regenerate_plots,
         )
     else:
         _write_disabled_report(
@@ -154,6 +158,8 @@ def _write_reports(
             allow_incomplete=allow_incomplete,
             title=opinion_from_next.title,
             description_lines=opinion_from_next.description_lines,
+            predictions_root=opinion_from_next.predictions_root,
+            regenerate_plots=opinion_from_next.regenerate_plots,
         )
     _write_feature_report(
         reports_dir / "additional_features",

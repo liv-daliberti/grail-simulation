@@ -726,6 +726,7 @@ def main(argv: Sequence[str] | None = None) -> None:
                 metrics=opinion_metrics,
                 outcomes=opinion_sweep_outcomes,
                 selections=opinion_selections,
+                predictions_root=opinion_dir,
             )
             if run_opinion
             else None
@@ -740,6 +741,7 @@ def main(argv: Sequence[str] | None = None) -> None:
                 metrics=opinion_from_next_metrics,
                 title="XGBoost Opinion Regression (Next-Video Config)",
                 description_lines=description_lines,
+                predictions_root=opinion_dir / "from_next",
             )
         _write_reports(
             reports_dir=reports_dir,

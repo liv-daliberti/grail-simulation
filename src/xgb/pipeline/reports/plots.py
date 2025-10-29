@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import Callable, List, Mapping, Optional, Sequence, Tuple
 
 from common.reports.utils import extract_curve_sections, extract_numeric_series
+from common.opinion.plots import plot_opinion_change_heatmap, plot_post_opinion_heatmap
 
 from .shared import LOGGER, _slugify_label, plt
 
@@ -473,6 +474,64 @@ def _plot_opinion_curve(  # pylint: disable=too-many-locals,too-many-return-stat
         return plot_path.as_posix()
 
 
+def _plot_opinion_change_heatmap(
+    *,
+    actual_changes: Sequence[float],
+    predicted_changes: Sequence[float],
+    output_path: Path,
+) -> None:
+    """Render a 2D histogram comparing predicted vs. actual opinion shifts."""
+    plot_opinion_change_heatmap(
+        actual_changes=actual_changes,
+        predicted_changes=predicted_changes,
+        output_path=output_path,
+        logger=LOGGER,
+        log_prefix="[XGB][OPINION]",
+    )
+
+
+def _plot_opinion_post_heatmap(
+    *,
+    actual_after: Sequence[float],
+    predicted_after: Sequence[float],
+    output_path: Path,
+) -> None:
+    """Render a 2D histogram comparing predicted vs. actual post-study indices."""
+    plot_post_opinion_heatmap(
+        actual_after=actual_after,
+        predicted_after=predicted_after,
+        output_path=output_path,
+        logger=LOGGER,
+        log_prefix="[XGB][OPINION]",
+        title="Predicted vs. actual opinion index",
+    )
+
+
+def _plot_opinion_error_histogram(
+    *,
+    errors: Sequence[float],
+    output_path: Path,
+) -> None:
+    """Render a histogram of absolute prediction errors."""
+    if plt is None:  # pragma: no cover - optional dependency
+        LOGGER.warning("[XGB][OPINION] Skip error histogram; matplotlib unavailable.")
+        return
+
+    if not errors:
+        LOGGER.warning("[XGB][OPINION] Skip error histogram; no prediction errors supplied.")
+        return
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    plt.figure(figsize=(5.0, 3.6))
+    plt.hist(errors, bins=30, color="#4C72B0", edgecolor="white")
+    plt.xlabel("Absolute prediction error")
+    plt.ylabel("Participants")
+    plt.title("Opinion prediction error distribution")
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=140)
+    plt.close()
+
+
 __all__ = [
     "_CurveSeries",
     "_build_curve_series",
@@ -481,6 +540,9 @@ __all__ = [
     "_extract_mae_curves",
     "_plot_curve_on_axis",
     "_plot_opinion_curve",
+    "_plot_opinion_change_heatmap",
+    "_plot_opinion_post_heatmap",
+    "_plot_opinion_error_histogram",
     "_plot_xgb_curve",
     "_plot_xgb_curve_overview",
 ]

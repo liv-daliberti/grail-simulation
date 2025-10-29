@@ -409,6 +409,40 @@
     <span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">build_participant_bootstrap_summary</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">model_samples</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="n">baseline_samples</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">n_groups</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">n_rows</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">n_bootstrap</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convenience wrapper that builds ``BootstrapSummaryConfig`` for participant summaries.</span>
+
+<span class="sd">    :param model_samples: Bootstrap samples produced for the model accuracy.</span>
+<span class="sd">    :param baseline_samples: Optional baseline accuracy samples.</span>
+<span class="sd">    :param n_groups: Number of participant groups contributing to the evaluation.</span>
+<span class="sd">    :param n_rows: Eligible evaluation row count across all groups.</span>
+<span class="sd">    :param n_bootstrap: Number of bootstrap replicates executed.</span>
+<span class="sd">    :param seed: Random seed used when sampling replicates.</span>
+<span class="sd">    :returns: Summary dictionary created by :func:`participant_bootstrap_summary`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">summary_config</span> <span class="o">=</span> <span class="n">BootstrapSummaryConfig</span><span class="p">(</span>
+        <span class="n">n_groups</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">n_groups</span><span class="p">),</span>
+        <span class="n">n_rows</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">n_rows</span><span class="p">),</span>
+        <span class="n">n_bootstrap</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">n_bootstrap</span><span class="p">),</span>
+        <span class="n">seed</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">seed</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">participant_bootstrap_summary</span><span class="p">(</span>
+        <span class="n">model_samples</span><span class="o">=</span><span class="n">model_samples</span><span class="p">,</span>
+        <span class="n">baseline_samples</span><span class="o">=</span><span class="n">baseline_samples</span><span class="p">,</span>
+        <span class="n">summary_config</span><span class="o">=</span><span class="n">summary_config</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">summarise_bootstrap_samples</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">model_samples</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
@@ -461,6 +495,7 @@
     <span class="s2">&quot;compose_issue_slug&quot;</span><span class="p">,</span>
     <span class="s2">&quot;ensure_hf_cache&quot;</span><span class="p">,</span>
     <span class="s2">&quot;group_key_for_example&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;build_participant_bootstrap_summary&quot;</span><span class="p">,</span>
     <span class="s2">&quot;participant_bootstrap_summary&quot;</span><span class="p">,</span>
     <span class="s2">&quot;prepare_dataset&quot;</span><span class="p">,</span>
     <span class="s2">&quot;safe_div&quot;</span><span class="p">,</span>

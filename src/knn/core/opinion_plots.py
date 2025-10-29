@@ -18,13 +18,11 @@
 from __future__ import annotations
 
 import logging
-import math
 from pathlib import Path
 from typing import Dict, Sequence
 
-import numpy as np
-
 from common.visualization.matplotlib import plt
+from common.opinion.plots import plot_opinion_change_heatmap, plot_post_opinion_heatmap
 
 LOGGER = logging.getLogger("knn.opinion")
 
@@ -86,56 +84,13 @@ def _plot_change_heatmap(
     :param output_path: Filesystem path for the generated report or figure.
     :type output_path: Path
     """
-    if plt is None:  # pragma: no cover - optional dependency
-        LOGGER.warning("[OPINION] Skipping opinion-change heatmap (matplotlib not installed).")
-        return
-
-    if not actual_changes or not predicted_changes:
-        LOGGER.warning("[OPINION] Skipping opinion-change heatmap (no valid predictions).")
-        return
-
-    actual = np.asarray(actual_changes, dtype=np.float32)
-    predicted = np.asarray(predicted_changes, dtype=np.float32)
-    if actual.size == 0 or predicted.size == 0:
-        LOGGER.warning("[OPINION] Skipping opinion-change heatmap (empty arrays).")
-        return
-
-    min_val = float(min(actual.min(), predicted.min()))
-    max_val = float(max(actual.max(), predicted.max()))
-    if math.isclose(min_val, max_val):
-        span = 0.1 if math.isfinite(min_val) else 1.0
-        min_val -= span
-        max_val += span
-    else:
-        extent = max(abs(min_val), abs(max_val))
-        if not math.isfinite(extent) or extent <= 1e-6:
-            extent = 1.0
-        min_val, max_val = -extent, extent
-
-    bins = 40
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    plt.figure(figsize=(5.5, 4.5))
-    hist = plt.hist2d(
-        actual,
-        predicted,
-        bins=bins,
-        range=[[min_val, max_val], [min_val, max_val]],
-        cmap="magma",
-        cmin=1,
+    plot_opinion_change_heatmap(
+        actual_changes=actual_changes,
+        predicted_changes=predicted_changes,
+        output_path=output_path,
+        logger=LOGGER,
+        log_prefix="[OPINION]",
     )
-    plt.colorbar(hist[3], label="Participants")
-    plt.plot([min_val, max_val], [min_val, max_val], color="cyan", linestyle="--", linewidth=1.0)
-    plt.xlim(min_val, max_val)
-    plt.ylim(min_val, max_val)
-    plt.gca().set_aspect("equal", adjustable="box")
-    plt.axhline(0.0, color="grey", linestyle=":", linewidth=0.8)
-    plt.axvline(0.0, color="grey", linestyle=":", linewidth=0.8)
-    plt.xlabel("Actual opinion change (post - pre)")
-    plt.ylabel("Predicted opinion change")
-    plt.title("Predicted vs. actual opinion change")
-    plt.tight_layout()
-    plt.savefig(output_path, dpi=150)
-    plt.close()
 
 
 def _plot_post_prediction_heatmap(
@@ -154,56 +109,13 @@ def _plot_post_prediction_heatmap(
     :param output_path: Filesystem path for the generated figure.
     :type output_path: Path
     """
-    if plt is None:  # pragma: no cover - optional dependency
-        LOGGER.warning("[OPINION] Skipping post-vs-predicted heatmap (matplotlib not installed).")
-        return
-
-    if not actual_after or not predicted_after:
-        LOGGER.warning("[OPINION] Skipping post-vs-predicted heatmap (no valid predictions).")
-        return
-
-    actual = np.asarray(actual_after, dtype=np.float32)
-    predicted = np.asarray(predicted_after, dtype=np.float32)
-    if actual.size == 0 or predicted.size == 0:
-        LOGGER.warning("[OPINION] Skipping post-vs-predicted heatmap (empty arrays).")
-        return
-
-    min_val = float(min(actual.min(), predicted.min()))
-    max_val = float(max(actual.max(), predicted.max()))
-    if math.isclose(min_val, max_val):
-        span = 0.05 if math.isfinite(min_val) else 1.0
-        min_val -= span
-        max_val += span
-    else:
-        span = max_val - min_val
-        if not math.isfinite(span) or span <= 1e-6:
-            span = 0.1
-        padding = 0.05 * span
-        min_val -= padding
-        max_val += padding
-
-    bins = 40
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    plt.figure(figsize=(5.5, 4.5))
-    hist = plt.hist2d(
-        actual,
-        predicted,
-        bins=bins,
-        range=[[min_val, max_val], [min_val, max_val]],
-        cmap="magma",
-        cmin=1,
+    plot_post_opinion_heatmap(
+        actual_after=actual_after,
+        predicted_after=predicted_after,
+        output_path=output_path,
+        logger=LOGGER,
+        log_prefix="[OPINION]",
     )
-    plt.colorbar(hist[3], label="Participants")
-    plt.plot([min_val, max_val], [min_val, max_val], color="cyan", linestyle="--", linewidth=1.0)
-    plt.xlim(min_val, max_val)
-    plt.ylim(min_val, max_val)
-    plt.gca().set_aspect("equal", adjustable="box")
-    plt.xlabel("Actual post-study opinion index")
-    plt.ylabel("Predicted post-study opinion index")
-    plt.title("Predicted vs. actual post-study opinion index")
-    plt.tight_layout()
-    plt.savefig(output_path, dpi=150)
-    plt.close()
 
 
 __all__ = [

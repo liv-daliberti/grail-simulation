@@ -26,7 +26,7 @@ from common.pipeline.io import load_metrics_json
 from common.opinion.metrics import compute_opinion_metrics
 
 from .pipeline_models import PipelinePaths, SweepOutcome, coerce_float, parse_config_label
-from .pipeline_reports import ReportContext, generate_reports
+from .pipeline_reports import run_report_generation
 from .opinion import (
     OpinionArtifacts,
     OpinionEvaluationResult,
@@ -271,9 +271,9 @@ def run_reports_stage(paths: PipelinePaths, *, repo_root: Path) -> None:
     selected, final_metrics = _load_selected_outcome_from_disk(paths, outcomes)
     opinion_result = _load_opinion_result_from_disk(paths, selected.config.label())
 
-    context = ReportContext(reports_dir=paths.reports_dir, repo_root=repo_root)
-    generate_reports(
-        context=context,
+    run_report_generation(
+        paths=paths,
+        repo_root=repo_root,
         outcomes=outcomes,
         selected=selected,
         final_metrics=final_metrics,

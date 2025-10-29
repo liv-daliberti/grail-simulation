@@ -2763,7 +2763,7 @@ downstream scripts still rely on the legacy import paths, so we re-export the
 public entry points here to ease the transition to the reorganised package.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="xgb.pipeline_reports.OpinionReportData">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_reports.</span></span><span class="sig-name descname"><span class="pre">OpinionReportData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metrics=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcomes=()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selections=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title='XGBoost</span> <span class="pre">Opinion</span> <span class="pre">Regression'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description_lines=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline/reports/runner.html#OpinionReportData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_reports.OpinionReportData" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_reports.</span></span><span class="sig-name descname"><span class="pre">OpinionReportData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metrics=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcomes=()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selections=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title='XGBoost</span> <span class="pre">Opinion</span> <span class="pre">Regression'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description_lines=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions_root=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regenerate_plots=True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline/reports/runner.html#OpinionReportData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline_reports.OpinionReportData" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Bundle describing opinion sweep data and aggregated metrics.</p>
 <dl class="field-list simple">
@@ -2774,6 +2774,8 @@ public entry points here to ease the transition to the reorganised package.</p>
 <li><p><strong>selections</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#xgb.pipeline_context.OpinionStudySelection" title="common.pipeline.types.OpinionStudySelection"><em>common.pipeline.types.OpinionStudySelection</em></a><em>]</em>)</p></li>
 <li><p><strong>title</strong> (<em>str</em>)</p></li>
 <li><p><strong>description_lines</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>predictions_root</strong> (<em>pathlib.Path</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>regenerate_plots</strong> (<em>bool</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -2790,6 +2792,16 @@ public entry points here to ease the transition to the reorganised package.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="xgb.pipeline_reports.OpinionReportData.outcomes">
 <span class="sig-name descname"><span class="pre">outcomes</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome" title="xgb.pipeline.context.OpinionSweepOutcome"><span class="pre">xgb.pipeline.context.OpinionSweepOutcome</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">()</span></em><a class="headerlink" href="#xgb.pipeline_reports.OpinionReportData.outcomes" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_reports.OpinionReportData.predictions_root">
+<span class="sig-name descname"><span class="pre">predictions_root</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_reports.OpinionReportData.predictions_root" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xgb.pipeline_reports.OpinionReportData.regenerate_plots">
+<span class="sig-name descname"><span class="pre">regenerate_plots</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#xgb.pipeline_reports.OpinionReportData.regenerate_plots" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -3262,6 +3274,8 @@ stages can select the best configurations.</p>
 <li><a class="reference internal" href="#xgb.pipeline_reports.OpinionReportData.description_lines"><code class="docutils literal notranslate"><span class="pre">OpinionReportData.description_lines</span></code></a></li>
 <li><a class="reference internal" href="#xgb.pipeline_reports.OpinionReportData.metrics"><code class="docutils literal notranslate"><span class="pre">OpinionReportData.metrics</span></code></a></li>
 <li><a class="reference internal" href="#xgb.pipeline_reports.OpinionReportData.outcomes"><code class="docutils literal notranslate"><span class="pre">OpinionReportData.outcomes</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_reports.OpinionReportData.predictions_root"><code class="docutils literal notranslate"><span class="pre">OpinionReportData.predictions_root</span></code></a></li>
+<li><a class="reference internal" href="#xgb.pipeline_reports.OpinionReportData.regenerate_plots"><code class="docutils literal notranslate"><span class="pre">OpinionReportData.regenerate_plots</span></code></a></li>
 <li><a class="reference internal" href="#xgb.pipeline_reports.OpinionReportData.selections"><code class="docutils literal notranslate"><span class="pre">OpinionReportData.selections</span></code></a></li>
 <li><a class="reference internal" href="#xgb.pipeline_reports.OpinionReportData.title"><code class="docutils literal notranslate"><span class="pre">OpinionReportData.title</span></code></a></li>
 </ul>

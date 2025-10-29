@@ -152,6 +152,7 @@ def generate_reports(repo_root: Path, report_bundle: ReportBundle) -> None:
                     "to estimate post-study opinion change.",
                 ],
                 predictions_root=report_bundle.opinion_from_next_predictions_root,
+                asset_subdir="opinion_from_next",
             ),
         )
     build_feature_report(repo_root, report_bundle)

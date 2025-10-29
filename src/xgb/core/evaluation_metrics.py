@@ -22,11 +22,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 
-from common.evaluation.utils import (
-    BootstrapSummaryConfig,
-    participant_bootstrap_summary,
-    safe_div,
-)
+from common.evaluation.utils import build_participant_bootstrap_summary, safe_div
 
 from .evaluation_records import collect_prediction_records
 from .evaluation_types import (
@@ -107,16 +103,13 @@ def bootstrap_uncertainty(  # pylint: disable=too-many-locals
         if baseline_index is not None:
             baseline_samples.append(_baseline_acc_for_indices(sampled_rows))
 
-    summary_config = BootstrapSummaryConfig(
+    return build_participant_bootstrap_summary(
+        model_samples=model_samples,
+        baseline_samples=baseline_samples or None,
         n_groups=len(grouped),
         n_rows=len(elig_indices),
         n_bootstrap=replicates,
         seed=seed,
-    )
-    return participant_bootstrap_summary(
-        model_samples=model_samples,
-        baseline_samples=baseline_samples or None,
-        summary_config=summary_config,
     )
 
 

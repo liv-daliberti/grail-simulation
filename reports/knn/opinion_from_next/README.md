@@ -13,7 +13,7 @@ This section reuses the selected next-video recommendation configuration to esti
 | Study 1 – Gun Control (MTurk) | 162 | 50 | 0.704 | 0.074 | +0.630 | 0.030 | +0.007 | 0.038 | 0.983 | 0.030 | 0.038 | +0.008 | 0.199 | 0.020 | 0.008 | — | 10.979 | +10.467 | 0.037 |
 | Study 2 – Minimum Wage (MTurk) | 165 | 50 | 0.527 | 0.061 | +0.467 | 0.093 | +0.003 | 0.128 | 0.786 | 0.093 | 0.128 | +0.010 | 1.079 | 0.007 | 0.018 | — | 8.264 | +10.105 | 0.096 |
 | Study 3 – Minimum Wage (YouGov) | 257 | 50 | 0.494 | 0.058 | +0.436 | 0.088 | -0.004 | 0.125 | 0.771 | 0.088 | 0.125 | +0.001 | 0.155 | 0.018 | 0.022 | — | 7.392 | +9.188 | 0.084 |
-*Assets:* [MAE / R² curves and heatmaps](../tfidf/opinion/)
+*Assets:* [MAE / R² curves and heatmaps](../tfidf/opinion_from_next/)
 
 ## Word2Vec Feature Space
 
@@ -22,7 +22,7 @@ This section reuses the selected next-video recommendation configuration to esti
 | Study 1 – Gun Control (MTurk) | 162 | 50 | 0.704 | 0.074 | +0.630 | 0.030 | +0.007 | 0.038 | 0.983 | 0.030 | 0.038 | +0.008 | 0.039 | 0.025 | 0.006 | — | 11.146 | +10.300 | 0.037 |
 | Study 2 – Minimum Wage (MTurk) | 165 | 50 | 0.545 | 0.061 | +0.485 | 0.090 | +0.006 | 0.125 | 0.795 | 0.090 | 0.125 | +0.013 | 1.334 | 0.000 | 0.031 | — | 9.678 | +8.690 | 0.096 |
 | Study 3 – Minimum Wage (YouGov) | 257 | 50 | 0.486 | 0.058 | +0.428 | 0.088 | -0.004 | 0.126 | 0.767 | 0.088 | 0.126 | -0.001 | -0.048 | 0.022 | 0.024 | — | 7.363 | +9.217 | 0.084 |
-*Assets:* [MAE / R² curves and heatmaps](../word2vec/opinion/)
+*Assets:* [MAE / R² curves and heatmaps](../word2vec/opinion_from_next/)
 
 ## Sentence-Transformer Feature Space
 
@@ -30,51 +30,47 @@ This section reuses the selected next-video recommendation configuration to esti
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | Study 1 – Gun Control (MTurk) | 162 | 50 | 0.704 | 0.074 | +0.630 | 0.030 | +0.007 | 0.038 | 0.983 | 0.030 | 0.038 | +0.008 | 0.030 | 0.025 | 0.009 | — | 14.511 | +6.935 | 0.037 |
 | Study 2 – Minimum Wage (MTurk) | 165 | 25 | 0.552 | 0.061 | +0.491 | 0.089 | +0.007 | 0.126 | 0.791 | 0.089 | 0.126 | +0.012 | 1.073 | 0.007 | 0.032 | — | 8.074 | +10.294 | 0.096 |
-*Assets:* [MAE / R² curves and heatmaps](../sentence_transformer/opinion/)
+*Assets:* [MAE / R² curves and heatmaps](../sentence_transformer/opinion_from_next/)
 
 ### Opinion Change Heatmaps
 
 #### SENTENCE_TRANSFORMER
 
-![Mae Study1](/n/fs/similarity/grail-simulation/reports/knn/sentence_transformer/opinion/mae_study1.png)
+![Mae Study1](../sentence_transformer/opinion_from_next/mae_study1.png)
 
-![Mae Study2](/n/fs/similarity/grail-simulation/reports/knn/sentence_transformer/opinion/mae_study2.png)
+![Mae Study2](../sentence_transformer/opinion_from_next/mae_study2.png)
 
-![Mae Study3](/n/fs/similarity/grail-simulation/reports/knn/sentence_transformer/opinion/mae_study3.png)
+![R2 Study1](../sentence_transformer/opinion_from_next/r2_study1.png)
 
-![R2 Study1](/n/fs/similarity/grail-simulation/reports/knn/sentence_transformer/opinion/r2_study1.png)
-
-![R2 Study2](/n/fs/similarity/grail-simulation/reports/knn/sentence_transformer/opinion/r2_study2.png)
-
-![R2 Study3](/n/fs/similarity/grail-simulation/reports/knn/sentence_transformer/opinion/r2_study3.png)
+![R2 Study2](../sentence_transformer/opinion_from_next/r2_study2.png)
 
 #### TFIDF
 
-![Mae Study1](/n/fs/similarity/grail-simulation/reports/knn/tfidf/opinion/mae_study1.png)
+![Mae Study1](../tfidf/opinion_from_next/mae_study1.png)
 
-![Mae Study2](/n/fs/similarity/grail-simulation/reports/knn/tfidf/opinion/mae_study2.png)
+![Mae Study2](../tfidf/opinion_from_next/mae_study2.png)
 
-![Mae Study3](/n/fs/similarity/grail-simulation/reports/knn/tfidf/opinion/mae_study3.png)
+![Mae Study3](../tfidf/opinion_from_next/mae_study3.png)
 
-![R2 Study1](/n/fs/similarity/grail-simulation/reports/knn/tfidf/opinion/r2_study1.png)
+![R2 Study1](../tfidf/opinion_from_next/r2_study1.png)
 
-![R2 Study2](/n/fs/similarity/grail-simulation/reports/knn/tfidf/opinion/r2_study2.png)
+![R2 Study2](../tfidf/opinion_from_next/r2_study2.png)
 
-![R2 Study3](/n/fs/similarity/grail-simulation/reports/knn/tfidf/opinion/r2_study3.png)
+![R2 Study3](../tfidf/opinion_from_next/r2_study3.png)
 
 #### WORD2VEC
 
-![Mae Study1](/n/fs/similarity/grail-simulation/reports/knn/word2vec/opinion/mae_study1.png)
+![Mae Study1](../word2vec/opinion_from_next/mae_study1.png)
 
-![Mae Study2](/n/fs/similarity/grail-simulation/reports/knn/word2vec/opinion/mae_study2.png)
+![Mae Study2](../word2vec/opinion_from_next/mae_study2.png)
 
-![Mae Study3](/n/fs/similarity/grail-simulation/reports/knn/word2vec/opinion/mae_study3.png)
+![Mae Study3](../word2vec/opinion_from_next/mae_study3.png)
 
-![R2 Study1](/n/fs/similarity/grail-simulation/reports/knn/word2vec/opinion/r2_study1.png)
+![R2 Study1](../word2vec/opinion_from_next/r2_study1.png)
 
-![R2 Study2](/n/fs/similarity/grail-simulation/reports/knn/word2vec/opinion/r2_study2.png)
+![R2 Study2](../word2vec/opinion_from_next/r2_study2.png)
 
-![R2 Study3](/n/fs/similarity/grail-simulation/reports/knn/word2vec/opinion/r2_study3.png)
+![R2 Study3](../word2vec/opinion_from_next/r2_study3.png)
 
 ## Cross-Study Diagnostics
 

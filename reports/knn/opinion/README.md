@@ -13,7 +13,7 @@ This study evaluates a second KNN baseline that predicts each participant's post
 | Study 1 – Gun Control (MTurk) | 162 | 50 | 0.704 | 0.074 | +0.630 | 0.030 | +0.007 | 0.038 | 0.983 | 0.030 | 0.038 | +0.008 | 0.238 | 0.019 | 0.009 | — | 10.978 | +10.467 | 0.037 |
 | Study 2 – Minimum Wage (MTurk) | 165 | 50 | 0.527 | 0.061 | +0.467 | 0.093 | +0.003 | 0.128 | 0.786 | 0.093 | 0.128 | +0.010 | 1.079 | 0.007 | 0.018 | — | 8.264 | +10.105 | 0.096 |
 | Study 3 – Minimum Wage (YouGov) | 257 | 50 | 0.490 | 0.058 | +0.432 | 0.088 | -0.004 | 0.125 | 0.771 | 0.088 | 0.125 | +0.001 | 0.163 | 0.018 | 0.027 | — | 7.386 | +9.194 | 0.084 |
-*Assets:* [MAE / R² curves and heatmaps](../tfidf/opinion/)
+*Assets:* see `reports/knn/tfidf/opinion/` for the generated figures.
 
 ## Word2Vec Feature Space
 
@@ -22,7 +22,7 @@ This study evaluates a second KNN baseline that predicts each participant's post
 | Study 1 – Gun Control (MTurk) | 162 | 50 | 0.704 | 0.074 | +0.630 | 0.030 | +0.007 | 0.038 | 0.983 | 0.030 | 0.038 | +0.008 | 0.076 | 0.024 | 0.008 | — | 11.074 | +10.371 | 0.037 |
 | Study 2 – Minimum Wage (MTurk) | 165 | 50 | 0.576 | 0.061 | +0.515 | 0.091 | +0.005 | 0.127 | 0.790 | 0.091 | 0.127 | +0.011 | 1.130 | 0.007 | 0.020 | — | 8.250 | +10.119 | 0.096 |
 | Study 3 – Minimum Wage (YouGov) | 257 | 50 | 0.494 | 0.058 | +0.436 | 0.088 | -0.004 | 0.126 | 0.767 | 0.088 | 0.126 | -0.001 | -0.031 | 0.022 | 0.027 | — | 7.342 | +9.238 | 0.084 |
-*Assets:* [MAE / R² curves and heatmaps](../word2vec/opinion/)
+*Assets:* see `reports/knn/word2vec/opinion/` for the generated figures.
 
 ## Sentence-Transformer Feature Space
 
@@ -31,57 +31,57 @@ This study evaluates a second KNN baseline that predicts each participant's post
 | Study 1 – Gun Control (MTurk) | 162 | 50 | 0.704 | 0.074 | +0.630 | 0.030 | +0.007 | 0.038 | 0.983 | 0.030 | 0.038 | +0.008 | 0.030 | 0.025 | 0.009 | — | 14.511 | +6.935 | 0.037 |
 | Study 2 – Minimum Wage (MTurk) | 165 | 25 | 0.552 | 0.061 | +0.491 | 0.089 | +0.007 | 0.126 | 0.791 | 0.089 | 0.126 | +0.012 | 1.073 | 0.007 | 0.032 | — | 8.074 | +10.294 | 0.096 |
 | Study 3 – Minimum Wage (YouGov) | 257 | 50 | 0.521 | 0.058 | +0.463 | 0.089 | -0.004 | 0.125 | 0.768 | 0.089 | 0.125 | -0.000 | 0.083 | 0.019 | 0.020 | — | 9.523 | +7.057 | 0.084 |
-*Assets:* [MAE / R² curves and heatmaps](../sentence_transformer/opinion/)
+*Assets:* see `reports/knn/sentence_transformer/opinion/` for the generated figures.
 
 ### Opinion Change Heatmaps
 
 #### SENTENCE_TRANSFORMER
 
-![Mae Study1](/n/fs/similarity/grail-simulation/reports/knn/sentence_transformer/opinion/mae_study1.png)
+![Mae Study1](../sentence_transformer/opinion/mae_study1.png)
 
-![Mae Study2](/n/fs/similarity/grail-simulation/reports/knn/sentence_transformer/opinion/mae_study2.png)
+![Mae Study2](../sentence_transformer/opinion/mae_study2.png)
 
-![Mae Study3](/n/fs/similarity/grail-simulation/reports/knn/sentence_transformer/opinion/mae_study3.png)
+![Mae Study3](../sentence_transformer/opinion/mae_study3.png)
 
-![R2 Study1](/n/fs/similarity/grail-simulation/reports/knn/sentence_transformer/opinion/r2_study1.png)
+![R2 Study1](../sentence_transformer/opinion/r2_study1.png)
 
-![R2 Study2](/n/fs/similarity/grail-simulation/reports/knn/sentence_transformer/opinion/r2_study2.png)
+![R2 Study2](../sentence_transformer/opinion/r2_study2.png)
 
-![R2 Study3](/n/fs/similarity/grail-simulation/reports/knn/sentence_transformer/opinion/r2_study3.png)
+![R2 Study3](../sentence_transformer/opinion/r2_study3.png)
 
 #### TFIDF
 
-![Mae Study1](/n/fs/similarity/grail-simulation/reports/knn/tfidf/opinion/mae_study1.png)
+![Mae Study1](../tfidf/opinion/mae_study1.png)
 
-![Mae Study2](/n/fs/similarity/grail-simulation/reports/knn/tfidf/opinion/mae_study2.png)
+![Mae Study2](../tfidf/opinion/mae_study2.png)
 
-![Mae Study3](/n/fs/similarity/grail-simulation/reports/knn/tfidf/opinion/mae_study3.png)
+![Mae Study3](../tfidf/opinion/mae_study3.png)
 
-![R2 Study1](/n/fs/similarity/grail-simulation/reports/knn/tfidf/opinion/r2_study1.png)
+![R2 Study1](../tfidf/opinion/r2_study1.png)
 
-![R2 Study2](/n/fs/similarity/grail-simulation/reports/knn/tfidf/opinion/r2_study2.png)
+![R2 Study2](../tfidf/opinion/r2_study2.png)
 
-![R2 Study3](/n/fs/similarity/grail-simulation/reports/knn/tfidf/opinion/r2_study3.png)
+![R2 Study3](../tfidf/opinion/r2_study3.png)
 
 #### WORD2VEC
 
-![Mae Study1](/n/fs/similarity/grail-simulation/reports/knn/word2vec/opinion/mae_study1.png)
+![Mae Study1](../word2vec/opinion/mae_study1.png)
 
-![Mae Study2](/n/fs/similarity/grail-simulation/reports/knn/word2vec/opinion/mae_study2.png)
+![Mae Study2](../word2vec/opinion/mae_study2.png)
 
-![Mae Study3](/n/fs/similarity/grail-simulation/reports/knn/word2vec/opinion/mae_study3.png)
+![Mae Study3](../word2vec/opinion/mae_study3.png)
 
-![R2 Study1](/n/fs/similarity/grail-simulation/reports/knn/word2vec/opinion/r2_study1.png)
+![R2 Study1](../word2vec/opinion/r2_study1.png)
 
-![R2 Study2](/n/fs/similarity/grail-simulation/reports/knn/word2vec/opinion/r2_study2.png)
+![R2 Study2](../word2vec/opinion/r2_study2.png)
 
-![R2 Study3](/n/fs/similarity/grail-simulation/reports/knn/word2vec/opinion/r2_study3.png)
+![R2 Study3](../word2vec/opinion/r2_study3.png)
 
 ## Cross-Study Diagnostics
 
 ## TF-IDF Feature Space
 
-#### Weighted Summary
+### Weighted Summary
 
 - Weighted MAE 0.073 across 584 participants.
 - Weighted baseline MAE 0.074 (+0.001 vs. final).
@@ -110,7 +110,7 @@ This study evaluates a second KNN baseline that predicts each participant's post
 
 ## Word2Vec Feature Space
 
-#### Weighted Summary
+### Weighted Summary
 
 - Weighted MAE 0.073 across 584 participants.
 - Weighted baseline MAE 0.074 (+0.002 vs. final).
@@ -139,7 +139,7 @@ This study evaluates a second KNN baseline that predicts each participant's post
 
 ## Sentence-Transformer Feature Space
 
-#### Weighted Summary
+### Weighted Summary
 
 - Weighted MAE 0.073 across 584 participants.
 - Weighted baseline MAE 0.074 (+0.002 vs. final).

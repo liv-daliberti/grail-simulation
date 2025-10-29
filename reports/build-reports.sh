@@ -146,6 +146,22 @@ KNN_W2V_DIR="${KNN_REPORTS_WORD2VEC_DIR:-${KNN_OUT_DIR}/next_video/word2vec_mode
 
 mkdir -p "${KNN_OUT_DIR}" "${KNN_CACHE_DIR}" "${KNN_W2V_DIR}"
 
+# Drop any previously generated KNN reports so the regeneration always starts from a clean slate.
+KNN_REPORTS_BASE="$("${PYTHON_BIN}" - <<PY
+from pathlib import Path
+from knn.evaluate import resolve_reports_dir
+
+out_dir = Path(r"${KNN_OUT_DIR}")
+print(resolve_reports_dir(out_dir))
+PY
+)"
+KNN_REPORTS_DIR="${KNN_REPORTS_BASE}/knn"
+if [ -d "${KNN_REPORTS_DIR}" ]; then
+  log "Clearing existing KNN reports at ${KNN_REPORTS_DIR}"
+  rm -rf "${KNN_REPORTS_DIR}"
+fi
+mkdir -p "${KNN_REPORTS_BASE}"
+
 : "${KNN_FEATURE_SPACES:=tfidf,word2vec,sentence_transformer}"
 : "${KNN_K_SWEEP:=1,2,3,4,5,10,25,50}"
 : "${KNN_PIPELINE_TASKS:=next_video,opinion}"
@@ -174,9 +190,14 @@ fi
   --stage reports \
   "${KNN_ALLOW_FLAG}"
 
+# Drop any previously generated XGBoost reports so the regeneration always starts from a clean slate.
 XGB_OUT_DIR="${XGB_REPORTS_OUT_DIR:-${REPO_ROOT}/models/xgb}"
 XGB_CACHE_DIR="${XGB_REPORTS_CACHE_DIR:-${REPO_ROOT}/.cache/huggingface/xgb}"
 XGB_REPORTS_DIR="${XGB_REPORTS_DIR:-${REPO_ROOT}/reports/xgb}"
+if [ -d "${XGB_REPORTS_DIR}" ]; then
+  log "Clearing existing XGBoost reports at ${XGB_REPORTS_DIR}"
+  rm -rf "${XGB_REPORTS_DIR}"
+fi
 
 mkdir -p "${XGB_OUT_DIR}" "${XGB_CACHE_DIR}" "${XGB_REPORTS_DIR}"
 

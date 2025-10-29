@@ -627,7 +627,9 @@ def test_run_final_evaluations_avoids_cross_study_training(
     assert "--participant-studies" in cli_invocation
     participant_idx = cli_invocation.index("--participant-studies") + 1
     assert cli_invocation[participant_idx] == study.key
-    assert "--train-participant-studies" not in cli_invocation
+    assert "--train-participant-studies" in cli_invocation
+    train_idx = cli_invocation.index("--train-participant-studies") + 1
+    assert cli_invocation[train_idx] == study.key
 
 def test_run_opinion_evaluations_reuses_cached_metrics(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     study = _make_study("study1", "gun_control", "Study 1 – Gun Control (MTurk)")
@@ -871,7 +873,9 @@ def test_run_cross_study_evaluations_avoids_cross_study_training(
         cli[cli.index("--participant-studies") + 1] for cli in call_args
     } == {study_a.key, study_b.key}
     for cli in call_args:
-        assert "--train-participant-studies" not in cli
+        assert "--train-participant-studies" in cli
+        train_idx = cli.index("--train-participant-studies") + 1
+        assert cli[train_idx] == cli[cli.index("--participant-studies") + 1]
 
 def test_generate_reports_creates_expected_sections(tmp_path: Path) -> None:
     repo_root = tmp_path

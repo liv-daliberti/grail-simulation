@@ -32,10 +32,16 @@ import zipfile
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional, Sequence, Tuple
 
+class DatasetGenerationCastError(Exception):  # type: ignore
+    """Fallback stub for :class:`datasets.builder.DatasetGenerationCastError`.
+
+    :meta private:
+    """
+
+
 try:  # pragma: no cover - optional dependency
     import datasets  # type: ignore
     from datasets import Dataset, DatasetDict, Features, Sequence as HFSequence, Value
-    from datasets.builder import DatasetGenerationCastError
 except ImportError:  # pragma: no cover - optional dependency for linting
     datasets = None  # type: ignore
     Dataset = Any  # type: ignore
@@ -43,12 +49,11 @@ except ImportError:  # pragma: no cover - optional dependency for linting
     Features = Any  # type: ignore
     HFSequence = Any  # type: ignore
     Value = Any  # type: ignore
-
-    class DatasetGenerationCastError(Exception):  # type: ignore
-        """Fallback stub for :class:`datasets.builder.DatasetGenerationCastError`.
-
-        :meta private:
-        """
+else:  # pragma: no cover - optional dependency
+    try:
+        from datasets.builder import DatasetGenerationCastError  # type: ignore
+    except ImportError:
+        pass
 
 try:
     import pandas as pd

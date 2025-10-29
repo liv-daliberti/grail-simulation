@@ -19,8 +19,6 @@ import clean_data.clean_data
 
 from clean_data.clean_data import (
     BuildOptions,
-    _ColumnUnionLoader,
-    _normalize_split_mappings,
     build_clean_dataset,
     dedupe_by_participant_issue,
     export_issue_datasets,
@@ -32,6 +30,7 @@ from clean_data.clean_data import (
     save_dataset,
     validate_required_columns,
 )
+from clean_data._datasets import _ColumnUnionLoader, normalize_split_mappings
 from clean_data.prompt.constants import REQUIRED_PROMPT_COLUMNS
 from clean_data.filters import filter_prompt_ready
 
@@ -202,13 +201,13 @@ def test_build_clean_dataset_respects_custom_split_names(monkeypatch: pytest.Mon
 
 def test_normalize_split_mappings_supports_strings_and_sequences():
     mapping = {"train": "train.csv", "validation": ("val1.csv", "val2.csv")}
-    normalized = _normalize_split_mappings(mapping)
+    normalized = normalize_split_mappings(mapping)
     assert normalized == {"train": ["train.csv"], "validation": ["val1.csv", "val2.csv"]}
 
 
 def test_normalize_split_mappings_rejects_unsupported_types():
     with pytest.raises(RuntimeError):
-        _normalize_split_mappings({"train": {"unexpected": "value"}})
+        normalize_split_mappings({"train": {"unexpected": "value"}})
 
 
 class _MemoryBuffer(io.BytesIO):

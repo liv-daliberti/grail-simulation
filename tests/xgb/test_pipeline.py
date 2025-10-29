@@ -456,7 +456,9 @@ def test_run_final_evaluations_reads_metrics(monkeypatch: pytest.MonkeyPatch, tm
         issue_name = args[args.index("--issues") + 1]
         study_name = args[args.index("--participant_studies") + 1]
         train_arg = args[args.index("--train_participant_studies") + 1]
-        assert train_arg == train_study.key
+        # The pipeline now restricts training to the evaluation cohort to
+        # prevent cross-study leakage, so the CLI should mirror the holdout.
+        assert train_arg == study_name
         evaluation_slug = f"{issue_name.replace(' ', '_')}_{study_name.replace(' ', '_')}"
         metrics_path = out_dir / evaluation_slug / "metrics.json"
         metrics_path.parent.mkdir(parents=True, exist_ok=True)

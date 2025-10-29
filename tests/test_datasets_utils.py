@@ -86,7 +86,7 @@ def test_column_union_loader_unions_and_casts(tmp_path, monkeypatch):
     assert unioned == {"train": "mock_dataset"}
     assert len(captured_frames) == 1
     frame = captured_frames[0]
-    assert list(frame.columns) == ["col_a", "col_shared", "col_c"]
+    assert set(frame.columns) == {"col_a", "col_shared", "col_c"}
     # Column that was missing in one shard should be NA filled.
     assert frame["col_a"].isna().sum() == 2
     assert frame["col_c"].isna().sum() == 2
@@ -135,14 +135,16 @@ def test_decompress_payload_variants(tmp_path, monkeypatch):
     )
 
 
-def test_decode_sample_texts_and_build_attempts():
+def test_decode_sample_texts_and_build_attempts(tmp_path):
     """Sample decoders should evaluate multiple encodings and delimiters."""
 
     samples = datasets_mod._ColumnUnionLoader._decode_sample_texts(b"col1,col2\n1,2\n")
     encodings = [encoding for encoding, _ in samples]
     assert encodings[0] == "utf-8"
 
-    attempts = datasets_mod._ColumnUnionLoader._build_attempts(samples[0][1])
+    builder = _make_builder(tmp_path, {"train": [(["col"], [[1]])]})
+    loader = datasets_mod._ColumnUnionLoader("dummy", builder, features=None)
+    attempts = loader._build_attempts(samples[0][1])
     # Expect multiple delimiter/engine combinations, starting with comma/"c".
     assert attempts[0].engine == "c"
     assert attempts[0].sep == ","

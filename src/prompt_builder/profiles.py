@@ -38,7 +38,16 @@ from .formatters import (
     with_indefinite_article,
 )
 from .parsers import format_yes_no, is_nanlike
-from .shared import first_non_nan_value, load_selected_survey_row
+from .profile_helpers import (
+    clean_fragment,
+    collect_labeled_fields,
+    ensure_sentence,
+    first_available_text,
+    first_text,
+    load_selected_row,
+    sentencize,
+)
+from .shared import first_non_nan_value
 from .value_maps import format_field_value
 
 MEDIA_SOURCES: Sequence[tuple[Sequence[str], str, bool]] = (
@@ -198,7 +207,7 @@ def render_profile(ex: Dict[str, Any]) -> ProfileRender:
     :rtype: ProfileRender
     """
 
-    selected_row = _load_selected_row(ex)
+    selected_row = load_selected_row(ex)
     viewer = clean_text(ex.get("viewer_profile_sentence"))
     if not viewer:
         viewer = synthesize_viewer_sentence(ex)
@@ -209,7 +218,7 @@ def render_profile(ex: Dict[str, Any]) -> ProfileRender:
         normalized = viewer.strip().lower()
         if normalized in {"(no profile provided)", "no profile provided"}:
             viewer_placeholder = True
-        viewer_sentence = _ensure_sentence(viewer)
+        viewer_sentence = ensure_sentence(viewer)
         if viewer_placeholder:
             sentences.append(viewer_sentence)
 
@@ -236,134 +245,6 @@ def render_profile(ex: Dict[str, Any]) -> ProfileRender:
         sentences.append(viewer_sentence)
 
     return ProfileRender(sentences=sentences, viewer_placeholder=viewer_placeholder)
-
-
-def _load_selected_row(ex: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Extract the ``selected_survey_row`` field as a plain dictionary.
-
-    :param ex: Dataset example containing optional survey-row metadata.
-    :type ex: Dict[str, Any]
-    :returns: Mapping of selected survey responses or an empty dictionary.
-    :rtype: Dict[str, Any]
-    """
-    return load_selected_survey_row(ex)
-
-
-def _ensure_sentence(text: str) -> str:
-    """Ensure that ``text`` ends with sentence punctuation.
-
-    :param text: Candidate fragment to normalise.
-    :type text: str
-    :returns: Sentence-terminated string or an empty string when missing.
-    :rtype: str
-    """
-    stripped = (text or "").strip()
-    if not stripped:
-        return ""
-    if stripped[-1] in ".!?":
-        return stripped
-    return f"{stripped}."
-
-
-def _first_text(
-    ex: Dict[str, Any],
-    selected: Dict[str, Any],
-    *keys: str,
-    limit: Optional[int] = None,
-) -> str:
-    """Return the first textual value among ``keys`` with optional length limit.
-
-    :param ex: Primary dataset example.
-    :type ex: Dict[str, Any]
-    :param selected: Selected survey-row mapping.
-    :type selected: Dict[str, Any]
-    :param keys: Candidate field names searched in order.
-    :type keys: str
-    :param limit: Optional maximum length passed to :func:`clean_text`.
-    :type limit: Optional[int]
-    :returns: Cleaned text fragment or an empty string.
-    :rtype: str
-    """
-    for key in keys:
-        for dataset in (ex, selected):
-            if key not in dataset:
-                continue
-            value = dataset.get(key)
-            if value is None or is_nanlike(value):
-                continue
-            formatted = format_field_value(key, value) or str(value)
-            cleaned = clean_text(formatted, limit=limit)
-            if cleaned:
-                return cleaned
-    return ""
-
-
-def _clean_fragment(text: str) -> str:
-    """Return a trimmed fragment without trailing periods.
-
-    :param text: Text fragment to normalise.
-    :type text: str
-    :returns: Stripped fragment.
-    :rtype: str
-    """
-    return (text or "").strip().rstrip(".")
-
-
-def _phrases_from_items(items: Sequence[str]) -> List[str]:
-    """Convert labeled item strings into a list of readable phrases.
-
-    :param items: Iterable of ``label: value`` strings.
-    :type items: Sequence[str]
-    :returns: List of single phrases suitable for inclusion in sentences.
-    :rtype: List[str]
-    """
-    phrases: List[str] = []
-    for item in items:
-        fragment = item.strip()
-        if not fragment:
-            continue
-        if ":" not in fragment:
-            phrases.append(fragment)
-            continue
-        label, value = fragment.split(":", 1)
-        label_clean = label.strip()
-        value_clean = value.strip()
-        if not label_clean and not value_clean:
-            continue
-        if not value_clean:
-            phrases.append(label_clean)
-            continue
-        prefix = label_clean
-        if prefix and prefix[1:].lower() == prefix[1:]:
-            prefix = prefix[0].lower() + prefix[1:]
-        label_lower = label_clean.lower()
-        value_lower = value_clean.lower()
-        if label_lower and label_lower in value_lower:
-            phrases.append(value_clean)
-        elif value_lower in {"yes", "no"}:
-            phrases.append(f"{prefix} {value_lower}")
-        else:
-            phrases.append(f"{prefix} is {value_clean}")
-    return phrases
-
-
-def _sentencize(prefix: str, items: Sequence[str]) -> str:
-    """Join ``items`` into a grammatically correct sentence prefixed by text.
-
-    :param prefix: Leading phrase preceding the list.
-    :type prefix: str
-    :param items: Sequence of phrase fragments.
-    :type items: Sequence[str]
-    :returns: Sentence string or empty string when ``items`` is empty.
-    :rtype: str
-    """
-    phrases = _phrases_from_items(items)
-    if not phrases:
-        return ""
-    if len(phrases) == 1:
-        return f"{prefix} {phrases[0]}."
-    return f"{prefix} {', '.join(phrases[:-1])}, and {phrases[-1]}."
 
 
 def _demographic_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
@@ -405,7 +286,7 @@ def _identity_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[st
     gender_fragment = describe_gender_fragment(
         first_non_nan_value(ex, selected, "gender", "q26", "gender4", "gender_3_text")
     )
-    race_fragment = _first_text(ex, selected, "race", "race_ethnicity", "ethnicity", "q29")
+    race_fragment = first_text(ex, selected, "race", "race_ethnicity", "ethnicity", "q29")
 
     identity_bits: List[str] = []
     if age_fragment:
@@ -415,7 +296,7 @@ def _identity_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[st
         else:
             identity_bits.append(with_indefinite_article(age_fragment))
     if gender_fragment:
-        gender_clean = _clean_fragment(gender_fragment)
+        gender_clean = clean_fragment(gender_fragment)
         mapped = {"male": "man", "female": "woman"}
         gender_text = mapped.get(gender_clean.lower(), gender_clean)
         if not gender_text.lower().startswith(("a ", "an ", "the ", "someone", "somebody")):
@@ -423,23 +304,23 @@ def _identity_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[st
         identity_bits.append(gender_text)
     if identity_bits:
         sentences.append(
-            _ensure_sentence(f"This viewer is {' and '.join(identity_bits)}.")
+            ensure_sentence(f"This viewer is {' and '.join(identity_bits)}.")
         )
     elif gender_fragment:
         sentences.append(
-            _ensure_sentence(
-                f"This viewer identifies as {_clean_fragment(gender_fragment)}."
+            ensure_sentence(
+                f"This viewer identifies as {clean_fragment(gender_fragment)}."
             )
         )
     elif race_fragment:
         sentences.append(
-            _ensure_sentence(
-                f"This viewer identifies as {_clean_fragment(race_fragment)}."
+            ensure_sentence(
+                f"This viewer identifies as {clean_fragment(race_fragment)}."
             )
         )
     if race_fragment and identity_bits:
         sentences.append(
-            _ensure_sentence(f"They identify as {_clean_fragment(race_fragment)}.")
+            ensure_sentence(f"They identify as {clean_fragment(race_fragment)}.")
         )
     return [s for s in sentences if s]
 
@@ -455,8 +336,8 @@ def _location_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[st
     :rtype: List[str]
     """
     sentences: List[str] = []
-    city = _first_text(ex, selected, "city", "city_name")
-    state = _first_text(
+    city = first_text(ex, selected, "city", "city_name")
+    state = first_text(
         ex,
         selected,
         "state",
@@ -466,27 +347,27 @@ def _location_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[st
         "thumb_states",
         "state_full",
     )
-    county = _first_text(ex, selected, "county", "county_name")
-    zip_text = _first_text(ex, selected, "zip3", "zip", "zip5")
+    county = first_text(ex, selected, "county", "county_name")
+    zip_text = first_text(ex, selected, "zip3", "zip", "zip5")
     location = ""
     if city and state:
-        location = f"{_clean_fragment(city)}, {_clean_fragment(state)}"
+        location = f"{clean_fragment(city)}, {clean_fragment(state)}"
     elif city:
-        location = _clean_fragment(city)
+        location = clean_fragment(city)
     elif state:
-        location = _clean_fragment(state)
+        location = clean_fragment(state)
     extras: List[str] = []
     if county:
-        extras.append(f"{_clean_fragment(county)} County")
+        extras.append(f"{clean_fragment(county)} County")
     if zip_text:
-        extras.append(f"ZIP3 {_clean_fragment(zip_text)}")
+        extras.append(f"ZIP3 {clean_fragment(zip_text)}")
     if location:
         if extras:
             location = f"{location} ({'; '.join(extras)})"
-        sentences.append(_ensure_sentence(f"They live in {location}."))
+        sentences.append(ensure_sentence(f"They live in {location}."))
     elif extras:
         sentences.append(
-            _ensure_sentence(f"They live in {human_join(extras)}.")
+            ensure_sentence(f"They live in {human_join(extras)}.")
         )
     return [s for s in sentences if s]
 
@@ -502,7 +383,7 @@ def _education_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[s
     :rtype: List[str]
     """
     sentences: List[str] = []
-    education = _first_text(
+    education = first_text(
         ex,
         selected,
         "education",
@@ -518,25 +399,25 @@ def _education_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[s
         no="no",
     )
     if education:
-        fragment = _clean_fragment(education)
+        fragment = clean_fragment(education)
         if college_flag == "yes":
             sentences.append(
-                _ensure_sentence(
+                ensure_sentence(
                     f"They have {fragment} and are college educated."
                 )
             )
         elif college_flag == "no":
             sentences.append(
-                _ensure_sentence(
+                ensure_sentence(
                     f"They have {fragment} and are not college educated."
                 )
             )
         else:
-            sentences.append(_ensure_sentence(f"They have {fragment}."))
+            sentences.append(ensure_sentence(f"They have {fragment}."))
     elif college_flag == "yes":
-        sentences.append(_ensure_sentence("They are college educated."))
+        sentences.append(ensure_sentence("They are college educated."))
     elif college_flag == "no":
-        sentences.append(_ensure_sentence("They are not college educated."))
+        sentences.append(ensure_sentence("They are not college educated."))
     return [s for s in sentences if s]
 
 
@@ -551,7 +432,7 @@ def _income_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]
     :rtype: List[str]
     """
     sentences: List[str] = []
-    income = _first_text(
+    income = first_text(
         ex,
         selected,
         "q31",
@@ -562,8 +443,8 @@ def _income_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]
     )
     if income:
         sentences.append(
-            _ensure_sentence(
-                f"Their household income is reported as {_clean_fragment(income)}."
+            ensure_sentence(
+                f"Their household income is reported as {clean_fragment(income)}."
             )
         )
         return sentences
@@ -574,7 +455,7 @@ def _income_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]
     )
     if income_flag:
         sentences.append(
-            _ensure_sentence(f"Their household income is {income_flag}.")
+            ensure_sentence(f"Their household income is {income_flag}.")
         )
     return sentences
 
@@ -590,7 +471,7 @@ def _employment_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[
     :rtype: List[str]
     """
     sentences: List[str] = []
-    employment = _first_text(
+    employment = first_text(
         ex,
         selected,
         "employment_status",
@@ -598,21 +479,21 @@ def _employment_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[
         "labor_force",
         "employ",
     )
-    occupation = _first_text(ex, selected, "occupation", "occupation_text")
+    occupation = first_text(ex, selected, "occupation", "occupation_text")
     if employment and occupation:
         sentences.append(
-            _ensure_sentence(
+            ensure_sentence(
                 "They work as "
-                f"{_clean_fragment(occupation)} and report being {_clean_fragment(employment)}."
+                f"{clean_fragment(occupation)} and report being {clean_fragment(employment)}."
             )
         )
     elif occupation:
         sentences.append(
-            _ensure_sentence(f"They work as {_clean_fragment(occupation)}.")
+            ensure_sentence(f"They work as {clean_fragment(occupation)}.")
         )
     elif employment:
         sentences.append(
-            _ensure_sentence(f"They report being {_clean_fragment(employment)}.")
+            ensure_sentence(f"They report being {clean_fragment(employment)}.")
         )
     return sentences
 
@@ -648,10 +529,10 @@ def _marital_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optional[
     :returns: Sentence covering marital status, or ``None`` when unavailable.
     :rtype: Optional[str]
     """
-    marital = _first_text(ex, selected, "marital_status", "married", "marital")
+    marital = first_text(ex, selected, "marital_status", "married", "marital")
     if not marital:
         return None
-    return _ensure_sentence(f"They report being {_clean_fragment(marital)}.")
+    return ensure_sentence(f"They report being {clean_fragment(marital)}.")
 
 
 def _children_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
@@ -692,7 +573,7 @@ def _children_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[st
                 sentence = f"Children in household: {formatted}."
     if not sentence:
         return []
-    return [_ensure_sentence(sentence)]
+    return [ensure_sentence(sentence)]
 
 
 def _household_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optional[str]:
@@ -705,10 +586,10 @@ def _household_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optiona
     :returns: Household-size sentence or ``None`` when the data is missing.
     :rtype: Optional[str]
     """
-    household = _first_text(ex, selected, "household_size", "hh_size")
+    household = first_text(ex, selected, "household_size", "hh_size")
     if not household:
         return None
-    size_clean = _clean_fragment(household)
+    size_clean = clean_fragment(household)
     try:
         size_val = float(size_clean)
     except (TypeError, ValueError):
@@ -723,7 +604,7 @@ def _household_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optiona
                 sentence = f"Their household has {size_int} people."
     if not sentence:
         sentence = f"Their household size is {size_clean}."
-    return _ensure_sentence(sentence)
+    return ensure_sentence(sentence)
 
 
 def _religion_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
@@ -759,7 +640,7 @@ def _religion_identity_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) ->
     :returns: Sentence describing religion, or ``None`` if absent.
     :rtype: Optional[str]
     """
-    religion = _first_text(
+    religion = first_text(
         ex,
         selected,
         "religion",
@@ -770,7 +651,7 @@ def _religion_identity_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) ->
     )
     if not religion:
         return None
-    return _ensure_sentence(f"They identify as {_clean_fragment(religion)}.")
+    return ensure_sentence(f"They identify as {clean_fragment(religion)}.")
 
 
 def _attendance_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optional[str]:
@@ -783,7 +664,7 @@ def _attendance_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Option
     :returns: Sentence about attendance or importance, or ``None`` if missing.
     :rtype: Optional[str]
     """
-    attendance = _first_text(
+    attendance = first_text(
         ex,
         selected,
         "relig_attend",
@@ -793,13 +674,13 @@ def _attendance_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Option
     )
     if not attendance:
         return None
-    attendance_clean = _clean_fragment(attendance)
+    attendance_clean = clean_fragment(attendance)
     lowered = attendance_clean.lower()
     if "important" in lowered:
         text = f"They say religion is {attendance_clean} to them."
     else:
         text = f"They report attending services {attendance_clean}."
-    return _ensure_sentence(text)
+    return ensure_sentence(text)
 
 
 def _veteran_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optional[str]:
@@ -823,13 +704,13 @@ def _veteran_sentence(ex: Dict[str, Any], selected: Dict[str, Any]) -> Optional[
         return None
     flag = format_yes_no(veteran_raw, yes="yes", no="no")
     if flag == "yes":
-        return _ensure_sentence("They are a veteran.")
+        return ensure_sentence("They are a veteran.")
     if flag == "no":
-        return _ensure_sentence("They are not a veteran.")
+        return ensure_sentence("They are not a veteran.")
     veteran_text = clean_text(veteran_raw)
     if not veteran_text:
         return None
-    return _ensure_sentence(f"Veteran status: {veteran_text}.")
+    return ensure_sentence(f"Veteran status: {veteran_text}.")
 
 
 def _language_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
@@ -853,27 +734,7 @@ def _language_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[st
     normalized = normalize_language_text(language)
     if not normalized:
         return []
-    return [_ensure_sentence(f"The survey was completed in {normalized}.")]
-
-
-def _collect_labeled_fields(
-    ex: Dict[str, Any],
-    selected: Dict[str, Any],
-    specs: Sequence[tuple[Sequence[str], str]],
-) -> List[str]:
-    """Collect labelled phrases from the example based on field specifications.
-
-    :param ex: Dataset example containing viewer metadata.
-    :param selected: Selected survey-row mapping.
-    :param specs: Sequence of ``(field_names, label)`` pairs.
-    :returns: List of ``label: value`` strings where values are present.
-    """
-    entries: List[str] = []
-    for keys, label in specs:
-        value = _first_text(ex, selected, *keys)
-        if value:
-            entries.append(f"{label}: {value}")
-    return entries
+    return [ensure_sentence(f"The survey was completed in {normalized}.")]
 
 
 def _politics_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
@@ -883,8 +744,8 @@ def _politics_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[st
     :param selected: Selected survey-row mapping.
     :returns: List of politics-related sentences.
     """
-    politics = _collect_labeled_fields(ex, selected, POLITICS_FIELD_SPECS)
-    sentence = _sentencize("Politics include", politics)
+    politics = collect_labeled_fields(ex, selected, POLITICS_FIELD_SPECS)
+    sentence = sentencize("Politics include", politics)
     return [sentence] if sentence else []
 
 
@@ -902,7 +763,7 @@ def _gun_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
     labeled_entries, known_keys = _gun_labeled_entries(ex, selected)
     gun_section.extend(labeled_entries)
     gun_section.extend(_gun_additional_entries(ex, known_keys))
-    sentence = _sentencize("Gun policy views include", gun_section)
+    sentence = sentencize("Gun policy views include", gun_section)
     return [sentence] if sentence else []
 
 
@@ -1118,7 +979,7 @@ def _wage_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
         if label:
             wage_section.append(f"{label.capitalize()}: {text}")
         known_keys.add(lower)
-    sentence = _sentencize("Minimum wage views include", wage_section)
+    sentence = sentencize("Minimum wage views include", wage_section)
     return [sentence] if sentence else []
 
 
@@ -1137,14 +998,14 @@ def _media_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> List[str]:
     media_section.extend(_youtube_binge_sentences(ex, selected))
     seen: set[str] = set()
     for sources, label, skip_duplicate in MEDIA_SOURCES:
-        text = _first_available_text(ex, selected, sources)
+        text = first_available_text(ex, selected, sources)
         if not text:
             continue
         if skip_duplicate and label in seen:
             continue
         media_section.append(f"{label}: {text}")
         seen.add(label)
-    sentence = _sentencize("Media habits include", media_section)
+    sentence = sentencize("Media habits include", media_section)
     return [sentence] if sentence else []
 
 
@@ -1199,27 +1060,6 @@ def _youtube_binge_sentences(ex: Dict[str, Any], selected: Dict[str, Any]) -> Li
     if not binge_clean:
         return []
     return [f"YouTube time reported: {binge_clean}"]
-
-
-def _first_available_text(
-    ex: Dict[str, Any], selected: Dict[str, Any], keys: Sequence[str]
-) -> str:
-    """Return the first non-empty text value across ``keys``.
-
-    :param ex: Dataset example containing viewer metadata.
-    :type ex: Dict[str, Any]
-    :param selected: Selected survey-row mapping.
-    :type selected: Dict[str, Any]
-    :param keys: Sequence of candidate field names.
-    :type keys: Sequence[str]
-    :returns: Cleaned text or an empty string.
-    :rtype: str
-    """
-    for key in keys:
-        text = _first_text(ex, selected, key, limit=220)
-        if text:
-            return text
-    return ""
 
 
 __all__ = [

@@ -66,6 +66,25 @@ def ensure_datasets_stub() -> None:
                         data[key].append(row.get(key))
                 return cls(data)
 
+            @classmethod
+            def from_pandas(
+                cls,
+                frame,  # type: ignore[override]
+                preserve_index: bool = True,
+                features: Optional[Features] = None,
+            ) -> "Dataset":
+                try:
+                    import pandas as pd  # type: ignore
+                except ImportError as exc:  # pragma: no cover - pandas is a test dependency
+                    raise ImportError("pandas is required for Dataset.from_pandas() in the stub.") from exc
+
+                if not isinstance(frame, pd.DataFrame):  # pragma: no cover - defensive
+                    raise TypeError("Dataset.from_pandas() expects a pandas DataFrame")
+
+                data_frame = frame if preserve_index else frame.reset_index(drop=True)
+                data = {column: data_frame[column].tolist() for column in data_frame.columns}
+                return cls(data, features)
+
             def to_pandas(self):
                 try:
                     import pandas as pd  # type: ignore
@@ -191,6 +210,12 @@ def ensure_datasets_stub() -> None:
                 )
                 return Dataset(data, features)
 
+            def remove_columns(self, column_names: Iterable[str]) -> "Dataset":
+                names = set(column_names)
+                data = {key: values for key, values in self._data.items() if key not in names}
+                features = Features({key: self._features[key] for key in data})
+                return Dataset(data, features)
+
         class DatasetDict:
             def __init__(self, mapping: Optional[Dict[str, Dataset]] = None) -> None:
                 self._splits: Dict[str, Dataset] = mapping.copy() if mapping else {}
@@ -258,6 +283,9 @@ def ensure_datasets_stub() -> None:
         def load_dataset(*_args: Any, **_kwargs: Any) -> Dataset | DatasetDict:
             raise RuntimeError("datasets stub cannot load remote datasets")
 
+        def load_dataset_builder(*_args: Any, **_kwargs: Any) -> Any:
+            raise RuntimeError("datasets stub cannot load dataset builders")
+
         module.Dataset = Dataset
         module.DatasetDict = DatasetDict
         module.Features = Features
@@ -267,5 +295,6 @@ def ensure_datasets_stub() -> None:
         module.concatenate_datasets = concatenate_datasets
         module.load_from_disk = load_from_disk
         module.load_dataset = load_dataset
+        module.load_dataset_builder = load_dataset_builder
 
         sys.modules["datasets"] = module

@@ -25,9 +25,11 @@ import pandas as pd
 import pytest
 
 from clean_data.prompt import cli as prompt_cli
-from clean_data.prompt import prompting
+import clean_data.prompting as prompting
+import clean_data.prompt.summary as summary_module
 from clean_data.prompt.summary import summarize_feature
 from clean_data.prompt.utils import SeriesPair
+from clean_data import prompt_stats
 
 
 def test_viewer_profile_formatters_and_sentence():
@@ -73,15 +75,17 @@ def test_summarize_feature_numeric_and_categorical(monkeypatch, tmp_path):
 
     hist_calls: List[str] = []
 
-    monkeypatch.setattr(prompt_cli, "plot_numeric_hist", lambda *args, **kwargs: hist_calls.append("numeric"))
-    monkeypatch.setattr(prompt_cli, "plot_categorical_hist", lambda *args, **kwargs: hist_calls.append("categorical"))
+    monkeypatch.setattr(summary_module, "plot_numeric_hist", lambda *args, **kwargs: hist_calls.append("numeric"))
+    monkeypatch.setattr(summary_module, "plot_numeric_hist_by_issue", lambda *args, **kwargs: hist_calls.append("numeric_issue"))
+    monkeypatch.setattr(summary_module, "plot_categorical_hist", lambda *args, **kwargs: hist_calls.append("categorical"))
+    monkeypatch.setattr(summary_module, "plot_categorical_hist_by_issue", lambda *args, **kwargs: hist_calls.append("categorical_issue"))
 
     train_df = pd.DataFrame({"value": [1, 2, 3], "issue": ["gun_control"] * 3})
     val_df = pd.DataFrame({"value": [2, 4], "issue": ["gun_control", "gun_control"]})
     pair = SeriesPair(train_df["value"], val_df["value"], train_df, val_df)
     out = summarize_feature(pair, "Value", tmp_path / "value.png")
     assert set(out.keys()) == {"train", "validation"}
-    assert hist_calls[-1] == "numeric"
+    assert any(tag.startswith("numeric") for tag in hist_calls)
 
     hist_calls.clear()
     train_df = pd.DataFrame({"cat": ["a", "b", "b"], "issue": ["gun_control"] * 3})
@@ -89,7 +93,7 @@ def test_summarize_feature_numeric_and_categorical(monkeypatch, tmp_path):
     pair = SeriesPair(train_df["cat"], val_df["cat"], train_df, val_df)
     out = summarize_feature(pair, "Category", tmp_path / "cat.png")
     assert out["train"]["b"] == 2
-    assert hist_calls[-1] == "categorical"
+    assert any(tag.startswith("categorical") for tag in hist_calls)
 
 
 def test_generate_prompt_feature_report_writes_files(monkeypatch, tmp_path):
@@ -147,29 +151,23 @@ def test_prompt_cli_main_invokes_generate(monkeypatch, tmp_path):
         "generate_prompt_feature_report",
         lambda dataset, output_dir, train_split, validation_split: called.setdefault("invoked", (dataset, output_dir, train_split, validation_split)),
     )
-
-    prompt_cli.main(
-        [
-            "--dataset",
-            "dummy",
-            "--output-dir",
-            str(tmp_path),
-            "--train-split",
-            "train",
-            "--validation-split",
-            "validation",
-        ]
+    monkeypatch.setattr(
+        prompt_cli,
+        "_parse_args",
+        lambda: type("Args", (), {"dataset": "dummy", "output_dir": str(tmp_path), "train_split": "train", "validation_split": "validation"})(),
     )
+
+    prompt_cli.main()
     assert "invoked" in called
 
 
-def test_prompt_stats_main_delegates(monkeypatch):
-    """prompt_stats main should delegate to prompt CLI's main entry point."""
+def test_prompt_stats_main_delegates():
+    """prompt_stats should mirror the prompt package entry points."""
 
-    called = {}
-    monkeypatch.setattr(prompt_cli, "generate_prompt_feature_report", lambda dataset, output_dir, train_split, validation_split: called.setdefault("report", True))
-    dataset = {"train": [], "validation": []}
-    monkeypatch.setattr(prompt_cli, "load_dataset_any", lambda _: dataset)
+    from clean_data.prompt import generate_prompt_feature_report as base_gpr, main as base_main
 
-    prompt_cli.generate_prompt_feature_report(dataset, Path.cwd())
-    assert called["report"]
+    assert prompt_stats.generate_prompt_feature_report is base_gpr
+    assert prompt_stats.main is base_main
+
+
+

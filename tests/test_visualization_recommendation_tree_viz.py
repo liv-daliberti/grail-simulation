@@ -12,12 +12,17 @@ import pytest
 from src.visualization.recommendation_tree_viz import (
     TreeData,
     TreeEdge,
+    _extract_sequences_from_object,
     aggregate_counts,
     build_graph,
     build_session_graph,
     compute_depths,
     format_node_label,
+    load_metadata,
     load_trajectories,
+    load_tree_csv,
+    main,
+    parse_args,
     parse_issue_counts,
     render_graph,
 )
@@ -165,3 +170,220 @@ def test_load_trajectories_jsonl(tmp_path: Path) -> None:
 
     trajectories = load_trajectories(path)
     assert trajectories == [["vid1", "vid2"], ["vid3", "vid4"]]
+
+
+def test_load_tree_csv_detects_columns_and_edges(tmp_path: Path) -> None:
+    """Tree CSV ingestion should detect identifier column and child prefixes."""
+    csv_path = tmp_path / "tree.csv"
+    csv_path.write_text(
+        "\n".join(
+            [
+                "originid,rec1,rec2",
+                "root,child,",
+                "child,,",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    tree = load_tree_csv(csv_path)
+
+    assert tree.root == "root"
+    assert any(edge == TreeEdge(parent="root", child="child", rank=1) for edge in tree.edges)
+    assert "root" in tree.nodes and tree.nodes["root"]["rec1"] == "child"
+    assert "child" in tree.nodes
+
+
+def test_load_tree_csv_requires_recommendation_columns(tmp_path: Path) -> None:
+    """Missing recommendation columns should raise an informative error."""
+    csv_path = tmp_path / "tree.csv"
+    csv_path.write_text("originId\nroot\n", encoding="utf-8")
+
+    with pytest.raises(ValueError):
+        load_tree_csv(csv_path)
+
+
+def test_load_metadata_supports_json_structures(tmp_path: Path) -> None:
+    """Metadata loader should accept JSON payloads and normalise identifiers."""
+    json_path = tmp_path / "meta.json"
+    json_path.write_text(
+        json.dumps(
+            [
+                {"originId": "root", "title": "Root Title"},
+                {"originId": "child", "title": "Child Title"},
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    metadata = load_metadata(json_path)
+    assert metadata["root"]["title"] == "Root Title"
+    assert metadata["child"]["title"] == "Child Title"
+
+
+def test_load_metadata_supports_csv(tmp_path: Path) -> None:
+    """Metadata loader should read CSV files with the configured identifier column."""
+    csv_path = tmp_path / "meta.csv"
+    csv_path.write_text(
+        "\n".join(
+            [
+                "originId,title",
+                "root,Root Title",
+                "child,Child Title",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    metadata = load_metadata(csv_path)
+    assert metadata == {
+        "root": {"originId": "root", "title": "Root Title"},
+        "child": {"originId": "child", "title": "Child Title"},
+    }
+
+
+def test_load_metadata_missing_identifier_column(tmp_path: Path) -> None:
+    """CSV metadata without the identifier column should raise a ValueError."""
+    csv_path = tmp_path / "meta.csv"
+    csv_path.write_text("title\nRoot Title\n", encoding="utf-8")
+
+    with pytest.raises(ValueError):
+        load_metadata(csv_path)
+
+
+def test_extract_sequences_from_object_handles_variants() -> None:
+    """Sequence extractor should cover list, mapping, and string payloads."""
+    list_payload = [["vid1", "", "vid2"], ("vid3", "vid4")]
+    mapping_payload = {"sequence": [["vid5", "vid6"], ["vid7"]]}
+    string_payload = "vid8, vid9 , vid10"
+
+    sequences_from_list = _extract_sequences_from_object(list_payload)
+    sequences_from_mapping = _extract_sequences_from_object(mapping_payload)
+    sequences_from_string = _extract_sequences_from_object(string_payload)
+
+    assert sequences_from_list == [["vid1", "vid2"], ["vid3", "vid4"]]
+    assert sequences_from_mapping == [["vid5", "vid6"], ["vid7"]]
+    assert sequences_from_string == [["vid8", "vid9", "vid10"]]
+
+
+def test_parse_args_converts_types(tmp_path: Path) -> None:
+    """CLI parser should coerce path-like and numeric arguments correctly."""
+    tree_csv = tmp_path / "tree.csv"
+    output_svg = tmp_path / "out.svg"
+
+    args = parse_args([
+        "--tree",
+        str(tree_csv),
+        "--output",
+        str(output_svg),
+        "--wrap-width",
+        "42",
+    ])
+
+    assert args.tree == tree_csv
+    assert args.output == output_svg
+    assert args.wrap_width == 42
+
+
+def test_main_invokes_build_and_render(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Main entry point should load CSV/metadata and emit a rendered graph."""
+    csv_path = tmp_path / "tree.csv"
+    csv_path.write_text(
+        "\n".join(
+            [
+                "originId,rec1",
+                "root,child",
+                "child,",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    metadata_path = tmp_path / "meta.json"
+    metadata_path.write_text(
+        json.dumps(
+            [
+                {"originId": "root", "title": "Root Title"},
+                {"originId": "child", "title": "Child Title"},
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    captured = {}
+
+    def _fake_build_graph(
+        tree,
+        *,
+        metadata,
+        label_template,
+        wrap_width,
+        highlight_path,
+        node_counts,
+        edge_counts,
+        max_depth,
+        rankdir,
+        engine,
+        show_rank_labels,
+    ):
+        del (
+            label_template,
+            wrap_width,
+            highlight_path,
+            node_counts,
+            edge_counts,
+            max_depth,
+            rankdir,
+            engine,
+            show_rank_labels,
+        )
+
+        captured["tree"] = tree
+        captured["metadata"] = metadata
+
+        class _FakeGraph:
+            format = "svg"
+
+            def render(self, filename: str, cleanup: bool) -> str:
+                del cleanup
+                target = tmp_path / f"{Path(filename).name}.svg"
+                target.write_text("graph", encoding="utf-8")
+                return str(target)
+
+        return _FakeGraph()
+
+    monkeypatch.setattr(
+        "src.visualization.recommendation_tree_viz.build_graph",
+        _fake_build_graph,
+    )
+
+    call_log = {}
+
+    def _fake_render_graph(graph, output_path: Path, *, output_format: str) -> Path:
+        call_log["graph"] = graph
+        call_log["output_path"] = output_path
+        call_log["output_format"] = output_format
+        return output_path
+
+    monkeypatch.setattr(
+        "src.visualization.recommendation_tree_viz.render_graph",
+        _fake_render_graph,
+    )
+
+    output_path = tmp_path / "rendered.svg"
+
+    main(
+        [
+            "--tree",
+            str(csv_path),
+            "--metadata",
+            str(metadata_path),
+            "--output",
+            str(output_path),
+        ]
+    )
+
+    assert captured["tree"].root == "root"
+    assert set(captured["metadata"]) == {"root", "child"}
+    assert call_log["output_path"] == output_path
+    assert call_log["output_format"] == "svg"

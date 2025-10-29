@@ -47,7 +47,7 @@ This section compares the eligible-only accuracy for KNN and XGB, and also shows
 
 | Study | KNN (feature) eligible-only ↑ | XGB eligible-only ↑ | KNN all-rows ↑ | XGB overall ↑ |
 | --- | ---: | ---: | ---: | ---: |
-| Study 1 – Gun Control (MTurk) | 0.763 (TFIDF) | — | 0.763 | 0.000 |
+| Study 1 – Gun Control (MTurk) | 0.763 (TFIDF) | 0.874 | 0.763 | 0.874 |
 | Study 2 – Minimum Wage (MTurk) | 0.355 (TFIDF) | 0.280 | 0.355 | 0.280 |
 
 Leave-one-study-out metrics were unavailable when this report was generated.

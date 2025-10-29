@@ -146,6 +146,15 @@ KNN_W2V_DIR="${KNN_REPORTS_WORD2VEC_DIR:-${KNN_OUT_DIR}/next_video/word2vec_mode
 
 mkdir -p "${KNN_OUT_DIR}" "${KNN_CACHE_DIR}" "${KNN_W2V_DIR}"
 
+: "${KNN_FEATURE_SPACES:=tfidf,word2vec,sentence_transformer}"
+: "${KNN_K_SWEEP:=1,2,3,4,5,10,25,50}"
+: "${KNN_PIPELINE_TASKS:=next_video,opinion}"
+declare -a KNN_SWEEP_FLAGS=(
+  "--feature-spaces" "${KNN_FEATURE_SPACES}"
+  "--k-sweep" "${KNN_K_SWEEP}"
+  "--tasks" "${KNN_PIPELINE_TASKS}"
+)
+
 log "Regenerating KNN reports from existing artefacts..."
 if ! find "${KNN_OUT_DIR}" -name "knn_eval_*_validation_metrics.json" -print -quit | grep -q .; then
   if [ "${ALLOW_INCOMPLETE}" = "1" ]; then
@@ -161,6 +170,7 @@ fi
   --out-dir "${KNN_OUT_DIR}" \
   --cache-dir "${KNN_CACHE_DIR}" \
   --word2vec-model-dir "${KNN_W2V_DIR}" \
+  "${KNN_SWEEP_FLAGS[@]}" \
   --stage reports \
   "${KNN_ALLOW_FLAG}"
 

@@ -101,6 +101,113 @@ __all__ = [
 prepare_sweep_execution = _prepare_sweep_execution
 
 
+def _iter_sentence_transformer_config_dirs(base_dir):
+    """Yield sentence-transformer configuration directories rooted at ``base_dir``."""
+
+    if base_dir is None:
+        return
+    try:
+        iterator = base_dir.rglob("sentence_transformer")
+    except (OSError, RuntimeError):
+        LOGGER.debug("Skipping sentence-transformer discovery under %s.", base_dir)
+        return
+    for st_root in iterator:
+        if not st_root.is_dir():
+            continue
+        try:
+            study_dirs = list(st_root.iterdir())
+        except OSError:
+            continue
+        for study_dir in study_dirs:
+            if not study_dir.is_dir():
+                continue
+            try:
+                for config_dir in study_dir.iterdir():
+                    if config_dir.is_dir():
+                        yield config_dir
+            except OSError:
+                continue
+
+
+def _parse_sentence_transformer_label(label: str) -> tuple[str | None, int | None, bool | None]:
+    """Extract device, batch size, and normalization flags encoded in a config label."""
+
+    device: str | None = None
+    batch_size: int | None = None
+    normalize: bool | None = None
+    for token in label.split("_"):
+        if token.startswith("device-"):
+            device = token[len("device-") :]
+        elif token.startswith("bs"):
+            raw = token[2:]
+            if raw.isdigit():
+                batch_size = int(raw)
+        elif token == "norm":
+            normalize = True
+        elif token == "nonorm":
+            normalize = False
+    return device, batch_size, normalize
+
+
+def _discover_sentence_transformer_overrides(context: PipelineContext) -> dict[str, object]:
+    """Infer cached sentence-transformer settings from existing sweep artefacts."""
+
+    overrides: dict[str, object] = {}
+    roots = [context.sweep_dir, context.opinion_sweep_dir]
+    for root in roots:
+        if root is None:
+            continue
+        for config_dir in _iter_sentence_transformer_config_dirs(root):
+            device, batch_size, normalize = _parse_sentence_transformer_label(
+                config_dir.name.lower()
+            )
+            if device and "device" not in overrides:
+                overrides["device"] = device
+            if batch_size is not None and "batch_size" not in overrides:
+                overrides["batch_size"] = batch_size
+            if normalize is not None and "normalize" not in overrides:
+                overrides["normalize"] = normalize
+            if len(overrides) == 3:
+                return overrides
+    return overrides
+
+
+def _align_sentence_transformer_context(
+    context: PipelineContext,
+    *,
+    stage: str,
+) -> None:
+    """Adjust the sentence-transformer configuration to reuse cached artefacts."""
+
+    if "sentence_transformer" not in context.feature_spaces:
+        return
+    consider_reuse = stage in {"finalize", "reports"} or context.reuse_sweeps or context.reuse_final
+    if not consider_reuse:
+        return
+    overrides = _discover_sentence_transformer_overrides(context)
+    device = overrides.get("device")
+    if device and context.sentence_device != device:
+        LOGGER.info(
+            "Detected cached sentence-transformer device '%s'; overriding configuration.",
+            device,
+        )
+        context.sentence_device = device
+    batch_size = overrides.get("batch_size")
+    if batch_size is not None and context.sentence_batch_size != batch_size:
+        LOGGER.info(
+            "Detected cached sentence-transformer batch size %d; overriding configuration.",
+            batch_size,
+        )
+        context.sentence_batch_size = batch_size
+    if "normalize" in overrides and context.sentence_normalize != overrides["normalize"]:
+        normalize = bool(overrides["normalize"])
+        LOGGER.info(
+            "Detected cached sentence-transformer normalization=%s; overriding configuration.",
+            "enabled" if normalize else "disabled",
+        )
+        context.sentence_normalize = normalize
+
+
 def _describe_sweep_outcome(outcome: "SweepOutcome") -> str:
     """Compose a human-readable descriptor for cached KNN sweep outcomes."""
     return f"{outcome.feature_space}:{outcome.study.key}:{outcome.config.label()}"
@@ -142,9 +249,11 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     _log_run_configuration(studies, context)
 
+    stage = getattr(args, "stage", "full")
+    _align_sentence_transformer_context(context, stage=stage)
+
     base_cli = _build_base_cli(context, extra_cli)
     configs = _build_sweep_configs(context)
-    stage = getattr(args, "stage", "full")
 
     sweep_context = SweepTaskContext(
         base_cli=base_cli,

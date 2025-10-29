@@ -358,12 +358,40 @@ format_range_bounds() {
 
 ensure_reuse_final_flag() {
   local -n target_ref=$1
+  local selection=""
   for flag in "${target_ref[@]}"; do
-    if [[ "${flag}" == "--reuse-final" || "${flag}" == "--no-reuse-final" ]]; then
-      return
-    fi
+    case "${flag}" in
+      --reuse-final)
+        selection="reuse"
+        ;;
+      --no-reuse-final)
+        selection="no"
+        ;;
+    esac
   done
-  target_ref+=("--reuse-final")
+  if [[ -z "${selection}" ]]; then
+    local reuse_env="${KNN_REUSE_FINAL:-}"
+    reuse_env=$(echo "${reuse_env}" | tr '[:upper:]' '[:lower:]')
+    case "${reuse_env}" in
+      ""|1|true|yes)
+        selection="reuse"
+        target_ref+=("--reuse-final")
+        ;;
+      0|false|no)
+        selection="no"
+        target_ref+=("--no-reuse-final")
+        ;;
+      *)
+        selection="reuse"
+        target_ref+=("--reuse-final")
+        ;;
+    esac
+  fi
+  if [[ "${selection}" == "reuse" ]]; then
+    export KNN_REUSE_FINAL=1
+  else
+    export KNN_REUSE_FINAL=0
+  fi
 }
 
 run_plan() {

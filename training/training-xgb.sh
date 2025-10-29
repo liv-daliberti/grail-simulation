@@ -378,12 +378,40 @@ format_range_bounds() {
 
 ensure_reuse_final_flag() {
   local -n target=$1
+  local selection=""
   for flag in "${target[@]}"; do
-    if [[ "${flag}" == "--reuse-final" || "${flag}" == "--no-reuse-final" ]]; then
-      return
-    fi
+    case "${flag}" in
+      --reuse-final)
+        selection="reuse"
+        ;;
+      --no-reuse-final)
+        selection="no"
+        ;;
+    esac
   done
-  target+=("--reuse-final")
+  if [[ -z "${selection}" ]]; then
+    local reuse_env="${XGB_REUSE_FINAL:-}"
+    reuse_env=$(echo "${reuse_env}" | tr '[:upper:]' '[:lower:]')
+    case "${reuse_env}" in
+      ""|1|true|yes)
+        selection="reuse"
+        target+=("--reuse-final")
+        ;;
+      0|false|no)
+        selection="no"
+        target+=("--no-reuse-final")
+        ;;
+      *)
+        selection="reuse"
+        target+=("--reuse-final")
+        ;;
+    esac
+  fi
+  if [[ "${selection}" == "reuse" ]]; then
+    export XGB_REUSE_FINAL=1
+  else
+    export XGB_REUSE_FINAL=0
+  fi
 }
 
 run_plan() {

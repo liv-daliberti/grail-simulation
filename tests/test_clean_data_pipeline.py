@@ -86,13 +86,15 @@ def test_load_raw_falls_back_to_file_type(tmp_path, monkeypatch):
     json_file = tmp_path / "data.json"
     json_file.write_text(json.dumps({"train": [{"col": 1}]}))
 
-    monkeypatch.setattr(clean_module, "datasets", SimpleNamespace(load_dataset=lambda *args, **kwargs: {"train": []}))
-    monkeypatch.setattr(clean_module, "DatasetDict", DatasetDict)
-
     result = clean_module.load_raw(str(json_file))
     assert isinstance(result, DatasetDict)
+    csv_file = tmp_path / "data.csv"
+    csv_file.write_text("col\n1\n")
+    assert isinstance(clean_module.load_raw(str(csv_file)), DatasetDict)
+    unsupported = tmp_path / "data.unsupported"
+    unsupported.write_text("foo")
     with pytest.raises(ValueError):
-        clean_module.load_raw(str(tmp_path / "data.unsupported"))
+        clean_module.load_raw(str(unsupported))
 
 
 def test_load_raw_union_loader(monkeypatch):
@@ -133,13 +135,21 @@ def test_map_rows_to_examples_sol_key_and_system(monkeypatch, sol_key, system_pr
 
 def test_ensure_shared_schema_handles_sequences(monkeypatch):
     seq_feature = clean_module.HFSequence(clean_module.Value("string"))
-    dataset_a = SimpleNamespace(
+    class DatasetA(SimpleNamespace):
+        def __len__(self):
+            return 2
+
+    class DatasetB(SimpleNamespace):
+        def __len__(self):
+            return 2
+
+    dataset_a = DatasetA(
         column_names=["a"],
         features={"a": seq_feature},
         add_column=lambda *args, **kwargs: dataset_a,
         cast=lambda features: SimpleNamespace(features=features),
     )
-    dataset_b = SimpleNamespace(
+    dataset_b = DatasetB(
         column_names=[],
         features={},
         add_column=lambda name, filler: dataset_b,
@@ -162,8 +172,37 @@ def test_build_clean_dataset_dedupe_and_options(monkeypatch):
     )
 
     monkeypatch.setattr(clean_module, "load_raw", lambda name, validation_ratio: raw_dataset)
-    monkeypatch.setattr(clean_module, "map_rows_to_examples", lambda ds, **opts: ds)
-    monkeypatch.setattr(clean_module, "filter_prompt_ready", lambda ds, **opts: ds)
+
+    def add_required(ds, **opts):
+        for split_name, split_ds in ds.items():
+            filled_rows = []
+            for row in split_ds._rows:
+                base = {
+                    **row,
+                    "prompt": "",
+                    "answer": "",
+                    "gold_index": 1,
+                    "gold_id": "g",
+                    "n_options": 1,
+                    "viewer_profile": "",
+                    "state_text": "",
+                    "slate_items": [],
+                    "slate_text": "",
+                    "watched_detailed_json": [],
+                    "watched_vids_json": [],
+                    "current_video_title": "",
+                    "task": "",
+                    "is_replay": False,
+                    "accuracy": 1,
+                    "mix_group_id": "",
+                    "mix_copy_idx": 0,
+                }
+                filled_rows.append(base)
+            ds[split_name] = _MockDataset(filled_rows)
+        return ds
+
+    monkeypatch.setattr(clean_module, "map_rows_to_examples", add_required)
+    monkeypatch.setattr(clean_module, "filter_prompt_ready", add_required)
     monkeypatch.setattr(clean_module, "compute_issue_counts", lambda ds: {})
 
     def fake_generate_stats(ds, output_dir, **kwargs):
@@ -177,19 +216,43 @@ def test_build_clean_dataset_dedupe_and_options(monkeypatch):
 
 
 def test_export_issue_datasets(tmp_path, monkeypatch):
-    dataset = DatasetDict({"train": _MockDataset([{"issue": "gun_control", "value": 1}]), "validation": _MockDataset([])})
+    base_row = {
+        "issue": "gun_control",
+        "value": 1,
+        "participant_id": "p",
+        "slate_items_json": [],
+        "watched_vids_json": [],
+        "watched_detailed_json": [],
+        "prompt": "",
+        "answer": "",
+        "gold_index": 1,
+        "gold_id": "g",
+        "n_options": 1,
+        "viewer_profile": "",
+        "state_text": "",
+        "slate_text": "",
+        "current_video_title": "",
+        "task": "",
+        "is_replay": False,
+        "accuracy": 1,
+        "mix_group_id": "",
+        "mix_copy_idx": 0,
+    }
     out_dir = tmp_path / "out"
 
-    saved = []
+    saved_paths = []
 
     class FakeDataset(_MockDataset):
-        def save_to_disk(self, path):
-            saved.append(Path(path))
+        def save_to_disk(self, path, **kwargs):
+            saved_paths.append(Path(path))
 
-    dataset["train"] = FakeDataset(dataset["train"]._rows)
+        def unique(self, column):
+            return list({row.get(column) for row in self._rows})
 
-    monkeypatch.setattr(clean_module, "DatasetDict", DatasetDict)
+        def filter(self, fn, **kwargs):
+            return FakeDataset([row for row in self._rows if fn(row)])
 
-    clean_module.export_issue_datasets(dataset, out_dir, {"gun_control": "repo"}, push_to_hub=False)
-    assert saved
+    dataset_dict = DatasetDict({"train": FakeDataset([base_row]), "validation": FakeDataset([base_row])})
 
+    clean_module.export_issue_datasets(dataset_dict, out_dir, {"gun_control": "repo"}, push_to_hub=False)
+    assert saved_paths

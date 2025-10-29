@@ -19,8 +19,9 @@ from __future__ import annotations
 
 import logging
 from operator import attrgetter
+from pathlib import Path
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Generic, List, Sequence, TypeVar, Optional
+from typing import Any, Callable, Dict, Generic, List, Sequence, TypeVar, Optional, Tuple
 
 
 T = TypeVar("T")
@@ -78,6 +79,13 @@ def make_duplicate_warning(
     """
 
     def _on_replace(existing: T, incoming: T) -> None:
+        """
+        Log a warning when ``incoming`` replaces ``existing`` in a result slot.
+
+        :param existing: Cached outcome being replaced.
+        :param incoming: Newly executed outcome replacing ``existing``.
+        :returns: ``None``.
+        """
         if args_factory is None:
             logger.warning(message)
         else:
@@ -124,10 +132,18 @@ def merge_indexed_outcomes(
     message: str,
     args_factory: Callable[[T, T], Sequence[Any]] | None = None,
 ) -> List[T]:
-    """Merge outcomes ordered by their ``order_index`` attribute.
+    """
+    Merge outcomes ordered by their ``order_index`` attribute.
 
     This wraps :func:`merge_ordered_with_warning` with a fixed ``order_key`` based on
     ``order_index`` to cut down on repeated boilerplate across pipeline modules.
+
+    :param cached: Previously materialised results (e.g., metrics read from disk).
+    :param executed: Newly computed results from the current run.
+    :param logger: Logger used when emitting duplicate warnings.
+    :param message: Logging format string passed to :py:meth:`logging.Logger.warning`.
+    :param args_factory: Optional callable producing format string arguments.
+    :returns: Combined results ordered by ``order_index``.
     """
 
     return merge_ordered_with_warning(
@@ -161,6 +177,8 @@ __all__ = [
     "merge_indexed_outcomes",
     "OpinionStudySelection",
     "make_placeholder_metrics",
+    "ensure_overwrite_flag",
+    "ensure_stage_overwrite_flag",
 ]
 
 
@@ -171,11 +189,18 @@ def make_placeholder_metrics(
     extra_fields: Optional[Sequence[str]] = None,
     skip_reason: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Return a standard placeholder metrics payload for skipped runs.
+    """
+    Return a standard placeholder metrics payload for skipped runs.
 
     Consolidates duplicated inline dictionaries across pipeline modules when a run is
     skipped (e.g., due to missing train/eval rows). Zero-initialises known fields and
     includes optional ``extra_fields`` and ``skip_reason`` when provided.
+
+    :param issue: Issue identifier associated with the skipped run.
+    :param participant_studies: Studies associated with the skipped run.
+    :param extra_fields: Optional list of additional fields noted in the payload.
+    :param skip_reason: Optional human-readable explanation for the skip.
+    :returns: Dictionary containing placeholder metrics and metadata.
     """
 
     payload: Dict[str, Any] = {
@@ -195,3 +220,100 @@ def make_placeholder_metrics(
     if skip_reason is not None:
         payload["skip_reason"] = skip_reason
     return payload
+
+
+ArgsFactory = Callable[[Path], Sequence[Any]]
+
+
+def ensure_overwrite_flag(
+    cli_args: List[str],
+    metrics_path: Path,
+    *,
+    logger: logging.Logger,
+    recover_log: Optional[Tuple[str, ArgsFactory]] = None,
+    overwrite_log: Optional[Tuple[str, ArgsFactory]] = None,
+) -> bool:
+    """
+    Append ``--overwrite`` to ``cli_args`` when prior evaluation artefacts exist.
+
+    Many pipelines share the same pattern of re-running evaluators when a metrics
+    directory already exists on disk. This helper centralises the guard so that
+    callers only need to provide logging metadata.
+
+    :param cli_args: Mutable list of CLI arguments that may require ``--overwrite``.
+    :param metrics_path: Expected metrics file within the evaluation directory.
+    :param logger: Logger used when emitting informational or recovery messages.
+    :param recover_log: Optional tuple of ``(message, args_factory)`` used when the
+        metrics file is missing but other outputs are present.
+    :param overwrite_log: Optional tuple of ``(message, args_factory)`` used when both
+        the directory and metrics file already exist.
+    :returns: ``True`` when ``--overwrite`` was appended to ``cli_args``.
+    """
+
+    evaluation_dir = metrics_path.parent
+    has_existing_outputs = evaluation_dir.exists()
+    missing_metrics = not metrics_path.exists()
+
+    if not has_existing_outputs or "--overwrite" in cli_args:
+        return False
+
+    if missing_metrics and recover_log is not None:
+        message, args_factory = recover_log
+        logger.warning(message, *args_factory(evaluation_dir))
+    elif not missing_metrics and overwrite_log is not None:
+        message, args_factory = overwrite_log
+        logger.info(message, *args_factory(evaluation_dir))
+
+    cli_args.append("--overwrite")
+    return True
+
+
+def ensure_stage_overwrite_flag(
+    cli_args: List[str],
+    metrics_path: Path,
+    *,
+    logger: logging.Logger,
+    stage: str,
+    context_labels: Sequence[Tuple[str, object]] | Tuple[()],
+    noun: str = "outputs",
+) -> bool:
+    """
+    Apply :func:`ensure_overwrite_flag` using standardised stage-aware log messages.
+
+    :param cli_args: Mutable list of CLI arguments that may require ``--overwrite``.
+    :param metrics_path: Expected metrics file within the evaluation directory.
+    :param logger: Logger used when emitting informational or recovery messages.
+    :param stage: Pipeline stage label (e.g., ``\"FINAL\"``) included in log messages.
+    :param context_labels: Ordered ``(name, value)`` pairs describing the run context.
+    :param noun: Noun describing the artefacts being overwritten (default: ``\"outputs\"``).
+    :returns: ``True`` when ``--overwrite`` was appended to ``cli_args``.
+    """
+
+    stage_token = stage.upper()
+    label_fmt = " ".join(f"{label}=%s" for label, _ in context_labels)
+    context_values = tuple(value for _, value in context_labels)
+
+    if label_fmt:
+        label_fmt = f"{label_fmt} "
+
+    def _args_factory(evaluation_dir: Path) -> Tuple[object, ...]:
+        if context_values:
+            return (*context_values, evaluation_dir)
+        return (evaluation_dir,)
+
+    recover_message = (
+        f"[{stage_token}][RECOVER] {label_fmt}detected partial {noun} at %s; "
+        "automatically enabling overwrite for rerun."
+    )
+    overwrite_message = (
+        f"[{stage_token}][OVERWRITE] {label_fmt}existing {noun} at %s; "
+        "enabling overwrite to refresh metrics."
+    )
+
+    return ensure_overwrite_flag(
+        cli_args,
+        metrics_path,
+        logger=logger,
+        recover_log=(recover_message, _args_factory),
+        overwrite_log=(overwrite_message, _args_factory),
+    )

@@ -166,6 +166,23 @@ with the GPT-4o and XGBoost baselines.
 `pipeline/reports/catalog.py` regenerates the top-level README, while the
 issue-specific modules handle table/plot assembly.
 
+### Task Overview
+
+- **`next_video` (slate recovery):** Trains kNN recommenders to reproduce the platform playlists shown to participants during the Liu et al. (_Short-term exposure to filter-bubble recommendation systems has limited polarization effects_, PNAS 2025) experiment. High accuracy here verifies that our reconstructed prompt embeddings can recover the actual exposure path before we study downstream effects.
+- **`opinion` (opinion shift regression):** Fits kNN regressors on the same participants’ pre/post survey indices to model how opinions moved after exposure. The task mirrors the article’s finding that short-term recommendations produced only small average shifts and lets us quantify that behaviour for any feature space.
+- **`opinion_from_next` (exposure-informed shift):** Reuses the best `next_video` configuration to score opinion change, isolating the effect of the reconstructed playlist on the observed shifts. This bridges the two evaluations so report readers can link slate quality to the limited polarization results replicated in `reports/research_article_political_sciences/README.md`.
+
+    **Leakage guard:** Beginning in November 2025 the opinion evaluator removes any participant who appears in the validation split from the training corpus before building the neighbour index. Earlier runs included ~60 overlapping IDs from `data/cleaned_grail` and produced unrealistically high R²/MAE improvements. Regenerate sweeps/finals to refresh cached metrics after upgrading.
+
+### Opinion Shift Metrics
+
+- **Participants:** `n_participants` counts every row exported to `opinion_knn_*_metrics.json`; `eligible` is the subset with finite before/after targets and predictions and therefore matches the sample size used in each statistic.
+- **Primary metrics:** `mae_after = mean(|ŷ_after - y_after|)`, `rmse_after = sqrt(mean((ŷ_after - y_after)^2))`, and `r2_after = 1 - Σ(y_after - ŷ_after)^2 / Σ(y_after - mean(y_after))^2`; `mae_change` and `rmse_change` apply the same formulas to opinion deltas where `ŷ_change = ŷ_after - y_before` and `y_change = y_after - y_before`.
+- **Direction accuracy:** `direction_accuracy` is the share of participants where the sign of `ŷ_change` matches `y_change`, treating |Δ| < 1e-6 as “no change”; the best-`k` value is copied into `best_direction_accuracy` when finite.
+- **Calibration & divergence:** `calibration_slope` and `calibration_intercept` fit a least-squares line from predicted to observed change; `calibration_bins` summarise quantile buckets with mean predicted vs. actual change and back the expected calibration error `calibration_ece`; `kl_divergence_change` compares smoothed histograms of predicted and observed change.
+- **Baselines:** the `baseline` block reports two references—a constant prediction at the mean post-study index (`mae_global_mean_after`, `rmse_global_mean_after`, `global_mean_after`) and a “no change” predictor that reuses the pre-study index (`mae_using_before`, `rmse_using_before`, `mae_change_zero`, `rmse_change_zero`, the calibration fields ending in `_change_zero`, plus the baseline `direction_accuracy`).
+- **Per-k tracking:** `metrics_by_k` captures the metrics for every candidate `k`; `best_k` selects the lowest-MAE configuration (breaking ties with higher R²), `best_metrics` mirrors that row, and `curve_metrics` bundles `mae_by_k`, `r2_by_k`, `best_mae`, `best_r2`, and the evaluation sample count for the elbow plots under `reports/knn/opinion/`.
+
 ## Testing
 
 Targeted tests live under `tests/knn/`:

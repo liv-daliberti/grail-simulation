@@ -43,7 +43,12 @@ def safe_div(numerator: float, denominator: float, *, default: float = 0.0) -> f
 
 
 def ensure_hf_cache(cache_dir: str) -> None:
-    """Default HF cache environment variables to ``cache_dir`` if unset."""
+    """
+    Default HF cache environment variables to ``cache_dir`` if unset.
+
+    :param cache_dir: Directory used when populating ``HF_DATASETS_CACHE`` and ``HF_HOME``.
+    :returns: ``None``.
+    """
     os.environ.setdefault("HF_DATASETS_CACHE", cache_dir)
     os.environ.setdefault("HF_HOME", cache_dir)
 
@@ -56,7 +61,16 @@ def prepare_dataset(
     loader: Callable[[str, str], _Dataset],
     issue_lookup: Callable[[_Dataset], Sequence[str]],
 ) -> Tuple[str, _Dataset, Sequence[str]]:
-    """Resolve the dataset source, load it, and enumerate available issues."""
+    """
+    Resolve the dataset source, load it, and enumerate available issues.
+
+    :param dataset: Explicit dataset identifier supplied by the caller.
+    :param default_source: Default dataset identifier used when ``dataset`` is ``None``.
+    :param cache_dir: Hugging Face cache directory forwarded to the loader.
+    :param loader: Callable that loads the dataset given the source and cache path.
+    :param issue_lookup: Callable returning the available issue labels for the dataset.
+    :returns: Tuple of dataset source, loaded dataset object, and ordered issue labels.
+    """
     ensure_hf_cache(cache_dir)
     dataset_source = dataset or default_source
     base_ds = loader(dataset_source, cache_dir)
@@ -66,32 +80,14 @@ def prepare_dataset(
 
 def compose_issue_slug(issue: str, study_tokens: Sequence[str]) -> str:
     """
+    Return a filesystem-safe slug combining ``issue`` and ``study_tokens``.
 
+    Tokens matching ``all`` (case-insensitive) are ignored to avoid noise.
 
-
-        Return a filesystem-safe slug combining ``issue`` and ``study_tokens``.
-
-
-
-        Tokens matching ``all`` (case-insensitive) are ignored to avoid noise.
-
-
-
-    :param issue: Value provided for ``issue``.
-
-    :type issue: str
-
-    :param study_tokens: Value provided for ``study_tokens``.
-
-    :type study_tokens: Sequence[str]
-
-    :returns: Result produced by ``compose_issue_slug``.
-
-    :rtype: str
-
+    :param issue: Issue label used as the slug prefix.
+    :param study_tokens: Sequence of participant study identifiers.
+    :returns: Normalised slug suitable for filenames.
     """
-
-
     base_slug = issue.replace(" ", "_") if issue and issue.strip() else "all"
     suffix_parts: list[str] = []
     seen_suffix: set[str] = set()

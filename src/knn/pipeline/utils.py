@@ -331,7 +331,7 @@ def extract_opinion_summary(data: Mapping[str, object]) -> OpinionSummary:
     :param data: Raw metrics dictionary emitted by the opinion pipeline.
     :type data: Mapping[str, object]
     :returns: Normalised opinion summary for reporting.
-    :rtype: OpinionSummary
+    :rtype: ~knn.pipeline.context.OpinionSummary
     """
     best_metrics = data.get("best_metrics", {})
     baseline_metrics = data.get("baseline", {})

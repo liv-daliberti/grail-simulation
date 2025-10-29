@@ -2,7 +2,7 @@
 
 Slate-ranking accuracy for the selected XGBoost configuration.
 
-- Dataset: `/n/fs/similarity/grail-simulation/data/cleaned_grail`
+- Dataset: `data/cleaned_grail`
 - Split: validation
 - Metrics include overall accuracy, eligible-only accuracy (gold present in slate), coverage of known candidates, and availability of known neighbors.
 - In the summary table below, the Accuracy column reports eligible-only accuracy to match KNN reports.

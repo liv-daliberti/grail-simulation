@@ -36,7 +36,7 @@ class BasePipelineSweepOutcome(Generic[ConfigT]):
     :param order_index: Deterministic ordering index assigned to the task.
     :type order_index: int
     :param study: Study metadata associated with the sweep.
-    :type study: StudySpec
+    :type study: ~common.pipeline.models.StudySpec
     :param config: Evaluated sweep configuration.
     :type config: ConfigT
     :param metrics_path: Filesystem path to the metrics artefact.
@@ -57,7 +57,7 @@ class StudySelection(Generic[OutcomeT]):
     """Container describing the selected outcome for a study.
 
     :param study: Study metadata that produced the selected outcome.
-    :type study: StudySpec
+    :type study: ~common.pipeline.models.StudySpec
     :param outcome: Outcome object that contains the runnable configuration.
     :type outcome: OutcomeT
     """
@@ -89,7 +89,7 @@ class OpinionStudySelection(Generic[OutcomeT]):
     """Container describing the selected opinion outcome for a study.
 
     :param study: Study metadata that produced the selected outcome.
-    :type study: StudySpec
+    :type study: ~common.pipeline.models.StudySpec
     :param outcome: Opinion outcome chosen for downstream processing.
     :type outcome: OutcomeT
     """

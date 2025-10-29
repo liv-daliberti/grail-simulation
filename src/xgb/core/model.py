@@ -402,7 +402,12 @@ def predict_among_slate(
     best_index = _select_best_candidate(slate_pairs, probability_map)
     if best_index is None and slate_pairs:
         # Open-set fallback using vector-space similarity between prompt and candidate title.
-        best_index = _open_set_best_index(model.vectorizer, document, slate_pairs)
+        best_index = _open_set_best_index(
+            model.vectorizer,
+            row_matrix,
+            document,
+            slate_pairs,
+        )
     return best_index, probability_map
 
 
@@ -885,17 +890,19 @@ def _l2_norm(mat) -> float:
 
 def _open_set_best_index(
     vectorizer: BaseTextVectorizer,
+    prompt_vector: Any,
     document: str,
     slate_pairs: Sequence[tuple[str, str]],
 ) -> Optional[int]:
     """Return the index of the most similar candidate by cosine similarity.
 
-    Encodes the prompt document and each candidate title/id using the same
-    vectoriser and selects the highest cosine similarity. Falls back to a raw
-    dot product when norms are zero or unavailable.
+    Reuses ``prompt_vector`` when supplied to avoid recomputing embeddings.
+    Falls back to encoding ``document`` on demand so call sites remain tolerant
+    to ``None`` inputs. Dot products are used when cosine norms cannot be
+    established.
     """
     try:
-        doc_vec = vectorizer.transform([document])
+        doc_vec = prompt_vector if prompt_vector is not None else vectorizer.transform([document])
     except (ValueError, TypeError, AttributeError, RuntimeError):
         return None
 

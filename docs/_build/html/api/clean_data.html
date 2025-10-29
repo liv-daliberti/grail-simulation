@@ -341,7 +341,7 @@ LICENSE for terms and conditions.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dataset_name</strong> (<em>str</em>) – Path or dataset identifier understood by <a class="reference internal" href="#clean_data.clean_data.load_raw" title="clean_data.clean_data.load_raw"><code class="xref py py-func docutils literal notranslate"><span class="pre">load_raw()</span></code></a>.</p></li>
-<li><p><strong>options</strong> (<a class="reference internal" href="#clean_data.clean_data.BuildOptions" title="clean_data.clean_data.BuildOptions"><em>BuildOptions</em></a><em> | </em><em>None</em>) – Optional overrides controlling split names and prompt construction.</p></li>
+<li><p><strong>options</strong> (<a class="reference internal" href="#clean_data.clean_data.BuildOptions" title="clean_data.clean_data.BuildOptions"><em>clean_data.clean_data.BuildOptions</em></a><em> | </em><em>None</em>) – Optional overrides controlling split names and prompt construction.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -399,7 +399,7 @@ view can apply this helper to recover the previous behavior.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dataset</strong> (<em>datasets.DatasetDict</em>) – Cleaned dataset keyed by split.</p></li>
-<li><p><strong>output_dir</strong> (<em>Path</em><em> | </em><em>str</em>) – Base directory where issue-specific datasets will be written.</p></li>
+<li><p><strong>output_dir</strong> (<em>pathlib.Path</em><em> | </em><em>str</em>) – Base directory where issue-specific datasets will be written.</p></li>
 <li><p><strong>issue_repo_map</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – Mapping from issue name to Hugging Face repository id.</p></li>
 <li><p><strong>push_to_hub</strong> (<em>bool</em>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code>, push each subset to its configured repository.</p></li>
 <li><p><strong>hub_token</strong> (<em>str</em><em> | </em><em>None</em>) – Authentication token used for Hugging Face uploads.</p></li>
@@ -419,7 +419,7 @@ view can apply this helper to recover the previous behavior.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dataset</strong> (<em>datasets.DatasetDict</em>) – Dataset containing cleaned prompt rows.</p></li>
-<li><p><strong>output_dir</strong> (<em>Path</em><em> | </em><em>str</em>) – Directory where plots and Markdown summaries will be written.</p></li>
+<li><p><strong>output_dir</strong> (<em>pathlib.Path</em><em> | </em><em>str</em>) – Directory where plots and Markdown summaries will be written.</p></li>
 <li><p><strong>train_split</strong> (<em>str</em>) – Name of the training split in <code class="docutils literal notranslate"><span class="pre">dataset</span></code>.</p></li>
 <li><p><strong>validation_split</strong> (<em>str</em>) – Name of the validation split in <code class="docutils literal notranslate"><span class="pre">dataset</span></code>.</p></li>
 </ul>
@@ -507,7 +507,7 @@ view can apply this helper to recover the previous behavior.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dataset</strong> (<em>datasets.DatasetDict</em>) – Dataset to save.</p></li>
-<li><p><strong>output_dir</strong> (<em>Path</em><em> | </em><em>str</em>) – Destination directory that will be created if necessary.</p></li>
+<li><p><strong>output_dir</strong> (<em>pathlib.Path</em><em> | </em><em>str</em>) – Destination directory that will be created if necessary.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -567,7 +567,7 @@ values are read from <code class="xref py py-data docutils literal notranslate">
 <dd class="field-even"><p>Parsed <code class="xref py py-class docutils literal notranslate"><span class="pre">argparse.Namespace</span></code> with CLI options.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Namespace</em></p>
+<dd class="field-odd"><p>argparse.Namespace</p>
 </dd>
 </dl>
 </dd></dl>
@@ -587,7 +587,7 @@ the definitive terms.</p>
 <dd><p>Construct the full interaction dataframe from raw CodeOcean assets.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>data_root</strong> (<em>Path</em>) – Path to the CodeOcean capsule <code class="docutils literal notranslate"><span class="pre">data</span></code> directory.</p>
+<dd class="field-odd"><p><strong>data_root</strong> (<em>pathlib.Path</em>) – Path to the CodeOcean capsule <code class="docutils literal notranslate"><span class="pre">data</span></code> directory.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Dataframe containing cleaned interaction rows per session pair.</p>
@@ -627,13 +627,13 @@ the definitive terms.</p>
 <dd><p>Expose the IO helper under the codeocean namespace for compatibility.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>path</strong> (<em>Path</em>) – Candidate path to the capsule root or the nested <code class="docutils literal notranslate"><span class="pre">data</span></code> directory.</p>
+<dd class="field-odd"><p><strong>path</strong> (<em>pathlib.Path</em>) – Candidate path to the capsule root or the nested <code class="docutils literal notranslate"><span class="pre">data</span></code> directory.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Normalized capsule root when detected, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Path</em> | None</p>
+<dd class="field-odd"><p>pathlib.Path | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -744,7 +744,7 @@ refer to the repository’s LICENSE file for details.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>meta</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – Existing metadata mapping keyed by video id.</p></li>
-<li><p><strong>base_dir</strong> (<em>Path</em>) – Capsule base directory containing the supplemental bundle.</p></li>
+<li><p><strong>base_dir</strong> (<em>pathlib.Path</em>) – Capsule base directory containing the supplemental bundle.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -778,7 +778,7 @@ refer to the repository’s LICENSE file for details.</p>
 <dd><p>Scan recommendation tree CSVs to build a metadata index keyed by video id.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>base_dir</strong> (<em>Path</em>) – Capsule base directory containing the tree exports.</p>
+<dd class="field-odd"><p><strong>base_dir</strong> (<em>pathlib.Path</em>) – Capsule base directory containing the tree exports.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Tuple of (metadata mapping, issue map) derived from the tree CSVs.</p>
@@ -795,7 +795,7 @@ refer to the repository’s LICENSE file for details.</p>
 <dd><p>Load Shorts (Study 4) interaction logs from the YTRecs RDS export.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>data_root</strong> (<em>Path</em>) – Capsule <code class="docutils literal notranslate"><span class="pre">data</span></code> directory.</p>
+<dd class="field-odd"><p><strong>data_root</strong> (<em>pathlib.Path</em>) – Capsule <code class="docutils literal notranslate"><span class="pre">data</span></code> directory.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>List of normalized session dictionaries.</p>
@@ -812,7 +812,7 @@ refer to the repository’s LICENSE file for details.</p>
 <dd><p>Load supplemental video titles from the metadata bundle.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>base_dir</strong> (<em>Path</em>) – Capsule base directory containing supplemental metadata.</p>
+<dd class="field-odd"><p><strong>base_dir</strong> (<em>pathlib.Path</em>) – Capsule base directory containing supplemental metadata.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Mapping of canonical video id to title string.</p>
@@ -846,7 +846,7 @@ refer to the repository’s LICENSE file for details.</p>
 <dd><p>Read a CSV file into a dataframe, returning empty on failure.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>path</strong> (<em>Path</em>) – Absolute or relative CSV path.</p>
+<dd class="field-odd"><p><strong>path</strong> (<em>pathlib.Path</em>) – Absolute or relative CSV path.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Dataframe containing the file contents, or empty when unavailable.</p>
@@ -863,7 +863,7 @@ refer to the repository’s LICENSE file for details.</p>
 <dd><p>Convert an RDS file into a dataframe via <code class="docutils literal notranslate"><span class="pre">Rscript</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>path</strong> (<em>Path</em>) – Location of the <code class="docutils literal notranslate"><span class="pre">.rds</span></code> file.</p>
+<dd class="field-odd"><p><strong>path</strong> (<em>pathlib.Path</em>) – Location of the <code class="docutils literal notranslate"><span class="pre">.rds</span></code> file.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Parsed dataframe or empty dataframe when conversion fails.</p>
@@ -880,7 +880,7 @@ refer to the repository’s LICENSE file for details.</p>
 <dd><p>Return the first survey export that includes a <code class="docutils literal notranslate"><span class="pre">urlid</span></code> column.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>candidates</strong> (<em>Path</em>) – Ordered sequence of candidate paths.</p>
+<dd class="field-odd"><p><strong>candidates</strong> (<em>pathlib.Path</em>) – Ordered sequence of candidate paths.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Dataframe of the first usable survey export, or empty when none exist.</p>
@@ -897,13 +897,13 @@ refer to the repository’s LICENSE file for details.</p>
 <dd><p>Locate the CodeOcean capsule root or <code class="docutils literal notranslate"><span class="pre">data</span></code> directory from a user path.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>path</strong> (<em>Path</em>) – Candidate path provided by the caller.</p>
+<dd class="field-odd"><p><strong>path</strong> (<em>pathlib.Path</em>) – Candidate path provided by the caller.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Normalized capsule root if detected, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Path</em> | None</p>
+<dd class="field-odd"><p>pathlib.Path | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1103,7 +1103,7 @@ for the exact terms.</p>
 <dd class="field-even"><p>Initialized <a class="reference internal" href="#clean_data.sessions.AllowlistState" title="clean_data.sessions.AllowlistState"><code class="xref py py-class docutils literal notranslate"><span class="pre">AllowlistState</span></code></a> populated with identifier sets.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="#clean_data.sessions.AllowlistState" title="clean_data.sessions.models.AllowlistState"><em>AllowlistState</em></a></p>
+<dd class="field-odd"><p><a class="reference internal" href="#clean_data.sessions.AllowlistState" title="clean_data.sessions.models.AllowlistState">clean_data.sessions.models.AllowlistState</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1292,7 +1292,7 @@ for the exact terms.</p>
 <dd><p>Construct the full interaction dataframe from raw CodeOcean assets.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>data_root</strong> (<em>Path</em>) – Path to the CodeOcean capsule <code class="docutils literal notranslate"><span class="pre">data</span></code> directory.</p>
+<dd class="field-odd"><p><strong>data_root</strong> (<em>pathlib.Path</em>) – Path to the CodeOcean capsule <code class="docutils literal notranslate"><span class="pre">data</span></code> directory.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Dataframe containing cleaned interaction rows per session pair.</p>
@@ -1491,7 +1491,7 @@ explicit overrides when provided.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>identifiers</strong> (<a class="reference internal" href="#clean_data.sessions.ParticipantIdentifiers" title="clean_data.sessions.models.ParticipantIdentifiers"><em>ParticipantIdentifiers</em></a>) – Structured participant identifiers collected from a session.</p></li>
+<li><p><strong>identifiers</strong> (<a class="reference internal" href="#clean_data.sessions.ParticipantIdentifiers" title="clean_data.sessions.models.ParticipantIdentifiers"><em>clean_data.sessions.models.ParticipantIdentifiers</em></a>) – Structured participant identifiers collected from a session.</p></li>
 <li><p><strong>fallback_counter</strong> (<em>int</em>) – Monotonic counter used when no identifiers are present.</p></li>
 </ul>
 </dd>
@@ -1593,7 +1593,7 @@ Apache 2.0 license; check LICENSE for obligations and permissions.</p>
 <dd><p>Reconstruct participant allow-lists used by the original R preprocessing.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>capsule_root</strong> (<em>Path</em>) – Path to the CodeOcean capsule root directory.</p>
+<dd class="field-odd"><p><strong>capsule_root</strong> (<em>pathlib.Path</em>) – Path to the CodeOcean capsule root directory.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Nested mapping of issue -&gt; allow-list buckets -&gt; identifier sets.</p>
@@ -1687,7 +1687,7 @@ LICENSE for the terms.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dataset</strong> (<em>datasets.DatasetDict</em>) – Hugging Face dataset dictionary produced by <code class="xref py py-func docutils literal notranslate"><span class="pre">load_dataset_any()</span></code>.</p></li>
-<li><p><strong>output_dir</strong> (<em>Path</em>) – Directory where figures and Markdown summaries will be written.</p></li>
+<li><p><strong>output_dir</strong> (<em>pathlib.Path</em>) – Directory where figures and Markdown summaries will be written.</p></li>
 <li><p><strong>train_split</strong> (<em>str</em>) – Name of the split treated as the training set.</p></li>
 <li><p><strong>validation_split</strong> (<em>str</em>) – Name of the split treated as the validation set.</p></li>
 </ul>
@@ -1734,31 +1734,31 @@ consult LICENSE for the governing terms.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>output_dir</strong> (<em>Path</em>) – Destination directory for generated Markdown files.</p></li>
-<li><p><strong>figures_dir</strong> (<em>Path</em>) – Directory containing rendered plots.</p></li>
-<li><p><strong>summaries</strong> (<a class="reference internal" href="#clean_data.prompt.markdown.ReportSummaries" title="clean_data.prompt.markdown.ReportSummaries"><em>ReportSummaries</em></a>) – Aggregated summaries describing the dataset.</p></li>
-<li><p><strong>figures</strong> (<a class="reference internal" href="#clean_data.prompt.markdown.ReportFigures" title="clean_data.prompt.markdown.ReportFigures"><em>ReportFigures</em></a>) – Paths to figures referenced in the report.</p></li>
+<li><p><strong>output_dir</strong> (<em>pathlib.Path</em>) – Destination directory for generated Markdown files.</p></li>
+<li><p><strong>figures_dir</strong> (<em>pathlib.Path</em>) – Directory containing rendered plots.</p></li>
+<li><p><strong>summaries</strong> (<a class="reference internal" href="#clean_data.prompt.markdown.ReportSummaries" title="clean_data.prompt.markdown.ReportSummaries"><em>clean_data.prompt.markdown.ReportSummaries</em></a>) – Aggregated summaries describing the dataset.</p></li>
+<li><p><strong>figures</strong> (<a class="reference internal" href="#clean_data.prompt.markdown.ReportFigures" title="clean_data.prompt.markdown.ReportFigures"><em>clean_data.prompt.markdown.ReportFigures</em></a>) – Paths to figures referenced in the report.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="clean_data.prompt.markdown.ReportContext.figures">
-<span class="sig-name descname"><span class="pre">figures</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#clean_data.prompt.markdown.ReportFigures" title="clean_data.prompt.markdown.ReportFigures"><span class="pre">ReportFigures</span></a></em><a class="headerlink" href="#clean_data.prompt.markdown.ReportContext.figures" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">figures</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#clean_data.prompt.markdown.ReportFigures" title="clean_data.prompt.markdown.ReportFigures"><span class="pre">clean_data.prompt.markdown.ReportFigures</span></a></em><a class="headerlink" href="#clean_data.prompt.markdown.ReportContext.figures" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="clean_data.prompt.markdown.ReportContext.figures_dir">
-<span class="sig-name descname"><span class="pre">figures_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#clean_data.prompt.markdown.ReportContext.figures_dir" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">figures_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></em><a class="headerlink" href="#clean_data.prompt.markdown.ReportContext.figures_dir" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="clean_data.prompt.markdown.ReportContext.output_dir">
-<span class="sig-name descname"><span class="pre">output_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#clean_data.prompt.markdown.ReportContext.output_dir" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">output_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></em><a class="headerlink" href="#clean_data.prompt.markdown.ReportContext.output_dir" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="clean_data.prompt.markdown.ReportContext.summaries">
-<span class="sig-name descname"><span class="pre">summaries</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#clean_data.prompt.markdown.ReportSummaries" title="clean_data.prompt.markdown.ReportSummaries"><span class="pre">ReportSummaries</span></a></em><a class="headerlink" href="#clean_data.prompt.markdown.ReportContext.summaries" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">summaries</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#clean_data.prompt.markdown.ReportSummaries" title="clean_data.prompt.markdown.ReportSummaries"><span class="pre">clean_data.prompt.markdown.ReportSummaries</span></a></em><a class="headerlink" href="#clean_data.prompt.markdown.ReportContext.summaries" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -1814,25 +1814,25 @@ consult LICENSE for the governing terms.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>prior_history</strong> (<em>Path</em>) – Location of the prior-history distribution plot.</p></li>
-<li><p><strong>n_options</strong> (<em>Path</em>) – Location of the slate-size distribution plot.</p></li>
-<li><p><strong>demographic</strong> (<em>Path</em>) – Location of the demographic coverage plot.</p></li>
+<li><p><strong>prior_history</strong> (<em>pathlib.Path</em>) – Location of the prior-history distribution plot.</p></li>
+<li><p><strong>n_options</strong> (<em>pathlib.Path</em>) – Location of the slate-size distribution plot.</p></li>
+<li><p><strong>demographic</strong> (<em>pathlib.Path</em>) – Location of the demographic coverage plot.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="clean_data.prompt.markdown.ReportFigures.demographic">
-<span class="sig-name descname"><span class="pre">demographic</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#clean_data.prompt.markdown.ReportFigures.demographic" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">demographic</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></em><a class="headerlink" href="#clean_data.prompt.markdown.ReportFigures.demographic" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="clean_data.prompt.markdown.ReportFigures.n_options">
-<span class="sig-name descname"><span class="pre">n_options</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#clean_data.prompt.markdown.ReportFigures.n_options" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">n_options</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></em><a class="headerlink" href="#clean_data.prompt.markdown.ReportFigures.n_options" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="clean_data.prompt.markdown.ReportFigures.prior_history">
-<span class="sig-name descname"><span class="pre">prior_history</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#clean_data.prompt.markdown.ReportFigures.prior_history" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">prior_history</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></em><a class="headerlink" href="#clean_data.prompt.markdown.ReportFigures.prior_history" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -1847,7 +1847,7 @@ consult LICENSE for the governing terms.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>feature</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em><em>]</em><em>]</em>) – Aggregated feature statistics per split.</p></li>
 <li><p><strong>profile</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em><em>]</em>) – Profile coverage metrics per split.</p></li>
-<li><p><strong>counts</strong> (<a class="reference internal" href="#clean_data.prompt.markdown.ReportCounts" title="clean_data.prompt.markdown.ReportCounts"><em>ReportCounts</em></a>) – Structured count bundle for the report.</p></li>
+<li><p><strong>counts</strong> (<a class="reference internal" href="#clean_data.prompt.markdown.ReportCounts" title="clean_data.prompt.markdown.ReportCounts"><em>clean_data.prompt.markdown.ReportCounts</em></a>) – Structured count bundle for the report.</p></li>
 <li><p><strong>coverage</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – Dataset coverage summaries by split.</p></li>
 <li><p><strong>skipped_features</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – Features omitted from reporting.</p></li>
 </ul>
@@ -1855,7 +1855,7 @@ consult LICENSE for the governing terms.</p>
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="clean_data.prompt.markdown.ReportSummaries.counts">
-<span class="sig-name descname"><span class="pre">counts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#clean_data.prompt.markdown.ReportCounts" title="clean_data.prompt.markdown.ReportCounts"><span class="pre">ReportCounts</span></a></em><a class="headerlink" href="#clean_data.prompt.markdown.ReportSummaries.counts" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">counts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#clean_data.prompt.markdown.ReportCounts" title="clean_data.prompt.markdown.ReportCounts"><span class="pre">clean_data.prompt.markdown.ReportCounts</span></a></em><a class="headerlink" href="#clean_data.prompt.markdown.ReportSummaries.counts" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -1886,7 +1886,7 @@ consult LICENSE for the governing terms.</p>
 <dd><p>Return rendered Markdown lines summarizing the prompt statistics.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>context</strong> (<a class="reference internal" href="#clean_data.prompt.markdown.ReportContext" title="clean_data.prompt.markdown.ReportContext"><em>ReportContext</em></a>) – Full set of summary statistics, counts, and plots.</p>
+<dd class="field-odd"><p><strong>context</strong> (<a class="reference internal" href="#clean_data.prompt.markdown.ReportContext" title="clean_data.prompt.markdown.ReportContext"><em>clean_data.prompt.markdown.ReportContext</em></a>) – Full set of summary statistics, counts, and plots.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Markdown lines suitable for writing to a README.</p>
@@ -1913,7 +1913,7 @@ LICENSE for the allowed uses.</p>
 <li><p><strong>train_vals</strong> (<em>pandas.Series</em>) – Categorical values from the training split.</p></li>
 <li><p><strong>val_vals</strong> (<em>pandas.Series</em>) – Categorical values from the validation split.</p></li>
 <li><p><strong>title</strong> (<em>str</em>) – Plot title describing the feature.</p></li>
-<li><p><strong>output_path</strong> (<em>Path</em>) – Destination path for the rendered figure.</p></li>
+<li><p><strong>output_path</strong> (<em>pathlib.Path</em>) – Destination path for the rendered figure.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1932,9 +1932,9 @@ LICENSE for the allowed uses.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>pair</strong> (<a class="reference internal" href="#clean_data.prompt.utils.SeriesPair" title="clean_data.prompt.utils.SeriesPair"><em>SeriesPair</em></a>) – Pair of train/validation series with optional issue annotations.</p></li>
+<li><p><strong>pair</strong> (<a class="reference internal" href="#clean_data.prompt.utils.SeriesPair" title="clean_data.prompt.utils.SeriesPair"><em>clean_data.prompt.utils.SeriesPair</em></a>) – Pair of train/validation series with optional issue annotations.</p></li>
 <li><p><strong>title</strong> (<em>str</em>) – Plot title describing the feature.</p></li>
-<li><p><strong>output_path</strong> (<em>Path</em>) – Destination path for the rendered figure.</p></li>
+<li><p><strong>output_path</strong> (<em>pathlib.Path</em>) – Destination path for the rendered figure.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1956,7 +1956,7 @@ LICENSE for the allowed uses.</p>
 <li><p><strong>train_vals</strong> (<em>pandas.Series</em>) – Numeric values from the training split.</p></li>
 <li><p><strong>val_vals</strong> (<em>pandas.Series</em>) – Numeric values from the validation split.</p></li>
 <li><p><strong>title</strong> (<em>str</em>) – Plot title describing the feature.</p></li>
-<li><p><strong>output_path</strong> (<em>Path</em>) – Destination path for the rendered figure.</p></li>
+<li><p><strong>output_path</strong> (<em>pathlib.Path</em>) – Destination path for the rendered figure.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1975,9 +1975,9 @@ LICENSE for the allowed uses.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>pair</strong> (<a class="reference internal" href="#clean_data.prompt.utils.SeriesPair" title="clean_data.prompt.utils.SeriesPair"><em>SeriesPair</em></a>) – Pair of train/validation series with optional issue annotations.</p></li>
+<li><p><strong>pair</strong> (<a class="reference internal" href="#clean_data.prompt.utils.SeriesPair" title="clean_data.prompt.utils.SeriesPair"><em>clean_data.prompt.utils.SeriesPair</em></a>) – Pair of train/validation series with optional issue annotations.</p></li>
 <li><p><strong>title</strong> (<em>str</em>) – Plot title describing the feature.</p></li>
-<li><p><strong>output_path</strong> (<em>Path</em>) – Destination path for the rendered figure.</p></li>
+<li><p><strong>output_path</strong> (<em>pathlib.Path</em>) – Destination path for the rendered figure.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2010,7 +2010,7 @@ under the repository’s Apache 2.0 license; refer to LICENSE for details.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>train_df</strong> (<em>pandas.DataFrame</em>) – Training split dataframe to evaluate.</p></li>
 <li><p><strong>val_df</strong> (<em>pandas.DataFrame</em>) – Validation split dataframe to evaluate.</p></li>
-<li><p><strong>figures_dir</strong> (<em>Path</em>) – Directory where the demographic bar chart will be stored.</p></li>
+<li><p><strong>figures_dir</strong> (<em>pathlib.Path</em>) – Directory where the demographic bar chart will be stored.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2018,7 +2018,7 @@ under the repository’s Apache 2.0 license; refer to LICENSE for details.</p>
 and the path to the rendered figure.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tuple</em>[<em>Dict</em>[str, <em>Dict</em>[str, float]], <em>Path</em>]</p>
+<dd class="field-odd"><p><em>Tuple</em>[<em>Dict</em>[str, <em>Dict</em>[str, float]], pathlib.Path]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2032,7 +2032,7 @@ and the path to the rendered figure.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>train_df</strong> (<em>pandas.DataFrame</em>) – Training split dataframe containing <code class="docutils literal notranslate"><span class="pre">n_options</span></code> values.</p></li>
 <li><p><strong>val_df</strong> (<em>pandas.DataFrame</em>) – Validation split dataframe containing <code class="docutils literal notranslate"><span class="pre">n_options</span></code> values.</p></li>
-<li><p><strong>figures_dir</strong> (<em>Path</em>) – Directory where the slate-size histogram will be written.</p></li>
+<li><p><strong>figures_dir</strong> (<em>pathlib.Path</em>) – Directory where the slate-size histogram will be written.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2040,7 +2040,7 @@ and the path to the rendered figure.</p>
 and the path to the rendered figure.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tuple</em>[<em>Dict</em>[str, <em>Dict</em>[int, int]], <em>Path</em>]</p>
+<dd class="field-odd"><p><em>Tuple</em>[<em>Dict</em>[str, <em>Dict</em>[int, int]], pathlib.Path]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2074,7 +2074,7 @@ and the path to the rendered figure.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>train_df</strong> (<em>pandas.DataFrame</em>) – Training split dataframe containing interaction history columns.</p></li>
 <li><p><strong>val_df</strong> (<em>pandas.DataFrame</em>) – Validation split dataframe containing interaction history columns.</p></li>
-<li><p><strong>figures_dir</strong> (<em>Path</em>) – Directory where the generated histogram will be saved.</p></li>
+<li><p><strong>figures_dir</strong> (<em>pathlib.Path</em>) – Directory where the generated histogram will be saved.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2082,7 +2082,7 @@ and the path to the rendered figure.</p>
 and the path to the rendered figure.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tuple</em>[<em>Dict</em>[str, <em>Dict</em>[int, int]], <em>Path</em>]</p>
+<dd class="field-odd"><p><em>Tuple</em>[<em>Dict</em>[str, <em>Dict</em>[int, int]], pathlib.Path]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2115,9 +2115,9 @@ and the path to the rendered figure.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>pair</strong> (<a class="reference internal" href="#clean_data.prompt.utils.SeriesPair" title="clean_data.prompt.utils.SeriesPair"><em>SeriesPair</em></a>) – Training/validation series plus backing dataframes for the feature.</p></li>
+<li><p><strong>pair</strong> (<a class="reference internal" href="#clean_data.prompt.utils.SeriesPair" title="clean_data.prompt.utils.SeriesPair"><em>clean_data.prompt.utils.SeriesPair</em></a>) – Training/validation series plus backing dataframes for the feature.</p></li>
 <li><p><strong>label</strong> (<em>str</em>) – Human-readable label used for chart titles.</p></li>
-<li><p><strong>output_path</strong> (<em>Path</em>) – Path where the rendered figure will be written.</p></li>
+<li><p><strong>output_path</strong> (<em>pathlib.Path</em>) – Path where the rendered figure will be written.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2138,7 +2138,7 @@ and the path to the rendered figure.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>train_df</strong> (<em>pandas.DataFrame</em>) – Training split dataframe containing prompt rows.</p></li>
 <li><p><strong>val_df</strong> (<em>pandas.DataFrame</em>) – Validation split dataframe containing prompt rows.</p></li>
-<li><p><strong>figures_dir</strong> (<em>Path</em>) – Directory used to persist per-feature figures.</p></li>
+<li><p><strong>figures_dir</strong> (<em>pathlib.Path</em>) – Directory used to persist per-feature figures.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2383,7 +2383,7 @@ repository’s Apache 2.0 license; consult LICENSE for the complete details.</p>
 <dd><p>Create the directory hierarchy when it does not already exist.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>path</strong> (<em>Path</em>) – Target directory path to create.</p>
+<dd class="field-odd"><p><strong>path</strong> (<em>pathlib.Path</em>) – Target directory path to create.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -2584,7 +2584,7 @@ repository’s Apache 2.0 license; consult LICENSE for more information.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dataset</strong> (<em>datasets.DatasetDict</em>) – Hugging Face <code class="docutils literal notranslate"><span class="pre">DatasetDict</span></code> containing cleaned sessions.</p></li>
-<li><p><strong>output_dir</strong> (<em>Path</em><em> | </em><em>str</em>) – Directory where plots and the Markdown report are written.</p></li>
+<li><p><strong>output_dir</strong> (<em>pathlib.Path</em><em> | </em><em>str</em>) – Directory where plots and the Markdown report are written.</p></li>
 <li><p><strong>heatmap_bins</strong> (<em>int</em>) – Number of bins to use along each dimension of the heatmaps.</p></li>
 </ul>
 </dd>
@@ -2658,10 +2658,11 @@ uses.</p>
 <dd><p>Return the static study specifications handled by the report.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Iterable of <a class="reference internal" href="#clean_data.research_article_political_sciences.analysis.StudySpec" title="clean_data.research_article_political_sciences.analysis.StudySpec"><code class="xref py py-class docutils literal notranslate"><span class="pre">StudySpec</span></code></a> describing each study.</p>
+<dd class="field-odd"><p>Iterable of <a class="reference internal" href="#clean_data.research_article_political_sciences.analysis.StudySpec" title="clean_data.research_article_political_sciences.analysis.StudySpec"><code class="xref py py-class docutils literal notranslate"><span class="pre">StudySpec</span></code></a>
+describing each study.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Iterable</em>[<a class="reference internal" href="#clean_data.research_article_political_sciences.analysis.StudySpec" title="clean_data.research_article_political_sciences.analysis.StudySpec"><em>StudySpec</em></a>]</p>
+<dd class="field-even"><p><em>Iterable</em>[<a class="reference internal" href="#clean_data.research_article_political_sciences.analysis.StudySpec" title="clean_data.research_article_political_sciences.analysis.StudySpec">clean_data.research_article_political_sciences.analysis.StudySpec</a>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2732,7 +2733,7 @@ coefficient, standard error, 95% CI, and two-sided p-value.</p>
 <dd><p>Load a dataframe containing control/treatment assignments for a study.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>spec</strong> (<a class="reference internal" href="#clean_data.research_article_political_sciences.analysis.StudySpec" title="clean_data.research_article_political_sciences.analysis.StudySpec"><em>StudySpec</em></a>) – Study specification determining which assignment loader to use.</p>
+<dd class="field-odd"><p><strong>spec</strong> (<a class="reference internal" href="#clean_data.research_article_political_sciences.analysis.StudySpec" title="clean_data.research_article_political_sciences.analysis.StudySpec"><em>clean_data.research_article_political_sciences.analysis.StudySpec</em></a>) – Study specification determining which assignment loader to use.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Assignment dataframe with pre/post scores or an empty frame on failure.</p>
@@ -2751,7 +2752,7 @@ coefficient, standard error, 95% CI, and two-sided p-value.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>frame</strong> (<em>pandas.DataFrame</em>) – Combined dataframe across all studies/issues.</p></li>
-<li><p><strong>spec</strong> (<a class="reference internal" href="#clean_data.research_article_political_sciences.analysis.StudySpec" title="clean_data.research_article_political_sciences.analysis.StudySpec"><em>StudySpec</em></a>) – Study specification describing the target subset.</p></li>
+<li><p><strong>spec</strong> (<a class="reference internal" href="#clean_data.research_article_political_sciences.analysis.StudySpec" title="clean_data.research_article_political_sciences.analysis.StudySpec"><em>clean_data.research_article_political_sciences.analysis.StudySpec</em></a>) – Study specification describing the target subset.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2880,11 +2881,11 @@ LICENSE for the detailed terms.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>output_dir</strong> (<em>Path</em>) – Directory where referenced assets are written.</p></li>
+<li><p><strong>output_dir</strong> (<em>pathlib.Path</em>) – Directory where referenced assets are written.</p></li>
 <li><p><strong>study_rows</strong> (<em>Iterable</em><em>[</em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em><em>]</em>) – Iterable of per-study summary dictionaries.</p></li>
-<li><p><strong>heatmap_paths</strong> (<em>Iterable</em><em>[</em><em>Path</em><em>]</em>) – Paths to generated heatmap image files.</p></li>
-<li><p><strong>mean_change_path</strong> (<em>Path</em>) – Path to the combined mean-change figure.</p></li>
-<li><p><strong>artifacts</strong> (<a class="reference internal" href="#clean_data.research_article_political_sciences.markdown.MarkdownArtifacts" title="clean_data.research_article_political_sciences.markdown.MarkdownArtifacts"><em>MarkdownArtifacts</em></a><em> | </em><em>None</em>) – Optional container with supplemental report inputs.</p></li>
+<li><p><strong>heatmap_paths</strong> (<em>Iterable</em><em>[</em><em>pathlib.Path</em><em>]</em>) – Paths to generated heatmap image files.</p></li>
+<li><p><strong>mean_change_path</strong> (<em>pathlib.Path</em>) – Path to the combined mean-change figure.</p></li>
+<li><p><strong>artifacts</strong> (<a class="reference internal" href="#clean_data.research_article_political_sciences.markdown.MarkdownArtifacts" title="clean_data.research_article_political_sciences.markdown.MarkdownArtifacts"><em>clean_data.research_article_political_sciences.markdown.MarkdownArtifacts</em></a><em> | </em><em>None</em>) – Optional container with supplemental report inputs.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2909,7 +2910,7 @@ licensed under the repository’s Apache 2.0 terms; see LICENSE for details.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>study_panels</strong> (<em>Iterable</em><em>[</em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>Iterable</em><em>[</em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em>) – Iterable pairing panel titles with per-assignment summaries.</p></li>
 <li><p><strong>regression</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>) – Dictionary containing pooled regression metrics.</p></li>
-<li><p><strong>output_path</strong> (<em>Path</em>) – Destination path where the composite figure is saved.</p></li>
+<li><p><strong>output_path</strong> (<em>pathlib.Path</em>) – Destination path where the composite figure is saved.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2928,7 +2929,7 @@ licensed under the repository’s Apache 2.0 terms; see LICENSE for details.</p>
 <li><p><strong>hist</strong> (<em>numpy.ndarray</em>) – 2D histogram counts (before x after).</p></li>
 <li><p><strong>bin_edges</strong> (<em>numpy.ndarray</em>) – Bin edges used along both axes.</p></li>
 <li><p><strong>title</strong> (<em>str</em>) – Plot title describing the study context.</p></li>
-<li><p><strong>output_path</strong> (<em>Path</em>) – Destination path where the heatmap is saved.</p></li>
+<li><p><strong>output_path</strong> (<em>pathlib.Path</em>) – Destination path where the heatmap is saved.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2947,7 +2948,7 @@ licensed under the repository’s Apache 2.0 terms; see LICENSE for details.</p>
 <li><p><strong>summaries</strong> (<em>Iterable</em><em>[</em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em><em>]</em>) – Iterable of summary dictionaries with <code class="docutils literal notranslate"><span class="pre">mean_change</span></code>,
 <code class="docutils literal notranslate"><span class="pre">std_change</span></code>, and <code class="docutils literal notranslate"><span class="pre">n</span></code> keys.</p></li>
 <li><p><strong>labels</strong> (<em>Iterable</em><em>[</em><em>str</em><em>]</em>) – Iterable of x-axis labels aligned with <code class="docutils literal notranslate"><span class="pre">summaries</span></code>.</p></li>
-<li><p><strong>output_path</strong> (<em>Path</em>) – Destination path where the plot image is written.</p></li>
+<li><p><strong>output_path</strong> (<em>pathlib.Path</em>) – Destination path where the plot image is written.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2969,7 +2970,7 @@ repository’s Apache 2.0 terms; see LICENSE for the precise allowances.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dataset</strong> (<em>datasets.DatasetDict</em>) – Hugging Face <code class="docutils literal notranslate"><span class="pre">DatasetDict</span></code> containing cleaned sessions.</p></li>
-<li><p><strong>output_dir</strong> (<em>Path</em><em> | </em><em>str</em>) – Directory where plots and the Markdown report are written.</p></li>
+<li><p><strong>output_dir</strong> (<em>pathlib.Path</em><em> | </em><em>str</em>) – Directory where plots and the Markdown report are written.</p></li>
 <li><p><strong>heatmap_bins</strong> (<em>int</em>) – Number of bins to use along each dimension of the heatmaps.</p></li>
 </ul>
 </dd>

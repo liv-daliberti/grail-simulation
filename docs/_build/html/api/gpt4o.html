@@ -508,7 +508,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dd class="field-odd"><p><strong>raw_eval_max</strong> (<em>int</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#gpt4o.evaluate.EvaluationLimits" title="gpt4o.evaluate.EvaluationLimits"><em>EvaluationLimits</em></a></p>
+<dd class="field-even"><p><a class="reference internal" href="#gpt4o.evaluate.EvaluationLimits" title="gpt4o.evaluate.EvaluationLimits">gpt4o.evaluate.EvaluationLimits</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -537,7 +537,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dd><p>Construct the payload used when serialising evaluation metrics.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>SlateMetricsRequest</em></p>
+<dd class="field-odd"><p>common.evaluation.slate_eval.SlateMetricsRequest</p>
 </dd>
 </dl>
 </dd></dl>
@@ -698,8 +698,8 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>issues</strong> (<a class="reference internal" href="#gpt4o.evaluate.FilterSet" title="gpt4o.evaluate.FilterSet"><em>FilterSet</em></a>)</p></li>
-<li><p><strong>studies</strong> (<a class="reference internal" href="#gpt4o.evaluate.FilterSet" title="gpt4o.evaluate.FilterSet"><em>FilterSet</em></a>)</p></li>
+<li><p><strong>issues</strong> (<a class="reference internal" href="#gpt4o.evaluate.FilterSet" title="gpt4o.evaluate.FilterSet"><em>gpt4o.evaluate.FilterSet</em></a>)</p></li>
+<li><p><strong>studies</strong> (<a class="reference internal" href="#gpt4o.evaluate.FilterSet" title="gpt4o.evaluate.FilterSet"><em>gpt4o.evaluate.FilterSet</em></a>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -709,7 +709,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dd><p>Check whether an example passes the configured filters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>labels</strong> (<a class="reference internal" href="#gpt4o.evaluate.ExampleLabels" title="gpt4o.evaluate.ExampleLabels"><em>ExampleLabels</em></a>)</p>
+<dd class="field-odd"><p><strong>labels</strong> (<a class="reference internal" href="#gpt4o.evaluate.ExampleLabels" title="gpt4o.evaluate.ExampleLabels"><em>gpt4o.evaluate.ExampleLabels</em></a>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>bool</p>
@@ -719,13 +719,13 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="gpt4o.evaluate.FilterState.issues">
-<span class="sig-name descname"><span class="pre">issues</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#gpt4o.evaluate.FilterSet" title="gpt4o.evaluate.FilterSet"><span class="pre">FilterSet</span></a></em><a class="headerlink" href="#gpt4o.evaluate.FilterState.issues" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">issues</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#gpt4o.evaluate.FilterSet" title="gpt4o.evaluate.FilterSet"><span class="pre">gpt4o.evaluate.FilterSet</span></a></em><a class="headerlink" href="#gpt4o.evaluate.FilterState.issues" title="Link to this definition">¶</a></dt>
 <dd><p>Alias for field number 0</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="gpt4o.evaluate.FilterState.studies">
-<span class="sig-name descname"><span class="pre">studies</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#gpt4o.evaluate.FilterSet" title="gpt4o.evaluate.FilterSet"><span class="pre">FilterSet</span></a></em><a class="headerlink" href="#gpt4o.evaluate.FilterState.studies" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">studies</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#gpt4o.evaluate.FilterSet" title="gpt4o.evaluate.FilterSet"><span class="pre">gpt4o.evaluate.FilterSet</span></a></em><a class="headerlink" href="#gpt4o.evaluate.FilterState.studies" title="Link to this definition">¶</a></dt>
 <dd><p>Alias for field number 1</p>
 </dd></dl>
 
@@ -739,9 +739,9 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>root</strong> (<em>Path</em>)</p></li>
-<li><p><strong>predictions</strong> (<em>Path</em>)</p></li>
-<li><p><strong>metrics</strong> (<em>Path</em>)</p></li>
+<li><p><strong>root</strong> (<em>pathlib.Path</em>)</p></li>
+<li><p><strong>predictions</strong> (<em>pathlib.Path</em>)</p></li>
+<li><p><strong>metrics</strong> (<em>pathlib.Path</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -752,31 +752,31 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>out_dir</strong> (<em>str</em><em> | </em><em>Path</em>)</p></li>
+<li><p><strong>out_dir</strong> (<em>str</em><em> | </em><em>pathlib.Path</em>)</p></li>
 <li><p><strong>overwrite</strong> (<em>bool</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#gpt4o.evaluate.OutputPaths" title="gpt4o.evaluate.OutputPaths"><em>OutputPaths</em></a></p>
+<dd class="field-even"><p><a class="reference internal" href="#gpt4o.evaluate.OutputPaths" title="gpt4o.evaluate.OutputPaths">gpt4o.evaluate.OutputPaths</a></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="gpt4o.evaluate.OutputPaths.metrics">
-<span class="sig-name descname"><span class="pre">metrics</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#gpt4o.evaluate.OutputPaths.metrics" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">metrics</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></em><a class="headerlink" href="#gpt4o.evaluate.OutputPaths.metrics" title="Link to this definition">¶</a></dt>
 <dd><p>Alias for field number 2</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="gpt4o.evaluate.OutputPaths.predictions">
-<span class="sig-name descname"><span class="pre">predictions</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#gpt4o.evaluate.OutputPaths.predictions" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">predictions</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></em><a class="headerlink" href="#gpt4o.evaluate.OutputPaths.predictions" title="Link to this definition">¶</a></dt>
 <dd><p>Alias for field number 1</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="gpt4o.evaluate.OutputPaths.root">
-<span class="sig-name descname"><span class="pre">root</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#gpt4o.evaluate.OutputPaths.root" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">root</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></em><a class="headerlink" href="#gpt4o.evaluate.OutputPaths.root" title="Link to this definition">¶</a></dt>
 <dd><p>Alias for field number 0</p>
 </dd></dl>
 
@@ -800,7 +800,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.titles.TitleResolver">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.titles.</span></span><span class="sig-name descname"><span class="pre">TitleResolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/titles.html#TitleResolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.titles.TitleResolver" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="common.html#common.title_index.TitleResolver" title="common.title_index.TitleResolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">TitleResolver</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="common.html#common.text.title_index.TitleResolver" title="common.text.title_index.TitleResolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">common.text.title_index.TitleResolver</span></code></a></p>
 <p>Resolve YouTube ids to titles using shared common helpers.</p>
 <dl class="field-list simple">
 </dl>
@@ -827,7 +827,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dd class="field-odd"><p><strong>directories</strong> (<em>str</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#gpt4o.titles.TitleResolver" title="gpt4o.titles.TitleResolver"><em>TitleResolver</em></a></p>
+<dd class="field-even"><p><a class="reference internal" href="#gpt4o.titles.TitleResolver" title="gpt4o.titles.TitleResolver">gpt4o.titles.TitleResolver</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -932,10 +932,10 @@ the GPT-4o workflow used in Grail Simulation experiments.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>out_dir</strong> (<em>Path</em>)</p></li>
-<li><p><strong>final_out_dir</strong> (<em>Path</em>)</p></li>
-<li><p><strong>sweep_dir</strong> (<em>Path</em>)</p></li>
-<li><p><strong>reports_dir</strong> (<em>Path</em>)</p></li>
+<li><p><strong>out_dir</strong> (<em>pathlib.Path</em>)</p></li>
+<li><p><strong>final_out_dir</strong> (<em>pathlib.Path</em>)</p></li>
+<li><p><strong>sweep_dir</strong> (<em>pathlib.Path</em>)</p></li>
+<li><p><strong>reports_dir</strong> (<em>pathlib.Path</em>)</p></li>
 <li><p><strong>cache_dir</strong> (<em>str</em>)</p></li>
 </ul>
 </dd>
@@ -947,22 +947,22 @@ the GPT-4o workflow used in Grail Simulation experiments.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="gpt4o.pipeline.PipelinePaths.final_out_dir">
-<span class="sig-name descname"><span class="pre">final_out_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths.final_out_dir" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">final_out_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></em><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths.final_out_dir" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="gpt4o.pipeline.PipelinePaths.out_dir">
-<span class="sig-name descname"><span class="pre">out_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths.out_dir" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">out_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></em><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths.out_dir" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="gpt4o.pipeline.PipelinePaths.reports_dir">
-<span class="sig-name descname"><span class="pre">reports_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths.reports_dir" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">reports_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></em><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths.reports_dir" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="gpt4o.pipeline.PipelinePaths.sweep_dir">
-<span class="sig-name descname"><span class="pre">sweep_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths.sweep_dir" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">sweep_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></em><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths.sweep_dir" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -1022,11 +1022,11 @@ the GPT-4o workflow used in Grail Simulation experiments.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>config</strong> (<a class="reference internal" href="#gpt4o.pipeline.SweepConfig" title="gpt4o.pipeline.SweepConfig"><em>SweepConfig</em></a>)</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="#gpt4o.pipeline.SweepConfig" title="gpt4o.pipeline.SweepConfig"><em>gpt4o.pipeline.SweepConfig</em></a>)</p></li>
 <li><p><strong>accuracy</strong> (<em>float</em>)</p></li>
 <li><p><strong>parsed_rate</strong> (<em>float</em>)</p></li>
 <li><p><strong>format_rate</strong> (<em>float</em>)</p></li>
-<li><p><strong>metrics_path</strong> (<em>Path</em>)</p></li>
+<li><p><strong>metrics_path</strong> (<em>pathlib.Path</em>)</p></li>
 <li><p><strong>metrics</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em>)</p></li>
 </ul>
 </dd>
@@ -1038,7 +1038,7 @@ the GPT-4o workflow used in Grail Simulation experiments.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="gpt4o.pipeline.SweepOutcome.config">
-<span class="sig-name descname"><span class="pre">config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#gpt4o.pipeline.SweepConfig" title="gpt4o.pipeline.SweepConfig"><span class="pre">SweepConfig</span></a></em><a class="headerlink" href="#gpt4o.pipeline.SweepOutcome.config" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#gpt4o.pipeline.SweepConfig" title="gpt4o.pipeline.SweepConfig"><span class="pre">gpt4o.pipeline.SweepConfig</span></a></em><a class="headerlink" href="#gpt4o.pipeline.SweepOutcome.config" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -1053,7 +1053,7 @@ the GPT-4o workflow used in Grail Simulation experiments.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="gpt4o.pipeline.SweepOutcome.metrics_path">
-<span class="sig-name descname"><span class="pre">metrics_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#gpt4o.pipeline.SweepOutcome.metrics_path" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">metrics_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></em><a class="headerlink" href="#gpt4o.pipeline.SweepOutcome.metrics_path" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">

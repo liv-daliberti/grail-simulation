@@ -48,7 +48,16 @@ CliRunner = Callable[[Sequence[str]], None]
 
 
 def _compare_metric(lhs: Optional[float], rhs: Optional[float]) -> int:
-    """Return comparison result {-1,0,1} for two optional floats."""
+    """
+    Compare two optional floats using numeric ordering.
+
+    :param lhs: Left-hand operand to compare.
+    :type lhs: float | None
+    :param rhs: Right-hand operand to compare.
+    :type rhs: float | None
+    :returns: ``-1`` when ``lhs`` is smaller, ``1`` when greater, otherwise ``0``.
+    :rtype: int
+    """
 
     if lhs is None or rhs is None:
         return 0
@@ -61,7 +70,19 @@ def _compare_metric(lhs: Optional[float], rhs: Optional[float]) -> int:
 def _opinion_is_better(
     candidate: OpinionSweepOutcome, incumbent: OpinionSweepOutcome
 ) -> bool:
-    """Determine whether ``candidate`` should replace ``incumbent``."""
+    """
+    Determine whether a candidate outcome should replace the current incumbent.
+
+    The comparison favours lower error metrics first and breaks ties using the
+    number of participants and the selected ``k``.
+
+    :param candidate: Outcome under consideration.
+    :type candidate: ~knn.pipeline.context.OpinionSweepOutcome
+    :param incumbent: Outcome currently marked as the best.
+    :type incumbent: ~knn.pipeline.context.OpinionSweepOutcome
+    :returns: ``True`` when ``candidate`` is preferable to ``incumbent``.
+    :rtype: bool
+    """
 
     for lhs, rhs in ((candidate.mae, incumbent.mae), (candidate.rmse, incumbent.rmse)):
         result = _compare_metric(lhs, rhs)
@@ -82,6 +103,20 @@ def _build_opinion_task(
     study: StudySpec,
     context: SweepTaskContext,
 ) -> OpinionSweepTask:
+    """
+    Construct the internal :class:`~knn.pipeline.context.OpinionSweepTask`.
+
+    :param index: Position of the task within the sweep grid (used for logging).
+    :type index: int
+    :param config: Hyper-parameter configuration to evaluate.
+    :type config: ~knn.pipeline.context.SweepConfig
+    :param study: Study metadata describing the target opinion cohort.
+    :type study: ~knn.pipeline.context.StudySpec
+    :param context: Execution context containing CLI defaults and filesystem roots.
+    :type context: ~knn.pipeline.context.SweepTaskContext
+    :returns: Fully-populated sweep task including paths for metrics and models.
+    :rtype: ~knn.pipeline.context.OpinionSweepTask
+    """
     run_root = (
         context.sweep_dir
         / "opinion"
@@ -121,7 +156,12 @@ def build_opinion_task(
     study: StudySpec,
     context: SweepTaskContext,
 ) -> OpinionSweepTask:
-    """Public wrapper that exposes the opinion task builder for testing."""
+    """
+    Expose the opinion sweep task builder for use in tests and external callers.
+
+    :returns: A configured opinion sweep task matching the supplied arguments.
+    :rtype: ~knn.pipeline.context.OpinionSweepTask
+    """
     return _build_opinion_task(
         index=index,
         config=config,
@@ -131,7 +171,14 @@ def build_opinion_task(
 
 
 def _load_cached_opinion_outcome(task: OpinionSweepTask) -> Optional[OpinionSweepOutcome]:
-    """Load cached opinion metrics if available."""
+    """
+    Load cached opinion metrics when the on-disk artefact is present.
+
+    :param task: Sweep task whose cached metrics should be inspected.
+    :type task: ~knn.pipeline.context.OpinionSweepTask
+    :returns: Reconstructed outcome if the cache exists, otherwise ``None``.
+    :rtype: ~knn.pipeline.context.OpinionSweepOutcome | None
+    """
 
     try:
         with open(task.metrics_path, "r", encoding="utf-8") as handle:
@@ -156,27 +203,20 @@ def prepare_opinion_sweep_tasks(
     reuse_existing: bool,
 ) -> Tuple[List[OpinionSweepTask], List[OpinionSweepOutcome]]:
     """
-    Return opinion sweep tasks requiring execution and cached outcomes.
+    Return tasks that require execution alongside cached sweep outcomes.
 
-    :param studies: Sequence of study specifications targeted by the workflow.
-
-    :type studies: Sequence[StudySpec]
-
-    :param configs: Iterable of sweep configurations scheduled for execution.
-
-    :type configs: Sequence[SweepConfig]
-
+    :param studies: Study specifications targeted by the workflow.
+    :type studies: Sequence[~knn.pipeline.context.StudySpec]
+    :param configs: Hyper-parameter sweep configurations scheduled for execution.
+    :type configs: Sequence[~knn.pipeline.context.SweepConfig]
     :param context: Shared CLI/runtime parameters reused across sweep invocations.
-    :type context: SweepTaskContext
-
-    :param reuse_existing: Whether to reuse cached results instead of recomputing them.
-
+    :type context: ~knn.pipeline.context.SweepTaskContext
+    :param reuse_existing: When ``True``, reuse cached results instead of recomputing.
     :type reuse_existing: bool
-
-    :returns: opinion sweep tasks requiring execution and cached outcomes
-
-    :rtype: Tuple[List[OpinionSweepTask], List[OpinionSweepOutcome]]
-
+    :returns: Tasks pending execution and outcomes reconstructed from cache.
+    :rtype:
+        Tuple[List[~knn.pipeline.context.OpinionSweepTask],
+        List[~knn.pipeline.context.OpinionSweepOutcome]]
     """
     return prepare_task_grid(
         configs,
@@ -193,7 +233,16 @@ def prepare_opinion_sweep_tasks(
 
 
 def _coerce_optional_float(value: object, default: float | None = None) -> Optional[float]:
-    """Return ``value`` converted to ``float`` when possible."""
+    """
+    Convert an optional value to ``float`` when possible.
+
+    :param value: Input value that may be convertible to ``float``.
+    :type value: object
+    :param default: Fallback value returned when ``value`` is ``None``.
+    :type default: float | None
+    :returns: Numeric representation of ``value`` or ``default``.
+    :rtype: float | None
+    """
 
     try:
         return default if value is None else float(value)
@@ -209,22 +258,14 @@ def opinion_sweep_outcome_from_metrics(
     """
     Translate cached opinion metrics into an :class:`OpinionSweepOutcome`.
 
-    :param task: Individual sweep task describing an execution unit.
-
-    :type task: OpinionSweepTask
-
+    :param task: Sweep task describing the execution unit that produced the metrics.
+    :type task: ~knn.pipeline.context.OpinionSweepTask
     :param metrics: Metrics dictionary captured from a previous pipeline stage.
-
     :type metrics: Mapping[str, object]
-
     :param metrics_path: Filesystem path where the metrics JSON artefact resides.
-
-    :type metrics_path: Path
-
+    :type metrics_path: pathlib.Path
     :returns: Opinion sweep outcome reconstructed from cached metrics.
-
-    :rtype: OpinionSweepOutcome
-
+    :rtype: ~knn.pipeline.context.OpinionSweepOutcome
     """
     summary = extract_opinion_summary(metrics)
 
@@ -309,20 +350,14 @@ def merge_opinion_sweep_outcomes(
     executed: Sequence[OpinionSweepOutcome],
 ) -> List[OpinionSweepOutcome]:
     """
-    Combine cached and freshly executed opinion outcomes preserving order.
+    Combine cached and freshly executed opinion outcomes while preserving order.
 
     :param cached: Previously computed artefacts available for reuse.
-
-    :type cached: Sequence[OpinionSweepOutcome]
-
-    :param executed: Iterable of tasks that were actually executed during the run.
-
-    :type executed: Sequence[OpinionSweepOutcome]
-
-    :returns: Mapping of feature spaces to merged opinion sweep outcomes.
-
-    :rtype: List[OpinionSweepOutcome]
-
+    :type cached: Sequence[~knn.pipeline.context.OpinionSweepOutcome]
+    :param executed: Outcomes produced during the current run.
+    :type executed: Sequence[~knn.pipeline.context.OpinionSweepOutcome]
+    :returns: Ordered list comprising cached results first and overwriting duplicates.
+    :rtype: List[~knn.pipeline.context.OpinionSweepOutcome]
     """
     return merge_indexed_outcomes(
         cached,
@@ -346,13 +381,13 @@ def execute_opinion_sweep_tasks(
     Run the supplied opinion sweep tasks, optionally in parallel.
 
     :param tasks: Collection of sweep tasks scheduled for execution.
-    :type tasks: Sequence[OpinionSweepTask]
+    :type tasks: Sequence[~knn.pipeline.context.OpinionSweepTask]
     :param jobs: Maximum number of parallel workers allowed.
     :type jobs: int
     :param cli_runner: Callable used to invoke the CLI for each task.
-    :type cli_runner: Callable[[Sequence[str]], None]
-    :returns: List of opinion sweep outcomes generated from the provided tasks.
-    :rtype: List[OpinionSweepOutcome]
+    :type cli_runner: CliRunner
+    :returns: Opinion sweep outcomes generated from the provided tasks.
+    :rtype: List[~knn.pipeline.context.OpinionSweepOutcome]
     """
     if not tasks:
         return []
@@ -375,16 +410,13 @@ def execute_opinion_sweep_task(
     Execute a single opinion sweep task and return the captured metrics.
 
     :param task: Individual sweep task describing an execution unit.
-
-    :type task: OpinionSweepTask
-
+    :type task: ~knn.pipeline.context.OpinionSweepTask
     :param cli_runner: Callable used to invoke the CLI for the opinion sweep.
-    :type cli_runner: Callable[[Sequence[str]], None]
-
+    :type cli_runner: CliRunner
     :returns: Opinion sweep outcome produced by executing the given task.
-
-    :rtype: OpinionSweepOutcome
-
+    :rtype: ~knn.pipeline.context.OpinionSweepOutcome
+    :raises RuntimeError: Raised when a Word2Vec task omits the model directory.
+    :raises FileNotFoundError: Raised if the metrics artefact is missing post-run.
     """
     run_root = ensure_dir(task.run_root)
     outputs_root = run_root / "opinion" / task.config.feature_space
@@ -423,13 +455,9 @@ def format_opinion_sweep_task_descriptor(task: OpinionSweepTask) -> str:
     Return a short descriptor for an opinion sweep task.
 
     :param task: Individual sweep task describing an execution unit.
-
-    :type task: OpinionSweepTask
-
-    :returns: a short descriptor for an opinion sweep task
-
+    :type task: ~knn.pipeline.context.OpinionSweepTask
+    :returns: Human-readable descriptor combining feature space, study, and label.
     :rtype: str
-
     """
     return f"{task.config.feature_space}:{task.study.key}:{task.config.label()}"
 
@@ -441,24 +469,18 @@ def select_best_opinion_configs(
     allow_incomplete: bool = False,
 ) -> Dict[str, Dict[str, OpinionStudySelection]]:
     """
-    Select the best configuration per feature space and study for opinion.
+    Select the best configuration per feature space and study for opinion sweeps.
 
-    :param outcomes: Iterable of sweep outcomes available for aggregation.
-
-    :type outcomes: Sequence[OpinionSweepOutcome]
-
-    :param studies: Sequence of study specifications targeted by the workflow.
-
-    :type studies: Sequence[StudySpec]
-
-    :param allow_incomplete: Whether processing may continue when some sweep data is missing.
-
+    :param outcomes: Sweep outcomes available for aggregation.
+    :type outcomes: Sequence[~knn.pipeline.context.OpinionSweepOutcome]
+    :param studies: Study specifications targeted by the workflow.
+    :type studies: Sequence[~knn.pipeline.context.StudySpec]
+    :param allow_incomplete: Continue when some sweep data is missing if ``True``.
     :type allow_incomplete: bool
-
     :returns: Mapping of feature spaces to their selected opinion configurations.
-
-    :rtype: Dict[str, Dict[str, OpinionStudySelection]]
-
+    :rtype: Dict[str, Dict[str, ~knn.pipeline.context.OpinionStudySelection]]
+    :raises ValueError:
+        Raised when mandatory selections are missing and ``allow_incomplete`` is ``False``.
     """
     selections: Dict[str, Dict[str, OpinionStudySelection]] = {}
     for outcome in outcomes:

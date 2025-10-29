@@ -45,6 +45,19 @@ Each evaluation issue produces:
 Set ``--train-curve-max`` when invoking the CLI to limit how many training
 examples feed into the training curve diagnostics.
 
+Package Overview
+----------------
+
+.. automodule:: knn
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.core
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 .. automodule:: knn.data
    :members:
    :undoc-members:
@@ -54,7 +67,7 @@ examples feed into the training curve diagnostics.
    :members:
    :undoc-members:
    :show-inheritance:
-   :exclude-members: CandidateMetadata
+   :exclude-members: CandidateMetadata, Word2VecConfig
 
 .. automodule:: knn.index
    :members:
@@ -70,8 +83,296 @@ examples feed into the training curve diagnostics.
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: knn.cli
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: DEFAULT_KNN_TEXT_FIELDS, add_sentence_transformer_normalize_flags, build_parser, main
+
+Core (Canonical Paths)
+----------------------
+
+.. automodule:: knn.core.data
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.core.features
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.core.index
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.core.evaluate
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.core.opinion
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: OpinionEmbeddingConfigs, OpinionEvaluationContext, OpinionExample, OpinionIndex, OpinionSpec, DEFAULT_SPECS
+
+.. automodule:: knn.core.opinion_models
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: OpinionSpec
+
+.. automodule:: knn.core.opinion_data
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.core.opinion_index
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.core.opinion_predictions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.core.opinion_plots
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.core.opinion_outputs
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.core.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Core Utilities
+--------------
+
+.. automodule:: knn.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Pipeline Modules
+----------------
+
+.. automodule:: knn.pipeline
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: PipelineContext, ReportBundle
+
+.. automodule:: knn.pipeline.__main__
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline.cli
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline.context
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline.data
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline.evaluate
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline.io
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline.opinion_sweeps
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline.sweeps
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Report Builders
+---------------
+
+.. automodule:: knn.pipeline.reports
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline.reports.catalog
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline.reports.features
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline.reports.hyperparameter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline.reports.next_video
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: NextVideoReportInputs
+
+.. automodule:: knn.pipeline.reports.opinion
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline.reports.shared
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Next-Video Report Internals
+---------------------------
+
+.. automodule:: knn.pipeline.reports.next_video.inputs
+   :members:
+   :undoc-members:
+   :private-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline.reports.next_video.sections
+   :members:
+   :undoc-members:
+   :private-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline.reports.next_video.curves
+   :members:
+   :undoc-members:
+   :private-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline.reports.next_video.comparison
+   :members:
+   :undoc-members:
+   :private-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline.reports.next_video.loso
+   :members:
+   :undoc-members:
+   :private-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline.reports.next_video.csv_exports
+   :members:
+   :undoc-members:
+   :private-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline.reports.next_video.helpers
+   :members:
+   :undoc-members:
+   :private-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline.reports.next_video.report
+   :members:
+   :undoc-members:
+   :private-members:
+   :show-inheritance:
+
+Legacy Report Shims
+-------------------
+
+.. automodule:: knn.pipeline_reports
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline_reports.catalog
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline_reports.next_video
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline_reports.shared
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline_reports.features
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline_reports.hyperparameter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline_reports.opinion
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Scripts
+-------
+
+.. automodule:: knn.scripts
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.scripts.baseline
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+CLI Internals
+-------------
+
+.. automodule:: knn.cli.__main__
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.cli.main
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: knn.cli.utils
    :members:
    :undoc-members:
    :show-inheritance:

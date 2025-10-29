@@ -202,7 +202,7 @@ class StudySelection(BaseStudySelection[SweepOutcome]):
     Selected configuration for the final evaluation of a participant study.
 
     :param study: Study metadata chosen for final evaluation.
-    :type study: StudySpec
+    :type study: ~common.pipeline.types.StudySpec
     :param outcome: Winning sweep outcome leveraged for reporting.
     :type outcome: SweepOutcome
     """

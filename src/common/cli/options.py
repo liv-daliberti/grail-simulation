@@ -21,7 +21,12 @@ import argparse
 
 
 def add_jobs_argument(parser: argparse.ArgumentParser) -> None:
-    """Register the ``--jobs`` argument controlling worker parallelism."""
+    """
+    Register the ``--jobs`` argument controlling worker parallelism.
+
+    :param parser: Argument parser receiving the job-count configuration flag.
+    :returns: ``None``.
+    """
     parser.add_argument(
         "--jobs",
         type=int,
@@ -31,7 +36,12 @@ def add_jobs_argument(parser: argparse.ArgumentParser) -> None:
 
 
 def add_stage_arguments(parser: argparse.ArgumentParser) -> None:
-    """Register shared stage-selection arguments used by pipelines."""
+    """
+    Register shared stage-selection arguments used by pipelines.
+
+    :param parser: Argument parser being extended with stage options.
+    :returns: ``None``.
+    """
     parser.add_argument(
         "--stage",
         choices=["full", "plan", "sweeps", "finalize", "reports"],
@@ -53,7 +63,12 @@ def add_stage_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def add_log_level_argument(parser: argparse.ArgumentParser) -> None:
-    """Add the shared ``--log-level`` argument."""
+    """
+    Add the shared ``--log-level`` argument.
+
+    :param parser: Argument parser receiving the log-level configuration flag.
+    :returns: ``None``.
+    """
     parser.add_argument(
         "--log-level",
         "--log_level",
@@ -63,7 +78,12 @@ def add_log_level_argument(parser: argparse.ArgumentParser) -> None:
 
 
 def add_overwrite_argument(parser: argparse.ArgumentParser) -> None:
-    """Expose the standard ``--overwrite`` boolean flag."""
+    """
+    Expose the standard ``--overwrite`` boolean flag.
+
+    :param parser: Argument parser receiving the overwrite toggle.
+    :returns: ``None``.
+    """
     parser.add_argument(
         "--overwrite",
         action="store_true",

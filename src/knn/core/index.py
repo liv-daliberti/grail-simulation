@@ -132,7 +132,18 @@ class CandidateScorer:
         if not mask.any():
             if sims.size == 0:
                 return {k: 0.0 for k in self.unique_k}
-            score_vector = np.nan_to_num(np.asarray(sims, dtype=np.float32), nan=0.0)
+            full_mask = np.ones(sims.shape, dtype=bool)
+            sims_masked = np.asarray(sims[full_mask], dtype=np.float32)
+            if sims_masked.size == 0:
+                return {k: 0.0 for k in self.unique_k}
+            score_vector_raw = _score_vector_from_similarity(
+                sims_masked=sims_masked,
+                index_data=self.index_data,
+                mask=full_mask,
+                query=query,
+                metric=self.config.metric,
+            )
+            score_vector = np.nan_to_num(np.asarray(score_vector_raw, dtype=np.float32), nan=0.0)
             return _aggregate_scores(score_vector, self.unique_k)
 
         sims_masked = sims[mask]

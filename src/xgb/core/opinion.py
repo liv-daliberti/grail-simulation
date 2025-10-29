@@ -32,10 +32,12 @@ from common.opinion import (
     DEFAULT_SPECS,
     OpinionExample,
     OpinionSpec,
+    exclude_eval_participants,
+    ensure_train_examples,
+    log_participant_counts,
     float_or_none,
     make_opinion_example_from_values,
 )
-from common.opinion import log_participant_counts
 from common.opinion.metrics import compute_opinion_metrics
 from common.ml.xgb.callbacks import build_fit_callbacks
 from common.ml.xgb.fit_utils import harmonize_fit_kwargs
@@ -510,12 +512,7 @@ def _evaluate_spec(  # pylint: disable=too-many-locals,too-many-statements
         max_participants=request.train_config.max_participants,
         seed=request.train_config.seed,
     )
-    # Log participant counts for sweep visibility
-    log_participant_counts(
-        LOGGER, study_key=spec.key,
-        train_count=len(train_examples), eval_count=len(eval_examples)
-    )
-    if not train_examples or not eval_examples:
+    if not eval_examples:
         LOGGER.warning(
             "[OPINION] Skipping study=%s (train=%d eval=%d).",
             spec.key,
@@ -523,6 +520,27 @@ def _evaluate_spec(  # pylint: disable=too-many-locals,too-many-statements
             len(eval_examples),
         )
         return None
+
+    train_examples = exclude_eval_participants(
+        train_examples,
+        eval_examples,
+        **{"logger": LOGGER, "study_key": spec.key},
+    )
+
+    has_train_examples = ensure_train_examples(
+        train_examples,
+        logger=LOGGER,
+        message="[OPINION] Skipping study=%s (train=%d eval=%d).",
+        args=(spec.key, len(train_examples), len(eval_examples)),
+    )
+    if not has_train_examples:
+        return None
+
+    # Log participant counts for sweep visibility
+    log_participant_counts(
+        LOGGER, study_key=spec.key,
+        train_count=len(train_examples), eval_count=len(eval_examples)
+    )
 
     feature_space = request.feature_space.lower()
     train_docs = [example.document for example in train_examples]

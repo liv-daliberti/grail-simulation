@@ -494,9 +494,9 @@ def _opinion_hyperparameter_section(
     Render the opinion hyper-parameter sweep summary.
 
     :param outcomes: Opinion sweep outcomes considered during selection.
-    :type outcomes: Sequence[OpinionSweepOutcome]
+    :type outcomes: Sequence[~xgb.pipeline.context.OpinionSweepOutcome]
     :param selections: Mapping from study key to selected opinion sweep outcome.
-    :type selections: Mapping[str, OpinionStudySelection]
+    :type selections: Mapping[str, ~xgb.pipeline.context.OpinionStudySelection]
     :param allow_incomplete: Flag controlling placeholder messaging when artefacts are missing.
     :type allow_incomplete: bool
     :returns: Markdown lines describing opinion sweeps.

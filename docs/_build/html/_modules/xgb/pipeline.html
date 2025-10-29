@@ -282,18 +282,18 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">common.pipeline_stage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.pipeline.stage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">SweepPartitionExecutors</span><span class="p">,</span>
     <span class="n">dispatch_cli_partitions</span><span class="p">,</span>
     <span class="n">emit_stage_dry_run_summary</span><span class="p">,</span>
     <span class="n">build_standard_sweeps_partitions</span><span class="p">,</span>
     <span class="n">prepare_sweep_execution</span> <span class="k">as</span> <span class="n">_prepare_sweep_execution</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">common.prompt_docs</span><span class="w"> </span><span class="kn">import</span> <span class="n">merge_default_extra_fields</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.prompts.docs</span><span class="w"> </span><span class="kn">import</span> <span class="n">merge_default_extra_fields</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">.pipeline_context</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.context</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">FinalEvalContext</span><span class="p">,</span>
     <span class="n">OpinionStageConfig</span><span class="p">,</span>
     <span class="n">OpinionStudySelection</span><span class="p">,</span>
@@ -305,7 +305,7 @@
     <span class="n">SweepRunContext</span><span class="p">,</span>
     <span class="n">SweepTask</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.pipeline_cli</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.cli</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">_parse_args</span><span class="p">,</span>
     <span class="n">_repo_root</span><span class="p">,</span>
     <span class="n">_default_out_dir</span><span class="p">,</span>
@@ -315,7 +315,7 @@
     <span class="n">_build_sweep_configs</span><span class="p">,</span>
     <span class="n">_resolve_study_specs</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.pipeline_sweeps</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.sweeps</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">_prepare_opinion_sweep_tasks</span><span class="p">,</span>
     <span class="n">_prepare_sweep_tasks</span><span class="p">,</span>
     <span class="n">_merge_opinion_sweep_outcomes</span><span class="p">,</span>
@@ -333,18 +333,18 @@
     <span class="n">_select_best_configs</span><span class="p">,</span>
     <span class="n">_select_best_opinion_configs</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.pipeline_evaluate</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.evaluate</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">_run_cross_study_evaluations</span><span class="p">,</span>
     <span class="n">_run_final_evaluations</span><span class="p">,</span>
     <span class="n">_run_opinion_from_next_stage</span><span class="p">,</span>
     <span class="n">_run_opinion_stage</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.vectorizers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.vectorizers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">SentenceTransformerVectorizerConfig</span><span class="p">,</span>
     <span class="n">TfidfConfig</span><span class="p">,</span>
     <span class="n">Word2VecVectorizerConfig</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.pipeline_reports</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.reports</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">OpinionReportData</span><span class="p">,</span>
     <span class="n">ReportSections</span><span class="p">,</span>
     <span class="n">SweepReportData</span><span class="p">,</span>
@@ -355,6 +355,57 @@
 
 <span class="n">_WORD2VEC_WORKER_PATTERN</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;training model with (\d+)\s+workers&quot;</span><span class="p">)</span>
 <span class="n">_VECTORISER_META</span> <span class="o">=</span> <span class="s2">&quot;vectorizer.json&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_record_workers_from_dirs</span><span class="p">(</span>
+    <span class="n">directories</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span> <span class="n">record</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Scan cached vectoriser metadata files and record worker counts.&quot;&quot;&quot;</span>
+
+    <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">directories</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">base</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">base</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">continue</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">iterator</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="n">_VECTORISER_META</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">RuntimeError</span><span class="p">):</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Skipping Word2Vec metadata scan under </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span> <span class="n">base</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">for</span> <span class="n">meta_path</span> <span class="ow">in</span> <span class="n">iterator</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">with</span> <span class="n">meta_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+                    <span class="n">payload</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">,</span> <span class="ne">UnicodeDecodeError</span><span class="p">):</span>
+                <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Unable to parse vectoriser metadata at </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span> <span class="n">meta_path</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="n">config</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;config&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="n">workers</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;workers&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">workers</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="n">record</span><span class="p">(</span><span class="n">workers</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_record_workers_from_logs</span><span class="p">(</span><span class="n">logs_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">],</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Inspect pipeline logs to infer Word2Vec worker counts.&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">logs_dir</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">logs_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">return</span>
+
+    <span class="n">pattern</span> <span class="o">=</span> <span class="n">_WORD2VEC_WORKER_PATTERN</span>
+    <span class="k">for</span> <span class="n">log_path</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">logs_dir</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;xgb-*.err&quot;</span><span class="p">))</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">logs_dir</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;xgb-*.out&quot;</span><span class="p">)):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">log_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">handle</span><span class="p">:</span>
+                    <span class="n">match</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">record</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)))</span>
+                    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - defensive guard</span>
+                        <span class="k">continue</span>
+        <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;Unable to read log file </span><span class="si">%s</span><span class="s2"> for Word2Vec worker discovery.&quot;</span><span class="p">,</span>
+                <span class="n">log_path</span><span class="p">,</span>
+            <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_discover_cached_word2vec_workers</span><span class="p">(</span>
@@ -377,43 +428,8 @@
         <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">counts</span><span class="p">[</span><span class="n">value</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
 
-    <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">directories</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">base</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">base</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="k">continue</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">iterator</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="n">_VECTORISER_META</span><span class="p">)</span>
-        <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">RuntimeError</span><span class="p">):</span>
-            <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Skipping Word2Vec metadata scan under </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span> <span class="n">base</span><span class="p">)</span>
-            <span class="k">continue</span>
-        <span class="k">for</span> <span class="n">meta_path</span> <span class="ow">in</span> <span class="n">iterator</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="k">with</span> <span class="n">meta_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
-                    <span class="n">payload</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
-            <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">,</span> <span class="ne">UnicodeDecodeError</span><span class="p">):</span>
-                <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Unable to parse vectoriser metadata at </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span> <span class="n">meta_path</span><span class="p">)</span>
-                <span class="k">continue</span>
-            <span class="n">config</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;config&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
-            <span class="n">workers</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;workers&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">workers</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-                <span class="n">_record</span><span class="p">(</span><span class="n">workers</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">logs_dir</span> <span class="ow">and</span> <span class="n">logs_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-        <span class="n">pattern</span> <span class="o">=</span> <span class="n">_WORD2VEC_WORKER_PATTERN</span>
-        <span class="k">for</span> <span class="n">log_path</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">logs_dir</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;xgb-*.err&quot;</span><span class="p">))</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">logs_dir</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;xgb-*.out&quot;</span><span class="p">)):</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="k">with</span> <span class="n">log_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
-                    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">handle</span><span class="p">:</span>
-                        <span class="n">match</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-                        <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
-                            <span class="k">try</span><span class="p">:</span>
-                                <span class="n">_record</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)))</span>
-                            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - defensive guard</span>
-                                <span class="k">continue</span>
-            <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
-                <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                    <span class="s2">&quot;Unable to read log file </span><span class="si">%s</span><span class="s2"> for Word2Vec worker discovery.&quot;</span><span class="p">,</span>
-                    <span class="n">log_path</span><span class="p">,</span>
-                <span class="p">)</span>
+    <span class="n">_record_workers_from_dirs</span><span class="p">(</span><span class="n">directories</span><span class="p">,</span> <span class="n">_record</span><span class="p">)</span>
+    <span class="n">_record_workers_from_logs</span><span class="p">(</span><span class="n">logs_dir</span><span class="p">,</span> <span class="n">_record</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">counts</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">()</span>
@@ -563,8 +579,11 @@
         <span class="k">if</span> <span class="n">workers_observed</span> <span class="ow">and</span> <span class="n">args</span><span class="o">.</span><span class="n">word2vec_workers</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">workers_observed</span><span class="p">:</span>
             <span class="n">detected_workers</span> <span class="o">=</span> <span class="n">workers_observed</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="s2">&quot;Detected cached Word2Vec artefacts trained with workers=</span><span class="si">%d</span><span class="s2">; overriding &quot;</span>
-                <span class="s2">&quot;--word2vec-workers to reuse them. Provide --word2vec-workers to force a new value.&quot;</span><span class="p">,</span>
+                <span class="p">(</span>
+                    <span class="s2">&quot;Detected cached Word2Vec artefacts trained with workers=</span><span class="si">%d</span><span class="s2">; overriding &quot;</span>
+                    <span class="s2">&quot;--word2vec-workers to reuse them. Provide --word2vec-workers to force &quot;</span>
+                    <span class="s2">&quot;a new value.&quot;</span>
+                <span class="p">),</span>
                 <span class="n">detected_workers</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">args</span><span class="o">.</span><span class="n">word2vec_workers</span> <span class="o">=</span> <span class="n">detected_workers</span>

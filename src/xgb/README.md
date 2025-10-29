@@ -176,6 +176,23 @@ per opinion study. Artefacts flow to `models/xgb/opinion/*`, while
 
 Regenerate reports with `python -m xgb.pipeline --stage reports`.
 
+### Task Overview
+
+- **`next_video` (slate recovery):** Trains gradient-boosted recommenders to recreate the YouTube playlists observed in Liu et al. (_Short-term exposure to filter-bubble recommendation systems has limited polarization effects_, PNAS 2025). Matching held-out slates confirms the learned features capture the same cues as the production system before we study downstream impact.
+- **`opinion` (opinion shift regression):** Uses participant-level pre/post indices to predict the post-study opinion score, reproducing the article’s measurement that shifts were small even under personalised feeds. This task exposes how model capacity and feature space choices influence the magnitude of predicted change.
+- **`opinion_from_next` (exposure-informed shift):** Scores opinion change using the best `next_video` configuration so the identical reconstructed exposure path drives both predictions and counterfactuals. The reports tie these outputs back to the replication in `reports/research_article_political_sciences/README.md`, making the limited polarization findings easy to interpret alongside model diagnostics.
+
+    **Leakage guard:** As of November 2025 the XGB opinion runner prunes training rows whose participant ID also exists in the validation slice before fitting. Earlier sweeps kept ~60 overlapping IDs from `data/cleaned_grail`, inflating MAE/R². Re-run sweeps/finals to refresh cached metrics with the stricter split.
+
+### Opinion Shift Metrics
+
+- **Participants:** `n_participants` (evaluation) and `train_participants` (training split) are written to `opinion_xgb_*_validation_metrics.json`; `eligible` mirrors the count of rows with finite before/after targets and model predictions and is the population used for every statistic.
+- **Primary metrics:** `mae_after = mean(|ŷ_after - y_after|)`, `rmse_after = sqrt(mean((ŷ_after - y_after)^2))`, and `r2_after = 1 - Σ(y_after - ŷ_after)^2 / Σ(y_after - mean(y_after))^2`; `mae_change` and `rmse_change` evaluate the same formulas on opinion deltas where `ŷ_change = ŷ_after - y_before` and `y_change = y_after - y_before`.
+- **Direction & calibration:** `direction_accuracy` measures how often the sign of `ŷ_change` matches `y_change` with a 1e-6 tolerance for “no change”; `calibration_slope`, `calibration_intercept`, and `calibration_bins` fit predicted change to observed change and back the expected calibration error `calibration_ece`; `kl_divergence_change` compares smoothed histograms of predicted vs. observed change.
+- **Baseline comparison:** the `baseline` section scores a “no change” predictor (`pred_after = y_before`) with `mae_before`, `rmse_before`, `r2_before`, the change metrics ending in `_change_zero`, the calibration diagnostics ending in `_change_zero`, and the baseline `direction_accuracy` so deltas in the Markdown reports are interpretable.
+- **Training curves:** `curve_metrics`, when present, records per-round MAE/RMSE for the train and validation splits (`mae_by_round`, `rmse_by_round`) and highlights the best validation round via `best_round` and `best_mae`; these values drive the opinion plots under `reports/xgb/opinion/`.
+- **Per-participant exports:** predictions land in `opinion_xgb_*_validation_predictions.jsonl` with `prediction` (ŷ_after) and `prediction_change` (ŷ_change), making it easy to rebuild the same statistics offline if needed.
+
 ## Outputs & Testing
 
 - Slate metrics, predictions, and curve snapshots land in

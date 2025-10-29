@@ -25,6 +25,8 @@ from __future__ import annotations
 import logging
 from typing import Dict, Mapping, Sequence
 
+from common.pipeline.utils import ensure_stage_overwrite_flag
+
 from .context import EvaluationContext, OpinionStudySelection, StudySelection, StudySpec
 from .data import issue_slug_for_study
 from .io import (
@@ -48,11 +50,11 @@ def run_final_evaluations(
     Run final slate evaluations and return metrics grouped by feature space.
 
     :param selections: Winning sweep selections keyed by feature space and study key.
-    :type selections: Mapping[str, Mapping[str, StudySelection]]
+    :type selections: Mapping[str, Mapping[str, ~knn.pipeline.context.StudySelection]]
     :param studies: Ordered list of studies to evaluate.
-    :type studies: Sequence[StudySpec]
+    :type studies: Sequence[~knn.pipeline.context.StudySpec]
     :param context: Shared CLI/runtime parameters used for all evaluations.
-    :type context: EvaluationContext
+    :type context: ~knn.pipeline.context.EvaluationContext
     :returns: Nested mapping ``feature_space -> study_key -> metrics`` for the final evaluations.
     :rtype: Dict[str, Dict[str, Mapping[str, object]]]
     """
@@ -108,6 +110,16 @@ def run_final_evaluations(
             cli_args.extend(["--out-dir", str(feature_out_dir)])
             cli_args.extend(["--knn-k", str(selection.best_k)])
             cli_args.extend(context.extra_cli)
+            ensure_stage_overwrite_flag(
+                cli_args,
+                metrics_path,
+                logger=LOGGER,
+                stage="FINAL",
+                context_labels=(
+                    ("feature", feature_space),
+                    ("study", study.key),
+                ),
+            )
             run_knn_cli(cli_args)
             metrics, _ = load_metrics(feature_out_dir, issue_slug)
             feature_metrics[study.key] = metrics
@@ -126,11 +138,11 @@ def run_opinion_evaluations(
     Run opinion regression for each feature space and return metrics.
 
     :param selections: Winning opinion selections keyed by feature space and study key.
-    :type selections: Mapping[str, Mapping[str, OpinionStudySelection]]
+    :type selections: Mapping[str, Mapping[str, ~knn.pipeline.context.OpinionStudySelection]]
     :param studies: Ordered list of opinion studies to evaluate.
-    :type studies: Sequence[StudySpec]
+    :type studies: Sequence[~knn.pipeline.context.StudySpec]
     :param context: Shared CLI/runtime parameters used for all evaluations.
-    :type context: EvaluationContext
+    :type context: ~knn.pipeline.context.EvaluationContext
     :returns: Nested mapping ``feature_space -> study_key -> metrics`` for the opinion evaluations.
     :rtype: Dict[str, Dict[str, Mapping[str, object]]]
     """
@@ -181,11 +193,11 @@ def run_opinion_from_next_evaluations(
     Score opinion change using the next-video configuration.
 
     :param selections: Winning next-video selections keyed by feature space and study key.
-    :type selections: Mapping[str, Mapping[str, StudySelection]]
+    :type selections: Mapping[str, Mapping[str, ~knn.pipeline.context.StudySelection]]
     :param studies: Ordered list of opinion studies to evaluate.
-    :type studies: Sequence[StudySpec]
+    :type studies: Sequence[~knn.pipeline.context.StudySpec]
     :param context: Shared CLI/runtime parameters used for all evaluations.
-    :type context: EvaluationContext
+    :type context: ~knn.pipeline.context.EvaluationContext
     :returns: Next-video metrics keyed by ``feature_space`` then ``study_key``.
     :rtype: Dict[str, Dict[str, Mapping[str, object]]]
     """

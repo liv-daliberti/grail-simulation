@@ -26,7 +26,13 @@ except ImportError:  # pragma: no cover - optional dependency
 
 
 def create_tfidf_vectorizer(*, max_features: Optional[int] = None) -> TfidfVectorizer:
-    """Return a TF-IDF vectoriser configured with shared defaults."""
+    """
+    Return a TF-IDF vectoriser configured with shared defaults.
+
+    :param max_features: Optional cap on the vocabulary size used for training.
+    :returns: Instance of :class:`sklearn.feature_extraction.text.TfidfVectorizer`.
+    :raises ImportError: If scikit-learn is not installed.
+    """
     if TfidfVectorizer is None:  # pragma: no cover - optional dependency
         raise ImportError("Install scikit-learn to use TF-IDF vectorisation.")
     return TfidfVectorizer(

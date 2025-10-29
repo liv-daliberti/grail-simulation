@@ -321,7 +321,7 @@ to explore the available configuration surfaces and helper tooling.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>datasets</strong> (<em>list</em><em>[</em><a class="reference internal" href="#open_r1.configs.DatasetConfig" title="open_r1.configs.DatasetConfig"><em>DatasetConfig</em></a><em>]</em>)</p></li>
+<li><p><strong>datasets</strong> (<em>list</em><em>[</em><a class="reference internal" href="#open_r1.configs.DatasetConfig" title="open_r1.configs.DatasetConfig"><em>open_r1.configs.DatasetConfig</em></a><em>]</em>)</p></li>
 <li><p><strong>seed</strong> (<em>int</em>)</p></li>
 <li><p><strong>test_split_size</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
 </ul>
@@ -329,7 +329,7 @@ to explore the available configuration surfaces and helper tooling.</p>
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="open_r1.configs.DatasetMixtureConfig.datasets">
-<span class="sig-name descname"><span class="pre">datasets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#open_r1.configs.DatasetConfig" title="open_r1.configs.DatasetConfig"><span class="pre">DatasetConfig</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#open_r1.configs.DatasetMixtureConfig.datasets" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">datasets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#open_r1.configs.DatasetConfig" title="open_r1.configs.DatasetConfig"><span class="pre">open_r1.configs.DatasetConfig</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#open_r1.configs.DatasetMixtureConfig.datasets" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -347,7 +347,7 @@ to explore the available configuration surfaces and helper tooling.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="open_r1.configs.GRPOConfig">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">open_r1.configs.</span></span><span class="sig-name descname"><span class="pre">GRPOConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">benchmarks=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chat_template=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hub_model_revision='main'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_completions_to_print=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite_hub_revision=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">push_to_hub_revision=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system_prompt=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wandb_log_unique_prompts=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wandb_entity=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wandb_project=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wandb_run_group=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/configs.html#GRPOConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.configs.GRPOConfig" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">GRPOConfig</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">trl.GRPOConfig</span></code></p>
 <p>Arguments for callbacks, benchmarks, and related settings.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -432,7 +432,7 @@ to explore the available configuration surfaces and helper tooling.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="open_r1.configs.GRPOScriptArguments">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">open_r1.configs.</span></span><span class="sig-name descname"><span class="pre">GRPOScriptArguments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_name=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_mixture=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reward_funcs=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cosine_min_value_wrong=0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cosine_max_value_wrong=-0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cosine_min_value_correct=0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cosine_max_value_correct=1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cosine_max_len=1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repetition_n_grams=3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repetition_max_penalty=-1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">code_language='python'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">code_eval_test_batch_size=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">code_eval_scoring_mode='weighted_sum'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parallel_code_exec_per_proc=2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_prompt_column='problem'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_solution_column='answer'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e2b_router_url=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">morph_router_url=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">code_provider='e2b'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ioi_provider='piston'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_completion_len=16384</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">soft_punish_cache=4096</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">span_kl_target=0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">span_kl_beta0=0.12</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">span_kl_horizon=10000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/configs.html#GRPOScriptArguments"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.configs.GRPOScriptArguments" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#open_r1.configs.ScriptArguments" title="open_r1.configs.ScriptArguments"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScriptArguments</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#open_r1.configs.ScriptArguments" title="open_r1.configs.ScriptArguments"><code class="xref py py-class docutils literal notranslate"><span class="pre">open_r1.configs.ScriptArguments</span></code></a></p>
 <p>Script arguments for the GRPO training script.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -589,7 +589,7 @@ hard penalty applies.</p></li>
 <dl class="py class">
 <dt class="sig sig-object py" id="open_r1.configs.SFTConfig">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">open_r1.configs.</span></span><span class="sig-name descname"><span class="pre">SFTConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">benchmarks=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chat_template=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system_prompt=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hub_model_revision='main'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite_hub_revision=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">push_to_hub_revision=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wandb_entity=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wandb_project=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wandb_run_group=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/configs.html#SFTConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.configs.SFTConfig" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SFTConfig</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">trl.SFTConfig</span></code></p>
 <p>Arguments for callbacks, benchmarks, and related settings.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -662,7 +662,7 @@ hard penalty applies.</p></li>
 <dl class="py class">
 <dt class="sig sig-object py" id="open_r1.configs.ScriptArguments">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">open_r1.configs.</span></span><span class="sig-name descname"><span class="pre">ScriptArguments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_mixture</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/configs.html#ScriptArguments"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.configs.ScriptArguments" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ScriptArguments</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">trl.ScriptArguments</span></code></p>
 <p>Extended version of ScriptArguments with support for dataset mixtures.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -805,7 +805,7 @@ callers keep the outer function signature small enough for linting.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<em>str</em>)</p></li>
-<li><p><strong>config</strong> (<a class="reference internal" href="#open_r1.generate.DistilabelPipelineConfig" title="open_r1.generate.DistilabelPipelineConfig"><em>DistilabelPipelineConfig</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="#open_r1.generate.DistilabelPipelineConfig" title="open_r1.generate.DistilabelPipelineConfig"><em>open_r1.generate.DistilabelPipelineConfig</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -968,9 +968,9 @@ underlying user prompt construction is shared with <code class="docutils literal
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>script_args</strong> (<a class="reference internal" href="#open_r1.configs.GRPOScriptArguments" title="open_r1.configs.GRPOScriptArguments"><em>GRPOScriptArguments</em></a>)</p></li>
-<li><p><strong>training_args</strong> (<a class="reference internal" href="#open_r1.configs.GRPOConfig" title="open_r1.configs.GRPOConfig"><em>GRPOConfig</em></a>)</p></li>
-<li><p><strong>model_args</strong> (<em>ModelConfig</em>)</p></li>
+<li><p><strong>script_args</strong> (<a class="reference internal" href="#open_r1.configs.GRPOScriptArguments" title="open_r1.configs.GRPOScriptArguments"><em>open_r1.configs.GRPOScriptArguments</em></a>)</p></li>
+<li><p><strong>training_args</strong> (<a class="reference internal" href="#open_r1.configs.GRPOConfig" title="open_r1.configs.GRPOConfig"><em>open_r1.configs.GRPOConfig</em></a>)</p></li>
+<li><p><strong>model_args</strong> (<em>trl.ModelConfig</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -986,7 +986,7 @@ underlying user prompt construction is shared with <code class="docutils literal
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>disc</strong> (<a class="reference internal" href="#open_r1.grail.OnlineDiscriminator" title="open_r1.grail.OnlineDiscriminator"><em>OnlineDiscriminator</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>disc</strong> (<a class="reference internal" href="#open_r1.grail.OnlineDiscriminator" title="open_r1.grail.OnlineDiscriminator"><em>open_r1.grail.OnlineDiscriminator</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>alpha</strong> (<em>float</em>)</p></li>
 </ul>
 </dd>
@@ -1006,9 +1006,9 @@ underlying user prompt construction is shared with <code class="docutils literal
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>script_args</strong> (<a class="reference internal" href="#open_r1.configs.GRPOScriptArguments" title="open_r1.configs.GRPOScriptArguments"><em>GRPOScriptArguments</em></a>)</p></li>
-<li><p><strong>training_args</strong> (<a class="reference internal" href="#open_r1.configs.GRPOConfig" title="open_r1.configs.GRPOConfig"><em>GRPOConfig</em></a>)</p></li>
-<li><p><strong>model_args</strong> (<em>ModelConfig</em>)</p></li>
+<li><p><strong>script_args</strong> (<a class="reference internal" href="#open_r1.configs.GRPOScriptArguments" title="open_r1.configs.GRPOScriptArguments"><em>open_r1.configs.GRPOScriptArguments</em></a>)</p></li>
+<li><p><strong>training_args</strong> (<a class="reference internal" href="#open_r1.configs.GRPOConfig" title="open_r1.configs.GRPOConfig"><em>open_r1.configs.GRPOConfig</em></a>)</p></li>
+<li><p><strong>model_args</strong> (<em>trl.ModelConfig</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1433,7 +1433,7 @@ Sphinx autodoc so they show up in the generated API reference.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="open_r1.utils.callbacks.PushToHubRevisionCallback">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">open_r1.utils.callbacks.</span></span><span class="sig-name descname"><span class="pre">PushToHubRevisionCallback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/callbacks.html#PushToHubRevisionCallback"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.callbacks.PushToHubRevisionCallback" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TrainerCallback</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">transformers.TrainerCallback</span></code></p>
 <p>Callback that pushes checkpoints to the Hub using revision tags.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="open_r1.utils.callbacks.PushToHubRevisionCallback.__init__">
@@ -1464,7 +1464,7 @@ Sphinx autodoc so they show up in the generated API reference.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="open_r1.utils.callbacks.ReplayBufferCallback">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">open_r1.utils.callbacks.</span></span><span class="sig-name descname"><span class="pre">ReplayBufferCallback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/callbacks.html#ReplayBufferCallback"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.callbacks.ReplayBufferCallback" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TrainerCallback</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">transformers.TrainerCallback</span></code></p>
 <p>Callback that logs batches directly into the replay buffer.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1482,7 +1482,7 @@ Sphinx autodoc so they show up in the generated API reference.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>replay_buffer</strong> (<a class="reference internal" href="#open_r1.utils.replay_buffer.ReplayBuffer" title="open_r1.utils.replay_buffer.ReplayBuffer"><em>ReplayBuffer</em></a>)</p></li>
+<li><p><strong>replay_buffer</strong> (<a class="reference internal" href="#open_r1.utils.replay_buffer.ReplayBuffer" title="open_r1.utils.replay_buffer.ReplayBuffer"><em>open_r1.utils.replay_buffer.ReplayBuffer</em></a>)</p></li>
 <li><p><strong>accuracy_key</strong> (<em>str</em>)</p></li>
 <li><p><strong>threshold</strong> (<em>float</em>)</p></li>
 </ul>
@@ -1501,7 +1501,7 @@ Sphinx autodoc so they show up in the generated API reference.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="open_r1.utils.callbacks.SuccessCachingCallback">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">open_r1.utils.callbacks.</span></span><span class="sig-name descname"><span class="pre">SuccessCachingCallback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/callbacks.html#SuccessCachingCallback"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.callbacks.SuccessCachingCallback" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TrainerCallback</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">transformers.TrainerCallback</span></code></p>
 <p>Scrape <code class="docutils literal notranslate"><span class="pre">trainer._textual_logs</span></code> after each log step and push any prompt whose
 accuracy meets or exceeds <code class="docutils literal notranslate"><span class="pre">acc_threshold</span></code> into the attached <code class="docutils literal notranslate"><span class="pre">ReplayBuffer</span></code>.</p>
 <div class="admonition note">
@@ -1524,7 +1524,7 @@ accuracy meets or exceeds <code class="docutils literal notranslate"><span class
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>replay_buffer</strong> (<a class="reference internal" href="#open_r1.utils.replay_buffer.ReplayBuffer" title="open_r1.utils.replay_buffer.ReplayBuffer"><em>ReplayBuffer</em></a>)</p></li>
+<li><p><strong>replay_buffer</strong> (<a class="reference internal" href="#open_r1.utils.replay_buffer.ReplayBuffer" title="open_r1.utils.replay_buffer.ReplayBuffer"><em>open_r1.utils.replay_buffer.ReplayBuffer</em></a>)</p></li>
 <li><p><strong>acc_threshold</strong> (<em>float</em>)</p></li>
 </ul>
 </dd>
@@ -1562,7 +1562,7 @@ accuracy meets or exceeds <code class="docutils literal notranslate"><span class
 <dl class="py class">
 <dt class="sig sig-object py" id="open_r1.utils.code_providers.CodeExecutionProvider">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">open_r1.utils.code_providers.</span></span><span class="sig-name descname"><span class="pre">CodeExecutionProvider</span></span><a class="reference internal" href="../_modules/open_r1/utils/code_providers.html#CodeExecutionProvider"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.code_providers.CodeExecutionProvider" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
 <p>Abstract base class for code execution providers.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="open_r1.utils.code_providers.CodeExecutionProvider.execute_scripts">
@@ -1589,7 +1589,7 @@ accuracy meets or exceeds <code class="docutils literal notranslate"><span class
 <dl class="py class">
 <dt class="sig sig-object py" id="open_r1.utils.code_providers.E2BProvider">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">open_r1.utils.code_providers.</span></span><span class="sig-name descname"><span class="pre">E2BProvider</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_parallel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e2b_router_url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/code_providers.html#E2BProvider"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.code_providers.E2BProvider" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#open_r1.utils.code_providers.CodeExecutionProvider" title="open_r1.utils.code_providers.CodeExecutionProvider"><code class="xref py py-class docutils literal notranslate"><span class="pre">CodeExecutionProvider</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#open_r1.utils.code_providers.CodeExecutionProvider" title="open_r1.utils.code_providers.CodeExecutionProvider"><code class="xref py py-class docutils literal notranslate"><span class="pre">open_r1.utils.code_providers.CodeExecutionProvider</span></code></a></p>
 <p>Provider that executes code using E2B sandboxes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1637,7 +1637,7 @@ Otherwise, uses direct AsyncSandbox with parallelization.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="open_r1.utils.code_providers.MorphProvider">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">open_r1.utils.code_providers.</span></span><span class="sig-name descname"><span class="pre">MorphProvider</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_parallel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">morph_router_url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/utils/code_providers.html#MorphProvider"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.utils.code_providers.MorphProvider" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#open_r1.utils.code_providers.CodeExecutionProvider" title="open_r1.utils.code_providers.CodeExecutionProvider"><code class="xref py py-class docutils literal notranslate"><span class="pre">CodeExecutionProvider</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#open_r1.utils.code_providers.CodeExecutionProvider" title="open_r1.utils.code_providers.CodeExecutionProvider"><code class="xref py py-class docutils literal notranslate"><span class="pre">open_r1.utils.code_providers.CodeExecutionProvider</span></code></a></p>
 <p>Provider that executes code using MorphCloud’s Sandbox API.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>

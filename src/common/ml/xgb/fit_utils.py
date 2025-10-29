@@ -22,6 +22,12 @@ def harmonize_fit_kwargs(
     - Removes "callbacks" when the installed estimator does not support it.
     - Adds "early_stopping_rounds" as a fallback when callbacks aren't available.
     - Drops None-valued and unsupported keys based on the signature.
+
+    :param estimator: XGBoost estimator exposing a ``fit`` method.
+    :param fit_kwargs: Keyword arguments forwarded to ``estimator.fit``.
+    :param has_eval: Indicates whether evaluation data is provided.
+    :param early_stopping_rounds: Early stopping patience used when callbacks are unavailable.
+    :returns: ``None``.
     """
 
     try:

@@ -22,14 +22,12 @@ from pathlib import Path
 
 
 def get_logger(name: str, *, level: int = logging.INFO) -> logging.Logger:
-    """Return a memoised logger configured with a simple stream handler.
+    """
+    Return a memoised logger configured with a simple stream handler.
 
-    Args:
-        name: Name registered on the logger.
-        level: Log level applied when initialising the logger.
-
-    Returns:
-        logging.Logger: Configured logger instance.
+    :param name: Name registered on the logger.
+    :param level: Log level applied when initialising the logger.
+    :returns: Configured logger instance.
     """
 
     logger = logging.getLogger(name)
@@ -43,10 +41,11 @@ def get_logger(name: str, *, level: int = logging.INFO) -> logging.Logger:
 
 
 def ensure_directory(path: Path | str) -> None:
-    """Create ``path`` (including parents) when it does not already exist.
+    """
+    Create ``path`` (including parents) when it does not already exist.
 
-    Args:
-        path: Target directory to ensure.
+    :param path: Target directory to ensure.
+    :returns: ``None``.
     """
 
     Path(path).mkdir(parents=True, exist_ok=True)

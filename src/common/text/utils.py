@@ -30,14 +30,24 @@ CANON_RE = re.compile(_CANON_EXPR)
 
 
 def canon_text(text: str | None) -> str:
-    """Return a lowercased alphanumeric representation of ``text``."""
+    """
+    Return a lowercased alphanumeric representation of ``text``.
+
+    :param text: Input string to normalise.
+    :returns: Canonical token containing only lowercase alphanumeric characters.
+    """
     if not text:
         return ""
     return CANON_RE.sub("", text.lower().strip())
 
 
 def canon_video_id(value: object | None) -> str:
-    """Extract a canonical YouTube id from ``value`` when possible."""
+    """
+    Extract a canonical YouTube id from ``value`` when possible.
+
+    :param value: Raw video identifier or URL.
+    :returns: 11-character YouTube ID or an empty string when unavailable.
+    """
     if value is None:
         return ""
     if not isinstance(value, str):
@@ -49,7 +59,12 @@ def canon_video_id(value: object | None) -> str:
 
 
 def split_env_list(value: str | None) -> list[str]:
-    """Parse colon/comma/space separated environment list values."""
+    """
+    Parse colon/comma/space separated environment list values.
+
+    :param value: Raw environment variable string.
+    :returns: List of non-empty tokens extracted from ``value``.
+    """
     if not value:
         return []
     return [
@@ -60,7 +75,12 @@ def split_env_list(value: str | None) -> list[str]:
 
 
 def resolve_paths_from_env(variable_names: Iterable[str]) -> list[str]:
-    """Aggregate filesystem paths from the given environment variables."""
+    """
+    Aggregate filesystem paths from the given environment variables.
+
+    :param variable_names: Iterable of environment variable names to read.
+    :returns: Combined list of resolved filesystem paths.
+    """
     paths: list[str] = []
     for name in variable_names:
         paths.extend(split_env_list(os.environ.get(name)))

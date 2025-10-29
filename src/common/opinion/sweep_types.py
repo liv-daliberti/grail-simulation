@@ -34,7 +34,7 @@ class BaseSweepTask(Generic[ConfigT]):
     :param index: Stable ordinal used to preserve submission order.
     :type index: int
     :param study: Study metadata associated with the task.
-    :type study: StudySpec
+    :type study: ~common.pipeline.types.StudySpec
     :param config: Pipeline-specific hyper-parameter configuration.
     :type config: ConfigT
     :param base_cli: Baseline CLI arguments reused across tasks.
@@ -63,7 +63,7 @@ class BaseOpinionSweepTask(Generic[ConfigT]):
     :param index: Stable ordinal used to preserve submission order.
     :type index: int
     :param study: Study metadata associated with the task.
-    :type study: StudySpec
+    :type study: ~common.pipeline.types.StudySpec
     :param config: Pipeline-specific hyper-parameter configuration.
     :type config: ConfigT
     :param metrics_path: Expected location of the metrics artefact.
@@ -101,7 +101,7 @@ class BaseOpinionSweepOutcome(Generic[ConfigT]):
     :param order_index: Deterministic ordering index assigned to the task.
     :type order_index: int
     :param study: Study metadata associated with the sweep.
-    :type study: StudySpec
+    :type study: ~common.pipeline.types.StudySpec
     :param config: Evaluated sweep configuration.
     :type config: ConfigT
     :param mae: Mean absolute error achieved by the configuration.

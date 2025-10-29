@@ -23,7 +23,14 @@ from typing import Mapping
 
 
 def install_package_aliases(package_name: str, aliases: Mapping[str, str]) -> None:
-    """Register module aliases relative to ``package_name``."""
+    """
+    Register module aliases relative to ``package_name``.
+
+    :param package_name: Fully qualified package name that already exists in :data:`sys.modules`.
+    :param aliases: Mapping of alias name to relative module path for import resolution.
+    :raises KeyError: If ``package_name`` has not been imported yet.
+    :returns: ``None``.
+    """
     package_module = sys.modules[package_name]
     for alias, target in aliases.items():
         module = import_module(target, package_name)

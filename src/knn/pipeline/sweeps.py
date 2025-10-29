@@ -35,10 +35,11 @@ from common.pipeline.executor import execute_indexed_tasks
 from common.pipeline.utils import merge_indexed_outcomes
 from common.prompts.docs import merge_default_extra_fields
 
+# Access the sibling module through the package namespace to satisfy pylint checks.
+from knn.pipeline import opinion_sweeps as _opinion_sweeps
 from ..cli import build_parser as build_knn_parser
 from ..core.evaluate import run_eval
 from ..core.opinion import run_opinion_eval
-from . import opinion_sweeps as _opinion_sweeps
 from .context import (
     OpinionSweepOutcome,
     OpinionSweepTask,
@@ -340,11 +341,11 @@ def build_sweep_configs(context: PipelineContext) -> List[SweepConfig]:
 
     :param context: Pipeline context encapsulating dataset paths and configuration flags.
 
-    :type context: PipelineContext
+    :type context: ~knn.pipeline.context.PipelineContext
 
     :returns: the grid of configurations evaluated during sweeps
 
-    :rtype: List[SweepConfig]
+    :rtype: List[~knn.pipeline.context.SweepConfig]
 
     """
     feature_spaces = context.feature_spaces
@@ -431,14 +432,14 @@ def prepare_sweep_tasks(
 
     :param studies: Sequence of study specifications targeted by the workflow.
 
-    :type studies: Sequence[StudySpec]
+    :type studies: Sequence[~knn.pipeline.context.StudySpec]
 
     :param configs: Iterable of sweep configurations scheduled for execution.
 
-    :type configs: Sequence[SweepConfig]
+    :type configs: Sequence[~knn.pipeline.context.SweepConfig]
 
     :param context: Shared CLI/runtime parameters reused across sweep invocations.
-    :type context: SweepTaskContext
+    :type context: ~knn.pipeline.context.SweepTaskContext
 
     :param reuse_existing: Whether to reuse cached results instead of recomputing them.
 
@@ -446,7 +447,7 @@ def prepare_sweep_tasks(
 
     :returns: next-video sweep tasks requiring execution and cached outcomes
 
-    :rtype: Tuple[List[SweepTask], List[SweepOutcome]]
+    :rtype: Tuple[List[~knn.pipeline.context.SweepTask], List[~knn.pipeline.context.SweepOutcome]]
 
     """
     base_cli_tuple = tuple(context.base_cli)
@@ -485,7 +486,7 @@ def sweep_outcome_from_metrics(
 
     :param task: Individual sweep task describing an execution unit.
 
-    :type task: SweepTask
+    :type task: ~knn.pipeline.context.SweepTask
 
     :param metrics: Metrics dictionary captured from a previous pipeline stage.
 
@@ -497,7 +498,7 @@ def sweep_outcome_from_metrics(
 
     :returns: Slate sweep outcome reconstructed from cached metrics.
 
-    :rtype: SweepOutcome
+    :rtype: ~knn.pipeline.context.SweepOutcome
 
     """
     summary = extract_metric_summary(metrics)
@@ -532,15 +533,15 @@ def merge_sweep_outcomes(
 
     :param cached: Previously computed artefacts available for reuse.
 
-    :type cached: Sequence[SweepOutcome]
+    :type cached: Sequence[~knn.pipeline.context.SweepOutcome]
 
     :param executed: Iterable of tasks that were actually executed during the run.
 
-    :type executed: Sequence[SweepOutcome]
+    :type executed: Sequence[~knn.pipeline.context.SweepOutcome]
 
     :returns: Mapping of feature spaces to merged slate sweep outcomes.
 
-    :rtype: List[SweepOutcome]
+    :rtype: List[~knn.pipeline.context.SweepOutcome]
 
     """
     return merge_indexed_outcomes(
@@ -564,11 +565,11 @@ def execute_opinion_sweep_tasks(
     Run the supplied opinion sweep tasks via the shared CLI runner.
 
     :param tasks: Opinion sweep tasks scheduled for execution.
-    :type tasks: Sequence[OpinionSweepTask]
+    :type tasks: Sequence[~knn.pipeline.context.OpinionSweepTask]
     :param jobs: Maximum number of parallel workers.
     :type jobs: int
     :returns: Ordered list of opinion sweep outcomes.
-    :rtype: List[OpinionSweepOutcome]
+    :rtype: List[~knn.pipeline.context.OpinionSweepOutcome]
     """
     return _opinion_sweeps.execute_opinion_sweep_tasks(
         tasks,
@@ -594,7 +595,7 @@ def execute_sweep_tasks(
 
     :param tasks: Collection of sweep tasks scheduled for execution.
 
-    :type tasks: Sequence[SweepTask]
+    :type tasks: Sequence[~knn.pipeline.context.SweepTask]
 
     :param jobs: Maximum number of parallel workers to schedule.
 
@@ -602,7 +603,7 @@ def execute_sweep_tasks(
 
     :returns: List of slate sweep outcomes generated from the provided tasks.
 
-    :rtype: List[SweepOutcome]
+    :rtype: List[~knn.pipeline.context.SweepOutcome]
 
     """
     return execute_indexed_tasks(tasks, execute_sweep_task, jobs=jobs, logger=LOGGER, label="sweep")
@@ -613,11 +614,11 @@ def execute_sweep_task(task: SweepTask) -> SweepOutcome:
 
     :param task: Individual sweep task describing an execution unit.
 
-    :type task: SweepTask
+    :type task: ~knn.pipeline.context.SweepTask
 
     :returns: Slate sweep outcome produced by executing the given task.
 
-    :rtype: SweepOutcome
+    :rtype: ~knn.pipeline.context.SweepOutcome
 
     """
     run_root = ensure_dir(task.run_root)
@@ -698,7 +699,7 @@ def emit_sweep_plan(tasks: Sequence[SweepTask]) -> None:
 
     :param tasks: Collection of sweep tasks scheduled for execution.
 
-    :type tasks: Sequence[SweepTask]
+    :type tasks: Sequence[~knn.pipeline.context.SweepTask]
 
     :returns: None.
 
@@ -725,11 +726,11 @@ def emit_combined_sweep_plan(
 
     :param slate_tasks: Slate sweep tasks prepared for execution.
 
-    :type slate_tasks: Sequence[SweepTask]
+    :type slate_tasks: Sequence[~knn.pipeline.context.SweepTask]
 
     :param opinion_tasks: Opinion sweep tasks queued for execution.
 
-    :type opinion_tasks: Sequence[OpinionSweepTask]
+    :type opinion_tasks: Sequence[~knn.pipeline.context.OpinionSweepTask]
 
     :returns: None.
 
@@ -761,7 +762,7 @@ def format_sweep_task_descriptor(task: SweepTask) -> str:
 
     :param task: Individual sweep task describing an execution unit.
 
-    :type task: SweepTask
+    :type task: ~knn.pipeline.context.SweepTask
 
     :returns: a short descriptor for a sweep task
 
@@ -783,14 +784,14 @@ def run_sweeps(
 
     :param studies: Sequence of study specifications targeted by the workflow.
 
-    :type studies: Sequence[StudySpec]
+    :type studies: Sequence[~knn.pipeline.context.StudySpec]
 
     :param configs: Iterable of sweep configurations scheduled for execution.
 
-    :type configs: Sequence[SweepConfig]
+    :type configs: Sequence[~knn.pipeline.context.SweepConfig]
 
     :param context: Shared CLI/runtime parameters reused across sweep invocations.
-    :type context: SweepTaskContext
+    :type context: ~knn.pipeline.context.SweepTaskContext
 
     :param reuse_existing: Whether to reuse cached results instead of recomputing them.
 
@@ -802,7 +803,7 @@ def run_sweeps(
 
     :returns: Tuple containing slate tasks, opinion tasks, and any cached sweep outcomes.
 
-    :rtype: List[SweepOutcome]
+    :rtype: List[~knn.pipeline.context.SweepOutcome]
 
     """
     pending_tasks, cached_outcomes = prepare_sweep_tasks(
@@ -825,11 +826,11 @@ def select_best_configs(
 
     :param outcomes: Iterable of sweep outcomes available for aggregation.
 
-    :type outcomes: Sequence[SweepOutcome]
+    :type outcomes: Sequence[~knn.pipeline.context.SweepOutcome]
 
     :param studies: Sequence of study specifications targeted by the workflow.
 
-    :type studies: Sequence[StudySpec]
+    :type studies: Sequence[~knn.pipeline.context.StudySpec]
 
     :param allow_incomplete: Whether processing may continue when some sweep data is missing.
 
@@ -837,7 +838,7 @@ def select_best_configs(
 
     :returns: Mapping of feature spaces to their selected slate configurations.
 
-    :rtype: Dict[str, Dict[str, StudySelection]]
+    :rtype: Dict[str, Dict[str, ~knn.pipeline.context.StudySelection]]
 
     """
     def _is_better(candidate: SweepOutcome, incumbent: SweepOutcome) -> bool:
@@ -845,9 +846,9 @@ def select_best_configs(
         Determine whether ``candidate`` should replace the incumbent outcome.
 
         :param candidate: Candidate sweep outcome under consideration.
-        :type candidate: SweepOutcome
+        :type candidate: ~knn.pipeline.context.SweepOutcome
         :param incumbent: Currently selected sweep outcome.
-        :type incumbent: SweepOutcome
+        :type incumbent: ~knn.pipeline.context.SweepOutcome
         :returns: ``True`` when ``candidate`` offers a preferable accuracy/eligibility trade-off.
         :rtype: bool
         """

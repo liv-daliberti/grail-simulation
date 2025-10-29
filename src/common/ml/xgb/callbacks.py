@@ -26,9 +26,20 @@ def _load_callback_classes():
 
 
 def _metric_text_fn(objective: str) -> Callable[[dict], Optional[str]]:
-    """Return a function that extracts a concise metric string from eval logs."""
+    """
+    Return a function that extracts a concise metric string from eval logs.
+
+    :param objective: Objective label used to select classification or regression metrics.
+    :returns: Callable that accepts an evaluation log mapping and returns a metric string.
+    """
 
     def _cls_metrics(block: dict) -> Optional[str]:
+        """
+        Derive a classification metric string from ``block``.
+
+        :param block: Evaluation log mapping emitted by XGBoost.
+        :returns: Metric string such as ``\"acc=0.9876\"`` or ``None`` when unavailable.
+        """
         if not isinstance(block, dict):
             return None
         if "merror" in block and block["merror"]:
@@ -45,6 +56,12 @@ def _metric_text_fn(objective: str) -> Callable[[dict], Optional[str]]:
         return None
 
     def _reg_metrics(block: dict) -> Optional[str]:
+        """
+        Derive a regression metric string from ``block``.
+
+        :param block: Evaluation log mapping emitted by XGBoost.
+        :returns: Metric string such as ``\"mae=0.1234\"`` or ``None`` when unavailable.
+        """
         if not isinstance(block, dict):
             return None
         if "mae" in block and block["mae"]:
@@ -87,10 +104,22 @@ def make_progress_logger(
     class _ProgressLogger(training_callback_cls):  # type: ignore
         # pylint: disable=too-few-public-methods
         def __init__(self, interval: int = 25) -> None:
+            """
+            Configure the logging interval for the progress callback.
+
+            :param interval: Number of boosting rounds between log entries.
+            """
             self._interval = max(1, int(interval))
 
         def after_iteration(self, _model, epoch: int, evals_log):  # type: ignore[override]
-            """Log metrics every ``interval`` boosting rounds."""
+            """
+            Log metrics every ``interval`` boosting rounds.
+
+            :param _model: Booster instance (unused).
+            :param epoch: Zero-based boosting round index.
+            :param evals_log: Mapping of evaluation metrics keyed by dataset name.
+            :returns: ``False`` to continue training.
+            """
             round_idx = int(epoch) + 1
             if round_idx % self._interval != 0:
                 return False
@@ -125,6 +154,16 @@ def build_fit_callbacks(  # pylint: disable=too-many-arguments
     Construct a list of XGBoost callbacks for training progress and early stopping.
 
     Returns an empty list when callbacks are unavailable.
+
+    :param objective: Objective label forwarded to :func:`make_progress_logger`.
+    :param logger: Logger used for progress output.
+    :param prefix: Prefix string prepended to progress messages.
+    :param has_eval: Indicates whether evaluation data is provided.
+    :param interval: Number of boosting rounds between progress logs.
+    :param early_stopping_metric: Optional metric name used by early stopping.
+    :param early_stopping_data_name: Evaluation dataset monitored for early stopping.
+    :param early_stopping_rounds: Patience in rounds before early stopping triggers.
+    :returns: List of configured callback instances.
     """
 
     training_callback_cls, early_stopping_cls = _load_callback_classes()

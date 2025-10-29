@@ -447,13 +447,13 @@ def _filter_specs_by_issue(
     Filter study specifications by requested issues.
 
     :param specs: Collection of available study specifications.
-    :type specs: Sequence[StudySpec]
+    :type specs: Sequence[~common.pipeline.types.StudySpec]
     :param requested_issues: Issues provided via CLI tokens.
     :type requested_issues: Sequence[str]
     :param available_issues: Issues known to exist in the dataset.
     :type available_issues: Sequence[str]
     :returns: Filtered list of study specifications.
-    :rtype: List[StudySpec]
+    :rtype: List[~common.pipeline.types.StudySpec]
     :raises ValueError: If any requested issue is unknown.
     """
 
@@ -474,11 +474,11 @@ def _filter_specs_by_study(
     Reorder and filter study specifications by requested study keys.
 
     :param specs: Available study specifications.
-    :type specs: Sequence[StudySpec]
+    :type specs: Sequence[~common.pipeline.types.StudySpec]
     :param requested_studies: Study keys provided by the user.
     :type requested_studies: Sequence[str]
     :returns: Filtered and ordered study specifications.
-    :rtype: List[StudySpec]
+    :rtype: List[~common.pipeline.types.StudySpec]
     :raises ValueError: If any requested study key is unknown.
     """
 
@@ -647,7 +647,7 @@ def _resolve_study_specs(
     :param allow_incomplete: Flag controlling behaviour when datasets are unavailable.
     :type allow_incomplete: bool
     :returns: Ordered list of study specifications.
-    :rtype: List[StudySpec]
+    :rtype: List[~common.pipeline.types.StudySpec]
     :raises ValueError: If no studies are selected.
     """
 

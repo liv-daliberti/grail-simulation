@@ -166,6 +166,8 @@ autodoc_typehints = "description"
 autodoc_type_aliases = {
     "Future": "concurrent.futures.Future",
 }
+autodoc_typehints_format = "fully-qualified"
+python_use_unqualified_type_names = False
 napoleon_include_init_with_doc = True
 
 templates_path = ["_templates"]

@@ -12,10 +12,14 @@ NEXT_VIDEO_COVERAGE_FIELDS = (
 )
 
 def next_video_coverage_mapping(summary) -> dict:
-    """Return a dict of next-video coverage fields for CSV writers.
+    """
+    Return a dict of next-video coverage fields for CSV writers.
 
     The ``summary`` object is expected to expose attributes matching the
     entries in :data:`NEXT_VIDEO_COVERAGE_FIELDS`.
+
+    :param summary: Object exposing next-video coverage attributes.
+    :returns: Mapping from canonical column name to value extracted from ``summary``.
     """
 
     return {

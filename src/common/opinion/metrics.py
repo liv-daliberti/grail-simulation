@@ -56,7 +56,13 @@ OPINION_CSV_BASE_FIELDS: Tuple[str, ...] = (
 
 
 def _first_attr(summary: Any, *names: str) -> Optional[float]:
-    """Return the first present attribute value among ``names`` on ``summary``."""
+    """
+    Return the first present attribute value among ``names`` on ``summary``.
+
+    :param summary: Object exposing attributes via :func:`getattr`.
+    :param names: Candidate attribute names checked in order.
+    :returns: Attribute value when found, otherwise ``None``.
+    """
 
     for name in names:
         if hasattr(summary, name):
@@ -70,6 +76,10 @@ def build_opinion_csv_base_row(summary: Any, *, study_label: str) -> Mapping[str
 
     Bridges differences in attribute names between the KNN and XGB
     ``OpinionSummary`` types so both writers can share one implementation.
+
+    :param summary: Opinion summary object produced by a model family.
+    :param study_label: Study identifier used to populate the CSV row.
+    :returns: Mapping keyed by :data:`OPINION_CSV_BASE_FIELDS`.
     """
 
     # Normalise fields that differ by model family
@@ -142,7 +152,13 @@ class CalibrationBinBounds:
 
 
 def _pick(summary: Any, *names: Optional[str]) -> Optional[float]:
-    """Return the first present attribute on ``summary`` from ``names``."""
+    """
+    Return the first present attribute on ``summary`` from ``names``.
+
+    :param summary: Object exposing attributes via :func:`getattr`.
+    :param names: Candidate attribute names; ``None`` entries are ignored.
+    :returns: Attribute value when found, otherwise ``None``.
+    """
 
     for name in names:
         if name and hasattr(summary, name):
@@ -151,7 +167,13 @@ def _pick(summary: Any, *names: Optional[str]) -> Optional[float]:
 
 
 def summarise_opinion_metrics(summary: Any, *, prefer_after_fields: bool) -> OpinionMetricsView:
-    """Return a metric bundle with consistent field names across model families."""
+    """
+    Return a metric bundle with consistent field names across model families.
+
+    :param summary: Opinion summary object produced by a baseline.
+    :param prefer_after_fields: When ``True`` prefer post-study attribute names.
+    :returns: :class:`OpinionMetricsView` containing normalised metrics.
+    """
 
     participants_raw = getattr(summary, "participants", 0.0)
     participants = float(participants_raw or 0.0)
@@ -180,7 +202,12 @@ def summarise_opinion_metrics(summary: Any, *, prefer_after_fields: bool) -> Opi
 
 
 def _safe_numpy(values: Sequence[float]) -> np.ndarray:
-    """Return a 1D numpy array constructed from ``values``."""
+    """
+    Return a 1D numpy array constructed from ``values``.
+
+    :param values: Sequence of numeric values.
+    :returns: One-dimensional :class:`numpy.ndarray` view of ``values``.
+    """
 
     array = np.asarray(list(values), dtype=np.float64)
     if array.ndim != 1:
@@ -189,7 +216,12 @@ def _safe_numpy(values: Sequence[float]) -> np.ndarray:
 
 
 def _finite_mask(*arrays: np.ndarray) -> np.ndarray:
-    """Return a mask of entries that are finite across all arrays."""
+    """
+    Return a mask of entries that are finite across all arrays.
+
+    :param arrays: Sequence of arrays with broadcast-compatible shapes.
+    :returns: Boolean mask indicating indices that are finite in every array.
+    """
 
     mask = np.ones(arrays[0].shape, dtype=bool)
     for array in arrays:
@@ -198,7 +230,13 @@ def _finite_mask(*arrays: np.ndarray) -> np.ndarray:
 
 
 def _direction(values: np.ndarray, *, tolerance: float = 1e-6) -> np.ndarray:
-    """Map opinion deltas to -1, 0, +1 direction buckets with tolerance."""
+    """
+    Map opinion deltas to -1, 0, +1 direction buckets with tolerance.
+
+    :param values: Opinion delta array.
+    :param tolerance: Threshold below which deltas are treated as zero.
+    :returns: Array containing -1, 0, or +1 direction labels.
+    """
 
     direction = np.zeros_like(values)
     direction[values > tolerance] = 1.0
@@ -207,7 +245,13 @@ def _direction(values: np.ndarray, *, tolerance: float = 1e-6) -> np.ndarray:
 
 
 def _safe_r2(truth: np.ndarray, prediction: np.ndarray) -> float:
-    """Return the coefficient of determination handling degenerate cases."""
+    """
+    Return the coefficient of determination handling degenerate cases.
+
+    :param truth: Ground-truth target values.
+    :param prediction: Predicted target values.
+    :returns: R² score or ``nan`` when the computation is ill-defined.
+    """
 
     if truth.size < 2:
         return float("nan")
@@ -225,7 +269,13 @@ def _fit_calibration(
     predicted_change: np.ndarray,
     actual_change: np.ndarray,
 ) -> Tuple[float, float]:
-    """Return slope and intercept fitting actual change as a function of predicted change."""
+    """
+    Return slope and intercept fitting actual change as a function of predicted change.
+
+    :param predicted_change: Predicted opinion deltas.
+    :param actual_change: Ground-truth opinion deltas.
+    :returns: Tuple of ``(slope, intercept)``; ``nan`` values indicate failure.
+    """
 
     if predicted_change.size < 2:
         return (float("nan"), float("nan"))
@@ -240,6 +290,12 @@ class _CalibrationAccumulator:
     """State helper that collects calibration bin statistics."""
 
     def __init__(self, predicted_change: np.ndarray, actual_change: np.ndarray) -> None:
+        """
+        Initialise the accumulator with opinion deltas.
+
+        :param predicted_change: Predicted opinion delta array.
+        :param actual_change: Ground-truth opinion delta array.
+        """
         self._predicted_change = predicted_change
         self._actual_change = actual_change
         self._bins: list[dict] = []
@@ -247,7 +303,12 @@ class _CalibrationAccumulator:
         self._total = 0
 
     def process(self, *, bounds: CalibrationBinBounds) -> None:
-        """Accumulate calibration details for the provided interval."""
+        """
+        Accumulate calibration details for the provided interval.
+
+        :param bounds: Bin interval describing the lower/upper range to consider.
+        :returns: ``None``.
+        """
 
         count, error = _accumulate_calibration_bin(
             bins=self._bins,
@@ -259,7 +320,11 @@ class _CalibrationAccumulator:
         self._total += count
 
     def result(self) -> Tuple[Tuple[dict, ...], float]:
-        """Return immutable bins and the expected calibration error."""
+        """
+        Return immutable bins and the expected calibration error.
+
+        :returns: Tuple containing calibration bins and the expected calibration error.
+        """
 
         if self._total == 0:
             return tuple(self._bins), float("nan")
@@ -272,7 +337,14 @@ def _calibration_bins(
     *,
     max_bins: int = 10,
 ) -> Tuple[Tuple[dict, ...], float]:
-    """Construct calibration bins and compute an expected calibration error."""
+    """
+    Construct calibration bins and compute an expected calibration error.
+
+    :param predicted_change: Predicted opinion deltas.
+    :param actual_change: Ground-truth opinion deltas.
+    :param max_bins: Maximum number of quantile bins to construct.
+    :returns: Tuple containing calibration bin dictionaries and expected calibration error.
+    """
 
     if predicted_change.size == 0:
         return tuple(), float("nan")
@@ -312,7 +384,15 @@ def _accumulate_calibration_bin(
     actual_change: np.ndarray,
     bounds: CalibrationBinBounds,
 ) -> Tuple[int, float]:
-    """Collect summary statistics for observations within a calibration bin."""
+    """
+    Collect summary statistics for observations within a calibration bin.
+
+    :param bins: Mutable list receiving bin summaries.
+    :param predicted_change: Predicted opinion deltas.
+    :param actual_change: Ground-truth opinion deltas.
+    :param bounds: Interval describing the bin boundaries.
+    :returns: Tuple of observation count and weighted absolute error.
+    """
 
     lower = bounds.lower
     upper = bounds.upper
@@ -341,12 +421,19 @@ def _accumulate_calibration_bin(
 
 
 def _kl_divergence(
-    actual_change: np.ndarray,
-    predicted_change: np.ndarray,
-    *,
-    bins: int = 20,
+   actual_change: np.ndarray,
+   predicted_change: np.ndarray,
+   *,
+   bins: int = 20,
 ) -> float:
-    """Estimate the KL divergence between actual and predicted change histograms."""
+    """
+    Estimate the KL divergence between actual and predicted change histograms.
+
+    :param actual_change: Ground-truth opinion deltas.
+    :param predicted_change: Predicted opinion deltas.
+    :param bins: Histogram bin count used for the distribution estimate.
+    :returns: KL divergence value or ``nan`` when the estimate is ill-defined.
+    """
 
     if actual_change.size == 0 or predicted_change.size == 0:
         return float("nan")
@@ -376,12 +463,20 @@ def _kl_divergence(
 
 
 def _prepare_opinion_arrays(
-    *,
-    truth_after: Sequence[float],
-    truth_before: Sequence[float],
-    pred_after: Sequence[float],
+   *,
+   truth_after: Sequence[float],
+   truth_before: Sequence[float],
+   pred_after: Sequence[float],
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Return filtered arrays with consistent shapes and finite entries."""
+    """
+    Return filtered arrays with consistent shapes and finite entries.
+
+    :param truth_after: Ground-truth post-study opinion scores.
+    :param truth_before: Ground-truth pre-study opinion scores.
+    :param pred_after: Predicted post-study opinion scores.
+    :returns: Tuple of filtered ``(truth_after, truth_before, pred_after)`` arrays.
+    :raises ValueError: If the arrays do not share identical shapes.
+    """
 
     truth_after_arr = _safe_numpy(truth_after)
     truth_before_arr = _safe_numpy(truth_before)
@@ -402,12 +497,19 @@ def _prepare_opinion_arrays(
 
 
 def _error_and_change_metrics(
-    *,
-    truth_after: np.ndarray,
-    truth_before: np.ndarray,
-    pred_after: np.ndarray,
+   *,
+   truth_after: np.ndarray,
+   truth_before: np.ndarray,
+   pred_after: np.ndarray,
 ) -> Tuple[dict[str, float], np.ndarray, np.ndarray]:
-    """Compute point estimate errors and opinion-change aggregates."""
+    """
+    Compute point estimate errors and opinion-change aggregates.
+
+    :param truth_after: Ground-truth post-study opinion scores.
+    :param truth_before: Ground-truth pre-study opinion scores.
+    :param pred_after: Predicted post-study opinion scores.
+    :returns: Tuple of metrics dictionary, truth deltas, and predicted deltas.
+    """
 
     residual = pred_after - truth_after
     mae_after = float(np.mean(np.abs(residual)))
@@ -431,12 +533,19 @@ def _error_and_change_metrics(
 
 
 def _direction_metrics(
-    *,
-    change_truth: np.ndarray,
-    change_pred: np.ndarray,
-    tolerance: float,
+   *,
+   change_truth: np.ndarray,
+   change_pred: np.ndarray,
+   tolerance: float,
 ) -> dict[str, float]:
-    """Return direction accuracy metrics when the result is finite."""
+    """
+    Return direction accuracy metrics when the result is finite.
+
+    :param change_truth: Ground-truth opinion deltas.
+    :param change_pred: Predicted opinion deltas.
+    :param tolerance: Threshold below which deltas are treated as zero.
+    :returns: Mapping containing ``direction_accuracy`` when finite.
+    """
 
     direction_truth = _direction(change_truth, tolerance=tolerance)
     direction_pred = _direction(change_pred, tolerance=tolerance)
@@ -447,11 +556,17 @@ def _direction_metrics(
 
 
 def _calibration_and_divergence_metrics(
-    *,
-    change_truth: np.ndarray,
-    change_pred: np.ndarray,
+   *,
+   change_truth: np.ndarray,
+   change_pred: np.ndarray,
 ) -> dict[str, Any]:
-    """Compute calibration summary statistics and distributional divergence."""
+    """
+    Compute calibration summary statistics and distributional divergence.
+
+    :param change_truth: Ground-truth opinion deltas.
+    :param change_pred: Predicted opinion deltas.
+    :returns: Mapping containing calibration and divergence metrics.
+    """
 
     metrics: dict[str, Any] = {}
     slope, intercept = _fit_calibration(change_pred, change_truth)

@@ -338,7 +338,7 @@ def build_pipeline_context(args: argparse.Namespace, root: Path) -> PipelineCont
     :type root: Path
     :returns: Fully-populated context capturing dataset paths, sweep configuration,
         Word2Vec parameters, SentenceTransformer settings, and task toggles.
-    :rtype: PipelineContext
+    :rtype: ~knn.pipeline.context.PipelineContext
     """
     # pylint: disable=too-many-locals,too-many-statements
     dataset = args.dataset or os.environ.get("DATASET") or default_dataset(root)
@@ -419,7 +419,7 @@ def build_base_cli(context: PipelineContext, extra_cli: Sequence[str] | None = N
     Construct the CLI argument prefix reused across KNN pipeline invocations.
 
     :param context: Pipeline configuration describing dataset paths and sweep options.
-    :type context: PipelineContext
+    :type context: ~knn.pipeline.context.PipelineContext
     :returns: Argument list containing dataset/cache flags plus other shared options.
     :rtype: List[str]
     """
@@ -467,9 +467,9 @@ def log_run_configuration(studies: Sequence["StudySpec"], context: PipelineConte
     Emit a concise summary of the resolved pipeline configuration.
 
     :param studies: Collection of study specifications that will be evaluated.
-    :type studies: Sequence[StudySpec]
+    :type studies: Sequence[~knn.pipeline.context.StudySpec]
     :param context: Pipeline context describing dataset paths, jobs, and task toggles.
-    :type context: PipelineContext
+    :type context: ~knn.pipeline.context.PipelineContext
     :returns: ``None``. The function writes human-readable configuration details to the logger.
     :rtype: None
     """
@@ -492,7 +492,7 @@ def log_dry_run(configs: Sequence["SweepConfig"]) -> None:
     Log the number of sweep configurations that would have executed.
 
     :param configs: Planned sweep configuration objects assembled during a dry run.
-    :type configs: Sequence[SweepConfig]
+    :type configs: Sequence[~knn.pipeline.context.SweepConfig]
     :returns: ``None``. The function reports the count via :mod:`logging`.
     :rtype: None
     """

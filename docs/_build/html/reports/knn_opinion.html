@@ -265,8 +265,321 @@
 </section>
 <section id="knn-opinion-shift-study">
 <h1>KNN Opinion Shift Study<a class="headerlink" href="#knn-opinion-shift-study" title="Link to this heading">¶</a></h1>
-<p>Opinion regression metrics are not available yet. Execute the finalize stage to refresh these results.</p>
-<p>This placeholder was generated with <code class="docutils literal notranslate"><span class="pre">--allow-incomplete</span></code> enabled.</p>
+<p>This study evaluates a second KNN baseline that predicts each participant’s post-study opinion index.</p>
+<ul class="simple">
+<li><p>Dataset: <code class="docutils literal notranslate"><span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span></code></p></li>
+<li><p>Split: validation</p></li>
+<li><p>Metrics: MAE / RMSE / R² / directional accuracy / MAE (change) / RMSE (change) / calibration slope &amp; intercept / calibration ECE / KL divergence, compared against a no-change baseline.</p></li>
+</ul>
+<section id="tf-idf-feature-space">
+<h2>TF-IDF Feature Space<a class="headerlink" href="#tf-idf-feature-space" title="Link to this heading">¶</a></h2>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Study</p></th>
+<th class="head text-right"><p>Participants</p></th>
+<th class="head text-right"><p>Best k</p></th>
+<th class="head text-right"><p>Accuracy ↑</p></th>
+<th class="head text-right"><p>Baseline ↑</p></th>
+<th class="head text-right"><p>Δ Accuracy ↑</p></th>
+<th class="head text-right"><p>MAE ↓</p></th>
+<th class="head text-right"><p>Δ vs baseline ↓</p></th>
+<th class="head text-right"><p>RMSE ↓</p></th>
+<th class="head text-right"><p>R² ↑</p></th>
+<th class="head text-right"><p>MAE (change) ↓</p></th>
+<th class="head text-right"><p>RMSE (change) ↓</p></th>
+<th class="head text-right"><p>Δ RMSE (change) ↓</p></th>
+<th class="head text-right"><p>Calib slope</p></th>
+<th class="head text-right"><p>Calib intercept</p></th>
+<th class="head text-right"><p>ECE ↓</p></th>
+<th class="head text-right"><p>Δ ECE ↓</p></th>
+<th class="head text-right"><p>KL div ↓</p></th>
+<th class="head text-right"><p>Δ KL ↓</p></th>
+<th class="head text-right"><p>Baseline MAE ↓</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
+<td class="text-right"><p>162</p></td>
+<td class="text-right"><p>50</p></td>
+<td class="text-right"><p>0.704</p></td>
+<td class="text-right"><p>0.074</p></td>
+<td class="text-right"><p>+0.630</p></td>
+<td class="text-right"><p>0.030</p></td>
+<td class="text-right"><p>+0.007</p></td>
+<td class="text-right"><p>0.038</p></td>
+<td class="text-right"><p>0.983</p></td>
+<td class="text-right"><p>0.030</p></td>
+<td class="text-right"><p>0.038</p></td>
+<td class="text-right"><p>+0.008</p></td>
+<td class="text-right"><p>0.238</p></td>
+<td class="text-right"><p>0.019</p></td>
+<td class="text-right"><p>0.009</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>10.978</p></td>
+<td class="text-right"><p>+10.467</p></td>
+<td class="text-right"><p>0.037</p></td>
+</tr>
+<tr class="row-odd"><td><p>Study 2 – Minimum Wage (MTurk)</p></td>
+<td class="text-right"><p>165</p></td>
+<td class="text-right"><p>50</p></td>
+<td class="text-right"><p>0.527</p></td>
+<td class="text-right"><p>0.061</p></td>
+<td class="text-right"><p>+0.467</p></td>
+<td class="text-right"><p>0.093</p></td>
+<td class="text-right"><p>+0.003</p></td>
+<td class="text-right"><p>0.128</p></td>
+<td class="text-right"><p>0.786</p></td>
+<td class="text-right"><p>0.093</p></td>
+<td class="text-right"><p>0.128</p></td>
+<td class="text-right"><p>+0.010</p></td>
+<td class="text-right"><p>1.079</p></td>
+<td class="text-right"><p>0.007</p></td>
+<td class="text-right"><p>0.018</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>8.264</p></td>
+<td class="text-right"><p>+10.105</p></td>
+<td class="text-right"><p>0.096</p></td>
+</tr>
+<tr class="row-even"><td><p>Study 3 – Minimum Wage (YouGov)</p></td>
+<td class="text-right"><p>257</p></td>
+<td class="text-right"><p>50</p></td>
+<td class="text-right"><p>0.490</p></td>
+<td class="text-right"><p>0.058</p></td>
+<td class="text-right"><p>+0.432</p></td>
+<td class="text-right"><p>0.088</p></td>
+<td class="text-right"><p>-0.004</p></td>
+<td class="text-right"><p>0.125</p></td>
+<td class="text-right"><p>0.771</p></td>
+<td class="text-right"><p>0.088</p></td>
+<td class="text-right"><p>0.125</p></td>
+<td class="text-right"><p>+0.001</p></td>
+<td class="text-right"><p>0.163</p></td>
+<td class="text-right"><p>0.018</p></td>
+<td class="text-right"><p>0.027</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>7.386</p></td>
+<td class="text-right"><p>+9.194</p></td>
+<td class="text-right"><p>0.084</p></td>
+</tr>
+<tr class="row-odd"><td><p><em>Assets:</em> Opinion MAE and heatmap figures are generated alongside this report during pipeline runs.</p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="word2vec-feature-space">
+<h2>Word2Vec Feature Space<a class="headerlink" href="#word2vec-feature-space" title="Link to this heading">¶</a></h2>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Study</p></th>
+<th class="head text-right"><p>Participants</p></th>
+<th class="head text-right"><p>Best k</p></th>
+<th class="head text-right"><p>Accuracy ↑</p></th>
+<th class="head text-right"><p>Baseline ↑</p></th>
+<th class="head text-right"><p>Δ Accuracy ↑</p></th>
+<th class="head text-right"><p>MAE ↓</p></th>
+<th class="head text-right"><p>Δ vs baseline ↓</p></th>
+<th class="head text-right"><p>RMSE ↓</p></th>
+<th class="head text-right"><p>R² ↑</p></th>
+<th class="head text-right"><p>MAE (change) ↓</p></th>
+<th class="head text-right"><p>RMSE (change) ↓</p></th>
+<th class="head text-right"><p>Δ RMSE (change) ↓</p></th>
+<th class="head text-right"><p>Calib slope</p></th>
+<th class="head text-right"><p>Calib intercept</p></th>
+<th class="head text-right"><p>ECE ↓</p></th>
+<th class="head text-right"><p>Δ ECE ↓</p></th>
+<th class="head text-right"><p>KL div ↓</p></th>
+<th class="head text-right"><p>Δ KL ↓</p></th>
+<th class="head text-right"><p>Baseline MAE ↓</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
+<td class="text-right"><p>162</p></td>
+<td class="text-right"><p>50</p></td>
+<td class="text-right"><p>0.704</p></td>
+<td class="text-right"><p>0.074</p></td>
+<td class="text-right"><p>+0.630</p></td>
+<td class="text-right"><p>0.030</p></td>
+<td class="text-right"><p>+0.007</p></td>
+<td class="text-right"><p>0.038</p></td>
+<td class="text-right"><p>0.982</p></td>
+<td class="text-right"><p>0.030</p></td>
+<td class="text-right"><p>0.038</p></td>
+<td class="text-right"><p>+0.008</p></td>
+<td class="text-right"><p>-0.436</p></td>
+<td class="text-right"><p>0.039</p></td>
+<td class="text-right"><p>0.010</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>11.226</p></td>
+<td class="text-right"><p>+10.220</p></td>
+<td class="text-right"><p>0.037</p></td>
+</tr>
+<tr class="row-odd"><td><p>Study 2 – Minimum Wage (MTurk)</p></td>
+<td class="text-right"><p>165</p></td>
+<td class="text-right"><p>50</p></td>
+<td class="text-right"><p>0.582</p></td>
+<td class="text-right"><p>0.061</p></td>
+<td class="text-right"><p>+0.521</p></td>
+<td class="text-right"><p>0.090</p></td>
+<td class="text-right"><p>+0.006</p></td>
+<td class="text-right"><p>0.126</p></td>
+<td class="text-right"><p>0.792</p></td>
+<td class="text-right"><p>0.090</p></td>
+<td class="text-right"><p>0.126</p></td>
+<td class="text-right"><p>+0.012</p></td>
+<td class="text-right"><p>1.205</p></td>
+<td class="text-right"><p>0.005</p></td>
+<td class="text-right"><p>0.029</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>8.128</p></td>
+<td class="text-right"><p>+10.241</p></td>
+<td class="text-right"><p>0.096</p></td>
+</tr>
+<tr class="row-even"><td><p>Study 3 – Minimum Wage (YouGov)</p></td>
+<td class="text-right"><p>257</p></td>
+<td class="text-right"><p>50</p></td>
+<td class="text-right"><p>0.482</p></td>
+<td class="text-right"><p>0.058</p></td>
+<td class="text-right"><p>+0.424</p></td>
+<td class="text-right"><p>0.088</p></td>
+<td class="text-right"><p>-0.004</p></td>
+<td class="text-right"><p>0.126</p></td>
+<td class="text-right"><p>0.766</p></td>
+<td class="text-right"><p>0.088</p></td>
+<td class="text-right"><p>0.126</p></td>
+<td class="text-right"><p>-0.001</p></td>
+<td class="text-right"><p>-0.050</p></td>
+<td class="text-right"><p>0.022</p></td>
+<td class="text-right"><p>0.023</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>7.358</p></td>
+<td class="text-right"><p>+9.222</p></td>
+<td class="text-right"><p>0.084</p></td>
+</tr>
+<tr class="row-odd"><td><p><em>Assets:</em> Opinion MAE and heatmap figures are generated alongside this report during pipeline runs.</p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+<td class="text-right"><p></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<section id="opinion-change-heatmaps">
+<h3>Opinion Change Heatmaps<a class="headerlink" href="#opinion-change-heatmaps" title="Link to this heading">¶</a></h3>
+<p>Plots are refreshed under <code class="docutils literal notranslate"><span class="pre">reports/knn/&lt;feature-space&gt;/opinion/</span></code> including MAE vs. k (<code class="docutils literal notranslate"><span class="pre">mae_&lt;study&gt;.png</span></code>), R² vs. k (<code class="docutils literal notranslate"><span class="pre">r2_&lt;study&gt;.png</span></code>), and change heatmaps (<code class="docutils literal notranslate"><span class="pre">change_heatmap_&lt;study&gt;.png</span></code>).</p>
+</section>
+</section>
+<section id="cross-study-diagnostics">
+<h2>Cross-Study Diagnostics<a class="headerlink" href="#cross-study-diagnostics" title="Link to this heading">¶</a></h2>
+</section>
+<section id="id1">
+<h2>TF-IDF Feature Space<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h2>
+<section id="weighted-summary">
+<h3>Weighted Summary<a class="headerlink" href="#weighted-summary" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>Weighted MAE 0.073 across 584 participants.</p></li>
+<li><p>Weighted baseline MAE 0.074 (+0.001 vs. final).</p></li>
+<li><p>Weighted directional accuracy 0.560 across 584 participants.</p></li>
+<li><p>Weighted baseline accuracy 0.063 (+0.497 vs. final).</p></li>
+<li><p>Weighted RMSE (change) 0.102 (+0.005 vs. baseline).</p></li>
+<li><p>Weighted calibration ECE 0.019 (— vs. baseline).</p></li>
+<li><p>Weighted KL divergence 8.631 (+9.804 vs. baseline).</p></li>
+<li><p>Largest MAE reduction: Study 1 – Gun Control (MTurk) (TFIDF) (+0.007).</p></li>
+<li><p>Largest RMSE(change) reduction: Study 2 – Minimum Wage (MTurk) (TFIDF) (+0.010).</p></li>
+<li><p>Lowest MAE: Study 1 – Gun Control (MTurk) (TFIDF) (0.030); Highest MAE: Study 2 – Minimum Wage (MTurk) (TFIDF) (0.093).</p></li>
+<li><p>Biggest KL divergence reduction: Study 1 – Gun Control (MTurk) (TFIDF) (+10.467).</p></li>
+<li><p>Highest directional accuracy: Study 1 – Gun Control (MTurk) (TFIDF) (0.704).</p></li>
+<li><p>Lowest directional accuracy: Study 3 – Minimum Wage (YouGov) (TFIDF) (0.490).</p></li>
+<li><p>Largest accuracy gain vs. baseline: Study 1 – Gun Control (MTurk) (TFIDF) (+0.630).</p></li>
+<li><p>Unweighted MAE 0.070 (σ 0.028, range 0.030 – 0.093).</p></li>
+<li><p>MAE delta mean 0.002 (σ 0.004, range -0.004 – 0.007).</p></li>
+<li><p>Unweighted directional accuracy 0.574 (σ 0.093, range 0.490 – 0.704).</p></li>
+<li><p>Accuracy delta mean 0.509 (σ 0.086, range 0.432 – 0.630).</p></li>
+<li><p>RMSE (change) 0.097 (σ 0.042, range 0.038 – 0.128).</p></li>
+<li><p>RMSE (change) delta 0.006 (σ 0.004, range 0.001 – 0.010).</p></li>
+<li><p>Calibration ECE 0.018 (σ 0.007, range 0.009 – 0.027).</p></li>
+<li><p>KL divergence 8.876 (σ 1.529, range 7.386 – 10.978).</p></li>
+<li><p>KL divergence delta 9.922 (σ 0.536, range 9.194 – 10.467).</p></li>
+</ul>
+</section>
+</section>
+<section id="id2">
+<h2>Word2Vec Feature Space<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
+<section id="id3">
+<h3>Weighted Summary<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>Weighted MAE 0.073 across 584 participants.</p></li>
+<li><p>Weighted baseline MAE 0.074 (+0.002 vs. final).</p></li>
+<li><p>Weighted directional accuracy 0.572 across 584 participants.</p></li>
+<li><p>Weighted baseline accuracy 0.063 (+0.509 vs. final).</p></li>
+<li><p>Weighted RMSE (change) 0.102 (+0.005 vs. baseline).</p></li>
+<li><p>Weighted calibration ECE 0.021 (— vs. baseline).</p></li>
+<li><p>Weighted KL divergence 8.648 (+9.787 vs. baseline).</p></li>
+<li><p>Largest MAE reduction: Study 1 – Gun Control (MTurk) (WORD2VEC) (+0.007).</p></li>
+<li><p>Largest RMSE(change) reduction: Study 2 – Minimum Wage (MTurk) (WORD2VEC) (+0.012).</p></li>
+<li><p>Lowest MAE: Study 1 – Gun Control (MTurk) (WORD2VEC) (0.030); Highest MAE: Study 2 – Minimum Wage (MTurk) (WORD2VEC) (0.090).</p></li>
+<li><p>Biggest KL divergence reduction: Study 2 – Minimum Wage (MTurk) (WORD2VEC) (+10.241).</p></li>
+<li><p>Highest directional accuracy: Study 1 – Gun Control (MTurk) (WORD2VEC) (0.704).</p></li>
+<li><p>Lowest directional accuracy: Study 3 – Minimum Wage (YouGov) (WORD2VEC) (0.482).</p></li>
+<li><p>Largest accuracy gain vs. baseline: Study 1 – Gun Control (MTurk) (WORD2VEC) (+0.630).</p></li>
+<li><p>Unweighted MAE 0.070 (σ 0.028, range 0.030 – 0.090).</p></li>
+<li><p>MAE delta mean 0.003 (σ 0.005, range -0.004 – 0.007).</p></li>
+<li><p>Unweighted directional accuracy 0.589 (σ 0.090, range 0.482 – 0.704).</p></li>
+<li><p>Accuracy delta mean 0.525 (σ 0.084, range 0.424 – 0.630).</p></li>
+<li><p>RMSE (change) 0.097 (σ 0.041, range 0.038 – 0.126).</p></li>
+<li><p>RMSE (change) delta 0.006 (σ 0.005, range -0.001 – 0.012).</p></li>
+<li><p>Calibration ECE 0.021 (σ 0.008, range 0.010 – 0.029).</p></li>
+<li><p>KL divergence 8.904 (σ 1.672, range 7.358 – 11.226).</p></li>
+<li><p>KL divergence delta 9.894 (σ 0.475, range 9.222 – 10.241).</p></li>
+</ul>
+</section>
+</section>
+<section id="takeaways">
+<h2>Takeaways<a class="headerlink" href="#takeaways" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Study 1 – Gun Control (MTurk): best R² 0.983 with TFIDF (k=50); largest MAE reduction +0.007 via TFIDF.</p></li>
+<li><p>Study 2 – Minimum Wage (MTurk): best R² 0.792 with WORD2VEC (k=50); largest MAE reduction +0.006 via WORD2VEC.</p></li>
+<li><p>Study 3 – Minimum Wage (YouGov): best R² 0.771 with TFIDF (k=50); largest MAE reduction -0.004 via TFIDF.</p></li>
+</ul>
+</section>
 </section>
 
         </article>

@@ -32,7 +32,17 @@ def execute_indexed_tasks(
     logger,
     label: str = "task",
 ) -> List[ResultT]:
-    """Execute ``tasks`` possibly in parallel, preserving task order."""
+    """
+    Execute ``tasks`` possibly in parallel, preserving task order.
+
+    :param tasks: Ordered sequence of task payloads.
+    :param worker: Callable invoked for each task payload.
+    :param jobs: Maximum number of parallel processes to spawn.
+    :param logger: Logger receiving progress information.
+    :param label: Human-readable label used in log messages and errors.
+    :returns: List of results aligned with the original task ordering.
+    :raises RuntimeError: If any task completes without returning a result.
+    """
     if not tasks:
         return []
 
@@ -60,7 +70,13 @@ def execute_sequential_tasks(
     tasks: Sequence[TaskT],
     worker: Callable[[TaskT], ResultT],
 ) -> List[ResultT]:
-    """Execute ``tasks`` sequentially and collect the corresponding results."""
+    """
+    Execute ``tasks`` sequentially and collect the corresponding results.
+
+    :param tasks: Ordered sequence of task payloads.
+    :param worker: Callable invoked for each task payload.
+    :returns: List of results aligned with the original task ordering.
+    """
     results: List[ResultT] = []
     for task in tasks:
         results.append(worker(task))

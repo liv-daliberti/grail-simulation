@@ -848,6 +848,23 @@ by each module.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.prompt.lookup_video_stats">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.prompt.</span></span><span class="sig-name descname"><span class="pre">lookup_video_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/video_stats.html#lookup_video_stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.prompt.lookup_video_stats" title="Link to this definition">¶</a></dt>
+<dd><p>Return engagement metrics for <code class="docutils literal notranslate"><span class="pre">video_id</span></code> when available.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>video_id</strong> (<em>str</em>) – YouTube video identifier.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Engagement metrics dictionary or an empty mapping.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>VideoStats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="prompt_builder.prompt.synthesize_viewer_sentence">
 <span class="sig-prename descclassname"><span class="pre">prompt_builder.prompt.</span></span><span class="sig-name descname"><span class="pre">synthesize_viewer_sentence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ex</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/profiles.html#synthesize_viewer_sentence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.prompt.synthesize_viewer_sentence" title="Link to this definition">¶</a></dt>
 <dd><p>Generate a fallback viewer description when an explicit profile is absent.</p>
@@ -1109,6 +1126,7 @@ mapping.</p>
 <li><a class="reference internal" href="#prompt_builder.profiles.render_profile"><code class="docutils literal notranslate"><span class="pre">render_profile()</span></code></a></li>
 <li><a class="reference internal" href="#prompt_builder.profiles.synthesize_viewer_sentence"><code class="docutils literal notranslate"><span class="pre">synthesize_viewer_sentence()</span></code></a></li>
 <li><a class="reference internal" href="#prompt_builder.prompt.build_user_prompt"><code class="docutils literal notranslate"><span class="pre">build_user_prompt()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.prompt.lookup_video_stats"><code class="docutils literal notranslate"><span class="pre">lookup_video_stats()</span></code></a></li>
 <li><a class="reference internal" href="#prompt_builder.prompt.synthesize_viewer_sentence"><code class="docutils literal notranslate"><span class="pre">synthesize_viewer_sentence()</span></code></a></li>
 <li><a class="reference internal" href="#prompt_builder.samples.PromptSample"><code class="docutils literal notranslate"><span class="pre">PromptSample</span></code></a><ul>
 <li><a class="reference internal" href="#prompt_builder.samples.PromptSample.issue"><code class="docutils literal notranslate"><span class="pre">PromptSample.issue</span></code></a></li>

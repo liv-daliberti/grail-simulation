@@ -88,7 +88,7 @@ class SweepConfig:  # pylint: disable=too-many-instance-attributes
         Create a filesystem-friendly identifier summarising the configuration.
 
         :param self: Configuration instance being labelled.
-        :type self: SweepConfig
+        :type self: ~knn.pipeline.context.SweepConfig
         :returns: Underscore-delimited label that highlights metric, text fields, and model specifics.
         :rtype: str
         """
@@ -233,9 +233,9 @@ class StudySelection(BaseStudySelection[SweepOutcome]):  # pylint: disable=too-m
     Selected configuration for a specific study within a feature space.
 
     :param study: Study metadata chosen for final evaluation.
-    :type study: StudySpec
+    :type study: ~knn.pipeline.context.StudySpec
     :param outcome: Winning sweep outcome promoted for the study.
-    :type outcome: SweepOutcome
+    :type outcome: ~knn.pipeline.context.SweepOutcome
     """
     @property
     def accuracy(self) -> float:
@@ -243,7 +243,7 @@ class StudySelection(BaseStudySelection[SweepOutcome]):  # pylint: disable=too-m
         Return the held-out accuracy achieved by the selection.
 
         :param self: Selection exposing the chosen sweep outcome.
-        :type self: StudySelection
+        :type self: ~knn.pipeline.context.StudySelection
         :returns: the held-out accuracy achieved by the selection
 
         :rtype: float
@@ -257,7 +257,7 @@ class StudySelection(BaseStudySelection[SweepOutcome]):  # pylint: disable=too-m
         Return the optimal ``k`` discovered during sweeps.
 
         :param self: Selection exposing the chosen sweep outcome.
-        :type self: StudySelection
+        :type self: ~knn.pipeline.context.StudySelection
         :returns: the optimal ``k`` discovered during sweeps
 
         :rtype: int
@@ -614,9 +614,9 @@ class OpinionStudySelection(OpinionSelectionBase):  # pylint: disable=too-many-i
     Selected configuration for the final opinion evaluation.
 
     :param study: Opinion study metadata chosen for final evaluation.
-    :type study: StudySpec
+    :type study: ~knn.pipeline.context.StudySpec
     :param outcome: Winning opinion sweep outcome promoted for the study.
-    :type outcome: OpinionSweepOutcome
+    :type outcome: ~knn.pipeline.context.OpinionSweepOutcome
     """
     @property
     def best_k(self) -> int:
@@ -624,7 +624,7 @@ class OpinionStudySelection(OpinionSelectionBase):  # pylint: disable=too-many-i
         Return the selected ``k`` for the study.
 
         :param self: Opinion selection exposing the chosen sweep outcome.
-        :type self: OpinionStudySelection
+        :type self: ~knn.pipeline.context.OpinionStudySelection
         :returns: the selected ``k`` for the study
 
         :rtype: int
@@ -717,15 +717,15 @@ class ReportBundle:  # pylint: disable=too-many-instance-attributes
     Aggregated artefacts required to render Markdown reports for the pipeline run.
 
     :param selections: Winning slate selections keyed by feature space and study slug.
-    :type selections: Mapping[str, Mapping[str, StudySelection]]
+    :type selections: Mapping[str, Mapping[str, ~knn.pipeline.context.StudySelection]]
     :param sweep_outcomes: Chronological list of all slate sweep outcomes.
-    :type sweep_outcomes: Sequence[SweepOutcome]
+    :type sweep_outcomes: Sequence[~knn.pipeline.context.SweepOutcome]
     :param opinion_selections: Winning opinion selections keyed by feature space and study slug.
-    :type opinion_selections: Mapping[str, Mapping[str, OpinionStudySelection]]
+    :type opinion_selections: Mapping[str, Mapping[str, ~knn.pipeline.context.OpinionStudySelection]]
     :param opinion_sweep_outcomes: Chronological list of all opinion sweep outcomes.
-    :type opinion_sweep_outcomes: Sequence[OpinionSweepOutcome]
+    :type opinion_sweep_outcomes: Sequence[~knn.pipeline.context.OpinionSweepOutcome]
     :param studies: Study descriptors used when rendering friendly labels.
-    :type studies: Sequence[StudySpec]
+    :type studies: Sequence[~knn.pipeline.context.StudySpec]
     :param metrics_by_feature: Cached final slate metrics grouped by feature space and study.
     :type metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]]
     :param opinion_metrics: Cached final opinion metrics grouped by feature space and study.

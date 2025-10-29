@@ -262,7 +262,7 @@ def _hyperparameter_report_intro(
     Return the hyper-parameter README introduction.
 
     :param studies: Studies that participated in the sweep.
-    :type studies: Sequence[StudySpec]
+    :type studies: Sequence[~knn.pipeline.context.StudySpec]
     :param k_sweep: Iterable of ``k`` values evaluated during the sweep stage.
     :type k_sweep: Sequence[int]
     :param feature_spaces: Ordered set of feature spaces included in the sweeps.
@@ -325,9 +325,9 @@ def _hyperparameter_feature_rows(
     :param feature_space: Feature space identifier such as ``tfidf`` or ``word2vec``.
     :type feature_space: str
     :param per_study: Mapping of study keys to their associated selections or metrics.
-    :type per_study: Mapping[str, StudySelection]
+    :type per_study: Mapping[str, ~knn.pipeline.context.StudySelection]
     :param studies: Sequence of study specifications targeted by the workflow.
-    :type studies: Sequence[StudySpec]
+    :type studies: Sequence[~knn.pipeline.context.StudySpec]
     :returns: Markdown table rows describing selections.
     :rtype: List[str]
     """
@@ -366,11 +366,11 @@ def _format_hyperparameter_row(
     Format a Markdown table row summarising a sweep selection.
 
     :param study: Study metadata associated with the selection.
-    :type study: StudySpec
+    :type study: ~knn.pipeline.context.StudySpec
     :param summary: Derived metrics extracted from the selection outcome.
     :type summary: Mapping[str, object]
     :param selection: Winning selection entry.
-    :type selection: StudySelection
+    :type selection: ~knn.pipeline.context.StudySelection
     :param text_info: Human-readable text field description.
     :type text_info: str
     :param command: Optional reproduction command string.
@@ -407,9 +407,9 @@ def _hyperparameter_table_section(
     Produce the per-feature-space table summarising selections.
 
     :param selections: Nested mapping of feature spaces to study selections.
-    :type selections: Mapping[str, Mapping[str, StudySelection]]
+    :type selections: Mapping[str, Mapping[str, ~knn.pipeline.context.StudySelection]]
     :param studies: Sequence of studies targeted by the pipeline.
-    :type studies: Sequence[StudySpec]
+    :type studies: Sequence[~knn.pipeline.context.StudySpec]
     :param feature_spaces: Ordered feature spaces considered for the sweep.
     :type feature_spaces: Sequence[str]
     :returns: Markdown section with tables summarising hyperparameter selections.
@@ -454,7 +454,7 @@ def _hyperparameter_leaderboard_section(
     Build a Markdown leaderboard summarising sweep outcomes.
 
     :param sweep_outcomes: Chronological list of sweep outcomes.
-    :type sweep_outcomes: Sequence[SweepOutcome]
+    :type sweep_outcomes: Sequence[~knn.pipeline.context.SweepOutcome]
     :returns: Markdown lines covering the leaderboard.
     :rtype: List[str]
     """
@@ -512,7 +512,7 @@ def _hyperparameter_observations_section(
     Generate qualitative observations for the slate-ranking sweeps.
 
     :param selections: Nested mapping of feature spaces to study selections.
-    :type selections: Mapping[str, Mapping[str, StudySelection]]
+    :type selections: Mapping[str, Mapping[str, ~knn.pipeline.context.StudySelection]]
     :returns: Bullet-point observations comparing selections across feature spaces.
     :rtype: List[str]
     """
@@ -583,11 +583,14 @@ def _hyperparameter_opinion_section(
     Render the opinion-regression sweep summary.
 
     :param opinion_selections: Mapping of feature spaces to their chosen opinion selections.
-    :type opinion_selections: Mapping[str, Mapping[str, OpinionStudySelection]]
+    :type opinion_selections: Mapping[
+        str,
+        Mapping[str, ~knn.pipeline.context.OpinionStudySelection],
+    ]
     :param opinion_sweep_outcomes: Chronological list of opinion sweep outcomes.
-    :type opinion_sweep_outcomes: Sequence[OpinionSweepOutcome]
+    :type opinion_sweep_outcomes: Sequence[~knn.pipeline.context.OpinionSweepOutcome]
     :param studies: Sequence of study specifications targeted by the workflow.
-    :type studies: Sequence[StudySpec]
+    :type studies: Sequence[~knn.pipeline.context.StudySpec]
     :param feature_spaces: Ordered collection of feature space names under consideration.
     :type feature_spaces: Sequence[str]
     :param allow_incomplete: Whether missing sweeps should surface placeholders.

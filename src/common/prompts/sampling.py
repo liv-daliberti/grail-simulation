@@ -68,6 +68,12 @@ def collect_selected_examples(
     The helper applies ``select_train_indices`` and forwards each example to
     ``collect``. ``None`` return values are skipped, allowing callers to filter
     unsuitable rows while still tracking how many indices were inspected.
+
+    :param dataset: Training split providing random access to examples.
+    :param max_train: Optional cap on the number of examples inspected.
+    :param seed: Random seed controlling the subsampling order.
+    :param collect: Callback receiving ``(index, example)`` and returning a value or ``None``.
+    :returns: Tuple containing the processed indices and the collected values.
     """
 
     indices = select_train_indices(dataset, max_train=max_train, seed=seed)

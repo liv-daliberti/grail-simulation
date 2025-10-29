@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Any, Callable, Optional, Tuple, TypeVar
+from typing import Any, Callable, List, Optional, Sequence, Tuple, TypeVar
 import logging
 
 
@@ -40,7 +40,15 @@ class OpinionSpec:
         before: float,
         after: float,
     ) -> dict[str, object]:
-        """Return the standard keyword arguments for an ``OpinionExample``."""
+        """
+        Return the standard keyword arguments for an ``OpinionExample``.
+
+        :param participant_id: Participant identifier associated with the example.
+        :param document: Prompt document presented to the participant.
+        :param before: Pre-study opinion value.
+        :param after: Post-study opinion value.
+        :returns: Dictionary of keyword arguments suitable for :func:`opinion_example_kwargs`.
+        """
 
         return opinion_example_kwargs(
             participant_id=participant_id,
@@ -86,6 +94,12 @@ def make_opinion_inputs(
     Creating the dataclass via a helper keeps pipeline implementations concise
     while ensuring duplicate code detected by pylint's similarity checker is
     consolidated in one location.
+
+    :param participant_id: Participant identifier associated with the example.
+    :param document: Prompt document presented to the participant.
+    :param before: Pre-study opinion value.
+    :param after: Post-study opinion value.
+    :returns: Dataclass encapsulating the participant identifiers and opinion scores.
     """
 
     return OpinionExampleInputs(
@@ -162,6 +176,12 @@ def make_opinion_example(
 
     Provides a lightweight helper so pipelines can override the output factory
     while reusing the standardised opinion inputs bundle.
+
+    :param spec: Opinion specification describing the study identifiers.
+    :param inputs: Normalised participant inputs produced by :func:`make_opinion_inputs`.
+    :param factory: Callable constructing the final example instance.
+    :param extra_fields: Additional keyword arguments forwarded to ``factory``.
+    :returns: Instance created by ``factory`` populated with shared fields.
     """
 
     return build_opinion_example(
@@ -205,6 +225,77 @@ def make_opinion_example_from_values(
         **extra_fields,
     )
 
+def exclude_eval_participants(
+    train_examples: Sequence[ExampleT],
+    eval_examples: Sequence[ExampleT],
+    *,
+    logger: logging.Logger,
+    study_key: str,
+    prefix: str = "[OPINION]",
+) -> List[ExampleT]:
+    """
+    Return ``train_examples`` filtered to remove participants in ``eval_examples``.
+
+    Consolidating the overlap removal logic keeps pipelines free of duplicate
+    list comprehensions that pylint otherwise flags under the duplicate-code
+    checker.
+
+    :param train_examples: Training examples collected for the study.
+    :param eval_examples: Evaluation examples collected for the study.
+    :param logger: Logger used for emitting overlap summaries.
+    :param study_key: Study identifier included in the log message.
+    :param prefix: Prefix inserted at the beginning of the log message.
+    :returns: Filtered list of training examples without overlapping participants.
+    """
+
+    eval_participants = {
+        getattr(example, "participant_id", None) for example in eval_examples
+    }
+    eval_participants.discard(None)
+    if not eval_participants:
+        return list(train_examples)
+
+    filtered = [
+        example
+        for example in train_examples
+        if getattr(example, "participant_id", None) not in eval_participants
+    ]
+    removed = len(train_examples) - len(filtered)
+    if removed:
+        logger.info(
+            "%s Removed %d train participants overlapping validation for study=%s",
+            prefix,
+            removed,
+            study_key,
+        )
+    return filtered
+
+
+def ensure_train_examples(
+    train_examples: Sequence[ExampleT],
+    *,
+    logger: logging.Logger,
+    message: str,
+    args: Sequence[object] | None = None,
+) -> bool:
+    """
+    Return ``True`` when ``train_examples`` is non-empty, otherwise log a warning.
+
+    Centralises the empty-train guard so opinion pipelines avoid duplicating
+    identical warning blocks when overlap removal exhausts the training set.
+
+    :param train_examples: Training examples collected for the study.
+    :param logger: Logger used for emitting warning messages.
+    :param message: Log message template passed to :func:`logging.Logger.warning`.
+    :param args: Optional sequence of arguments interpolated into ``message``.
+    :returns: ``True`` if ``train_examples`` contains elements, otherwise ``False``.
+    """
+
+    if train_examples:
+        return True
+    logger.warning(message, *(tuple(args) if args is not None else ()))
+    return False
+
 
 DEFAULT_SPECS: Tuple[OpinionSpec, ...] = (
     OpinionSpec(
@@ -239,7 +330,16 @@ def log_participant_counts(
     eval_count: int,
     prefix: str = "[OPINION]",
 ) -> None:
-    """Emit a standardised log line for train/eval participant counts."""
+    """
+    Emit a standardised log line for train/eval participant counts.
+
+    :param logger: Logger receiving the formatted message.
+    :param study_key: Study identifier included in the log line.
+    :param train_count: Number of participants observed in the training split.
+    :param eval_count: Number of participants observed in the evaluation split.
+    :param prefix: Log message prefix inserted before the structured fields.
+    :returns: ``None``.
+    """
 
     logger.info(
         "%s study=%s train_participants=%d eval_participants=%d",
@@ -252,7 +352,12 @@ def log_participant_counts(
 
 
 def float_or_none(value: Any) -> Optional[float]:
-    """Return ``value`` as ``float`` when possible, otherwise ``None``."""
+    """
+    Return ``value`` as ``float`` when possible, otherwise ``None``.
+
+    :param value: Candidate numeric value.
+    :returns: Float representation or ``None`` when parsing fails or value is NaN.
+    """
     if value is None:
         return None
     try:

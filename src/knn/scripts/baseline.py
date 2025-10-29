@@ -13,10 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Legacy CLI shim maintained for backwards compatibility."""
+"""Legacy CLI shim maintained for backwards compatibility.
+
+Backward-compatible entry point for the refactored KNN baseline.
+"""
 
 # pylint: skip-file
-"""Backward-compatible entry point for the refactored KNN baseline."""
 from __future__ import annotations
 
 from knn.cli import main

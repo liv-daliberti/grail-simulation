@@ -118,7 +118,7 @@ def _xgb_opinion_command(selection: Optional[OpinionStudySelection]) -> Optional
     Build a reproduction command for an opinion sweep selection.
 
     :param selection: Selected opinion sweep outcome with configuration metadata.
-    :type selection: Optional[OpinionStudySelection]
+    :type selection: Optional[~xgb.pipeline.context.OpinionStudySelection]
     :returns: Shell command capable of reproducing the opinion pipeline, or ``None``.
     :rtype: Optional[str]
     """

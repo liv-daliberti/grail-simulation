@@ -271,7 +271,6 @@ training and evaluation utilities that live under <code class="docutils literal 
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api/common.html">Common Utilities API</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="api/common.html#common.OpinionStudySelection"><code class="docutils literal notranslate"><span class="pre">OpinionStudySelection</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/common.html#common.TitleResolver"><code class="docutils literal notranslate"><span class="pre">TitleResolver</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/common.html#common.add_comma_separated_argument"><code class="docutils literal notranslate"><span class="pre">add_comma_separated_argument()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/common.html#common.add_sentence_transformer_normalise_flags"><code class="docutils literal notranslate"><span class="pre">add_sentence_transformer_normalise_flags()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/common.html#common.build_opinion_example"><code class="docutils literal notranslate"><span class="pre">build_opinion_example()</span></code></a></li>
@@ -285,16 +284,17 @@ training and evaluation utilities that live under <code class="docutils literal 
 <li class="toctree-l2"><a class="reference internal" href="api/common.html#common.resolve_paths_from_env"><code class="docutils literal notranslate"><span class="pre">resolve_paths_from_env()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/common.html#common.safe_div"><code class="docutils literal notranslate"><span class="pre">safe_div()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/common.html#common.split_env_list"><code class="docutils literal notranslate"><span class="pre">split_env_list()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/common.html#common.logging_utils.ensure_directory"><code class="docutils literal notranslate"><span class="pre">ensure_directory()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/common.html#common.logging_utils.get_logger"><code class="docutils literal notranslate"><span class="pre">get_logger()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/common.html#common.logging.utils.ensure_directory"><code class="docutils literal notranslate"><span class="pre">ensure_directory()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/common.html#common.logging.utils.get_logger"><code class="docutils literal notranslate"><span class="pre">get_logger()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/common.html#common.text.canon_text"><code class="docutils literal notranslate"><span class="pre">canon_text()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/common.html#common.text.canon_video_id"><code class="docutils literal notranslate"><span class="pre">canon_video_id()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/common.html#common.text.create_tfidf_vectorizer"><code class="docutils literal notranslate"><span class="pre">create_tfidf_vectorizer()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/common.html#common.text.resolve_paths_from_env"><code class="docutils literal notranslate"><span class="pre">resolve_paths_from_env()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/common.html#common.text.split_env_list"><code class="docutils literal notranslate"><span class="pre">split_env_list()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/common.html#common.title_index.TitleResolver"><code class="docutils literal notranslate"><span class="pre">TitleResolver</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/common.html#common.title_index.TitleResolverEnvConfig"><code class="docutils literal notranslate"><span class="pre">TitleResolverEnvConfig</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/common.html#common.embeddings.SentenceTransformerConfig"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerConfig</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/common.html#common.embeddings.SentenceTransformerEncoder"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerEncoder</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/common.html#common.text.title_index.TitleResolver"><code class="docutils literal notranslate"><span class="pre">TitleResolver</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/common.html#common.text.title_index.TitleResolverEnvConfig"><code class="docutils literal notranslate"><span class="pre">TitleResolverEnvConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/common.html#common.text.embeddings.SentenceTransformerConfig"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/common.html#common.text.embeddings.SentenceTransformerEncoder"><code class="docutils literal notranslate"><span class="pre">SentenceTransformerEncoder</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api/clean_data.html">Clean Data Pipeline</a><ul>
@@ -333,6 +333,7 @@ training and evaluation utilities that live under <code class="docutils literal 
 <li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.profiles.render_profile"><code class="docutils literal notranslate"><span class="pre">render_profile()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.profiles.synthesize_viewer_sentence"><code class="docutils literal notranslate"><span class="pre">synthesize_viewer_sentence()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.prompt.build_user_prompt"><code class="docutils literal notranslate"><span class="pre">build_user_prompt()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.prompt.lookup_video_stats"><code class="docutils literal notranslate"><span class="pre">lookup_video_stats()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.prompt.synthesize_viewer_sentence"><code class="docutils literal notranslate"><span class="pre">synthesize_viewer_sentence()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.samples.PromptSample"><code class="docutils literal notranslate"><span class="pre">PromptSample</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/prompt_builder.html#prompt_builder.samples.generate_prompt_samples"><code class="docutils literal notranslate"><span class="pre">generate_prompt_samples()</span></code></a></li>
@@ -345,6 +346,15 @@ training and evaluation utilities that live under <code class="docutils literal 
 <li class="toctree-l1"><a class="reference internal" href="api/knn.html">KNN Baseline API</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="api/knn.html#feature-spaces">Feature Spaces</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/knn.html#elbow-curve-metrics">Elbow &amp; Curve Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#module-knn">Package Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#module-knn.core.data">Core (Canonical Paths)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#module-knn.utils">Core Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#module-knn.pipeline">Pipeline Modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#module-knn.pipeline.reports">Report Builders</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#module-knn.pipeline.reports.next_video.inputs">Next-Video Report Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#module-knn.pipeline_reports">Legacy Report Shims</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#module-knn.scripts">Scripts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/knn.html#module-knn.cli.__main__">CLI Internals</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api/gpt4o.html">GPT-4o Tools API</a><ul>

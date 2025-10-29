@@ -15,6 +15,9 @@ def summarize_vector(vec: Any) -> Dict[str, object]:
 
     Handles both SciPy-style sparse rows (exposing ``indices`` / ``data``) and
     dense numpy arrays or array-likes.
+
+    :param vec: Sparse or dense vector-like object to summarise.
+    :returns: Mapping containing ``dim``, ``nnz``, and preview details for ``vec``.
     """
     try:
         # Sparse path: check for .nnz presence and extract a single row preview
@@ -67,6 +70,13 @@ def log_embedding_previews(
 
     Any exceptions raised during preview computation are swallowed to avoid
     disrupting training/evaluation flows.
+
+    :param vectorizer: Text vectorizer exposing ``transform`` for re-embedding.
+    :param docs: Collection of prompt documents corresponding to the embeddings.
+    :param full_vector: Embedding (dense or sparse) associated with the full prompt.
+    :param logger: Logger receiving preview output.
+    :param tag: Prefix included on emitted log lines.
+    :returns: ``None``.
     """
 
     try:
@@ -105,7 +115,14 @@ def log_embedding_previews(
 
 
 def log_single_embedding(vec: Any, *, logger: logging.Logger, tag: str) -> None:
-    """Log a one-line summary for a single embedding vector."""
+    """
+    Log a one-line summary for a single embedding vector.
+
+    :param vec: Embedding (dense or sparse) to summarise.
+    :param logger: Logger receiving the summary line.
+    :param tag: Prefix included on the emitted log line.
+    :returns: ``None``.
+    """
 
     try:
         summary = summarize_vector(vec)

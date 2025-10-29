@@ -38,27 +38,52 @@ class BucketAccumulator:
     formatted: Counter[str] = field(default_factory=Counter)
 
     def record_seen(self, key: str) -> None:
-        """Increment the seen counter for ``key``."""
+        """
+        Increment the seen counter for ``key``.
+
+        :param key: Bucket identifier being updated.
+        :returns: ``None``.
+        """
 
         self.seen[key] += 1
 
     def record_formatted(self, key: str) -> None:
-        """Increment the correctly formatted counter for ``key``."""
+        """
+        Increment the correctly formatted counter for ``key``.
+
+        :param key: Bucket identifier being updated.
+        :returns: ``None``.
+        """
 
         self.formatted[key] += 1
 
     def record_parsed(self, key: str) -> None:
-        """Increment the parsed counter for ``key``."""
+        """
+        Increment the parsed counter for ``key``.
+
+        :param key: Bucket identifier being updated.
+        :returns: ``None``.
+        """
 
         self.parsed[key] += 1
 
     def record_eligible(self, key: str) -> None:
-        """Increment the eligible counter for ``key``."""
+        """
+        Increment the eligible counter for ``key``.
+
+        :param key: Bucket identifier being updated.
+        :returns: ``None``.
+        """
 
         self.eligible[key] += 1
 
     def record_correct(self, key: str) -> None:
-        """Increment the correct counter for ``key``."""
+        """
+        Increment the correct counter for ``key``.
+
+        :param key: Bucket identifier being updated.
+        :returns: ``None``.
+        """
 
         self.correct[key] += 1
 
@@ -67,7 +92,13 @@ class BucketAccumulator:
         order: Sequence[str] | None = None,
         skip_empty: bool = False,
     ) -> Dict[str, Dict[str, float | int]]:
-        """Return aggregated metrics per bucket."""
+        """
+        Return aggregated metrics per bucket.
+
+        :param order: Optional explicit ordering for bucket keys.
+        :param skip_empty: When ``True`` omit buckets with zero observations.
+        :returns: Mapping from bucket to aggregate counts and rates.
+        """
 
         keys = order if order is not None else sorted(self.seen.keys())
         result: Dict[str, Dict[str, float | int]] = {}
@@ -90,13 +121,26 @@ class BucketAccumulator:
         return result
 
     def histogram(self, order: Sequence[str], attr: str) -> Dict[str, int]:
-        """Return integer histogram for the requested attribute."""
+        """
+        Return integer histogram for the requested attribute.
+
+        :param order: Ordered list of buckets to include.
+        :param attr: Name of the counter attribute to read (e.g. ``\"seen\"``).
+        :returns: Mapping of bucket key to integer count.
+        """
 
         counter: Counter[str] = getattr(self, attr)
         return {key: int(counter.get(key, 0)) for key in order}
 
     def ratio(self, numerator: str, denominator: str, order: Sequence[str]) -> Dict[str, float]:
-        """Return ratios for ``numerator`` divided by ``denominator``."""
+        """
+        Return ratios for ``numerator`` divided by ``denominator``.
+
+        :param numerator: Counter attribute used as the numerator.
+        :param denominator: Counter attribute used as the denominator.
+        :param order: Ordered list of buckets to include in the output.
+        :returns: Mapping of bucket key to ratio value.
+        """
 
         num: Counter[str] = getattr(self, numerator)
         denom: Counter[str] = getattr(self, denominator)
@@ -168,7 +212,12 @@ class EvaluationAccumulator:  # pylint: disable=too-many-instance-attributes
     option_counts: list[int] = field(default_factory=list)
 
     def observe(self, obs: Observation) -> None:
-        """Update aggregates for a single example observation."""
+        """
+        Update aggregates for a single example observation.
+
+        :param obs: Observation containing per-example evaluation data.
+        :returns: ``None``.
+        """
 
         self.total_seen += 1
         self._record_seen_buckets(obs)
@@ -178,7 +227,12 @@ class EvaluationAccumulator:  # pylint: disable=too-many-instance-attributes
         self._record_correctness(obs)
 
     def _record_seen_buckets(self, obs: Observation) -> None:
-        """Record initial bucket counters for the observation."""
+        """
+        Record initial bucket counters for the observation.
+
+        :param obs: Observation containing bucket labels.
+        :returns: ``None``.
+        """
 
         self.position.record_seen(obs.position_bucket)
         self.issue.record_seen(obs.issue_label)
@@ -186,7 +240,12 @@ class EvaluationAccumulator:  # pylint: disable=too-many-instance-attributes
         self.options.record_seen(obs.option_bucket)
 
     def _record_formatting_state(self, obs: Observation) -> None:
-        """Track formatting and parsing totals."""
+        """
+        Track formatting and parsing totals.
+
+        :param obs: Observation describing formatting and parsing state.
+        :returns: ``None``.
+        """
 
         if obs.is_formatted:
             self.format_ok += 1
@@ -200,7 +259,12 @@ class EvaluationAccumulator:  # pylint: disable=too-many-instance-attributes
             self.options.record_parsed(obs.option_bucket)
 
     def _record_option_structure(self, obs: Observation) -> None:
-        """Track single-option vs. multi-option observations."""
+        """
+        Track single-option vs. multi-option observations.
+
+        :param obs: Observation describing option counts and formatting.
+        :returns: ``None``.
+        """
 
         if obs.option_count == 1:
             self.seen_single += 1
@@ -212,7 +276,12 @@ class EvaluationAccumulator:  # pylint: disable=too-many-instance-attributes
             self.parsed_multi += 1
 
     def _record_eligibility(self, obs: Observation) -> None:
-        """Capture eligibility-related aggregates."""
+        """
+        Capture eligibility-related aggregates.
+
+        :param obs: Observation including eligibility and gold index details.
+        :returns: ``None``.
+        """
 
         if not obs.eligible:
             return
@@ -232,7 +301,12 @@ class EvaluationAccumulator:  # pylint: disable=too-many-instance-attributes
             self.option_counts.append(obs.option_count)
 
     def _record_correctness(self, obs: Observation) -> None:
-        """Capture correctness totals."""
+        """
+        Capture correctness totals.
+
+        :param obs: Observation including correctness and bucket membership.
+        :returns: ``None``.
+        """
 
         if not obs.is_correct:
             return
@@ -262,12 +336,22 @@ class EvaluationAccumulator:  # pylint: disable=too-many-instance-attributes
         return safe_div(self.format_ok, self.total_seen)
 
     def position_summary(self, order: Sequence[str]) -> Dict[str, Dict[str, float | int]]:
-        """Return aggregated position metrics."""
+        """
+        Return aggregated position metrics.
+
+        :param order: Desired ordering of position buckets.
+        :returns: Mapping of bucket names to aggregate counts and rates.
+        """
 
         return self.position.summary(order=order)
 
     def options_summary(self, order: Sequence[str]) -> Dict[str, Any]:
-        """Return aggregated option-count metrics."""
+        """
+        Return aggregated option-count metrics.
+
+        :param order: Desired ordering of option-count buckets.
+        :returns: Mapping containing histograms and ratio metrics by bucket.
+        """
 
         return {
             "hist_seen": self.options.histogram(order, "seen"),
@@ -325,7 +409,12 @@ class EvaluationAccumulator:  # pylint: disable=too-many-instance-attributes
         return distribution, baseline, expected_random
 
     def metrics_payload(self, request: SlateMetricsRequest) -> Dict[str, Any]:
-        """Return the metrics blob written to disk after evaluation."""
+        """
+        Return the metrics blob written to disk after evaluation.
+
+        :param request: Request metadata describing the evaluation run.
+        :returns: Serializable dictionary persisted to reporting artefacts.
+        """
 
         gold_distribution, baseline_most_frequent, random_baseline = self.baseline_metrics()
         return {
@@ -355,7 +444,12 @@ class EvaluationAccumulator:  # pylint: disable=too-many-instance-attributes
 
 
 def bucket_from_position(position_index: int) -> str:
-    """Map a zero-based position index to an accuracy bucket label."""
+    """
+    Map a zero-based position index to an accuracy bucket label.
+
+    :param position_index: Zero-based rank of the gold item within the slate.
+    :returns: Bucket label describing the rank.
+    """
 
     if position_index < 0:
         return "unknown"
@@ -371,7 +465,12 @@ def bucket_from_position(position_index: int) -> str:
 
 
 def bucket_from_options(count: int) -> str:
-    """Normalise the number of slate options into histogram buckets."""
+    """
+    Normalise the number of slate options into histogram buckets.
+
+    :param count: Total number of options shown to the participant.
+    :returns: Bucket label describing the option count.
+    """
 
     if count <= 1:
         return "1"

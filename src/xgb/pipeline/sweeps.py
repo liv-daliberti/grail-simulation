@@ -172,7 +172,7 @@ def _prepare_sweep_tasks(
     Determine pending sweep tasks and return cached outcomes.
 
     :param studies: Participant studies slated for evaluation.
-    :type studies: Sequence[StudySpec]
+    :type studies: Sequence[~common.pipeline.types.StudySpec]
     :param configs: Hyper-parameter configurations to explore.
     :type configs: Sequence[SweepConfig]
     :param context: Shared sweep execution context.
@@ -297,7 +297,7 @@ def _opinion_sweep_outcome_from_metrics(
     :param metrics_path: Filesystem path to the metrics artefact.
     :type metrics_path: Path
     :returns: Opinion sweep outcome capturing MAE, RMSE, and R².
-    :rtype: OpinionSweepOutcome
+    :rtype: ~xgb.pipeline.context.OpinionSweepOutcome
     """
 
     def _safe_float(value: object, default: float = 0.0) -> float:
@@ -675,7 +675,7 @@ def _load_final_metrics_from_disk(
     :param next_video_dir: Directory containing final next-video artefacts.
     :type next_video_dir: Path
     :param studies: Participant studies to load.
-    :type studies: Sequence[StudySpec]
+    :type studies: Sequence[~common.pipeline.types.StudySpec]
     :returns: Mapping from study key to metrics payloads.
     :rtype: Dict[str, Mapping[str, object]]
     """
@@ -702,7 +702,7 @@ def _load_loso_metrics_from_disk(
     :param next_video_dir: Directory containing next-video evaluation artefacts.
     :type next_video_dir: Path
     :param studies: Participant studies to load.
-    :type studies: Sequence[StudySpec]
+    :type studies: Sequence[~common.pipeline.types.StudySpec]
     :returns: Mapping from study key to LOSO metrics payloads.
     :rtype: Dict[str, Mapping[str, object]]
     """
@@ -739,7 +739,7 @@ def _load_opinion_metrics_from_disk(
     :param opinion_dir: Directory containing opinion artefacts.
     :type opinion_dir: Path
     :param studies: Participant studies to load.
-    :type studies: Sequence[StudySpec]
+    :type studies: Sequence[~common.pipeline.types.StudySpec]
     :returns: Mapping from study key to opinion metrics payload.
     :rtype: Dict[str, Dict[str, object]]
     """
@@ -779,7 +779,7 @@ def _load_opinion_from_next_metrics_from_disk(
     :param opinion_dir: Directory containing opinion artefacts.
     :type opinion_dir: Path
     :param studies: Participant studies to load.
-    :type studies: Sequence[StudySpec]
+    :type studies: Sequence[~common.pipeline.types.StudySpec]
     :returns: Mapping from study key to opinion-from-next metrics payload.
     :rtype: Dict[str, Dict[str, object]]
     """
@@ -822,7 +822,7 @@ def _run_sweeps(
     Execute hyper-parameter sweeps and collect outcome metadata.
 
     :param studies: Participant studies slated for evaluation.
-    :type studies: Sequence[StudySpec]
+    :type studies: Sequence[~common.pipeline.types.StudySpec]
     :param configs: Hyper-parameter configurations to explore.
     :type configs: Sequence[SweepConfig]
     :param context: Shared sweep execution context.
@@ -989,9 +989,9 @@ def _select_best_opinion_configs(
     Pick the best opinion configuration per study prioritising MAE, RMSE, then R².
 
     :param outcomes: Opinion sweep outcomes spanning studies and configurations.
-    :type outcomes: Sequence[OpinionSweepOutcome]
+    :type outcomes: Sequence[~xgb.pipeline.context.OpinionSweepOutcome]
     :returns: Mapping from study key to the chosen opinion configuration.
-    :rtype: Dict[str, OpinionStudySelection]
+    :rtype: Dict[str, ~xgb.pipeline.context.OpinionStudySelection]
     """
 
     selections: Dict[str, OpinionStudySelection] = {}

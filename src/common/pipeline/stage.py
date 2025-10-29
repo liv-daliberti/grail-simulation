@@ -38,7 +38,13 @@ class DryRunSummary:
 
 
 def log_dry_run_summary(logger, entries: Sequence[DryRunSummary]) -> None:
-    """Emit a consistent dry-run summary across pipeline implementations."""
+    """
+    Emit a consistent dry-run summary across pipeline implementations.
+
+    :param logger: Logger used for emitting the summary.
+    :param entries: Iterable of :class:`DryRunSummary` instances to describe.
+    :returns: ``None``.
+    """
 
     summary_bits = [
         f"{entry.label} pending={entry.pending} cached={entry.cached}"
@@ -61,7 +67,19 @@ def emit_stage_dry_run_summary(  # pylint: disable=too-many-arguments
     opinion_pending: int,
     opinion_cached: int,
 ) -> None:
-    """Convenience wrapper that logs dry-run summaries for next-video and opinion stages."""
+    """
+    Convenience wrapper that logs dry-run summaries for next-video and opinion stages.
+
+    :param logger: Logger used for emitting the summary.
+    :param include_next: Whether to include the next-video summary.
+    :param next_label: Label describing the next-video partition.
+    :param next_pending: Number of pending next-video tasks.
+    :param next_cached: Number of cached next-video tasks.
+    :param include_opinion: Whether to include the opinion summary.
+    :param opinion_pending: Number of pending opinion tasks.
+    :param opinion_cached: Number of cached opinion tasks.
+    :returns: ``None``.
+    """
 
     summaries: list[DryRunSummary] = []
     if include_next:
@@ -146,18 +164,42 @@ class SweepPartition(Generic[TaskT, OutcomeT]):
     paths: SweepPartitionPaths[TaskT, OutcomeT]
 
 def _default_pending_index(task: TaskT) -> int:
+    """
+    Return the pending index for ``task`` based on its ``index`` attribute.
+
+    :param task: Sweep task providing an ``index`` attribute.
+    :returns: Integer index used for partition ordering.
+    """
     return getattr(task, "index")
 
 
 def _default_cached_index(outcome: OutcomeT) -> int:
+    """
+    Return the cached index for ``outcome`` based on its ``order_index`` attribute.
+
+    :param outcome: Completed outcome providing an ``order_index`` attribute.
+    :returns: Integer index used for partition ordering.
+    """
     return getattr(outcome, "order_index")
 
 
 def _default_pending_metrics_path(task: TaskT) -> Path:
+    """
+    Return the metrics path for ``task`` using its ``metrics_path`` attribute.
+
+    :param task: Sweep task providing a ``metrics_path`` attribute.
+    :returns: Path where metrics should be written for the task.
+    """
     return getattr(task, "metrics_path")
 
 
 def _default_cached_metrics_path(outcome: OutcomeT) -> Path:
+    """
+    Return the metrics path for ``outcome`` using its ``metrics_path`` attribute.
+
+    :param outcome: Completed outcome providing a ``metrics_path`` attribute.
+    :returns: Path where metrics were previously written for the outcome.
+    """
     return getattr(outcome, "metrics_path")
 
 
@@ -174,7 +216,12 @@ _DEFAULT_PATHS: SweepPartitionPaths[TaskT, OutcomeT] = SweepPartitionPaths(
 def make_sweep_partition(
     spec: SweepPartitionSpec[TaskT, OutcomeT],
 ) -> SweepPartition[TaskT, OutcomeT]:
-    """Normalise sweep task partitions for distributed execution."""
+    """
+    Normalise sweep task partitions for distributed execution.
+
+    :param spec: Sweep partition specification describing tasks and cached outcomes.
+    :returns: Partition object combining executors, lookup tables, and paths.
+    """
 
     lookups = spec.lookups or SweepPartitionLookups()
     indexers = lookups.indexers or _DEFAULT_INDEXERS
@@ -220,6 +267,15 @@ def build_sweep_partition(  # pylint: disable=too-many-arguments
     standard arguments. Wrapping the boilerplate helps avoid duplicate code in
     downstream packages while keeping the explicit spec-based API available for
     advanced use-cases.
+
+    :param label: Descriptive label for the partition.
+    :param pending: Sequence of pending sweep tasks.
+    :param cached: Sequence of cached sweep outcomes.
+    :param reuse_existing: Whether existing metrics files should be reused.
+    :param executors: Executor bundle handling task execution and descriptions.
+    :param prefix: Optional log prefix for task messages.
+    :param lookups: Optional overrides for index and path lookups.
+    :returns: Normalised :class:`SweepPartition` instance.
     """
 
     spec = SweepPartitionSpec(
@@ -240,7 +296,14 @@ def _run_partition_task(
     *,
     logger,
 ) -> None:
-    """Execute or skip a single sweep task within ``partition``."""
+    """
+    Execute or skip a single sweep task within ``partition``.
+
+    :param partition: Partition containing the task to evaluate.
+    :param task_index: Zero-based index of the task or cached outcome.
+    :param logger: Logger used for progress messages.
+    :returns: ``None``.
+    """
 
     prefix = f"{partition.prefix} " if partition.prefix else ""
     state = partition.state
@@ -300,7 +363,15 @@ def dispatch_sweep_task(
     task_id: int,
     logger,
 ) -> None:
-    """Dispatch ``task_id`` to the appropriate sweep partition."""
+    """
+    Dispatch ``task_id`` to the appropriate sweep partition.
+
+    :param partitions: Ordered sequence of sweep partitions.
+    :param task_id: Zero-based global sweep task index.
+    :param logger: Logger used for progress messages.
+    :returns: ``None``.
+    :raises RuntimeError: If ``task_id`` exceeds the available slots.
+    """
 
     offset = 0
     for partition in partitions:
@@ -322,7 +393,17 @@ def prepare_sweep_execution(
     logger,
     env_var: str = "SLURM_ARRAY_TASK_ID",
 ) -> Optional[int]:
-    """Resolve the sweep task index to execute for the current worker."""
+    """
+    Resolve the sweep task index to execute for the current worker.
+
+    :param total_tasks: Total number of tasks available across partitions.
+    :param cli_task_id: Optional task id provided via CLI arguments.
+    :param cli_task_count: Optional total task count provided via CLI arguments.
+    :param logger: Logger used for diagnostics.
+    :param env_var: Environment variable consulted for the task id fallback.
+    :returns: Zero-based task id or ``None`` when no work is required.
+    :raises RuntimeError: If task id inputs are missing or invalid.
+    """
     if total_tasks == 0:
         logger.info("No sweep tasks pending; existing metrics cover the grid.")
         return None
@@ -390,6 +471,11 @@ def execute_sweep_partitions(
     invoking :func:`prepare_sweep_execution`, and calling
     :func:`dispatch_sweep_task`. Returns the concrete task index when a
     task is executed and ``None`` when no work is required.
+
+    :param partitions: Ordered sequence of sweep partitions.
+    :param logger: Logger used for diagnostics.
+    :param options: Execution options controlling task selection logic.
+    :returns: Executed task id or ``None`` when no task is dispatched.
     """
 
     options = options or SweepExecutionOptions()
@@ -419,6 +505,12 @@ def execute_partitions_for_cli(  # pragma: no cover - thin convenience wrapper
 
     Reduces duplication across pipelines by forwarding the relevant namespace
     attributes to :func:`execute_sweep_partitions`.
+
+    :param partitions: Ordered sequence of sweep partitions.
+    :param args: CLI namespace providing ``sweep_task_id`` and ``sweep_task_count``.
+    :param logger: Logger used for diagnostics.
+    :param prepare: Callable used to resolve the effective task id.
+    :returns: Executed task id or ``None`` when no task is dispatched.
     """
 
     return execute_sweep_partitions(
@@ -444,6 +536,12 @@ def dispatch_cli_partitions(
 
     Dedicated helper used by pipelines that only need side effects from
     :func:`execute_partitions_for_cli`, reducing duplicate call scaffolding.
+
+    :param partitions: Ordered sequence of sweep partitions.
+    :param args: CLI namespace providing ``sweep_task_id`` and ``sweep_task_count``.
+    :param logger: Logger used for diagnostics.
+    :param prepare: Callable used to resolve the effective task id.
+    :returns: ``None``.
     """
 
     execute_partitions_for_cli(
@@ -469,10 +567,25 @@ def build_standard_sweeps_partitions(  # pylint: disable=too-many-arguments
     next_prefix: str = "",
     opinion_prefix: str = "",
 ):
-    """Assemble standard next-video/opinion sweep partitions with shared semantics.
+    """
+    Assemble standard next-video/opinion sweep partitions with shared semantics.
 
     Minimises duplicated setup code across pipeline implementations by providing
     a thin wrapper around :func:`build_sweep_partition` for the common case.
+
+    :param include_next: Whether to include the next-video partition.
+    :param next_label: Label for the next-video partition.
+    :param next_pending: Pending tasks for the next-video partition.
+    :param next_cached: Cached outcomes for the next-video partition.
+    :param next_executors: Executor bundle for the next-video partition.
+    :param include_opinion: Whether to include the opinion partition.
+    :param opinion_pending: Pending tasks for the opinion partition.
+    :param opinion_cached: Cached outcomes for the opinion partition.
+    :param opinion_executors: Executor bundle for the opinion partition.
+    :param reuse_existing: Whether existing metrics files should be reused.
+    :param next_prefix: Log prefix applied to next-video messages.
+    :param opinion_prefix: Log prefix applied to opinion messages.
+    :returns: List of constructed sweep partitions.
     """
 
     partitions = []

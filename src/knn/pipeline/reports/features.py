@@ -40,6 +40,8 @@ _normalise_fields = partial(normalise_field_values, default=_DEFAULT_FIELD_SET)
 
 @dataclass(frozen=True)
 class _PipelineMessages:
+    """Pre-formatted Markdown messages shown when sections are omitted."""
+
     disabled: str
     no_sweep: str
     no_final: str
@@ -47,6 +49,8 @@ class _PipelineMessages:
 
 @dataclass(frozen=True)
 class _PipelineSection:
+    """Descriptors for KNN field-summary sections and their table collectors."""
+
     heading: str
     include: bool
     sweep_headers: Sequence[str]

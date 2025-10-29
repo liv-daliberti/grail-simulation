@@ -2,7 +2,7 @@
 
 This report summarises the slate-ranking KNN model that predicts the next clicked video.
 
-- Dataset: `/n/fs/similarity/grail-simulation/data/cleaned_grail`
+- Dataset: `data/cleaned_grail`
 - Split: validation
 - Metric: eligible-only accuracy (gold index present).
 - Note: an all-rows accuracy (including ineligible slates) is also recorded in the per-study metrics as `accuracy_overall_all_rows` to ease comparison with XGB's overall accuracy.
@@ -32,7 +32,7 @@ Best-performing feature space: **TFIDF** with weighted accuracy 0.425 across 2,4
 
 | Study | Accuracy ↑ | Accuracy (all rows) ↑ | 95% CI | Δ vs baseline ↑ | Baseline ↑ | Random ↑ | Best k | Eligible | Total |
 | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Study 1 – Gun Control (MTurk) | 0.288 | 0.288 | [0.256, 0.322] | -0.252 | 0.540 | 0.326 | 2 | 548 | 548 |
+| Study 1 – Gun Control (MTurk) | 0.290 | 0.290 | [0.257, 0.323] | -0.250 | 0.540 | 0.326 | 2 | 548 | 548 |
 | Study 2 – Minimum Wage (MTurk) | 0.292 | 0.292 | [0.258, 0.328] | -0.076 | 0.368 | 0.255 | 2 | 671 | 671 |
 | Study 3 – Minimum Wage (YouGov) | 0.268 | 0.268 | [0.245, 0.291] | -0.212 | 0.479 | 0.255 | 2 | 1,200 | 1,200 |
 
@@ -65,7 +65,7 @@ Best-performing feature space: **TFIDF** with weighted accuracy 0.425 across 2,4
 ## Observations
 
 - TFIDF: Study 1 – Gun Control (MTurk): 0.763 (baseline 0.540, Δ +0.223, k=2, eligible 548); Study 2 – Minimum Wage (MTurk): 0.355 (baseline 0.368, Δ -0.013, k=2, eligible 671); Study 3 – Minimum Wage (YouGov): 0.309 (baseline 0.479, Δ -0.170, k=2, eligible 1,200); averages: mean Δ +0.013, mean random 0.279.
-- WORD2VEC: Study 1 – Gun Control (MTurk): 0.288 (baseline 0.540, Δ -0.252, k=2, eligible 548); Study 2 – Minimum Wage (MTurk): 0.292 (baseline 0.368, Δ -0.076, k=2, eligible 671); Study 3 – Minimum Wage (YouGov): 0.268 (baseline 0.479, Δ -0.212, k=2, eligible 1,200); averages: mean Δ -0.180, mean random 0.279.
+- WORD2VEC: Study 1 – Gun Control (MTurk): 0.290 (baseline 0.540, Δ -0.250, k=2, eligible 548); Study 2 – Minimum Wage (MTurk): 0.292 (baseline 0.368, Δ -0.076, k=2, eligible 671); Study 3 – Minimum Wage (YouGov): 0.268 (baseline 0.479, Δ -0.212, k=2, eligible 1,200); averages: mean Δ -0.179, mean random 0.279.
 - Random values approximate the accuracy from uniformly guessing across the slate.
 
 ## KNN vs XGB (Matched Studies)

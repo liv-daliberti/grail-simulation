@@ -71,7 +71,7 @@ def generate_reports(repo_root: Path, report_bundle: ReportBundle) -> None:
     :param repo_root: Repository root directory used for path resolution.
     :type repo_root: Path
     :param report_bundle: Aggregated data structure containing everything needed to emit reports.
-    :type report_bundle: ReportBundle
+    :type report_bundle: ~knn.pipeline.context.ReportBundle
     """
     reports_root = repo_root / "reports" / "knn"
     feature_spaces = report_bundle.feature_spaces

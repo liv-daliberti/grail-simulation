@@ -21,34 +21,65 @@ from typing import Optional
 
 
 def format_float(value: float) -> str:
-    """Format a floating-point metric with three decimal places."""
+    """
+    Format a floating-point metric with three decimal places.
+
+    :param value: Metric value to format.
+    :returns: String formatted with ``\"{value:.3f}\"``.
+    """
     return f"{value:.3f}"
 
 
 def format_optional_float(value: Optional[float]) -> str:
-    """Return ``format_float`` output or an em dash when the value is ``None``."""
+    """
+    Return ``format_float`` output or an em dash when the value is ``None``.
+
+    :param value: Optional metric value to format.
+    :returns: Formatted metric or ``\"—\"`` when ``value`` is ``None``.
+    """
     return format_float(value) if value is not None else "—"
 
 
 def format_delta(value: Optional[float]) -> str:
-    """Render a signed delta using ``+0.000`` formatting."""
+    """
+    Render a signed delta using ``+0.000`` formatting.
+
+    :param value: Optional delta value to format.
+    :returns: Signed delta string or ``\"—\"`` when ``value`` is ``None``.
+    """
     return f"{value:+.3f}" if value is not None else "—"
 
 
 def format_count(value: Optional[int]) -> str:
-    """Format integer counts with thousands separators or return an em dash."""
+    """
+    Format integer counts with thousands separators or return an em dash.
+
+    :param value: Optional integer count.
+    :returns: Formatted count or ``\"—\"`` when ``value`` is ``None``.
+    """
     return f"{value:,}" if value is not None else "—"
 
 
 def format_ratio(numerator: Optional[int], denominator: Optional[int]) -> str:
-    """Format ratios as ``hits/total`` when both parts are available."""
+    """
+    Format ratios as ``hits/total`` when both parts are available.
+
+    :param numerator: Numerator of the ratio.
+    :param denominator: Denominator of the ratio.
+    :returns: ``\"numerator/denominator\"`` or ``\"—\"`` when values are missing.
+    """
     if numerator is None or denominator is None:
         return "—"
     return f"{numerator:,}/{denominator:,}"
 
 
 def safe_float(value: object) -> Optional[float]:
-    """Attempt to convert ``value`` to ``float`` returning ``None`` on failure."""
+    """
+    Attempt to convert ``value`` to ``float`` returning ``None`` on failure.
+
+    :param value: Candidate value to convert.
+    :returns: Float representation or ``None`` when conversion fails.
+    """
     try:
         return float(value)
     except (TypeError, ValueError):

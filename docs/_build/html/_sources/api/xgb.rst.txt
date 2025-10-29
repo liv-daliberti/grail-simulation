@@ -74,6 +74,7 @@ explaining that the section was intentionally skipped.
    :members:
    :undoc-members:
    :show-inheritance:
+   :exclude-members: SweepRunContext, OpinionStageConfig, OpinionSweepRunContext
 
 .. automodule:: xgb.pipeline_cli
    :members:
@@ -84,6 +85,7 @@ explaining that the section was intentionally skipped.
    :members:
    :undoc-members:
    :show-inheritance:
+   :exclude-members: StudySpec
 
 .. automodule:: xgb.pipeline_evaluate
    :members:

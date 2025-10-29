@@ -28,7 +28,7 @@ import json
 from pathlib import Path
 from typing import Dict, List, Mapping, Sequence, Set
 
-from common.pipeline.utils import make_placeholder_metrics
+from common.pipeline.utils import ensure_stage_overwrite_flag, make_placeholder_metrics
 
 from ..core.opinion import (
     DEFAULT_SPECS,
@@ -118,7 +118,7 @@ def _run_final_evaluations(
     :param selections: Mapping from study key to selected configuration.
     :type selections: Mapping[str, StudySelection]
     :param studies: Ordered list of study specifications available for training.
-    :type studies: Sequence[StudySpec]
+    :type studies: Sequence[~common.pipeline.types.StudySpec]
     :param context: Runtime configuration describing CLI arguments and output paths.
     :type context: FinalEvalContext
     :returns: Mapping from study key to the loaded metrics payload.
@@ -160,6 +160,16 @@ def _run_final_evaluations(
         if context.save_model_dir is not None:
             cli_args.extend(["--save_model", str(context.save_model_dir)])
         cli_args.extend(context.extra_cli)
+        ensure_stage_overwrite_flag(
+            cli_args,
+            metrics_path,
+            logger=LOGGER,
+            stage="FINAL",
+            context_labels=(
+                ("issue", selection.study.issue),
+                ("study", selection.study.key),
+            ),
+        )
         LOGGER.info(
             "[FINAL] issue=%s study=%s config=%s",
             selection.study.issue,
@@ -268,7 +278,7 @@ def _run_opinion_stage(
     Execute the optional opinion regression stage for selected participant studies.
 
     :param selections: Mapping from study key to selected opinion configuration.
-    :type selections: Mapping[str, OpinionStudySelection]
+    :type selections: Mapping[str, ~xgb.pipeline.context.OpinionStudySelection]
     :param config: Opinion stage configuration describing dataset and feature options.
     :type config: OpinionStageConfig
     :returns: Mapping from study key to the resulting metrics payload.
@@ -474,7 +484,7 @@ def _run_opinion_from_next_stage(
     :param selections: Mapping from study key to next-video selection.
     :type selections: Mapping[str, StudySelection]
     :param studies: Ordered list of study specifications considered by the pipeline.
-    :type studies: Sequence[StudySpec]
+    :type studies: Sequence[~common.pipeline.types.StudySpec]
     :param config: Opinion stage configuration describing dataset and feature options.
     :type config: OpinionStageConfig
     :param allow_incomplete: When true, skips missing datasets instead of raising.

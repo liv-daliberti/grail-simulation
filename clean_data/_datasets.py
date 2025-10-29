@@ -430,9 +430,16 @@ class _ColumnUnionLoader:
         :returns: DataFrame containing the union of the provided columns.
         """
 
-        all_columns = sorted({col for frame in frames for col in frame.columns})
-        aligned = [frame.reindex(columns=all_columns, fill_value=pd.NA) for frame in frames]
-        return pd.concat(aligned, ignore_index=True)
+        cleaned_frames = [frame.dropna(how="all") for frame in frames]
+        nonempty_frames = [frame for frame in cleaned_frames if not frame.empty]
+        if not nonempty_frames:
+            return pd.DataFrame()
+
+        all_columns = sorted({col for frame in nonempty_frames for col in frame.columns})
+        combined = pd.concat(nonempty_frames, ignore_index=True, sort=False)
+        if not all_columns:
+            return combined
+        return combined.reindex(columns=all_columns)
 
     def _apply_feature_casts(self, frame: pd.DataFrame) -> pd.DataFrame:
         """Cast string-like columns so they align with the dataset feature schema.

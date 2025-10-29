@@ -23,7 +23,14 @@ from typing import Mapping, Sequence
 
 
 def load_metrics_json(path: Path) -> Mapping[str, object]:
-    """Load a metrics dictionary from ``path``."""
+    """
+    Load a metrics dictionary from ``path``.
+
+    :param path: JSON file containing previously computed metrics.
+    :returns: Parsed metrics mapping.
+    :raises FileNotFoundError: If the path does not exist.
+    :raises json.JSONDecodeError: If the file cannot be parsed.
+    """
     if not path.exists():
         raise FileNotFoundError(f"Missing metrics file: {path}")
     with open(path, "r", encoding="utf-8") as handle:
@@ -31,7 +38,13 @@ def load_metrics_json(path: Path) -> Mapping[str, object]:
 
 
 def write_markdown_lines(path: Path, lines: Sequence[str]) -> None:
-    """Write ``lines`` to ``path`` ensuring the file ends with a newline."""
+    """
+    Write ``lines`` to ``path`` ensuring the file ends with a newline.
+
+    :param path: Destination Markdown file.
+    :param lines: Iterable of Markdown lines to write.
+    :returns: ``None``.
+    """
     text = "\n".join(lines)
     if not text.endswith("\n"):
         text += "\n"

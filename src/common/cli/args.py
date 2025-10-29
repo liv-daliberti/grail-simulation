@@ -23,7 +23,12 @@ import argparse
 
 
 def _normalise_flags(flags: Sequence[str] | str) -> Sequence[str]:
-    """Return ``flags`` as a tuple while accepting single-string inputs."""
+    """
+    Return ``flags`` as a tuple while accepting single-string inputs.
+
+    :param flags: Single flag string or a sequence of flag strings.
+    :returns: Tuple containing the provided flag strings.
+    """
     if isinstance(flags, str):
         return (flags,)
     return tuple(flags)
@@ -37,7 +42,16 @@ def add_comma_separated_argument(
     help_text: str,
     default: str = "",
 ) -> None:
-    """Register a comma-separated argument with consistent flag aliases."""
+    """
+    Register a comma-separated argument with consistent flag aliases.
+
+    :param parser: Argument parser being extended.
+    :param flags: Flag alias or aliases forwarded to :func:`argparse.ArgumentParser.add_argument`.
+    :param dest: Destination attribute populated on the parsed namespace.
+    :param help_text: Help message displayed in ``--help`` output.
+    :param default: Default comma-separated value assigned when the flag is omitted.
+    :returns: ``None``.
+    """
     parser.add_argument(
         *_normalise_flags(flags),
         default=default,
@@ -56,7 +70,18 @@ def add_sentence_transformer_normalise_flags(  # pylint: disable=too-many-argume
     enable_help: str = "Enable L2-normalisation for sentence-transformer embeddings (default).",
     disable_help: str = "Disable L2-normalisation for sentence-transformer embeddings.",
 ) -> None:
-    """Add paired boolean flags controlling sentence-transformer normalisation."""
+    """
+    Add paired boolean flags controlling sentence-transformer normalisation.
+
+    :param parser: Argument parser receiving the paired flags.
+    :param dest: Name of the boolean attribute stored on the parsed namespace.
+    :param default: Default value applied via :func:`argparse.ArgumentParser.set_defaults`.
+    :param enable_flags: CLI flags that enable normalisation when provided.
+    :param disable_flags: CLI flags that disable normalisation when provided.
+    :param enable_help: Help string describing the enabling behaviour.
+    :param disable_help: Help string describing the disabling behaviour.
+    :returns: ``None``.
+    """
     parser.set_defaults(**{dest: default})
     parser.add_argument(
         *_normalise_flags(enable_flags),

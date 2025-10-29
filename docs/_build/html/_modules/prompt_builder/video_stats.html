@@ -311,7 +311,7 @@
 
 
 <div class="viewcode-block" id="get_video_stats">
-<a class="viewcode-back" href="../../api/prompt_builder.html#prompt_builder.video_stats.get_video_stats">[docs]</a>
+<a class="viewcode-back" href="../../api/prompt_builder.html#prompt_builder.prompt.get_video_stats">[docs]</a>
 <span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_video_stats</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">VideoStats</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a mapping of video id to engagement metrics.</span>
@@ -349,7 +349,7 @@
 
 
 <div class="viewcode-block" id="lookup_video_stats">
-<a class="viewcode-back" href="../../api/prompt_builder.html#prompt_builder.video_stats.lookup_video_stats">[docs]</a>
+<a class="viewcode-back" href="../../api/prompt_builder.html#prompt_builder.prompt.lookup_video_stats">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">lookup_video_stats</span><span class="p">(</span><span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VideoStats</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Return engagement metrics for ``video_id`` when available.</span>

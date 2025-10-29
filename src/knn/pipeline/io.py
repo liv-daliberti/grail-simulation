@@ -89,7 +89,7 @@ def load_final_metrics_from_disk(
     :param feature_spaces: Iterable of feature space names to inspect.
     :type feature_spaces: Sequence[str]
     :param studies: Studies to look up within each feature directory.
-    :type studies: Sequence[StudySpec]
+    :type studies: Sequence[~knn.pipeline.context.StudySpec]
     :returns: Nested mapping ``feature_space -> study -> metrics`` for all cached
         results found.
     :rtype: Dict[str, Dict[str, Mapping[str, object]]]
@@ -126,7 +126,7 @@ def load_loso_metrics_from_disk(
         LOSO runs.
     :type feature_spaces: Sequence[str]
     :param studies: Studies that were treated as hold-outs in the LOSO evaluation.
-    :type studies: Sequence[StudySpec]
+    :type studies: Sequence[~knn.pipeline.context.StudySpec]
     :returns: Mapping ``feature_space -> study -> metrics`` for every cached
         LOSO evaluation located.
     :rtype: Dict[str, Dict[str, Mapping[str, object]]]

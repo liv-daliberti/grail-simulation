@@ -176,7 +176,8 @@ def summarize_shift(
 def assemble_study_specs() -> Iterable[StudySpec]:
     """Return the static study specifications handled by the report.
 
-    :returns: Iterable of :class:`StudySpec` describing each study.
+    :returns: Iterable of :class:`~clean_data.research_article_political_sciences.analysis.StudySpec`
+        describing each study.
     """
 
     return [

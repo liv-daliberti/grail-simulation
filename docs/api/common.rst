@@ -8,6 +8,7 @@ title resolution, and safe numerical operations used across the baselines.
    :members:
    :undoc-members:
    :show-inheritance:
+   :exclude-members: TitleResolver
 
 .. automodule:: common.logging.utils
    :members:
@@ -18,6 +19,7 @@ title resolution, and safe numerical operations used across the baselines.
    :members:
    :undoc-members:
    :show-inheritance:
+   :exclude-members: TitleResolver
 
 .. automodule:: common.text.title_index
    :members:

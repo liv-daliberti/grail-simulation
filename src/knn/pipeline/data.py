@@ -35,7 +35,7 @@ def study_specs() -> Tuple[StudySpec, ...]:
     Return the canonical participant-study specifications bundled with the project.
 
     :returns: Tuple of opinion-study descriptors used for sweeps and reporting.
-    :rtype: Tuple[StudySpec, ...]
+    :rtype: Tuple[~knn.pipeline.context.StudySpec, ...]
     """
     return tuple(StudySpec(spec.key, spec.issue, spec.label) for spec in _DEFAULT_OPINION_SPECS)
 
@@ -56,7 +56,7 @@ def issue_slug_for_study(study: StudySpec) -> str:
     Derive the filesystem slug used for artefacts associated with ``study``.
 
     :param study: Study specification providing issue/study slugs.
-    :type study: StudySpec
+    :type study: ~knn.pipeline.context.StudySpec
     :returns: Concatenated issue and study slug (e.g. ``issue_study``).
     :rtype: str
     """
@@ -69,7 +69,7 @@ def resolve_studies(tokens: Sequence[str]) -> List[StudySpec]:
     :param tokens: Iterable of study keys or issue names received from the CLI.
     :type tokens: Sequence[str]
     :returns: Ordered list of study specifications corresponding to the provided tokens.
-    :rtype: List[StudySpec]
+    :rtype: List[~knn.pipeline.context.StudySpec]
     """
     available = list(study_specs())
     if not tokens:

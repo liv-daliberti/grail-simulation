@@ -27,7 +27,14 @@ def start_markdown_report(
     title: str,
     filename: str = "README.md",
 ) -> Tuple[Path, List[str]]:
-    """Create the report directory and seed Markdown lines with the title."""
+    """
+    Create the report directory and seed Markdown lines with the title.
+
+    :param directory: Directory where the report should be created.
+    :param title: Markdown title inserted at the top of the report.
+    :param filename: Markdown filename to populate under ``directory``.
+    :returns: Tuple containing the report path and the seeded list of lines.
+    """
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / filename
     lines: List[str] = [f"# {title}", ""]
@@ -48,6 +55,7 @@ def append_catalog_sections(
     :param include_next_video: Whether next-video metrics should be mentioned.
     :param include_opinion: Whether opinion metrics should be mentioned.
     :param reports_prefix: Directory prefix (``knn`` or ``xgb``) used for report paths.
+    :returns: ``None``.
     """
     lines.append(
         "- `additional_features/README.md` — overview of the extra text fields appended to prompts."
@@ -83,6 +91,7 @@ def extend_with_catalog_sections(
     :param include_next_video: Whether next-video metrics should be mentioned.
     :param include_opinion: Whether opinion metrics should be mentioned.
     :param reports_prefix: Directory prefix (``knn`` or ``xgb``) used for report paths.
+    :returns: ``None``.
     """
 
     if lines and lines[-1] != "":
@@ -96,7 +105,12 @@ def extend_with_catalog_sections(
 
 
 def extract_numeric_series(curve_map: Mapping[str, object]) -> Tuple[List[int], List[float]]:
-    """Return sorted integer keys and float metrics from ``curve_map``."""
+    """
+    Return sorted integer keys and float metrics from ``curve_map``.
+
+    :param curve_map: Mapping of step identifiers to scalar metric values.
+    :returns: Tuple of ordered step indices and their corresponding metrics.
+    """
     points: List[Tuple[int, float]] = []
     for raw_step, raw_value in curve_map.items():
         try:
@@ -117,6 +131,7 @@ def extract_curve_sections(
     """
     Return the validation and training curve mappings from ``curve_bundle``.
 
+    :param curve_bundle: Arbitrary object potentially containing curve sections.
     :returns: Tuple containing the validation mapping and an optional training mapping.
     """
 
@@ -145,7 +160,14 @@ def append_image_section(
     image: Path,
     relative_root: Optional[Path] = None,
 ) -> None:
-    """Append Markdown for ``image`` using a path relative to ``relative_root`` when possible."""
+    """
+    Append Markdown for ``image`` using a path relative to ``relative_root`` when possible.
+
+    :param lines: Mutable list of Markdown lines to extend.
+    :param image: Absolute path to the image being embedded.
+    :param relative_root: Optional root used for relative path computation.
+    :returns: ``None``.
+    """
 
     try:
         if relative_root is not None:

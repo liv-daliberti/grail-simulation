@@ -178,7 +178,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
       </label>
     </div>
@@ -255,15 +255,122 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
           </label>
         </div>
         <article role="main" id="furo-main-content">
           <section id="knn-next-video-baseline">
 <h1>KNN Next-Video Baseline<a class="headerlink" href="#knn-next-video-baseline" title="Link to this heading">¶</a></h1>
-<p>Next-video slate metrics are not available yet. Execute the finalize stage to refresh these results.</p>
-<p>This placeholder was generated with <code class="docutils literal notranslate"><span class="pre">--allow-incomplete</span></code> enabled.</p>
+<p>This report summarises the slate-ranking KNN model that predicts the next clicked video.</p>
+<ul class="simple">
+<li><p>Dataset: <code class="docutils literal notranslate"><span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span></code></p></li>
+<li><p>Split: validation</p></li>
+<li><p>Metric: eligible-only accuracy (gold index present).</p></li>
+<li><p>Note: an all-rows accuracy (including ineligible slates) is also recorded in the per-study metrics as <code class="docutils literal notranslate"><span class="pre">accuracy_overall_all_rows</span></code> to ease comparison with XGB’s overall accuracy.</p></li>
+<li><p>Baseline column: accuracy from recommending the most frequent gold index.</p></li>
+<li><p>Δ column: improvement over that baseline accuracy.</p></li>
+<li><p>Random column: expected accuracy from uniformly sampling one candidate per slate.</p></li>
+<li><p>Uncertainty: participant_bootstrap (n_bootstrap=500, n_groups=162, n_rows=548, seed=2024)</p></li>
+</ul>
+<section id="portfolio-summary">
+<h2>Portfolio Summary<a class="headerlink" href="#portfolio-summary" title="Link to this heading">¶</a></h2>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Feature space</p></th>
+<th class="head text-right"><p>Weighted accuracy ↑</p></th>
+<th class="head text-right"><p>Δ vs baseline ↑</p></th>
+<th class="head text-right"><p>Random ↑</p></th>
+<th class="head text-right"><p>Eligible</p></th>
+<th class="head text-right"><p>Studies</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>TFIDF</p></td>
+<td class="text-right"><p>0.763</p></td>
+<td class="text-right"><p>+0.223</p></td>
+<td class="text-right"><p>0.326</p></td>
+<td class="text-right"><p>548</p></td>
+<td class="text-right"><p>1</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Best-performing feature space: <strong>TFIDF</strong> with weighted accuracy 0.763 across 548 eligible slates (1 studies).</p>
+</section>
+<section id="tf-idf-feature-space">
+<h2>TF-IDF Feature Space<a class="headerlink" href="#tf-idf-feature-space" title="Link to this heading">¶</a></h2>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Study</p></th>
+<th class="head text-right"><p>Accuracy ↑</p></th>
+<th class="head text-right"><p>Accuracy (all rows) ↑</p></th>
+<th class="head"><p>95% CI</p></th>
+<th class="head text-right"><p>Δ vs baseline ↑</p></th>
+<th class="head text-right"><p>Baseline ↑</p></th>
+<th class="head text-right"><p>Random ↑</p></th>
+<th class="head text-right"><p>Best k</p></th>
+<th class="head text-right"><p>Eligible</p></th>
+<th class="head text-right"><p>Total</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
+<td class="text-right"><p>0.763</p></td>
+<td class="text-right"><p>0.763</p></td>
+<td><p>[0.727, 0.799]</p></td>
+<td class="text-right"><p>+0.223</p></td>
+<td class="text-right"><p>0.540</p></td>
+<td class="text-right"><p>0.326</p></td>
+<td class="text-right"><p>2</p></td>
+<td class="text-right"><p>548</p></td>
+<td class="text-right"><p>548</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="accuracy-curves">
+<h2>Accuracy Curves<a class="headerlink" href="#accuracy-curves" title="Link to this heading">¶</a></h2>
+<section id="study-1-gun-control-mturk-tfidf">
+<h3>Study 1 – Gun Control (MTurk) (TFIDF)<a class="headerlink" href="#study-1-gun-control-mturk-tfidf" title="Link to this heading">¶</a></h3>
+<p><img alt="Accuracy curve" src="../_images/study1.png" /></p>
+</section>
+</section>
+<section id="observations">
+<h2>Observations<a class="headerlink" href="#observations" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>TFIDF: Study 1 – Gun Control (MTurk): 0.763 (baseline 0.540, Δ +0.223, k=2, eligible 548); averages: mean Δ +0.223, mean random 0.326.</p></li>
+<li><p>Random values approximate the accuracy from uniformly guessing across the slate.</p></li>
+</ul>
+</section>
+<section id="knn-vs-xgb-matched-studies">
+<h2>KNN vs XGB (Matched Studies)<a class="headerlink" href="#knn-vs-xgb-matched-studies" title="Link to this heading">¶</a></h2>
+<p>This section compares the eligible-only accuracy for KNN and XGB, and also shows an all-rows accuracy for KNN alongside XGB’s overall accuracy.</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Study</p></th>
+<th class="head text-right"><p>KNN (feature) eligible-only ↑</p></th>
+<th class="head text-right"><p>XGB eligible-only ↑</p></th>
+<th class="head text-right"><p>KNN all-rows ↑</p></th>
+<th class="head text-right"><p>XGB overall ↑</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
+<td class="text-right"><p>0.763 (TFIDF)</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>0.763</p></td>
+<td class="text-right"><p>0.000</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Leave-one-study-out metrics were unavailable when this report was generated.</p>
+</section>
 </section>
 
         </article>
@@ -309,8 +416,34 @@
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">KNN Next-Video Baseline</a><ul>
+<li><a class="reference internal" href="#portfolio-summary">Portfolio Summary</a></li>
+<li><a class="reference internal" href="#tf-idf-feature-space">TF-IDF Feature Space</a></li>
+<li><a class="reference internal" href="#accuracy-curves">Accuracy Curves</a><ul>
+<li><a class="reference internal" href="#study-1-gun-control-mturk-tfidf">Study 1 – Gun Control (MTurk) (TFIDF)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#observations">Observations</a></li>
+<li><a class="reference internal" href="#knn-vs-xgb-matched-studies">KNN vs XGB (Matched Studies)</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>

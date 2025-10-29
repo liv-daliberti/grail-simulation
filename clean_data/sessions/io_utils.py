@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Copyright 2025 The Grail Simulation Contributors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,7 +35,11 @@ logger = logging.getLogger("clean_grail")
 
 
 def load_sessions_from_capsule(data_root: Path) -> List[dict]:
-    """Return the combined longform + Shorts session logs."""
+    """Return the combined longform + Shorts session logs.
+
+    :param data_root: Path to the CodeOcean capsule ``data`` directory.
+    :returns: List of raw session dictionaries ready for normalization.
+    """
 
     sessions_path = data_root / "platform session data" / "sessions.json"
     with sessions_path.open("r", encoding="utf-8") as session_file:
@@ -52,7 +57,11 @@ def load_sessions_from_capsule(data_root: Path) -> List[dict]:
 
 
 def build_survey_index_map(capsule_root: Path) -> Dict[str, Dict[str, List[Dict[str, Any]]]]:
-    """Load survey CSV/RDS exports and build fast lookup indexes."""
+    """Load survey CSV/RDS exports and build fast lookup indexes.
+
+    :param capsule_root: Path to the CodeOcean capsule root directory.
+    :returns: Mapping of issue -> urlid -> survey rows for fast lookup.
+    """
 
     survey_gun = read_survey_with_fallback(
         capsule_root

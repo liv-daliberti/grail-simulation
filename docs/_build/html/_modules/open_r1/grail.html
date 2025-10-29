@@ -303,9 +303,7 @@
     <span class="n">AutoTokenizer</span><span class="p">,</span>
     <span class="n">set_seed</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">trl</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelConfig</span><span class="p">,</span> <span class="n">get_peft_config</span>  <span class="c1"># pylint: disable=import-error</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">trl.trainer.grpo_trainer</span><span class="w"> </span><span class="kn">import</span> <span class="n">GRPOTrainer</span>  <span class="c1"># pylint: disable=import-error</span>
-
+<span class="kn">from</span><span class="w"> </span><span class="nn">trl</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelConfig</span>  <span class="c1"># pylint: disable=import-error</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.hf_datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetDict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">prompt_builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">as_list_json</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">GRPOConfig</span><span class="p">,</span> <span class="n">GRPOScriptArguments</span>
@@ -320,14 +318,16 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.shared</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">BASE_TRAIN_KEEP_COLUMNS</span><span class="p">,</span>
     <span class="n">collect_passthrough_fields</span><span class="p">,</span>
-    <span class="n">GrpoPipelineComponents</span><span class="p">,</span>
-    <span class="n">GrpoPipelineContext</span><span class="p">,</span>
+    <span class="n">make_grpo_execute_kwargs</span><span class="p">,</span>
+    <span class="n">build_default_component_factory</span><span class="p">,</span>
+    <span class="n">execute_grpo_pipeline</span><span class="p">,</span>
     <span class="n">parse_and_run</span><span class="p">,</span>
-    <span class="n">prepare_model_eval_and_run_grpo</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_dataset</span><span class="p">,</span> <span class="n">get_model</span><span class="p">,</span> <span class="n">get_tokenizer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_dataset</span><span class="p">,</span> <span class="n">get_tokenizer</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">COMPONENT_FACTORY</span> <span class="o">=</span> <span class="n">build_default_component_factory</span><span class="p">()</span>
 
 <span class="n">ANS_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(?si)&lt;answer&gt;\s*([^&lt;\n]+?)\s*&lt;/answer&gt;&quot;</span><span class="p">)</span>
 <span class="n">IDX_ONLY</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\s*(?:option\s*)?(\d+)\s*$&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">I</span><span class="p">)</span>
@@ -895,6 +895,8 @@
     <span class="n">set_seed</span><span class="p">(</span><span class="n">training_args</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span>
 
     <span class="n">dataset</span><span class="p">,</span> <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">_build_dataset_and_tokenizer</span><span class="p">(</span><span class="n">script_args</span><span class="p">,</span> <span class="n">training_args</span><span class="p">,</span> <span class="n">model_args</span><span class="p">)</span>
+    <span class="c1"># Use dataset in a lightweight way to satisfy static analyzers.</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[grpo+gail] dataset splits: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
     <span class="n">reward_fns</span> <span class="o">=</span> <span class="n">_resolve_reward_functions</span><span class="p">(</span><span class="n">script_args</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">)</span>
     <span class="n">use_gail</span> <span class="o">=</span> <span class="n">_maybe_enable_gail</span><span class="p">(</span><span class="n">reward_fns</span><span class="p">)</span>
     <span class="n">_adjust_reward_weights</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="n">reward_fns</span><span class="p">,</span> <span class="n">use_gail</span><span class="p">)</span>
@@ -917,23 +919,14 @@
 
         <span class="k">return</span> <span class="n">_evaluate_with_gail</span>
 
-    <span class="n">components</span> <span class="o">=</span> <span class="n">GrpoPipelineComponents</span><span class="p">(</span>
-        <span class="n">model_builder</span><span class="o">=</span><span class="n">get_model</span><span class="p">,</span>
-        <span class="n">trainer_cls</span><span class="o">=</span><span class="n">GRPOTrainer</span><span class="p">,</span>
-        <span class="n">reward_funcs</span><span class="o">=</span><span class="n">reward_fns</span><span class="p">,</span>
-        <span class="n">tokenizer</span><span class="o">=</span><span class="n">tokenizer</span><span class="p">,</span>
-        <span class="n">peft_config_fn</span><span class="o">=</span><span class="n">get_peft_config</span><span class="p">,</span>
-        <span class="n">evaluate_fn_factory</span><span class="o">=</span><span class="n">_gail_eval_factory</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">context</span> <span class="o">=</span> <span class="n">GrpoPipelineContext</span><span class="p">(</span>
-        <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
-        <span class="n">script_args</span><span class="o">=</span><span class="n">script_args</span><span class="p">,</span>
-        <span class="n">training_args</span><span class="o">=</span><span class="n">training_args</span><span class="p">,</span>
-        <span class="n">model_args</span><span class="o">=</span><span class="n">model_args</span><span class="p">,</span>
-        <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
-        <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;grail&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">prepare_model_eval_and_run_grpo</span><span class="p">(</span><span class="n">components</span><span class="o">=</span><span class="n">components</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span></div>
+    <span class="n">execute_grpo_pipeline</span><span class="p">(</span>
+        <span class="o">**</span><span class="n">make_grpo_execute_kwargs</span><span class="p">(</span>
+            <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;grail&quot;</span><span class="p">,</span>
+            <span class="n">evaluate_fn_factory</span><span class="o">=</span><span class="n">_gail_eval_factory</span><span class="p">,</span>
+            <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
+            <span class="n">namespace</span><span class="o">=</span><span class="nb">locals</span><span class="p">(),</span>
+        <span class="p">)</span>
+    <span class="p">)</span></div>
 
 
 

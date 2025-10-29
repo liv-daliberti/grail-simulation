@@ -361,6 +361,19 @@
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Comma-separated list of additional k values to evaluate.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--knn-k-select&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--knn_k_select&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--k-select-method&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--k_select_method&quot;</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;max&quot;</span><span class="p">,</span> <span class="s2">&quot;elbow&quot;</span><span class="p">],</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;max&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;k_select_method&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Method for selecting best k: &#39;max&#39; chooses the accuracy-maximising k &quot;</span>
+            <span class="s2">&quot;(eligible-only accuracy), &#39;elbow&#39; applies a diminishing-returns heuristic.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--knn-metric&quot;</span><span class="p">,</span>
         <span class="s2">&quot;--knn_metric&quot;</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="s2">&quot;l2&quot;</span><span class="p">,</span>

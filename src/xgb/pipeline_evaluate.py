@@ -154,10 +154,8 @@ def _run_final_evaluations(
         cli_args.extend(selection.config.cli_args(context.tree_method))
         cli_args.extend(["--issues", selection.study.issue])
         cli_args.extend(["--participant_studies", selection.study.key])
-        # Train on companion studies (exclude the current evaluation study)
-        train_studies = [spec.key for spec in studies if spec.key != selection.study.key]
-        if train_studies:
-            cli_args.extend(["--train_participant_studies", ",".join(train_studies)])
+        # Ensure training remains scoped to the evaluation cohort.
+        cli_args.extend(["--train_participant_studies", selection.study.key])
         cli_args.extend(["--out_dir", str(context.out_dir)])
         if context.save_model_dir is not None:
             cli_args.extend(["--save_model", str(context.save_model_dir)])
@@ -210,8 +208,10 @@ def _run_cross_study_evaluations(
     if not selections or len(studies) <= 1:
         return {}
 
-    # Ensure output directory exists
+    # Ensure output directories exist
     context.out_dir.mkdir(parents=True, exist_ok=True)
+    loso_root = context.out_dir / "loso"
+    loso_root.mkdir(parents=True, exist_ok=True)
 
     results: Dict[str, Mapping[str, object]] = {}
     for spec in studies:
@@ -219,17 +219,29 @@ def _run_cross_study_evaluations(
         if selection is None:
             continue
         LOGGER.info("[LOSO] holdout=%s issue=%s", spec.key, spec.issue)
-        metrics_path = context.out_dir / spec.evaluation_slug / "metrics.json"
+        metrics_path = loso_root / spec.evaluation_slug / "metrics.json"
+        if context.reuse_existing and metrics_path.exists():
+            try:
+                metrics = dict(_load_metrics(metrics_path))
+            except FileNotFoundError:
+                LOGGER.warning(
+                    "[LOSO][MISS] holdout=%s expected cached metrics at %s but none found.",
+                    spec.key,
+                    metrics_path,
+                )
+            else:
+                _inject_study_metadata(metrics, spec)
+                results[spec.key] = metrics
+                LOGGER.info("[LOSO][SKIP] holdout=%s (metrics cached).", spec.key)
+                continue
         cli_args: List[str] = []
         cli_args.extend(context.base_cli)
         cli_args.extend(selection.config.cli_args(context.tree_method))
         cli_args.extend(["--issues", spec.issue])
         cli_args.extend(["--participant_studies", spec.key])
-        # Train on the companion cohort (exclude the holdout)
-        train_studies = [s.key for s in studies if s.key != spec.key]
-        if train_studies:
-            cli_args.extend(["--train_participant_studies", ",".join(train_studies)])
-        cli_args.extend(["--out_dir", str(context.out_dir)])
+        # Align training with the evaluation cohort for LOSO as well.
+        cli_args.extend(["--train_participant_studies", spec.key])
+        cli_args.extend(["--out_dir", str(loso_root)])
         cli_args.extend(context.extra_cli)
         _run_xgb_cli(cli_args)
 

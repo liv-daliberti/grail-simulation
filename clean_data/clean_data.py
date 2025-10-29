@@ -13,7 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Orchestrates loading, filtering, validation, persistence, and reporting for ``clean_data`` datasets (Apache 2.0; see LICENSE)."""
+"""Orchestrate loading, filtering, validation, persistence, and reporting for
+``clean_data`` datasets.
+
+All functionality is provided under the repository's Apache 2.0 license; see
+LICENSE for terms and conditions.
+"""
 
 from __future__ import annotations
 

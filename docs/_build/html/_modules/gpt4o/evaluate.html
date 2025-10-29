@@ -271,33 +271,27 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">importlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">import_module</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">t</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">common.eval_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">ensure_hf_cache</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">common.hf_datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_dataset_loaders</span><span class="p">,</span> <span class="n">require_dataset_support</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">common.slate_eval</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">EvaluationAccumulator</span><span class="p">,</span>
-    <span class="n">EvaluationFilters</span><span class="p">,</span>
-    <span class="n">Observation</span><span class="p">,</span>
-    <span class="n">SlateMetricsRequest</span><span class="p">,</span>
-    <span class="n">bucket_from_options</span><span class="p">,</span>
-    <span class="n">bucket_from_position</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">common.eval_utils</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_eval_utils</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">common.hf_datasets</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_hf_datasets</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common</span><span class="w"> </span><span class="kn">import</span> <span class="n">slate_eval</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">.client</span><span class="w"> </span><span class="kn">import</span> <span class="n">ds_call</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">DATASET_NAME</span><span class="p">,</span> <span class="n">DEPLOYMENT_NAME</span><span class="p">,</span> <span class="n">EVAL_SPLIT</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.conversation</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_conversation_record</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">ANS_TAG</span><span class="p">,</span> <span class="n">INDEX_ONLY</span>
+<span class="n">_client</span> <span class="o">=</span> <span class="n">import_module</span><span class="p">(</span><span class="s2">&quot;gpt4o.client&quot;</span><span class="p">)</span>
+<span class="n">_config</span> <span class="o">=</span> <span class="n">import_module</span><span class="p">(</span><span class="s2">&quot;gpt4o.config&quot;</span><span class="p">)</span>
+<span class="n">_conversation</span> <span class="o">=</span> <span class="n">import_module</span><span class="p">(</span><span class="s2">&quot;gpt4o.conversation&quot;</span><span class="p">)</span>
+<span class="n">_utils</span> <span class="o">=</span> <span class="n">import_module</span><span class="p">(</span><span class="s2">&quot;gpt4o.utils&quot;</span><span class="p">)</span>
 
-<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>  <span class="c1"># pragma: no cover - typing only imports</span>
+<span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">TYPE_CHECKING</span><span class="p">:</span>  <span class="c1"># pragma: no cover - typing only imports</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">argparse</span><span class="w"> </span><span class="kn">import</span> <span class="n">Namespace</span>
 <span class="k">else</span><span class="p">:</span>  <span class="c1"># pragma: no cover - runtime fallback for type hints</span>
     <span class="n">Namespace</span> <span class="o">=</span> <span class="nb">object</span>  <span class="c1"># type: ignore[misc]</span>
 
-<span class="n">DOWNLOAD_CONFIG_CLS</span><span class="p">,</span> <span class="n">LOAD_DATASET</span><span class="p">,</span> <span class="n">LOAD_FROM_DISK</span> <span class="o">=</span> <span class="n">get_dataset_loaders</span><span class="p">()</span>
+<span class="n">DOWNLOAD_CONFIG_CLS</span><span class="p">,</span> <span class="n">LOAD_DATASET</span><span class="p">,</span> <span class="n">LOAD_FROM_DISK</span> <span class="o">=</span> <span class="n">_hf_datasets</span><span class="o">.</span><span class="n">get_dataset_loaders</span><span class="p">()</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_index_from_output</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
@@ -306,10 +300,10 @@
 <span class="sd">    :param raw: Completion text returned by the model.</span>
 <span class="sd">    :returns: Parsed integer index (1-based) or ``None`` when absent.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">match</span> <span class="o">=</span> <span class="n">ANS_TAG</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">_utils</span><span class="o">.</span><span class="n">ANS_TAG</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
         <span class="n">candidate</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="n">numeric</span> <span class="o">=</span> <span class="n">INDEX_ONLY</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
+        <span class="n">numeric</span> <span class="o">=</span> <span class="n">_utils</span><span class="o">.</span><span class="n">INDEX_ONLY</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">numeric</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">numeric</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
@@ -317,7 +311,7 @@
                 <span class="k">return</span> <span class="kc">None</span>
     <span class="n">tail</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()[</span><span class="o">-</span><span class="mi">4</span><span class="p">:])</span>
     <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">tail</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()):</span>
-        <span class="n">numeric</span> <span class="o">=</span> <span class="n">INDEX_ONLY</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+        <span class="n">numeric</span> <span class="o">=</span> <span class="n">_utils</span><span class="o">.</span><span class="n">INDEX_ONLY</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
         <span class="k">if</span> <span class="n">numeric</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">numeric</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
@@ -326,7 +320,7 @@
     <span class="k">return</span> <span class="kc">None</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_ensure_output_dir</span><span class="p">(</span><span class="n">output_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_ensure_output_dir</span><span class="p">(</span><span class="n">output_dir</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create the evaluation output directory if it does not already exist.</span>
 
 <span class="sd">    :param output_dir: Target directory for evaluation artifacts.</span>
@@ -342,8 +336,7 @@
 
 <div class="viewcode-block" id="ExampleLabels">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.ExampleLabels">[docs]</a>
-<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">ExampleLabels</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExampleLabels</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalised issue/study labels used for filtering and reporting.&quot;&quot;&quot;</span>
 
     <span class="n">issue_label</span><span class="p">:</span> <span class="nb">str</span>
@@ -355,8 +348,7 @@
 
 <div class="viewcode-block" id="FilterSet">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.FilterSet">[docs]</a>
-<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">FilterSet</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FilterSet</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Container for requested filters and their lower-cased match set.&quot;&quot;&quot;</span>
 
     <span class="n">requested</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
@@ -373,8 +365,7 @@
 
 <div class="viewcode-block" id="FilterState">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.FilterState">[docs]</a>
-<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">FilterState</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FilterState</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregate filters for issues and participant studies.&quot;&quot;&quot;</span>
 
     <span class="n">issues</span><span class="p">:</span> <span class="n">FilterSet</span>
@@ -393,20 +384,19 @@
 
 <div class="viewcode-block" id="OutputPaths">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.OutputPaths">[docs]</a>
-<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">OutputPaths</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OutputPaths</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolved filesystem locations for evaluation artifacts.&quot;&quot;&quot;</span>
 
-    <span class="n">root</span><span class="p">:</span> <span class="n">Path</span>
-    <span class="n">predictions</span><span class="p">:</span> <span class="n">Path</span>
-    <span class="n">metrics</span><span class="p">:</span> <span class="n">Path</span>
+    <span class="n">root</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span>
+    <span class="n">predictions</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span>
+    <span class="n">metrics</span><span class="p">:</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span>
 
 <div class="viewcode-block" id="OutputPaths.build">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.OutputPaths.build">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;OutputPaths&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;OutputPaths&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate and construct the output directory structure.&quot;&quot;&quot;</span>
-        <span class="n">root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
         <span class="n">_ensure_output_dir</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
             <span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">,</span>
@@ -419,8 +409,7 @@
 
 <div class="viewcode-block" id="EvaluationLimits">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationLimits">[docs]</a>
-<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationLimits</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationLimits</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Encapsulates evaluation row limits for progress reporting.&quot;&quot;&quot;</span>
 
     <span class="n">eval_max</span><span class="p">:</span> <span class="nb">int</span>
@@ -444,8 +433,24 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">EvaluationState</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Mutable state tracked during evaluation.&quot;&quot;&quot;</span>
 
-    <span class="n">split</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">EVAL_SPLIT</span>
-    <span class="n">streaming</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
+    <span class="n">split</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_config</span><span class="o">.</span><span class="n">EVAL_SPLIT</span>
+    <span class="n">streaming</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="EvaluationState.set_split">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationState.set_split">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">split</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the active evaluation split.&quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">split</span> <span class="o">=</span> <span class="n">split</span></div>
+
+
+<div class="viewcode-block" id="EvaluationState.set_streaming">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationState.set_streaming">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_streaming</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">streaming</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Mark whether streaming mode is active.&quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">streaming</span> <span class="o">=</span> <span class="n">streaming</span></div>
+</div>
 
 
 
@@ -456,12 +461,12 @@
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">args</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;dataset&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">DATASET_NAME</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;dataset&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">_config</span><span class="o">.</span><span class="n">DATASET_NAME</span><span class="p">)</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Loading dataset </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">OutputPaths</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">out_dir</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">overwrite</span><span class="p">)</span>
 
-        <span class="n">ensure_hf_cache</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">cache_dir</span><span class="p">)</span>
+        <span class="n">_eval_utils</span><span class="o">.</span><span class="n">ensure_hf_cache</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">cache_dir</span><span class="p">)</span>
 
         <span class="n">issues_raw</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;issues&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
         <span class="n">studies_raw</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;studies&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
@@ -476,24 +481,28 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">EvaluationState</span><span class="p">()</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_filter</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-        <span class="n">tokens</span> <span class="o">=</span> <span class="p">[</span><span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">raw</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_filter</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+        <span class="n">tokens</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="n">raw</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">):</span>
+            <span class="n">candidate</span> <span class="o">=</span> <span class="n">segment</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">candidate</span><span class="p">:</span>
+                <span class="n">tokens</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
         <span class="n">lowered</span> <span class="o">=</span> <span class="p">{</span><span class="n">token</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">tokens</span> <span class="k">if</span> <span class="n">token</span><span class="p">}</span>
         <span class="k">if</span> <span class="s2">&quot;all&quot;</span> <span class="ow">in</span> <span class="n">lowered</span><span class="p">:</span>
             <span class="n">lowered</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">tokens</span><span class="p">,</span> <span class="n">lowered</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_load_dataset_iter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]:</span>
-        <span class="n">dataset_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_dataset_iter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]:</span>
+        <span class="n">dataset_path</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">)</span>
         <span class="n">dataset</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="k">if</span> <span class="n">dataset_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="n">require_dataset_support</span><span class="p">(</span><span class="n">needs_local</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">_hf_datasets</span><span class="o">.</span><span class="n">require_dataset_support</span><span class="p">(</span><span class="n">needs_local</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="k">assert</span> <span class="n">LOAD_FROM_DISK</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>  <span class="c1"># narrow Optional for type checkers</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Detected local dataset at </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">dataset_path</span><span class="p">)</span>
             <span class="n">dataset</span> <span class="o">=</span> <span class="n">LOAD_FROM_DISK</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">dataset_path</span><span class="p">))</span>  <span class="c1"># type: ignore[arg-type]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">require_dataset_support</span><span class="p">()</span>
+            <span class="n">_hf_datasets</span><span class="o">.</span><span class="n">require_dataset_support</span><span class="p">()</span>
             <span class="k">assert</span> <span class="n">LOAD_DATASET</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">DOWNLOAD_CONFIG_CLS</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="n">download_config</span> <span class="o">=</span> <span class="n">DOWNLOAD_CONFIG_CLS</span><span class="p">(</span>
                 <span class="n">resume_download</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -511,7 +520,7 @@
                     <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                         <span class="s2">&quot;Low disk space detected; falling back to streaming mode.&quot;</span>
                     <span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">streaming</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">set_streaming</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">raise</span>
 
@@ -521,8 +530,8 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_streaming_split</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_materialised_split</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_load_streaming_split</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]:</span>
-        <span class="n">eval_split</span> <span class="o">=</span> <span class="n">EVAL_SPLIT</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_streaming_split</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]:</span>
+        <span class="n">eval_split</span> <span class="o">=</span> <span class="n">_config</span><span class="o">.</span><span class="n">EVAL_SPLIT</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">data_iter</span> <span class="o">=</span> <span class="n">LOAD_DATASET</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">,</span>
@@ -546,16 +555,16 @@
                     <span class="s2">&quot;Unable to load evaluation split in streaming mode.&quot;</span>
                 <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">split</span> <span class="o">=</span> <span class="n">eval_split</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">set_split</span><span class="p">(</span><span class="n">eval_split</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">limits</span><span class="o">.</span><span class="n">eval_max</span><span class="p">:</span>
             <span class="n">data_iter</span> <span class="o">=</span> <span class="n">data_iter</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">limits</span><span class="o">.</span><span class="n">eval_max</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">data_iter</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_load_materialised_split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_materialised_split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]:</span>
         <span class="k">if</span> <span class="n">dataset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Expected dataset object when not streaming.&quot;</span><span class="p">)</span>
 
-        <span class="n">eval_split</span> <span class="o">=</span> <span class="n">EVAL_SPLIT</span>
+        <span class="n">eval_split</span> <span class="o">=</span> <span class="n">_config</span><span class="o">.</span><span class="n">EVAL_SPLIT</span>
         <span class="n">available_splits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="s2">&quot;keys&quot;</span><span class="p">):</span>
             <span class="k">try</span><span class="p">:</span>
@@ -567,21 +576,23 @@
             <span class="n">eval_split</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
                 <span class="p">(</span>
                     <span class="n">split</span>
-                    <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="p">(</span><span class="n">EVAL_SPLIT</span><span class="p">,</span> <span class="s2">&quot;validation&quot;</span><span class="p">,</span> <span class="s2">&quot;eval&quot;</span><span class="p">,</span> <span class="s2">&quot;test&quot;</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="p">(</span><span class="n">_config</span><span class="o">.</span><span class="n">EVAL_SPLIT</span><span class="p">,</span> <span class="s2">&quot;validation&quot;</span><span class="p">,</span> <span class="s2">&quot;eval&quot;</span><span class="p">,</span> <span class="s2">&quot;test&quot;</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">split</span> <span class="ow">in</span> <span class="n">available_splits</span>
                 <span class="p">),</span>
                 <span class="n">available_splits</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
             <span class="p">)</span>
             <span class="n">data_iter</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="n">eval_split</span><span class="p">]</span>  <span class="c1"># type: ignore[index]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">eval_split</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="s2">&quot;split&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="n">EVAL_SPLIT</span>  <span class="c1"># type: ignore[attr-defined]</span>
+            <span class="n">eval_split</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="nb">getattr</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="s2">&quot;split&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="n">_config</span><span class="o">.</span><span class="n">EVAL_SPLIT</span>
+            <span class="p">)</span>  <span class="c1"># type: ignore[attr-defined]</span>
             <span class="n">data_iter</span> <span class="o">=</span> <span class="n">dataset</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">limits</span><span class="o">.</span><span class="n">eval_max</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">data_iter</span><span class="p">,</span> <span class="s2">&quot;select&quot;</span><span class="p">):</span>
             <span class="n">limit</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">limits</span><span class="o">.</span><span class="n">eval_max</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_iter</span><span class="p">))</span>  <span class="c1"># type: ignore[arg-type]</span>
             <span class="n">data_iter</span> <span class="o">=</span> <span class="n">data_iter</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">limit</span><span class="p">))</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">split</span> <span class="o">=</span> <span class="n">eval_split</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">set_split</span><span class="p">(</span><span class="n">eval_split</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">data_iter</span>
 
     <span class="nd">@staticmethod</span>
@@ -602,7 +613,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_invoke_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">ds_call</span><span class="p">(</span>
+            <span class="k">return</span> <span class="n">_client</span><span class="o">.</span><span class="n">ds_call</span><span class="p">(</span>
                 <span class="n">messages</span><span class="p">,</span>
                 <span class="n">max_tokens</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">max_tokens</span><span class="p">,</span>
                 <span class="n">temperature</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">temperature</span><span class="p">,</span>
@@ -613,39 +624,40 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_evaluate_example</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Observation</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">Tuple</span><span class="p">[</span><span class="n">slate_eval</span><span class="o">.</span><span class="n">Observation</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_labels</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_passes_filters</span><span class="p">(</span><span class="n">labels</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">None</span>
 
-        <span class="n">record</span> <span class="o">=</span> <span class="n">make_conversation_record</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
+        <span class="n">record</span> <span class="o">=</span> <span class="n">_conversation</span><span class="o">.</span><span class="n">make_conversation_record</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
         <span class="n">messages</span> <span class="o">=</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;prompt&quot;</span><span class="p">]</span>
         <span class="n">gold_index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gold_index&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
         <span class="n">option_count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n_options&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
         <span class="n">position_index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;position_index&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
 
         <span class="n">raw_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_invoke_model</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
-        <span class="n">is_formatted</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">ANS_TAG</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">raw_output</span><span class="p">))</span>
+        <span class="n">is_formatted</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">_utils</span><span class="o">.</span><span class="n">ANS_TAG</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">raw_output</span><span class="p">))</span>
         <span class="n">parsed_index</span> <span class="o">=</span> <span class="n">_parse_index_from_output</span><span class="p">(</span><span class="n">raw_output</span><span class="p">)</span>
-        <span class="n">pos_bucket</span> <span class="o">=</span> <span class="n">bucket_from_position</span><span class="p">(</span><span class="n">position_index</span><span class="p">)</span>
-        <span class="n">option_bucket</span> <span class="o">=</span> <span class="n">bucket_from_options</span><span class="p">(</span><span class="n">option_count</span><span class="p">)</span>
+        <span class="n">pos_bucket</span> <span class="o">=</span> <span class="n">slate_eval</span><span class="o">.</span><span class="n">bucket_from_position</span><span class="p">(</span><span class="n">position_index</span><span class="p">)</span>
+        <span class="n">option_bucket</span> <span class="o">=</span> <span class="n">slate_eval</span><span class="o">.</span><span class="n">bucket_from_options</span><span class="p">(</span><span class="n">option_count</span><span class="p">)</span>
         <span class="n">eligible</span> <span class="o">=</span> <span class="n">gold_index</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">option_count</span> <span class="o">&gt;</span> <span class="mi">0</span>
         <span class="n">is_correct</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">eligible</span> <span class="ow">and</span> <span class="p">(</span><span class="n">parsed_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">parsed_index</span> <span class="o">==</span> <span class="n">gold_index</span><span class="p">)</span>
         <span class="p">)</span>
 
-        <span class="n">observation</span> <span class="o">=</span> <span class="n">Observation</span><span class="p">(</span>
-            <span class="n">issue_label</span><span class="o">=</span><span class="n">labels</span><span class="o">.</span><span class="n">issue_label</span><span class="p">,</span>
-            <span class="n">study_label</span><span class="o">=</span><span class="n">labels</span><span class="o">.</span><span class="n">study_label</span><span class="p">,</span>
-            <span class="n">position_bucket</span><span class="o">=</span><span class="n">pos_bucket</span><span class="p">,</span>
-            <span class="n">option_bucket</span><span class="o">=</span><span class="n">option_bucket</span><span class="p">,</span>
-            <span class="n">option_count</span><span class="o">=</span><span class="n">option_count</span><span class="p">,</span>
-            <span class="n">gold_index</span><span class="o">=</span><span class="n">gold_index</span><span class="p">,</span>
-            <span class="n">parsed_index</span><span class="o">=</span><span class="n">parsed_index</span><span class="p">,</span>
-            <span class="n">is_formatted</span><span class="o">=</span><span class="n">is_formatted</span><span class="p">,</span>
-            <span class="n">eligible</span><span class="o">=</span><span class="n">eligible</span><span class="p">,</span>
-            <span class="n">is_correct</span><span class="o">=</span><span class="n">is_correct</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="n">observation_fields</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;issue_label&quot;</span><span class="p">:</span> <span class="n">labels</span><span class="o">.</span><span class="n">issue_label</span><span class="p">,</span>
+            <span class="s2">&quot;study_label&quot;</span><span class="p">:</span> <span class="n">labels</span><span class="o">.</span><span class="n">study_label</span><span class="p">,</span>
+            <span class="s2">&quot;position_bucket&quot;</span><span class="p">:</span> <span class="n">pos_bucket</span><span class="p">,</span>
+            <span class="s2">&quot;option_bucket&quot;</span><span class="p">:</span> <span class="n">option_bucket</span><span class="p">,</span>
+            <span class="s2">&quot;option_count&quot;</span><span class="p">:</span> <span class="n">option_count</span><span class="p">,</span>
+            <span class="s2">&quot;gold_index&quot;</span><span class="p">:</span> <span class="n">gold_index</span><span class="p">,</span>
+            <span class="s2">&quot;parsed_index&quot;</span><span class="p">:</span> <span class="n">parsed_index</span><span class="p">,</span>
+            <span class="s2">&quot;is_formatted&quot;</span><span class="p">:</span> <span class="n">is_formatted</span><span class="p">,</span>
+            <span class="s2">&quot;eligible&quot;</span><span class="p">:</span> <span class="n">eligible</span><span class="p">,</span>
+            <span class="s2">&quot;is_correct&quot;</span><span class="p">:</span> <span class="n">is_correct</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">observation</span> <span class="o">=</span> <span class="n">slate_eval</span><span class="o">.</span><span class="n">Observation</span><span class="p">(</span><span class="o">**</span><span class="n">observation_fields</span><span class="p">)</span>
         <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;messages&quot;</span><span class="p">:</span> <span class="n">messages</span><span class="p">,</span>
             <span class="s2">&quot;gpt_output&quot;</span><span class="p">:</span> <span class="n">raw_output</span><span class="p">,</span>
@@ -662,7 +674,10 @@
         <span class="k">return</span> <span class="n">observation</span><span class="p">,</span> <span class="n">payload</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_maybe_log_progress</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">seen_rows</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">start_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">accumulator</span><span class="p">:</span> <span class="n">EvaluationAccumulator</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">seen_rows</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">start_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">accumulator</span><span class="p">:</span> <span class="n">slate_eval</span><span class="o">.</span><span class="n">EvaluationAccumulator</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">seen_rows</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">seen_rows</span> <span class="o">%</span> <span class="mi">25</span><span class="p">:</span>
             <span class="k">return</span>
@@ -680,21 +695,21 @@
 
 <div class="viewcode-block" id="EvaluationRunner.metrics_request">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.evaluate.EvaluationRunner.metrics_request">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">metrics_request</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SlateMetricsRequest</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">metrics_request</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">slate_eval</span><span class="o">.</span><span class="n">SlateMetricsRequest</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct the payload used when serialising evaluation metrics.&quot;&quot;&quot;</span>
-        <span class="n">model_name</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;deployment&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="n">DEPLOYMENT_NAME</span>
-        <span class="k">return</span> <span class="n">SlateMetricsRequest</span><span class="p">(</span>
+        <span class="n">model_name</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;deployment&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="n">_config</span><span class="o">.</span><span class="n">DEPLOYMENT_NAME</span>
+        <span class="k">return</span> <span class="n">slate_eval</span><span class="o">.</span><span class="n">SlateMetricsRequest</span><span class="p">(</span>
             <span class="n">model_name</span><span class="o">=</span><span class="n">model_name</span><span class="p">,</span>
             <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">,</span>
             <span class="n">eval_split</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">split</span><span class="p">,</span>
-            <span class="n">filters</span><span class="o">=</span><span class="n">EvaluationFilters</span><span class="p">(</span>
+            <span class="n">filters</span><span class="o">=</span><span class="n">slate_eval</span><span class="o">.</span><span class="n">EvaluationFilters</span><span class="p">(</span>
                 <span class="n">issues</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">filters</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">requested</span><span class="p">,</span>
                 <span class="n">studies</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">filters</span><span class="o">.</span><span class="n">studies</span><span class="o">.</span><span class="n">requested</span><span class="p">,</span>
             <span class="p">),</span>
         <span class="p">)</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_print_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">accumulator</span><span class="p">:</span> <span class="n">EvaluationAccumulator</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_print_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">accumulator</span><span class="p">:</span> <span class="n">slate_eval</span><span class="o">.</span><span class="n">EvaluationAccumulator</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">summary_bits</span> <span class="o">=</span> <span class="p">[</span>
             <span class="sa">f</span><span class="s2">&quot;[DONE] dataset=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="sa">f</span><span class="s2">&quot;split=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">split</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
@@ -714,7 +729,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute the full evaluation workflow.&quot;&quot;&quot;</span>
         <span class="n">data_iter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_dataset_iter</span><span class="p">()</span>
-        <span class="n">accumulator</span> <span class="o">=</span> <span class="n">EvaluationAccumulator</span><span class="p">()</span>
+        <span class="n">accumulator</span> <span class="o">=</span> <span class="n">slate_eval</span><span class="o">.</span><span class="n">EvaluationAccumulator</span><span class="p">()</span>
         <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
         <span class="n">seen_rows</span> <span class="o">=</span> <span class="mi">0</span>
 
@@ -731,7 +746,8 @@
 
         <span class="n">metrics</span> <span class="o">=</span> <span class="n">accumulator</span><span class="o">.</span><span class="n">metrics_payload</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metrics_request</span><span class="p">())</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">metrics</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
-            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">metrics</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">serialised</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">metrics</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">serialised</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_print_summary</span><span class="p">(</span><span class="n">accumulator</span><span class="p">)</span></div>
 </div>

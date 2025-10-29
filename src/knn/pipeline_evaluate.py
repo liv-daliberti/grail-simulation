@@ -104,8 +104,7 @@ def run_final_evaluations(
             cli_args.extend(selection.config.cli_args(word2vec_model_dir=model_dir))
             cli_args.extend(["--issues", study.issue])
             cli_args.extend(["--participant-studies", study.key])
-            # Allow the training split to inherit the participant-study restriction
-            # from ``--participant-studies`` so evaluation remains strictly within-study.
+            cli_args.extend(["--train-participant-studies", study.key])
             cli_args.extend(["--out-dir", str(feature_out_dir)])
             cli_args.extend(["--knn-k", str(selection.best_k)])
             cli_args.extend(context.extra_cli)
@@ -325,9 +324,9 @@ def run_cross_study_evaluations(
             cli_args.extend(context.base_cli)
             cli_args.extend(selection.config.cli_args(word2vec_model_dir=model_dir))
             cli_args.extend(["--issues", holdout.issue])
-            # Evaluate on the holdout only
+            # Evaluate on the holdout only and train on the same cohort.
             cli_args.extend(["--participant-studies", holdout.key])
-            # Leave training scoped to the holdout study to avoid cross-study combinations.
+            cli_args.extend(["--train-participant-studies", holdout.key])
             cli_args.extend(["--out-dir", str(loso_root)])
             cli_args.extend(["--knn-k", str(selection.best_k)])
             cli_args.extend(context.extra_cli)

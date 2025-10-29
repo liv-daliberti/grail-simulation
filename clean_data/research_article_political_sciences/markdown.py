@@ -98,7 +98,11 @@ def _format_interval(center: float, lower: float, upper: float, precision: int =
 
 
 def _opinion_summary_lines(study_rows: Iterable[Mapping[str, object]]) -> List[str]:
-    """Render Markdown rows describing opinion shift summaries."""
+    """Render Markdown rows describing opinion shift summaries.
+
+    :param study_rows: Iterable containing dictionaries with study labels and summary stats.
+    :returns: Markdown table row strings summarizing opinion shifts per study.
+    """
 
     lines: List[str] = []
     for row in study_rows:
@@ -119,7 +123,12 @@ def _opinion_summary_lines(study_rows: Iterable[Mapping[str, object]]) -> List[s
 
 
 def _heatmap_section(heatmap_paths: Iterable[Path], output_dir: Path) -> List[str]:
-    """Build Markdown image blocks for the heatmap paths."""
+    """Build Markdown image blocks for the heatmap paths.
+
+    :param heatmap_paths: Iterable of paths to generated heatmap images.
+    :param output_dir: Base directory used to compute relative image paths.
+    :returns: Markdown lines embedding each heatmap image.
+    """
 
     blocks: List[str] = []
     for heatmap_path in heatmap_paths:
@@ -135,7 +144,11 @@ def _heatmap_section(heatmap_paths: Iterable[Path], output_dir: Path) -> List[st
 
 
 def _assignment_section(rows: Iterable[Mapping[str, object]]) -> List[str]:
-    """Render the control vs. treatment summary table when data is available."""
+    """Render the control vs. treatment summary table when data is available.
+
+    :param rows: Iterable of dictionaries describing study-level control/treatment changes.
+    :returns: Markdown lines forming the summary table (or empty when no rows provided).
+    """
 
     material = list(rows)
     if not material:
@@ -160,7 +173,11 @@ def _assignment_section(rows: Iterable[Mapping[str, object]]) -> List[str]:
 
 
 def _policy_section(rows: Iterable[Mapping[str, object]]) -> List[str]:
-    """Render the preregistered stratified contrast table when present."""
+    """Render the preregistered stratified contrast table when present.
+
+    :param rows: Iterable of dictionaries representing stratified contrast results.
+    :returns: Markdown lines describing the contrast table (or empty when no rows).
+    """
 
     material = list(rows)
     if not material:

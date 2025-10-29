@@ -282,11 +282,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.pipeline_stage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">DryRunSummary</span><span class="p">,</span>
-    <span class="n">build_sweep_partition</span><span class="p">,</span>
     <span class="n">SweepPartitionExecutors</span><span class="p">,</span>
     <span class="n">dispatch_cli_partitions</span><span class="p">,</span>
-    <span class="n">log_dry_run_summary</span><span class="p">,</span>
+    <span class="n">emit_stage_dry_run_summary</span><span class="p">,</span>
+    <span class="n">build_standard_sweeps_partitions</span><span class="p">,</span>
     <span class="n">prepare_sweep_execution</span> <span class="k">as</span> <span class="n">_prepare_sweep_execution</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.prompt_docs</span><span class="w"> </span><span class="kn">import</span> <span class="n">merge_default_extra_fields</span>
@@ -336,6 +335,11 @@
     <span class="n">_run_final_evaluations</span><span class="p">,</span>
     <span class="n">_run_opinion_from_next_stage</span><span class="p">,</span>
     <span class="n">_run_opinion_stage</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.vectorizers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SentenceTransformerVectorizerConfig</span><span class="p">,</span>
+    <span class="n">TfidfConfig</span><span class="p">,</span>
+    <span class="n">Word2VecVectorizerConfig</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.pipeline_reports</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">OpinionReportData</span><span class="p">,</span>
@@ -459,13 +463,58 @@
 
     <span class="n">configs</span> <span class="o">=</span> <span class="n">_build_sweep_configs</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
     <span class="n">stage</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;stage&quot;</span><span class="p">,</span> <span class="s2">&quot;full&quot;</span><span class="p">)</span>
-    <span class="n">reuse_sweeps</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">overwrite</span>
+    <span class="n">reuse_sweeps</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;reuse_sweeps&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+    <span class="n">reuse_sweeps_source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s2">&quot;--reuse-sweeps&quot;</span> <span class="k">if</span> <span class="n">reuse_sweeps</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">reuse_sweeps_env</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;XGB_REUSE_SWEEPS&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">reuse_sweeps_env</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">reuse_sweeps</span> <span class="o">=</span> <span class="n">reuse_sweeps_env</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;0&quot;</span><span class="p">,</span> <span class="s2">&quot;false&quot;</span><span class="p">,</span> <span class="s2">&quot;no&quot;</span><span class="p">}</span>
+        <span class="n">reuse_sweeps_source</span> <span class="o">=</span> <span class="s2">&quot;XGB_REUSE_SWEEPS&quot;</span>
+    <span class="k">if</span> <span class="n">reuse_sweeps</span><span class="p">:</span>
+        <span class="n">detail</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot; (</span><span class="si">{</span><span class="n">reuse_sweeps_source</span><span class="si">}</span><span class="s2">)&quot;</span> <span class="k">if</span> <span class="n">reuse_sweeps_source</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;Cached sweep metrics reuse enabled</span><span class="si">%s</span><span class="s2">; stale artefacts will be used when present.&quot;</span><span class="p">,</span>
+            <span class="n">detail</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Cached sweep metrics reuse disabled; sweeps will recompute results.&quot;</span><span class="p">)</span>
     <span class="n">reuse_final</span> <span class="o">=</span> <span class="n">reuse_sweeps</span>
+    <span class="n">reuse_final_source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s2">&quot;sweep reuse default&quot;</span> <span class="k">if</span> <span class="n">reuse_final</span> <span class="k">else</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">reuse_final</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">reuse_final</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">reuse_final</span>
+        <span class="n">reuse_final_source</span> <span class="o">=</span> <span class="s2">&quot;--reuse-final&quot;</span>
     <span class="n">reuse_final_env</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;XGB_REUSE_FINAL&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">reuse_final_env</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">reuse_final</span> <span class="o">=</span> <span class="n">reuse_final_env</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;0&quot;</span><span class="p">,</span> <span class="s2">&quot;false&quot;</span><span class="p">,</span> <span class="s2">&quot;no&quot;</span><span class="p">}</span>
+        <span class="n">reuse_final_source</span> <span class="o">=</span> <span class="s2">&quot;XGB_REUSE_FINAL&quot;</span>
+    <span class="k">if</span> <span class="n">reuse_final</span><span class="p">:</span>
+        <span class="n">detail</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot; (</span><span class="si">{</span><span class="n">reuse_final_source</span><span class="si">}</span><span class="s2">)&quot;</span> <span class="k">if</span> <span class="n">reuse_final_source</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;Finalize-stage reuse enabled</span><span class="si">%s</span><span class="s2">; cached evaluation artefacts may be consumed.&quot;</span><span class="p">,</span>
+            <span class="n">detail</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="n">max_features_value</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">max_features</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">max_features</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">tfidf_config</span> <span class="o">=</span> <span class="n">TfidfConfig</span><span class="p">(</span><span class="n">max_features</span><span class="o">=</span><span class="n">max_features_value</span><span class="p">)</span>
+    <span class="n">word2vec_model_base</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">word2vec_model_dir</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">word2vec_model_dir</span>
+        <span class="k">else</span> <span class="kc">None</span>
+    <span class="p">)</span>
+    <span class="n">word2vec_config</span> <span class="o">=</span> <span class="n">Word2VecVectorizerConfig</span><span class="p">(</span>
+        <span class="n">vector_size</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">word2vec_size</span><span class="p">,</span>
+        <span class="n">window</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">word2vec_window</span><span class="p">,</span>
+        <span class="n">min_count</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">word2vec_min_count</span><span class="p">,</span>
+        <span class="n">epochs</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">word2vec_epochs</span><span class="p">,</span>
+        <span class="n">workers</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">word2vec_workers</span><span class="p">,</span>
+        <span class="n">seed</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span>
+        <span class="n">model_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">sentence_transformer_config</span> <span class="o">=</span> <span class="n">SentenceTransformerVectorizerConfig</span><span class="p">(</span>
+        <span class="n">model_name</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">sentence_transformer_model</span><span class="p">,</span>
+        <span class="n">device</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">sentence_transformer_device</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">sentence_transformer_batch_size</span><span class="p">,</span>
+        <span class="n">normalize</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">sentence_transformer_normalize</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="n">sweep_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">sweep_context</span><span class="p">:</span> <span class="n">SweepRunContext</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -487,9 +536,13 @@
             <span class="n">extra_fields</span><span class="o">=</span><span class="n">extra_fields_tuple</span><span class="p">,</span>
             <span class="n">max_participants</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">opinion_max_participants</span><span class="p">,</span>
             <span class="n">seed</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span>
-            <span class="n">max_features</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">max_features</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">max_features</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">max_features</span><span class="o">=</span><span class="n">max_features_value</span><span class="p">,</span>
             <span class="n">tree_method</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">tree_method</span><span class="p">,</span>
             <span class="n">overwrite</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">overwrite</span><span class="p">,</span>
+            <span class="n">tfidf_config</span><span class="o">=</span><span class="n">tfidf_config</span><span class="p">,</span>
+            <span class="n">word2vec_config</span><span class="o">=</span><span class="n">word2vec_config</span><span class="p">,</span>
+            <span class="n">sentence_transformer_config</span><span class="o">=</span><span class="n">sentence_transformer_config</span><span class="p">,</span>
+            <span class="n">word2vec_model_base</span><span class="o">=</span><span class="n">word2vec_model_base</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">opinion_sweep_context</span><span class="o">.</span><span class="n">sweep_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -503,9 +556,13 @@
             <span class="n">studies</span><span class="o">=</span><span class="n">study_tokens_tuple</span><span class="p">,</span>
             <span class="n">max_participants</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">opinion_max_participants</span><span class="p">,</span>
             <span class="n">seed</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span>
-            <span class="n">max_features</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">max_features</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">max_features</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">max_features</span><span class="o">=</span><span class="n">max_features_value</span><span class="p">,</span>
             <span class="n">tree_method</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">tree_method</span><span class="p">,</span>
             <span class="n">overwrite</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">overwrite</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">reuse_final</span><span class="p">,</span>
+            <span class="n">tfidf_config</span><span class="o">=</span><span class="n">tfidf_config</span><span class="p">,</span>
+            <span class="n">word2vec_config</span><span class="o">=</span><span class="n">word2vec_config</span><span class="p">,</span>
+            <span class="n">sentence_transformer_config</span><span class="o">=</span><span class="n">sentence_transformer_config</span><span class="p">,</span>
+            <span class="n">word2vec_model_base</span><span class="o">=</span><span class="n">word2vec_model_base</span><span class="p">,</span>
             <span class="n">reuse_existing</span><span class="o">=</span><span class="n">reuse_final</span><span class="p">,</span>
         <span class="p">)</span>
 
@@ -549,66 +606,49 @@
         <span class="k">return</span>
 
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">dry_run</span><span class="p">:</span>
-        <span class="n">summaries</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DryRunSummary</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">if</span> <span class="n">run_next_video</span><span class="p">:</span>
-            <span class="n">summaries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">DryRunSummary</span><span class="p">(</span>
-                    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;next-video&quot;</span><span class="p">,</span>
-                    <span class="n">pending</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">planned_slate_tasks</span><span class="p">),</span>
-                    <span class="n">cached</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">cached_slate_planned</span><span class="p">),</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-        <span class="k">if</span> <span class="n">run_opinion</span><span class="p">:</span>
-            <span class="n">summaries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">DryRunSummary</span><span class="p">(</span>
-                    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;opinion&quot;</span><span class="p">,</span>
-                    <span class="n">pending</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">planned_opinion_tasks</span><span class="p">),</span>
-                    <span class="n">cached</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">cached_opinion_planned</span><span class="p">),</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-        <span class="n">log_dry_run_summary</span><span class="p">(</span><span class="n">LOGGER</span><span class="p">,</span> <span class="n">summaries</span><span class="p">)</span>
+        <span class="n">emit_stage_dry_run_summary</span><span class="p">(</span>
+            <span class="n">LOGGER</span><span class="p">,</span>
+            <span class="n">include_next</span><span class="o">=</span><span class="n">run_next_video</span><span class="p">,</span>
+            <span class="n">next_label</span><span class="o">=</span><span class="s2">&quot;next-video&quot;</span><span class="p">,</span>
+            <span class="n">next_pending</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">planned_slate_tasks</span><span class="p">),</span>
+            <span class="n">next_cached</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">cached_slate_planned</span><span class="p">),</span>
+            <span class="n">include_opinion</span><span class="o">=</span><span class="n">run_opinion</span><span class="p">,</span>
+            <span class="n">opinion_pending</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">planned_opinion_tasks</span><span class="p">),</span>
+            <span class="n">opinion_cached</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">cached_opinion_planned</span><span class="p">),</span>
+        <span class="p">)</span>
         <span class="k">return</span>
 
     <span class="k">if</span> <span class="n">stage</span> <span class="o">==</span> <span class="s2">&quot;sweeps&quot;</span><span class="p">:</span>
-        <span class="n">partitions</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">if</span> <span class="n">run_next_video</span><span class="p">:</span>
-            <span class="k">def</span><span class="w"> </span><span class="nf">describe_cached</span><span class="p">(</span><span class="n">outcome</span><span class="p">):</span>
-                <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">issue</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">outcome</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="c1"># Skip execution for cached tasks so the sweeps stage only fills gaps. Removing</span>
+        <span class="c1"># the cached artefacts before invocation forces recomputation when needed.</span>
+        <span class="n">reuse_cached_metrics</span> <span class="o">=</span> <span class="kc">True</span>
 
-            <span class="n">partitions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">build_sweep_partition</span><span class="p">(</span>
-                    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;next-video&quot;</span><span class="p">,</span>
-                    <span class="n">pending</span><span class="o">=</span><span class="n">planned_slate_tasks</span><span class="p">,</span>
-                    <span class="n">cached</span><span class="o">=</span><span class="n">cached_slate_planned</span><span class="p">,</span>
-                    <span class="n">reuse_existing</span><span class="o">=</span><span class="n">reuse_sweeps</span><span class="p">,</span>
-                    <span class="n">executors</span><span class="o">=</span><span class="n">SweepPartitionExecutors</span><span class="p">(</span>
-                        <span class="n">execute_task</span><span class="o">=</span><span class="k">lambda</span> <span class="n">task</span><span class="p">:</span> <span class="n">_execute_sweep_tasks</span><span class="p">([</span><span class="n">task</span><span class="p">],</span> <span class="n">jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
-                        <span class="n">describe_pending</span><span class="o">=</span><span class="n">_format_sweep_task_descriptor</span><span class="p">,</span>
-                        <span class="n">describe_cached</span><span class="o">=</span><span class="n">describe_cached</span><span class="p">,</span>
-                    <span class="p">),</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-        <span class="k">if</span> <span class="n">run_opinion</span><span class="p">:</span>
-            <span class="k">def</span><span class="w"> </span><span class="nf">describe_opinion_cached</span><span class="p">(</span><span class="n">outcome</span><span class="p">):</span>
-                <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">issue</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">outcome</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_describe_slate_cached</span><span class="p">(</span><span class="n">outcome</span><span class="p">):</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">outcome</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">issue</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">outcome</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
 
-            <span class="k">def</span><span class="w"> </span><span class="nf">execute_opinion_task</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">_execute_opinion_sweep_tasks</span><span class="p">([</span><span class="n">task</span><span class="p">],</span> <span class="n">jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_execute_opinion_task</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">_execute_opinion_sweep_tasks</span><span class="p">([</span><span class="n">task</span><span class="p">],</span> <span class="n">jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
-            <span class="n">partitions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">build_sweep_partition</span><span class="p">(</span>
-                    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;opinion&quot;</span><span class="p">,</span>
-                    <span class="n">pending</span><span class="o">=</span><span class="n">planned_opinion_tasks</span><span class="p">,</span>
-                    <span class="n">cached</span><span class="o">=</span><span class="n">cached_opinion_planned</span><span class="p">,</span>
-                    <span class="n">reuse_existing</span><span class="o">=</span><span class="n">reuse_sweeps</span><span class="p">,</span>
-                    <span class="n">executors</span><span class="o">=</span><span class="n">SweepPartitionExecutors</span><span class="p">(</span>
-                        <span class="n">execute_task</span><span class="o">=</span><span class="n">execute_opinion_task</span><span class="p">,</span>
-                        <span class="n">describe_pending</span><span class="o">=</span><span class="n">_format_opinion_sweep_task_descriptor</span><span class="p">,</span>
-                        <span class="n">describe_cached</span><span class="o">=</span><span class="n">describe_opinion_cached</span><span class="p">,</span>
-                    <span class="p">),</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-
+        <span class="n">partitions</span> <span class="o">=</span> <span class="n">build_standard_sweeps_partitions</span><span class="p">(</span>
+            <span class="n">include_next</span><span class="o">=</span><span class="n">run_next_video</span><span class="p">,</span>
+            <span class="n">next_label</span><span class="o">=</span><span class="s2">&quot;next-video&quot;</span><span class="p">,</span>
+            <span class="n">next_pending</span><span class="o">=</span><span class="n">planned_slate_tasks</span><span class="p">,</span>
+            <span class="n">next_cached</span><span class="o">=</span><span class="n">cached_slate_planned</span><span class="p">,</span>
+            <span class="n">next_executors</span><span class="o">=</span><span class="n">SweepPartitionExecutors</span><span class="p">(</span>
+                <span class="n">execute_task</span><span class="o">=</span><span class="k">lambda</span> <span class="n">task</span><span class="p">:</span> <span class="n">_execute_sweep_tasks</span><span class="p">([</span><span class="n">task</span><span class="p">],</span> <span class="n">jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="n">describe_pending</span><span class="o">=</span><span class="n">_format_sweep_task_descriptor</span><span class="p">,</span>
+                <span class="n">describe_cached</span><span class="o">=</span><span class="n">_describe_slate_cached</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">include_opinion</span><span class="o">=</span><span class="n">run_opinion</span><span class="p">,</span>
+            <span class="n">opinion_pending</span><span class="o">=</span><span class="n">planned_opinion_tasks</span><span class="p">,</span>
+            <span class="n">opinion_cached</span><span class="o">=</span><span class="n">cached_opinion_planned</span><span class="p">,</span>
+            <span class="n">opinion_executors</span><span class="o">=</span><span class="n">SweepPartitionExecutors</span><span class="p">(</span>
+                <span class="n">execute_task</span><span class="o">=</span><span class="n">_execute_opinion_task</span><span class="p">,</span>
+                <span class="n">describe_pending</span><span class="o">=</span><span class="n">_format_opinion_sweep_task_descriptor</span><span class="p">,</span>
+                <span class="n">describe_cached</span><span class="o">=</span><span class="k">lambda</span> <span class="n">o</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">o</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">o</span><span class="o">.</span><span class="n">study</span><span class="o">.</span><span class="n">issue</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">o</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">reuse_existing</span><span class="o">=</span><span class="n">reuse_cached_metrics</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="n">dispatch_cli_partitions</span><span class="p">(</span>
             <span class="n">partitions</span><span class="p">,</span>
             <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
@@ -844,7 +884,11 @@
     <span class="n">final_metrics</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">loso_metrics</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">if</span> <span class="n">run_next_video</span> <span class="ow">and</span> <span class="n">final_eval_context</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">final_metrics</span> <span class="o">=</span> <span class="n">_run_final_evaluations</span><span class="p">(</span><span class="n">selections</span><span class="o">=</span><span class="n">selections</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">final_eval_context</span><span class="p">)</span>
+        <span class="n">final_metrics</span> <span class="o">=</span> <span class="n">_run_final_evaluations</span><span class="p">(</span>
+            <span class="n">selections</span><span class="o">=</span><span class="n">selections</span><span class="p">,</span>
+            <span class="n">studies</span><span class="o">=</span><span class="n">study_specs</span><span class="p">,</span>
+            <span class="n">context</span><span class="o">=</span><span class="n">final_eval_context</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="n">loso_metrics</span> <span class="o">=</span> <span class="n">_run_cross_study_evaluations</span><span class="p">(</span>
             <span class="n">selections</span><span class="o">=</span><span class="n">selections</span><span class="p">,</span>
             <span class="n">studies</span><span class="o">=</span><span class="n">study_specs</span><span class="p">,</span>

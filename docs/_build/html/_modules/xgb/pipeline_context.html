@@ -295,6 +295,11 @@
 <span class="p">)</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">XGBoostBoosterParams</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.vectorizers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SentenceTransformerVectorizerConfig</span><span class="p">,</span>
+    <span class="n">TfidfConfig</span><span class="p">,</span>
+    <span class="n">Word2VecVectorizerConfig</span><span class="p">,</span>
+<span class="p">)</span>
 
 
 <span class="c1"># pylint: disable=too-many-instance-attributes</span>
@@ -456,9 +461,12 @@
 
 <span class="sd">    :param tree_method: Tree construction algorithm supplied to XGBoost.</span>
 <span class="sd">    :type tree_method: str</span>
+<span class="sd">    :param train_participant_studies: Participant study keys used for training.</span>
+<span class="sd">    :type train_participant_studies: Tuple[str, ...]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">tree_method</span><span class="p">:</span> <span class="nb">str</span></div>
+    <span class="n">tree_method</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">train_participant_studies</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">tuple</span><span class="p">)</span></div>
 
 
 
@@ -562,6 +570,14 @@
 <span class="sd">    :type tree_method: str</span>
 <span class="sd">    :param overwrite: Flag controlling whether existing artefacts may be overwritten.</span>
 <span class="sd">    :type overwrite: bool</span>
+<span class="sd">    :param tfidf_config: TF-IDF vectoriser configuration applied during evaluation.</span>
+<span class="sd">    :type tfidf_config: TfidfConfig</span>
+<span class="sd">    :param word2vec_config: Word2Vec vectoriser configuration applied during evaluation.</span>
+<span class="sd">    :type word2vec_config: Word2VecVectorizerConfig</span>
+<span class="sd">    :param sentence_transformer_config: Sentence-transformer configuration for evaluations.</span>
+<span class="sd">    :type sentence_transformer_config: SentenceTransformerVectorizerConfig</span>
+<span class="sd">    :param word2vec_model_base: Optional base directory for Word2Vec model artefacts.</span>
+<span class="sd">    :type word2vec_model_base: Optional[Path]</span>
 <span class="sd">    :param reuse_existing: Flag enabling reuse of cached results.</span>
 <span class="sd">    :type reuse_existing: bool</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -576,6 +592,10 @@
     <span class="n">max_features</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
     <span class="n">tree_method</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">tfidf_config</span><span class="p">:</span> <span class="n">TfidfConfig</span>
+    <span class="n">word2vec_config</span><span class="p">:</span> <span class="n">Word2VecVectorizerConfig</span>
+    <span class="n">sentence_transformer_config</span><span class="p">:</span> <span class="n">SentenceTransformerVectorizerConfig</span>
+    <span class="n">word2vec_model_base</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span>
     <span class="n">reuse_existing</span><span class="p">:</span> <span class="nb">bool</span></div>
 
 
@@ -608,9 +628,12 @@
 
 <span class="sd">    :param request_args: Keyword arguments passed to :func:`run_opinion_eval`.</span>
 <span class="sd">    :type request_args: Mapping[str, object]</span>
+<span class="sd">    :param feature_space: Feature space evaluated by the sweep task.</span>
+<span class="sd">    :type feature_space: str</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">request_args</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span></div>
+    <span class="n">request_args</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span>
+    <span class="n">feature_space</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;tfidf&quot;</span></div>
 
 
 <span class="n">OpinionStudySelection</span> <span class="o">=</span> <span class="n">narrow_opinion_selection</span><span class="p">(</span><span class="n">OpinionSweepOutcome</span><span class="p">)</span>
@@ -642,6 +665,14 @@
 <span class="sd">    :type tree_method: str</span>
 <span class="sd">    :param overwrite: Flag controlling whether existing artefacts may be overwritten.</span>
 <span class="sd">    :type overwrite: bool</span>
+<span class="sd">    :param tfidf_config: TF-IDF vectoriser configuration applied during sweeps.</span>
+<span class="sd">    :type tfidf_config: TfidfConfig</span>
+<span class="sd">    :param word2vec_config: Word2Vec configuration applied during sweeps.</span>
+<span class="sd">    :type word2vec_config: Word2VecVectorizerConfig</span>
+<span class="sd">    :param sentence_transformer_config: Sentence-transformer configuration for sweeps.</span>
+<span class="sd">    :type sentence_transformer_config: SentenceTransformerVectorizerConfig</span>
+<span class="sd">    :param word2vec_model_base: Optional root directory for Word2Vec artefacts.</span>
+<span class="sd">    :type word2vec_model_base: Optional[Path]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span>
@@ -652,7 +683,11 @@
     <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">max_features</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
     <span class="n">tree_method</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span></div>
+    <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">tfidf_config</span><span class="p">:</span> <span class="n">TfidfConfig</span>
+    <span class="n">word2vec_config</span><span class="p">:</span> <span class="n">Word2VecVectorizerConfig</span>
+    <span class="n">sentence_transformer_config</span><span class="p">:</span> <span class="n">SentenceTransformerVectorizerConfig</span>
+    <span class="n">word2vec_model_base</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span></div>
 
 
 
@@ -668,10 +703,16 @@
 <span class="sd">    :type accuracy: Optional[float]</span>
 <span class="sd">    :param coverage: Validation coverage capturing known candidate recall.</span>
 <span class="sd">    :type coverage: Optional[float]</span>
+<span class="sd">    :param accuracy_eligible: Accuracy computed on eligible rows only.</span>
+<span class="sd">    :type accuracy_eligible: Optional[float]</span>
 <span class="sd">    :param evaluated: Number of evaluation rows.</span>
 <span class="sd">    :type evaluated: Optional[int]</span>
 <span class="sd">    :param correct: Number of correct predictions.</span>
 <span class="sd">    :type correct: Optional[int]</span>
+<span class="sd">    :param correct_eligible: Number of correct predictions among eligible rows.</span>
+<span class="sd">    :type correct_eligible: Optional[int]</span>
+<span class="sd">    :param eligible: Total number of eligible rows contributing to eligible-only metrics.</span>
+<span class="sd">    :type eligible: Optional[int]</span>
 <span class="sd">    :param known_hits: Correct predictions among known candidates.</span>
 <span class="sd">    :type known_hits: Optional[int]</span>
 <span class="sd">    :param known_total: Evaluations featuring at least one known candidate.</span>
@@ -680,6 +721,12 @@
 <span class="sd">    :type known_availability: Optional[float]</span>
 <span class="sd">    :param avg_probability: Mean probability recorded for known predictions.</span>
 <span class="sd">    :type avg_probability: Optional[float]</span>
+<span class="sd">    :param baseline_most_frequent_accuracy:</span>
+<span class="sd">        Accuracy achieved by recommending the most frequent gold index.</span>
+<span class="sd">    :type baseline_most_frequent_accuracy: Optional[float]</span>
+<span class="sd">    :param random_baseline_accuracy:</span>
+<span class="sd">        Expected accuracy from uniformly sampling a slate candidate.</span>
+<span class="sd">    :type random_baseline_accuracy: Optional[float]</span>
 <span class="sd">    :param dataset: Dataset identifier.</span>
 <span class="sd">    :type dataset: Optional[str]</span>
 <span class="sd">    :param issue: Issue key under evaluation.</span>
@@ -692,12 +739,17 @@
 
     <span class="n">accuracy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">coverage</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">accuracy_eligible</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">evaluated</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">correct</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">correct_eligible</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">eligible</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">known_hits</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">known_total</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">known_availability</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">avg_probability</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">baseline_most_frequent_accuracy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">random_baseline_accuracy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">issue</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">issue_label</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>

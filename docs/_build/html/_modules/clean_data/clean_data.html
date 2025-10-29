@@ -269,17 +269,7 @@
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 
-<span class="sd">&quot;&quot;&quot;Top-level orchestration helpers for the ``clean_data`` package.</span>
-
-<span class="sd">This module stitches together the key pieces of the cleaning pipeline:</span>
-<span class="sd">loading raw CodeOcean or Hugging Face datasets, filtering unusable rows,</span>
-<span class="sd">converting interactions into prompt-ready examples, validating schema</span>
-<span class="sd">requirements, saving artifacts, and dispatching prompt statistics reports.</span>
-<span class="sd">It is the public surface that downstream tooling should import when they</span>
-<span class="sd">need to build or persist cleaned prompt datasets. All functionality here is</span>
-<span class="sd">distributed under the repository&#39;s Apache 2.0 license; see LICENSE for</span>
-<span class="sd">details.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;Orchestrates loading, filtering, validation, persistence, and reporting for ``clean_data`` datasets (Apache 2.0; see LICENSE).&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -290,15 +280,58 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">io</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">lzma</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">types</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">zipfile</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">lru_cache</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
 
+<span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>  <span class="c1"># type: ignore</span>
+<span class="k">except</span> <span class="p">(</span><span class="ne">ImportError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">,</span> <span class="ne">RuntimeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+    <span class="n">torch</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">clean_data.filters</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_issue_counts</span><span class="p">,</span> <span class="n">filter_prompt_ready</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">clean_data.prompt.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">REQUIRED_PROMPT_COLUMNS</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">clean_data.prompting</span><span class="w"> </span><span class="kn">import</span> <span class="n">row_to_example</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_ensure_torch_env_compat</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Patch an installed or stubbed torch module for HF datasets compatibility.</span>
+
+<span class="sd">    Some test environments install extremely lightweight torch stubs that</span>
+<span class="sd">    don&#39;t expose class-like ``Tensor`` or required submodules. The Hugging Face</span>
+<span class="sd">    ``datasets`` pickler checks for ``torch`` and calls ``issubclass(..., torch.Tensor)``,</span>
+<span class="sd">    which raises a ``TypeError`` if ``torch.Tensor`` is not a class. This helper</span>
+<span class="sd">    ensures the minimal attributes exist when a ``torch`` module is present.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">torch</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="c1"># Guarantee class-like attributes expected by datasets&#39; dill integration</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">torch</span><span class="p">,</span> <span class="s2">&quot;Tensor&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">),</span> <span class="nb">type</span><span class="p">):</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">torch</span><span class="p">,</span> <span class="s2">&quot;Tensor&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="s2">&quot;Tensor&quot;</span><span class="p">,</span> <span class="p">(),</span> <span class="p">{}))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">torch</span><span class="p">,</span> <span class="s2">&quot;Generator&quot;</span><span class="p">):</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">torch</span><span class="p">,</span> <span class="s2">&quot;Generator&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="s2">&quot;Generator&quot;</span><span class="p">,</span> <span class="p">(),</span> <span class="p">{}))</span>
+    <span class="c1"># Provide torch.nn.Module for isinstance checks if missing</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">torch</span><span class="p">,</span> <span class="s2">&quot;nn&quot;</span><span class="p">):</span>
+        <span class="n">nn_mod</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">ModuleType</span><span class="p">(</span><span class="s2">&quot;torch.nn&quot;</span><span class="p">)</span>
+        <span class="n">nn_mod</span><span class="o">.</span><span class="n">Module</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="s2">&quot;Module&quot;</span><span class="p">,</span> <span class="p">(),</span> <span class="p">{})</span>  <span class="c1"># type: ignore[attr-defined]</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">nn</span> <span class="o">=</span> <span class="n">nn_mod</span>  <span class="c1"># type: ignore[attr-defined]</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;torch.nn&quot;</span><span class="p">,</span> <span class="n">nn_mod</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;torch.nn&quot;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="p">)</span>
+    <span class="c1"># Provide a distributed stub with is_available flag</span>
+    <span class="n">dist_mod</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">torch</span><span class="p">,</span> <span class="s2">&quot;distributed&quot;</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">ModuleType</span><span class="p">(</span><span class="s2">&quot;torch.distributed&quot;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">dist_mod</span><span class="p">,</span> <span class="s2">&quot;is_available&quot;</span><span class="p">):</span>
+        <span class="n">dist_mod</span><span class="o">.</span><span class="n">is_available</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="kc">False</span>  <span class="c1"># type: ignore[attr-defined]</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">distributed</span> <span class="o">=</span> <span class="n">dist_mod</span>  <span class="c1"># type: ignore[attr-defined]</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;torch.distributed&quot;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributed</span><span class="p">)</span>
+
+
+<span class="n">_ensure_torch_env_compat</span><span class="p">()</span>
 
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">datasets</span>

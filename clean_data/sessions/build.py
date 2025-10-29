@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Copyright 2025 The Grail Simulation Contributors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -176,7 +177,12 @@ class _ParticipantSessionMeta:
 
 
 def _session_info(sess: dict, watched_details: List[Dict[str, Any]]) -> SessionInfo:
-    """Build reusable identifiers and payloads for a session."""
+    """Build reusable identifiers and payloads for a session.
+
+    :param sess: Raw session dictionary emitted by ``sessions.json``.
+    :param watched_details: Sequence of normalized watched-video metadata entries.
+    :returns: Populated :class:`SessionInfo` describing the session identifiers.
+    """
 
     session_id = str(sess.get("sessionID") or sess.get("session_id") or "").strip()
     anon_id = str(sess.get("anonymousFirebaseAuthUID") or "").strip()
@@ -204,7 +210,14 @@ def _resolve_issue_and_surveys(
     watched_details: List[Dict[str, Any]],
     surveys: Dict[str, Dict[str, List[Dict[str, Any]]]],
 ) -> Tuple[str, List[Dict[str, Any]]]:
-    """Derive the canonical issue and survey rows associated with the session."""
+    """Derive the canonical issue and survey rows associated with the session.
+
+    :param sess: Raw session payload.
+    :param info: Session identifiers constructed by :func:`_session_info`.
+    :param watched_details: Normalized watched-video metadata for the session.
+    :param surveys: Mapping of issue -> urlid -> survey rows.
+    :returns: Tuple of canonical issue slug and associated survey rows.
+    """
 
     canonical_issue: Optional[str] = None
     survey_rows: List[Dict[str, Any]] = []
@@ -238,7 +251,14 @@ def _build_session_context(
     resources: _SessionResources,
     state: _SessionBuildState,
 ) -> Optional[_SessionContext]:
-    """Normalize the session payload into reusable components."""
+    """Normalize the session payload into reusable components.
+
+    :param sess: Raw session dictionary from the CodeOcean export.
+    :param resources: Preloaded survey, tree, and metadata resources.
+    :param state: Mutable build state tracking statistics and caches.
+    :returns: Session context bundle ready for step construction, or ``None`` when the
+        session should be skipped.
+    """
 
     state.interaction_stats["sessions_total"] += 1
     raw_vids = [
@@ -304,7 +324,11 @@ def _build_session_context(
 
 
 def _participant_metadata(context: _SessionContext) -> _ParticipantSessionMeta:
-    """Return participant identifiers and study metadata for the session."""
+    """Return participant identifiers and study metadata for the session.
+
+    :param context: Session context created by :func:`_build_session_context`.
+    :returns: Participant metadata including resolved identifiers and survey row.
+    """
 
     if context.candidate_entries:
         _, _, worker_value, case_value, study_label, survey_row = context.candidate_entries[0]
@@ -351,7 +375,13 @@ def _fallback_title_for_next(
     idx: int,
     next_base: str,
 ) -> str:
-    """Return a fallback title for the next video when slate metadata omits it."""
+    """Return a fallback title for the next video when slate metadata omits it.
+
+    :param context: Session context used to inspect watched details.
+    :param idx: Index of the current interaction step.
+    :param next_base: Canonical base id of the next video.
+    :returns: Title string to use when slate metadata lacks a title.
+    """
 
     if idx + 1 < len(context.watched_details):
         candidate = context.watched_details[idx + 1].get("title") or ""
@@ -367,7 +397,15 @@ def _build_step_row(
     state: _SessionBuildState,
     resources: _SessionResources,
 ) -> Optional[Dict[str, Any]]:
-    """Construct a single interaction row for the given step."""
+    """Construct a single interaction row for the given step.
+
+    :param idx: Zero-based interaction index within the session.
+    :param context: Session context bundle with watch and slate data.
+    :param participant_meta: Participant metadata resolved for the session.
+    :param state: Mutable build state storing statistics and caches.
+    :param resources: Shared resources including recommendation trees and allowlists.
+    :returns: Row dictionary representing the interaction, or ``None`` if skipped.
+    """
 
     next_base = context.base_vids[idx + 1]
     if not next_base:
@@ -470,7 +508,12 @@ def _collect_session_rows(
     resources: _SessionResources,
     state: _SessionBuildState,
 ) -> None:
-    """Append interaction rows for the session into ``state.rows``."""
+    """Append interaction rows for the session into ``state.rows``.
+
+    :param sess: Raw session payload.
+    :param resources: Shared metadata resources used during row construction.
+    :param state: Mutable build state capturing output rows and stats.
+    """
 
     context = _build_session_context(sess, resources, state)
     if context is None:
@@ -494,7 +537,11 @@ def _collect_session_rows(
 
 
 def build_codeocean_rows(data_root: Path) -> pd.DataFrame:
-    """Construct the full interaction dataframe from raw CodeOcean assets."""
+    """Construct the full interaction dataframe from raw CodeOcean assets.
+
+    :param data_root: Path to the CodeOcean capsule ``data`` directory.
+    :returns: Dataframe containing cleaned interaction rows per session pair.
+    """
 
     data_root = Path(data_root)
     sessions = load_sessions_from_capsule(data_root)
@@ -527,13 +574,22 @@ def build_codeocean_rows(data_root: Path) -> pd.DataFrame:
 def split_dataframe(
     interaction_frame: pd.DataFrame, validation_ratio: float = 0.1
 ) -> Dict[str, pd.DataFrame]:
-    """Split dataframe into train/validation partitions grouped by participant."""
+    """Split dataframe into train/validation partitions grouped by participant.
+
+    :param interaction_frame: Full interaction dataframe produced by ``build_codeocean_rows``.
+    :param validation_ratio: Share of participant groups assigned to the validation split.
+    :returns: Mapping of split name to dataframe subset.
+    """
 
     if interaction_frame.empty:
         return {"train": interaction_frame}
 
     def _pick_group(row_idx: int) -> str:
-        """Return a partition key for the participant/session of ``row_idx``."""
+        """Return a partition key for the participant/session of ``row_idx``.
+
+        :param row_idx: Index of the row in ``interaction_frame``.
+        :returns: Stable grouping key ensuring all related rows share a split.
+        """
 
         urlid = str(interaction_frame.iloc[row_idx].get("urlid") or "").strip()
         session = str(interaction_frame.iloc[row_idx].get("session_id") or "").strip()

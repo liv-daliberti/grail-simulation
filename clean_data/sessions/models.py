@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Copyright 2025 The Grail Simulation Contributors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -66,7 +67,11 @@ class AllowlistState:
 
     @classmethod
     def from_mapping(cls, mapping: Dict[str, Dict[str, Set[str]]]) -> "AllowlistState":
-        """Create an allowlist state from the nested mapping used on disk."""
+        """Create an allowlist state from the nested mapping used on disk.
+
+        :param mapping: Nested mapping of issue -> bucket -> identifier set.
+        :returns: Initialized :class:`AllowlistState` populated with identifier sets.
+        """
 
         wage = mapping.get("minimum_wage", {})
         return cls(
@@ -79,7 +84,11 @@ class AllowlistState:
         )
 
     def requires_enforcement(self, topic: str) -> bool:
-        """Return ``True`` when the given topic should be filtered by allowlists."""
+        """Return ``True`` when the given topic should be filtered by allowlists.
+
+        :param topic: Topic/issue string extracted from the session payload.
+        :returns: ``True`` when allowlist enforcement is required.
+        """
 
         topic_lower = topic.lower()
         if topic_lower == "gun_control":
@@ -100,7 +109,13 @@ class AllowlistState:
         worker_candidate: str,
         case_candidate: str,
     ) -> Tuple[str, Optional[str], bool]:
-        """Return ``(study_label, participant_token, valid)`` for minimum wage topics."""
+        """Return ``(study_label, participant_token, valid)`` for minimum wage topics.
+
+        :param urlid: URL identifier associated with the session.
+        :param worker_candidate: Candidate worker id extracted from survey/session.
+        :param case_candidate: Candidate case id extracted from survey/session.
+        :returns: Tuple of resolved study label, participant token, and validity flag.
+        """
 
         urlid_norm = urlid or ""
         if (

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Copyright 2025 The Grail Simulation Contributors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +27,11 @@ from clean_data.helpers import (
 
 
 def _normalize_display_step_index(key: Any) -> Optional[int]:
-    """Return the zero-based step index encoded by the display-order key."""
+    """Return the zero-based step index encoded by the display-order key.
+
+    :param key: Arbitrary key from the ``displayOrders`` payload.
+    :returns: Zero-based step index or ``None`` when parsing fails.
+    """
 
     if isinstance(key, int):
         return key if key >= 0 else None
@@ -41,7 +46,11 @@ def _normalize_display_step_index(key: Any) -> Optional[int]:
 
 
 def normalize_display_orders(display_orders: Any) -> Dict[int, List[str]]:
-    """Return normalized mapping from step index to canonical video ids."""
+    """Return normalized mapping from step index to canonical video ids.
+
+    :param display_orders: Raw ``displayOrders`` mapping from the session payload.
+    :returns: Mapping of step index to canonicalized video id strings.
+    """
 
     normalized: Dict[int, List[str]] = {}
     if not isinstance(display_orders, dict):
@@ -70,7 +79,13 @@ def _gather_slate_candidates(
     display_orders: Dict[int, List[str]],
     recommendations: Optional[List[Dict[str, Any]]],
 ) -> Tuple[List[Tuple[str, Optional[str]]], str]:
-    """Return ordered ``(base_id, raw_id)`` candidates and their source."""
+    """Return ordered ``(base_id, raw_id)`` candidates and their source.
+
+    :param step_index: Current interaction step index.
+    :param display_orders: Normalized ``displayOrders`` mapping.
+    :param recommendations: Recommendation metadata emitted by the session.
+    :returns: Tuple of candidate list and string describing the data source.
+    """
 
     order_ids = display_orders.get(step_index, [])
     if order_ids:
@@ -106,7 +121,14 @@ def _make_slate_item(
     tree_meta: Dict[str, Dict[str, Any]],
     fallback_titles: Dict[str, Any],
 ) -> Dict[str, Any]:
-    """Construct a single slate entry with metadata fallbacks."""
+    """Construct a single slate entry with metadata fallbacks.
+
+    :param base_id: Canonical video identifier.
+    :param raw_id: Raw/alternate identifier for the candidate (optional).
+    :param tree_meta: Metadata mapping derived from recommendation trees.
+    :param fallback_titles: Mapping of video ids to fallback titles or metadata.
+    :returns: Slate item dictionary with id/title and optional metadata.
+    """
 
     meta = tree_meta.get(base_id, {})
     title_candidates = (
@@ -156,7 +178,15 @@ def build_slate_items(
     tree_meta: Dict[str, Dict[str, Any]],
     fallback_titles: Dict[str, Any],
 ) -> Tuple[List[Dict[str, Any]], str]:
-    """Derive the slate items for the given interaction step."""
+    """Derive the slate items for the given interaction step.
+
+    :param step_index: Current interaction step index.
+    :param display_orders: Normalized ``displayOrders`` mapping.
+    :param recommendations: Recommendation metadata emitted by the session.
+    :param tree_meta: Recommendation tree metadata keyed by video id.
+    :param fallback_titles: Mapping of fallback titles by video id.
+    :returns: Tuple containing slate item dictionaries and the source label.
+    """
 
     candidates, source = _gather_slate_candidates(
         step_index,
@@ -175,7 +205,11 @@ def build_slate_items(
 
 
 def load_slate_items(ex: dict) -> List[dict]:
-    """Parse ``slate_items_json`` into a normalized list of ``{title, id}`` dicts."""
+    """Parse ``slate_items_json`` into a normalized list of ``{title, id}`` dicts.
+
+    :param ex: Example/row dictionary containing ``slate_items_json``.
+    :returns: List of dictionaries with ``title`` and ``id`` keys.
+    """
 
     arr = _as_list_json(ex.get("slate_items_json"))
     out: List[dict] = []
@@ -190,7 +224,12 @@ def load_slate_items(ex: dict) -> List[dict]:
 
 
 def derive_next_from_history(ex: dict, current_id: str) -> str:
-    """Infer the next video id from the watch history when explicit labels are missing."""
+    """Infer the next video id from the watch history when explicit labels are missing.
+
+    :param ex: Example/row dictionary containing watch history fields.
+    :param current_id: Canonical id of the current video.
+    :returns: Derived next-video id or empty string when unavailable.
+    """
 
     vids = _as_list_json(ex.get("watched_vids_json"))
     if current_id and isinstance(vids, list) and vids:
@@ -216,7 +255,12 @@ def derive_next_from_history(ex: dict, current_id: str) -> str:
 
 
 def _normalize_candidate(value: Any, current_id: str) -> str:
-    """Return a cleaned gold-id candidate or ``""`` when unusable."""
+    """Return a cleaned gold-id candidate or ``\"\"`` when unusable.
+
+    :param value: Candidate value extracted from the row.
+    :param current_id: Canonical id of the current video.
+    :returns: Normalized candidate id or empty string when invalid.
+    """
 
     if value is None:
         return ""
@@ -234,6 +278,10 @@ def get_gold_next_id(ex: dict, sol_key: Optional[str]) -> str:
     downstream helpers saw empty gold ids and dropped otherwise valid rows.
     Restoring the legacy precedence keeps ``None`` working while still allowing
     explicit overrides when provided.
+
+    :param ex: Example/row dictionary providing slate and answer fields.
+    :param sol_key: Optional alternative column name containing the gold id.
+    :returns: Resolved gold next-video identifier.
     """
 
     current_id = _normalize_candidate(ex.get("current_video_id"), "") or ""
@@ -255,7 +303,12 @@ def get_gold_next_id(ex: dict, sol_key: Optional[str]) -> str:
 
 
 def gold_index_from_items(gold: str, items: List[dict]) -> int:
-    """Return 1-based index of the gold item within ``items``."""
+    """Return 1-based index of the gold item within ``items``.
+
+    :param gold: Canonical gold video identifier.
+    :param items: Sequence of slate item dictionaries.
+    :returns: One-based index for the gold item, or ``0`` when missing.
+    """
 
     if not gold or not items:
         return -1

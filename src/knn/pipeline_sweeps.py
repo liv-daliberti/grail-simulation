@@ -26,6 +26,7 @@ from __future__ import annotations
 import logging
 import os
 import json
+import re
 from itertools import product
 from pathlib import Path
 from typing import Dict, List, Mapping, Optional, Sequence, Tuple
@@ -176,26 +177,88 @@ def run_knn_cli(argv: Sequence[str]) -> None:
         return
     raise ValueError(f"Unsupported task '{namespace.task}'.")
 
-def _word2vec_param_grid(context: PipelineContext) -> Dict[str, Tuple[int, ...]]:
-    """Read word2vec sweep parameters from environment variables or defaults."""
+def _discover_existing_word2vec_workers(context: PipelineContext) -> Tuple[int, ...]:
+    """Return worker counts inferred from cached Word2Vec sweep artefacts."""
 
-    def _parse_env(name: str, default: str) -> Tuple[int, ...]:
-        return tuple(
-            int(token)
-            for token in os.environ.get(name, default).split(",")
-            if token.strip()
-        )
+    candidates: set[int] = set()
+    roots = [
+        context.sweep_dir / "word2vec",
+        context.word2vec_model_dir / "sweeps",
+    ]
+    for root in roots:
+        try:
+            entries = list(root.iterdir())
+        except FileNotFoundError:
+            continue
+        except NotADirectoryError:
+            continue
+        for study_dir in entries:
+            if not study_dir.is_dir():
+                continue
+            try:
+                config_dirs = list(study_dir.iterdir())
+            except FileNotFoundError:
+                continue
+            except NotADirectoryError:
+                continue
+            for config_dir in config_dirs:
+                if not config_dir.is_dir():
+                    continue
+                match = re.search(r"_workers(\d+)", config_dir.name)
+                if not match:
+                    continue
+                try:
+                    candidates.add(int(match.group(1)))
+                except ValueError:
+                    LOGGER.debug(
+                        "Ignoring malformed Word2Vec worker suffix in %s.",
+                        config_dir,
+                    )
+    return tuple(sorted(candidates))
+
+
+def _word2vec_param_grid(context: PipelineContext) -> Dict[str, Tuple[int, ...]]:
+    """Read Word2Vec sweep parameters from environment variables or cached artefacts."""
+
+    def _parse_env(name: str, defaults: Sequence[int]) -> Tuple[int, ...]:
+        raw = os.environ.get(name)
+        tokens = raw.split(",") if raw else [str(value) for value in defaults]
+        values: list[int] = []
+        seen: set[int] = set()
+        for token in tokens:
+            token = token.strip()
+            if not token:
+                continue
+            try:
+                value = int(token)
+            except ValueError:
+                LOGGER.warning("Ignoring non-integer %s override token '%s'.", name, token)
+                continue
+            if value not in seen:
+                values.append(value)
+                seen.add(value)
+        if not values:
+            values = list(defaults)
+        return tuple(values)
+
+    discovered_workers = _discover_existing_word2vec_workers(context)
+    worker_defaults: Tuple[int, ...]
+    if os.environ.get("WORD2VEC_SWEEP_WORKERS"):
+        # Respect explicit overrides entirely.
+        worker_defaults = discovered_workers if discovered_workers else (context.word2vec_workers,)
+    else:
+        worker_defaults = discovered_workers or (context.word2vec_workers,)
 
     # Keep defaults intentionally narrow so the sweep stays well under 100 configs.
     return {
-        "sizes": _parse_env("WORD2VEC_SWEEP_SIZES", "128,256"),
-        "windows": _parse_env("WORD2VEC_SWEEP_WINDOWS", "5"),
-        "min_counts": _parse_env("WORD2VEC_SWEEP_MIN_COUNTS", "1"),
+        "sizes": _parse_env("WORD2VEC_SWEEP_SIZES", (128, 256)),
+        "windows": _parse_env("WORD2VEC_SWEEP_WINDOWS", (5,)),
+        "min_counts": _parse_env("WORD2VEC_SWEEP_MIN_COUNTS", (1,)),
         "epochs": _parse_env(
-            "WORD2VEC_SWEEP_EPOCHS", str(context.word2vec_epochs)
+            "WORD2VEC_SWEEP_EPOCHS", (context.word2vec_epochs,)
         ),
         "workers": _parse_env(
-            "WORD2VEC_SWEEP_WORKERS", str(context.word2vec_workers)
+            "WORD2VEC_SWEEP_WORKERS", worker_defaults
         ),
     }
 

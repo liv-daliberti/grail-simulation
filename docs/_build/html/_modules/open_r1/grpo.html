@@ -301,17 +301,19 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.shared</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">BASE_TRAIN_KEEP_COLUMNS</span><span class="p">,</span>
     <span class="n">collect_passthrough_fields</span><span class="p">,</span>
+    <span class="n">make_grpo_execute_kwargs</span><span class="p">,</span>
+    <span class="n">execute_grpo_pipeline</span><span class="p">,</span>
     <span class="n">parse_and_run</span><span class="p">,</span>
-    <span class="n">GrpoPipelineComponents</span><span class="p">,</span>
-    <span class="n">GrpoPipelineContext</span><span class="p">,</span>
-    <span class="n">prepare_model_eval_and_run_grpo</span><span class="p">,</span>
+    <span class="n">build_default_component_factory</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.rewards</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_reward_funcs</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_dataset</span><span class="p">,</span> <span class="n">get_model</span><span class="p">,</span> <span class="n">get_tokenizer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_dataset</span><span class="p">,</span> <span class="n">get_tokenizer</span>
 
 <span class="n">KEEP_COLUMNS</span> <span class="o">=</span> <span class="n">BASE_TRAIN_KEEP_COLUMNS</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">COMPONENT_FACTORY</span> <span class="o">=</span> <span class="n">build_default_component_factory</span><span class="p">()</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_ensure_training_dependencies</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -439,6 +441,8 @@
     <span class="n">solution_key</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">script_args</span><span class="p">,</span> <span class="s2">&quot;dataset_solution_column&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="n">max_hist</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;GRAIL_MAX_HISTORY&quot;</span><span class="p">,</span> <span class="s2">&quot;12&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;12&quot;</span><span class="p">)</span>
     <span class="n">dataset</span> <span class="o">=</span> <span class="n">_build_dataset</span><span class="p">(</span><span class="n">script_args</span><span class="p">,</span> <span class="n">training_args</span><span class="p">,</span> <span class="n">solution_key</span><span class="p">,</span> <span class="n">max_hist</span><span class="p">)</span>
+    <span class="c1"># Use dataset in a lightweight way to satisfy static analyzers.</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[grpo] dataset splits: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
     <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">get_tokenizer</span><span class="p">(</span><span class="n">model_args</span><span class="p">,</span> <span class="n">training_args</span><span class="p">)</span>
     <span class="n">reward_fns</span> <span class="o">=</span> <span class="n">_load_reward_functions</span><span class="p">(</span><span class="n">script_args</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">)</span>
     <span class="n">_ensure_reward_weights</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="n">reward_fns</span><span class="p">)</span>
@@ -449,22 +453,13 @@
         <span class="n">training_args</span><span class="o">.</span><span class="n">reward_weights</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">components</span> <span class="o">=</span> <span class="n">GrpoPipelineComponents</span><span class="p">(</span>
-        <span class="n">model_builder</span><span class="o">=</span><span class="n">get_model</span><span class="p">,</span>
-        <span class="n">trainer_cls</span><span class="o">=</span><span class="n">GRPOTrainer</span><span class="p">,</span>
-        <span class="n">reward_funcs</span><span class="o">=</span><span class="n">reward_fns</span><span class="p">,</span>
-        <span class="n">tokenizer</span><span class="o">=</span><span class="n">tokenizer</span><span class="p">,</span>
-        <span class="n">peft_config_fn</span><span class="o">=</span><span class="n">get_peft_config</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">context</span> <span class="o">=</span> <span class="n">GrpoPipelineContext</span><span class="p">(</span>
-        <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
-        <span class="n">script_args</span><span class="o">=</span><span class="n">script_args</span><span class="p">,</span>
-        <span class="n">training_args</span><span class="o">=</span><span class="n">training_args</span><span class="p">,</span>
-        <span class="n">model_args</span><span class="o">=</span><span class="n">model_args</span><span class="p">,</span>
-        <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
-        <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;grpo&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">prepare_model_eval_and_run_grpo</span><span class="p">(</span><span class="n">components</span><span class="o">=</span><span class="n">components</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span></div>
+    <span class="n">execute_grpo_pipeline</span><span class="p">(</span>
+        <span class="o">**</span><span class="n">make_grpo_execute_kwargs</span><span class="p">(</span>
+            <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;grpo&quot;</span><span class="p">,</span>
+            <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
+            <span class="n">namespace</span><span class="o">=</span><span class="nb">locals</span><span class="p">(),</span>
+        <span class="p">)</span>
+    <span class="p">)</span></div>
 
 
 

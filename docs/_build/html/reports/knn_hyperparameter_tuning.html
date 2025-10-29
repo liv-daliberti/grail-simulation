@@ -269,11 +269,12 @@
 <p>Key settings:</p>
 <ul class="simple">
 <li><p>Studies: Study 1 – Gun Control (MTurk), Study 2 – Minimum Wage (MTurk), Study 3 – Minimum Wage (YouGov) (study1, study2, study3)</p></li>
-<li><p>k sweep: 1, 2, 3, 4, 5, 10, 15, 20, 25, 50, 75, 100, 125, 150</p></li>
+<li><p>k sweep: 1, 2, 3, 4, 5, 10, 25, 50</p></li>
 <li><p>Feature spaces: TFIDF, WORD2VEC, SENTENCE_TRANSFORMER</p></li>
 <li><p>Sentence-transformer baseline: <code class="docutils literal notranslate"><span class="pre">sentence-transformers/all-mpnet-base-v2</span></code></p></li>
 </ul>
-<p>Tables bold the configurations promoted to the finalize stage. Commands beneath each table reproduce the selected configuration.</p>
+<p>Tables bold the configurations promoted to the finalize stage. Commands beneath each table reproduce the selected configuration.
+Accuracy values reflect eligible-only accuracy on the validation split at the selected best k (per the configured k-selection method).</p>
 <section id="slate-ranking-sweep-leaders">
 <h2>Slate-Ranking Sweep Leaders<a class="headerlink" href="#slate-ranking-sweep-leaders" title="Link to this heading">¶</a></h2>
 <section id="configuration-leaderboards">
@@ -288,7 +289,7 @@
 <tr class="row-odd"><th class="head"><p>Study</p></th>
 <th class="head"><p>Metric</p></th>
 <th class="head"><p>Text fields</p></th>
-<th class="head text-right"><p>Accuracy ↑</p></th>
+<th class="head text-right"><p>Acc (best k) ↑</p></th>
 <th class="head text-right"><p>Baseline ↑</p></th>
 <th class="head text-right"><p>Δ vs baseline ↑</p></th>
 <th class="head text-right"><p>Best k</p></th>
@@ -300,32 +301,32 @@
 <tr class="row-even"><td><p><strong>Study 1 – Gun Control (MTurk)</strong></p></td>
 <td><p>cosine</p></td>
 <td><p>viewer_profile, state_text</p></td>
-<td class="text-right"><p>0.717</p></td>
+<td class="text-right"><p>0.763</p></td>
 <td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>+0.177</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>+0.223</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">gun_control</span> <span class="pre">--participant-studies</span> <span class="pre">study1</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">3</span> <span class="pre">--knn-k-sweep</span> <span class="pre">3</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">gun_control</span> <span class="pre">--participant-studies</span> <span class="pre">study1</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">2</span> <span class="pre">--knn-k-sweep</span> <span class="pre">2</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p><strong>Study 2 – Minimum Wage (MTurk)</strong></p></td>
 <td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, freq_youtube</p></td>
-<td class="text-right"><p>0.359</p></td>
+<td><p>viewer_profile, state_text, ideo1</p></td>
+<td class="text-right"><p>0.355</p></td>
 <td class="text-right"><p>0.368</p></td>
-<td class="text-right"><p>-0.009</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>-0.013</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">minimum_wage</span> <span class="pre">--participant-studies</span> <span class="pre">study2</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">3</span> <span class="pre">--knn-k-sweep</span> <span class="pre">3</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text,freq_youtube</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">minimum_wage</span> <span class="pre">--participant-studies</span> <span class="pre">study2</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">2</span> <span class="pre">--knn-k-sweep</span> <span class="pre">2</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text,ideo1</span></code></p></td>
 </tr>
 <tr class="row-even"><td><p><strong>Study 3 – Minimum Wage (YouGov)</strong></p></td>
 <td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, newsint</p></td>
-<td class="text-right"><p>0.305</p></td>
+<td><p>viewer_profile, state_text</p></td>
+<td class="text-right"><p>0.309</p></td>
 <td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.174</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>-0.170</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">minimum_wage</span> <span class="pre">--participant-studies</span> <span class="pre">study3</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">3</span> <span class="pre">--knn-k-sweep</span> <span class="pre">3</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text,newsint</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">minimum_wage</span> <span class="pre">--participant-studies</span> <span class="pre">study3</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">2</span> <span class="pre">--knn-k-sweep</span> <span class="pre">2</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text</span></code></p></td>
 </tr>
 </tbody>
 </table>
@@ -333,10 +334,10 @@
 <section id="observations">
 <h3>Observations<a class="headerlink" href="#observations" title="Link to this heading">¶</a></h3>
 <ul class="simple">
-<li><p>TFIDF: Study 1 – Gun Control (MTurk): accuracy 0.717 (baseline 0.540, Δ +0.177, k=3) using cosine distance with viewer_profile, state_text; Study 2 – Minimum Wage (MTurk): accuracy 0.359 (baseline 0.368, Δ -0.009, k=3) using cosine distance with viewer_profile, state_text, freq_youtube; Study 3 – Minimum Wage (YouGov): accuracy 0.305 (baseline 0.479, Δ -0.174, k=3) using cosine distance with viewer_profile, state_text, newsint.
-Command (Study 1 – Gun Control (MTurk)): <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">gun_control</span> <span class="pre">--participant-studies</span> <span class="pre">study1</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">3</span> <span class="pre">--knn-k-sweep</span> <span class="pre">3</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text</span></code>
-Command (Study 2 – Minimum Wage (MTurk)): <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">minimum_wage</span> <span class="pre">--participant-studies</span> <span class="pre">study2</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">3</span> <span class="pre">--knn-k-sweep</span> <span class="pre">3</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text,freq_youtube</span></code>
-Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">minimum_wage</span> <span class="pre">--participant-studies</span> <span class="pre">study3</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">3</span> <span class="pre">--knn-k-sweep</span> <span class="pre">3</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text,newsint</span></code></p></li>
+<li><p>TFIDF: Study 1 – Gun Control (MTurk): accuracy 0.763 (baseline 0.540, Δ +0.223, k=2) using cosine distance with viewer_profile, state_text; Study 2 – Minimum Wage (MTurk): accuracy 0.355 (baseline 0.368, Δ -0.013, k=2) using cosine distance with viewer_profile, state_text, ideo1; Study 3 – Minimum Wage (YouGov): accuracy 0.309 (baseline 0.479, Δ -0.170, k=2) using cosine distance with viewer_profile, state_text.
+Command (Study 1 – Gun Control (MTurk)): <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">gun_control</span> <span class="pre">--participant-studies</span> <span class="pre">study1</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">2</span> <span class="pre">--knn-k-sweep</span> <span class="pre">2</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text</span></code>
+Command (Study 2 – Minimum Wage (MTurk)): <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">minimum_wage</span> <span class="pre">--participant-studies</span> <span class="pre">study2</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">2</span> <span class="pre">--knn-k-sweep</span> <span class="pre">2</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text,ideo1</span></code>
+Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">minimum_wage</span> <span class="pre">--participant-studies</span> <span class="pre">study3</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">2</span> <span class="pre">--knn-k-sweep</span> <span class="pre">2</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text</span></code></p></li>
 </ul>
 </section>
 <section id="id1">
@@ -349,7 +350,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <th class="head"><p>Feature space</p></th>
 <th class="head"><p>Metric</p></th>
 <th class="head"><p>Text fields</p></th>
-<th class="head text-right"><p>Accuracy ↑</p></th>
+<th class="head text-right"><p>Acc (best k) ↑</p></th>
 <th class="head text-right"><p>Baseline ↑</p></th>
 <th class="head text-right"><p>Δ vs baseline ↑</p></th>
 <th class="head text-right"><p>Best k</p></th>
@@ -362,10 +363,10 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td><p>TFIDF</p></td>
 <td><p>cosine</p></td>
 <td><p>viewer_profile, state_text</p></td>
-<td class="text-right"><p>0.717</p></td>
+<td class="text-right"><p>0.763</p></td>
 <td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>+0.177</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>+0.223</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
 <tr class="row-odd"><td class="text-right"><p>1</p></td>
@@ -373,10 +374,10 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td><p>TFIDF</p></td>
 <td><p>cosine</p></td>
 <td><p>viewer_profile, state_text</p></td>
-<td class="text-right"><p>0.352</p></td>
+<td class="text-right"><p>0.350</p></td>
 <td class="text-right"><p>0.368</p></td>
-<td class="text-right"><p>-0.016</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>-0.018</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
 <tr class="row-even"><td class="text-right"><p>2</p></td>
@@ -384,10 +385,10 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td><p>TFIDF</p></td>
 <td><p>cosine</p></td>
 <td><p>viewer_profile, state_text</p></td>
-<td class="text-right"><p>0.299</p></td>
+<td class="text-right"><p>0.309</p></td>
 <td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.180</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>-0.170</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
 <tr class="row-odd"><td class="text-right"><p>3</p></td>
@@ -395,10 +396,10 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td><p>TFIDF</p></td>
 <td><p>cosine</p></td>
 <td><p>viewer_profile, state_text, ideo1</p></td>
-<td class="text-right"><p>0.661</p></td>
+<td class="text-right"><p>0.699</p></td>
 <td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>+0.120</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>+0.159</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
 <tr class="row-even"><td class="text-right"><p>4</p></td>
@@ -406,10 +407,10 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td><p>TFIDF</p></td>
 <td><p>cosine</p></td>
 <td><p>viewer_profile, state_text, ideo1</p></td>
-<td class="text-right"><p>0.349</p></td>
+<td class="text-right"><p>0.355</p></td>
 <td class="text-right"><p>0.368</p></td>
-<td class="text-right"><p>-0.019</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>-0.013</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
 <tr class="row-odd"><td class="text-right"><p>5</p></td>
@@ -417,10 +418,10 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td><p>TFIDF</p></td>
 <td><p>cosine</p></td>
 <td><p>viewer_profile, state_text, ideo1</p></td>
-<td class="text-right"><p>0.299</p></td>
+<td class="text-right"><p>0.309</p></td>
 <td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.180</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>-0.170</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
 <tr class="row-even"><td class="text-right"><p>6</p></td>
@@ -428,10 +429,10 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td><p>TFIDF</p></td>
 <td><p>cosine</p></td>
 <td><p>viewer_profile, state_text, ideo2</p></td>
-<td class="text-right"><p>0.681</p></td>
+<td class="text-right"><p>0.726</p></td>
 <td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>+0.141</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>+0.186</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
 <tr class="row-odd"><td class="text-right"><p>7</p></td>
@@ -439,10 +440,10 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td><p>TFIDF</p></td>
 <td><p>cosine</p></td>
 <td><p>viewer_profile, state_text, ideo2</p></td>
-<td class="text-right"><p>0.349</p></td>
+<td class="text-right"><p>0.344</p></td>
 <td class="text-right"><p>0.368</p></td>
-<td class="text-right"><p>-0.019</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>-0.024</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
 <tr class="row-even"><td class="text-right"><p>8</p></td>
@@ -450,10 +451,10 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td><p>TFIDF</p></td>
 <td><p>cosine</p></td>
 <td><p>viewer_profile, state_text, ideo2</p></td>
-<td class="text-right"><p>0.299</p></td>
+<td class="text-right"><p>0.309</p></td>
 <td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.180</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>-0.170</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
 <tr class="row-odd"><td class="text-right"><p>9</p></td>
@@ -461,10 +462,10 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td><p>TFIDF</p></td>
 <td><p>cosine</p></td>
 <td><p>viewer_profile, state_text, pol_interest</p></td>
-<td class="text-right"><p>0.695</p></td>
+<td class="text-right"><p>0.735</p></td>
 <td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>+0.155</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>+0.195</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
 <tr class="row-even"><td class="text-right"><p>10</p></td>
@@ -472,10 +473,10 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td><p>TFIDF</p></td>
 <td><p>cosine</p></td>
 <td><p>viewer_profile, state_text, pol_interest</p></td>
-<td class="text-right"><p>0.352</p></td>
+<td class="text-right"><p>0.346</p></td>
 <td class="text-right"><p>0.368</p></td>
-<td class="text-right"><p>-0.016</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>-0.022</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
 <tr class="row-odd"><td class="text-right"><p>11</p></td>
@@ -483,10 +484,10 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td><p>TFIDF</p></td>
 <td><p>cosine</p></td>
 <td><p>viewer_profile, state_text, pol_interest</p></td>
-<td class="text-right"><p>0.297</p></td>
+<td class="text-right"><p>0.306</p></td>
 <td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.182</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>-0.173</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
 <tr class="row-even"><td class="text-right"><p>12</p></td>
@@ -494,10 +495,10 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td><p>TFIDF</p></td>
 <td><p>cosine</p></td>
 <td><p>viewer_profile, state_text, religpew</p></td>
-<td class="text-right"><p>0.717</p></td>
+<td class="text-right"><p>0.763</p></td>
 <td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>+0.177</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>+0.223</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
 <tr class="row-odd"><td class="text-right"><p>13</p></td>
@@ -505,10 +506,10 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td><p>TFIDF</p></td>
 <td><p>cosine</p></td>
 <td><p>viewer_profile, state_text, religpew</p></td>
-<td class="text-right"><p>0.352</p></td>
+<td class="text-right"><p>0.350</p></td>
 <td class="text-right"><p>0.368</p></td>
-<td class="text-right"><p>-0.016</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>-0.018</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
 <tr class="row-even"><td class="text-right"><p>14</p></td>
@@ -516,288 +517,57 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td><p>TFIDF</p></td>
 <td><p>cosine</p></td>
 <td><p>viewer_profile, state_text, religpew</p></td>
-<td class="text-right"><p>0.301</p></td>
+<td class="text-right"><p>0.309</p></td>
 <td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.178</p></td>
-<td class="text-right"><p>5</p></td>
+<td class="text-right"><p>-0.170</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>15</p></td>
+<tr class="row-odd"><td class="text-right"><p>45</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, freq_youtube</p></td>
-<td class="text-right"><p>0.692</p></td>
+<td><p>viewer_profile, state_text, ideo1, ideo2, pol_interest, religpew, freq_youtube, youtube_time, newsint, slate_source, educ, employ, child18, inputstate, income, participant_study</p></td>
+<td class="text-right"><p>0.719</p></td>
 <td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>+0.151</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>+0.179</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>16</p></td>
+<tr class="row-even"><td class="text-right"><p>46</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, freq_youtube</p></td>
-<td class="text-right"><p>0.359</p></td>
+<td><p>viewer_profile, state_text, ideo1, ideo2, pol_interest, religpew, freq_youtube, youtube_time, newsint, slate_source, educ, employ, child18, inputstate, income, participant_study</p></td>
+<td class="text-right"><p>0.349</p></td>
 <td class="text-right"><p>0.368</p></td>
-<td class="text-right"><p>-0.009</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>-0.019</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>17</p></td>
+<tr class="row-odd"><td class="text-right"><p>47</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, freq_youtube</p></td>
-<td class="text-right"><p>0.295</p></td>
+<td><p>viewer_profile, state_text, ideo1, ideo2, pol_interest, religpew, freq_youtube, youtube_time, newsint, slate_source, educ, employ, child18, inputstate, income, participant_study</p></td>
+<td class="text-right"><p>0.303</p></td>
 <td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.184</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>-0.176</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>18</p></td>
-<td><p>Study 1 – Gun Control (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, youtube_time</p></td>
-<td class="text-right"><p>0.717</p></td>
-<td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>+0.177</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>548</p></td>
-</tr>
-<tr class="row-odd"><td class="text-right"><p>19</p></td>
-<td><p>Study 2 – Minimum Wage (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, youtube_time</p></td>
-<td class="text-right"><p>0.352</p></td>
-<td class="text-right"><p>0.368</p></td>
-<td class="text-right"><p>-0.016</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>671</p></td>
-</tr>
-<tr class="row-even"><td class="text-right"><p>20</p></td>
-<td><p>Study 3 – Minimum Wage (YouGov)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, youtube_time</p></td>
-<td class="text-right"><p>0.299</p></td>
-<td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.180</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>1,200</p></td>
-</tr>
-<tr class="row-odd"><td class="text-right"><p>21</p></td>
-<td><p>Study 1 – Gun Control (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, newsint</p></td>
-<td class="text-right"><p>0.717</p></td>
-<td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>+0.177</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>548</p></td>
-</tr>
-<tr class="row-even"><td class="text-right"><p>22</p></td>
-<td><p>Study 2 – Minimum Wage (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, newsint</p></td>
-<td class="text-right"><p>0.352</p></td>
-<td class="text-right"><p>0.368</p></td>
-<td class="text-right"><p>-0.016</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>671</p></td>
-</tr>
-<tr class="row-odd"><td class="text-right"><p>23</p></td>
-<td><p>Study 3 – Minimum Wage (YouGov)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, newsint</p></td>
-<td class="text-right"><p>0.305</p></td>
-<td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.174</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>1,200</p></td>
-</tr>
-<tr class="row-even"><td class="text-right"><p>24</p></td>
-<td><p>Study 1 – Gun Control (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, slate_source</p></td>
-<td class="text-right"><p>0.697</p></td>
-<td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>+0.157</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>548</p></td>
-</tr>
-<tr class="row-odd"><td class="text-right"><p>25</p></td>
-<td><p>Study 2 – Minimum Wage (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, slate_source</p></td>
-<td class="text-right"><p>0.347</p></td>
-<td class="text-right"><p>0.368</p></td>
-<td class="text-right"><p>-0.021</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>671</p></td>
-</tr>
-<tr class="row-even"><td class="text-right"><p>26</p></td>
-<td><p>Study 3 – Minimum Wage (YouGov)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, slate_source</p></td>
-<td class="text-right"><p>0.302</p></td>
-<td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.177</p></td>
-<td class="text-right"><p>5</p></td>
-<td class="text-right"><p>1,200</p></td>
-</tr>
-<tr class="row-odd"><td class="text-right"><p>27</p></td>
-<td><p>Study 1 – Gun Control (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, educ</p></td>
-<td class="text-right"><p>0.717</p></td>
-<td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>+0.177</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>548</p></td>
-</tr>
-<tr class="row-even"><td class="text-right"><p>28</p></td>
-<td><p>Study 2 – Minimum Wage (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, educ</p></td>
-<td class="text-right"><p>0.352</p></td>
-<td class="text-right"><p>0.368</p></td>
-<td class="text-right"><p>-0.016</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>671</p></td>
-</tr>
-<tr class="row-odd"><td class="text-right"><p>29</p></td>
-<td><p>Study 3 – Minimum Wage (YouGov)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, educ</p></td>
-<td class="text-right"><p>0.298</p></td>
-<td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.181</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>1,200</p></td>
-</tr>
-<tr class="row-even"><td class="text-right"><p>30</p></td>
-<td><p>Study 1 – Gun Control (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, employ</p></td>
-<td class="text-right"><p>0.717</p></td>
-<td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>+0.177</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>548</p></td>
-</tr>
-<tr class="row-odd"><td class="text-right"><p>31</p></td>
-<td><p>Study 2 – Minimum Wage (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, employ</p></td>
-<td class="text-right"><p>0.352</p></td>
-<td class="text-right"><p>0.368</p></td>
-<td class="text-right"><p>-0.016</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>671</p></td>
-</tr>
-<tr class="row-even"><td class="text-right"><p>32</p></td>
-<td><p>Study 3 – Minimum Wage (YouGov)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, employ</p></td>
-<td class="text-right"><p>0.302</p></td>
-<td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.177</p></td>
-<td class="text-right"><p>5</p></td>
-<td class="text-right"><p>1,200</p></td>
-</tr>
-<tr class="row-odd"><td class="text-right"><p>33</p></td>
-<td><p>Study 1 – Gun Control (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, child18</p></td>
-<td class="text-right"><p>0.717</p></td>
-<td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>+0.177</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>548</p></td>
-</tr>
-<tr class="row-even"><td class="text-right"><p>34</p></td>
-<td><p>Study 2 – Minimum Wage (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, child18</p></td>
-<td class="text-right"><p>0.352</p></td>
-<td class="text-right"><p>0.368</p></td>
-<td class="text-right"><p>-0.016</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>671</p></td>
-</tr>
-<tr class="row-odd"><td class="text-right"><p>35</p></td>
-<td><p>Study 3 – Minimum Wage (YouGov)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, child18</p></td>
-<td class="text-right"><p>0.302</p></td>
-<td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.177</p></td>
-<td class="text-right"><p>5</p></td>
-<td class="text-right"><p>1,200</p></td>
-</tr>
-<tr class="row-even"><td class="text-right"><p>36</p></td>
-<td><p>Study 1 – Gun Control (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, inputstate</p></td>
-<td class="text-right"><p>0.717</p></td>
-<td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>+0.177</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>548</p></td>
-</tr>
-<tr class="row-odd"><td class="text-right"><p>37</p></td>
-<td><p>Study 2 – Minimum Wage (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, inputstate</p></td>
-<td class="text-right"><p>0.352</p></td>
-<td class="text-right"><p>0.368</p></td>
-<td class="text-right"><p>-0.016</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>671</p></td>
-</tr>
-<tr class="row-even"><td class="text-right"><p>38</p></td>
-<td><p>Study 3 – Minimum Wage (YouGov)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, inputstate</p></td>
-<td class="text-right"><p>0.302</p></td>
-<td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.177</p></td>
-<td class="text-right"><p>5</p></td>
-<td class="text-right"><p>1,200</p></td>
-</tr>
-<tr class="row-odd"><td class="text-right"><p>39</p></td>
+<tr class="row-even"><td class="text-right"><p>48</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
 <td><p>viewer_profile, state_text</p></td>
-<td class="text-right"><p>0.279</p></td>
+<td class="text-right"><p>0.308</p></td>
 <td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>-0.261</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>-0.232</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>40</p></td>
+<tr class="row-odd"><td class="text-right"><p>49</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
@@ -808,62 +578,62 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>3</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>41</p></td>
+<tr class="row-even"><td class="text-right"><p>50</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
 <td><p>viewer_profile, state_text</p></td>
-<td class="text-right"><p>0.294</p></td>
+<td class="text-right"><p>0.305</p></td>
 <td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.185</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>-0.174</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>42</p></td>
+<tr class="row-odd"><td class="text-right"><p>51</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
 <td><p>viewer_profile, state_text, ideo1</p></td>
-<td class="text-right"><p>0.277</p></td>
+<td class="text-right"><p>0.307</p></td>
 <td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>-0.263</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>-0.234</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>43</p></td>
+<tr class="row-even"><td class="text-right"><p>52</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
 <td><p>viewer_profile, state_text, ideo1</p></td>
-<td class="text-right"><p>0.341</p></td>
+<td class="text-right"><p>0.332</p></td>
 <td class="text-right"><p>0.368</p></td>
-<td class="text-right"><p>-0.027</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>-0.036</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>44</p></td>
+<tr class="row-odd"><td class="text-right"><p>53</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
 <td><p>viewer_profile, state_text, ideo1</p></td>
-<td class="text-right"><p>0.294</p></td>
+<td class="text-right"><p>0.305</p></td>
 <td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.185</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>-0.174</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>45</p></td>
+<tr class="row-even"><td class="text-right"><p>54</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
 <td><p>viewer_profile, state_text, ideo2</p></td>
-<td class="text-right"><p>0.279</p></td>
+<td class="text-right"><p>0.308</p></td>
 <td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>-0.261</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>-0.232</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>46</p></td>
+<tr class="row-odd"><td class="text-right"><p>55</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
@@ -874,29 +644,29 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>3</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>47</p></td>
+<tr class="row-even"><td class="text-right"><p>56</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
 <td><p>viewer_profile, state_text, ideo2</p></td>
-<td class="text-right"><p>0.294</p></td>
+<td class="text-right"><p>0.305</p></td>
 <td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.185</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>-0.174</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>48</p></td>
+<tr class="row-odd"><td class="text-right"><p>57</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
 <td><p>viewer_profile, state_text, pol_interest</p></td>
-<td class="text-right"><p>0.279</p></td>
+<td class="text-right"><p>0.308</p></td>
 <td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>-0.261</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>-0.232</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>49</p></td>
+<tr class="row-even"><td class="text-right"><p>58</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
@@ -907,132 +677,33 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>3</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>50</p></td>
-<td><p>Study 3 – Minimum Wage (YouGov)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>l2</p></td>
-<td><p>viewer_profile, state_text, pol_interest</p></td>
-<td class="text-right"><p>0.292</p></td>
-<td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.187</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>1,200</p></td>
-</tr>
-<tr class="row-odd"><td class="text-right"><p>51</p></td>
-<td><p>Study 1 – Gun Control (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>l2</p></td>
-<td><p>viewer_profile, state_text, religpew</p></td>
-<td class="text-right"><p>0.279</p></td>
-<td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>-0.261</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>548</p></td>
-</tr>
-<tr class="row-even"><td class="text-right"><p>52</p></td>
-<td><p>Study 2 – Minimum Wage (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>l2</p></td>
-<td><p>viewer_profile, state_text, religpew</p></td>
-<td class="text-right"><p>0.343</p></td>
-<td class="text-right"><p>0.368</p></td>
-<td class="text-right"><p>-0.025</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>671</p></td>
-</tr>
-<tr class="row-odd"><td class="text-right"><p>53</p></td>
-<td><p>Study 3 – Minimum Wage (YouGov)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>l2</p></td>
-<td><p>viewer_profile, state_text, religpew</p></td>
-<td class="text-right"><p>0.297</p></td>
-<td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.182</p></td>
-<td class="text-right"><p>5</p></td>
-<td class="text-right"><p>1,200</p></td>
-</tr>
-<tr class="row-even"><td class="text-right"><p>54</p></td>
-<td><p>Study 1 – Gun Control (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>l2</p></td>
-<td><p>viewer_profile, state_text, freq_youtube</p></td>
-<td class="text-right"><p>0.279</p></td>
-<td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>-0.261</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>548</p></td>
-</tr>
-<tr class="row-odd"><td class="text-right"><p>55</p></td>
-<td><p>Study 2 – Minimum Wage (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>l2</p></td>
-<td><p>viewer_profile, state_text, freq_youtube</p></td>
-<td class="text-right"><p>0.347</p></td>
-<td class="text-right"><p>0.368</p></td>
-<td class="text-right"><p>-0.021</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>671</p></td>
-</tr>
-<tr class="row-even"><td class="text-right"><p>56</p></td>
-<td><p>Study 3 – Minimum Wage (YouGov)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>l2</p></td>
-<td><p>viewer_profile, state_text, freq_youtube</p></td>
-<td class="text-right"><p>0.296</p></td>
-<td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.183</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>1,200</p></td>
-</tr>
-<tr class="row-odd"><td class="text-right"><p>57</p></td>
-<td><p>Study 1 – Gun Control (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>l2</p></td>
-<td><p>viewer_profile, state_text, youtube_time</p></td>
-<td class="text-right"><p>0.279</p></td>
-<td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>-0.261</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>548</p></td>
-</tr>
-<tr class="row-even"><td class="text-right"><p>58</p></td>
-<td><p>Study 2 – Minimum Wage (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>l2</p></td>
-<td><p>viewer_profile, state_text, youtube_time</p></td>
-<td class="text-right"><p>0.343</p></td>
-<td class="text-right"><p>0.368</p></td>
-<td class="text-right"><p>-0.025</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>671</p></td>
-</tr>
 <tr class="row-odd"><td class="text-right"><p>59</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
-<td><p>viewer_profile, state_text, youtube_time</p></td>
-<td class="text-right"><p>0.294</p></td>
+<td><p>viewer_profile, state_text, pol_interest</p></td>
+<td class="text-right"><p>0.300</p></td>
 <td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.185</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>-0.179</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
 <tr class="row-even"><td class="text-right"><p>60</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
-<td><p>viewer_profile, state_text, newsint</p></td>
-<td class="text-right"><p>0.279</p></td>
+<td><p>viewer_profile, state_text, religpew</p></td>
+<td class="text-right"><p>0.308</p></td>
 <td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>-0.261</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>-0.232</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
 <tr class="row-odd"><td class="text-right"><p>61</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
-<td><p>viewer_profile, state_text, newsint</p></td>
+<td><p>viewer_profile, state_text, religpew</p></td>
 <td class="text-right"><p>0.343</p></td>
 <td class="text-right"><p>0.368</p></td>
 <td class="text-right"><p>-0.025</p></td>
@@ -1043,176 +714,44 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
-<td><p>viewer_profile, state_text, newsint</p></td>
+<td><p>viewer_profile, state_text, religpew</p></td>
+<td class="text-right"><p>0.302</p></td>
+<td class="text-right"><p>0.479</p></td>
+<td class="text-right"><p>-0.177</p></td>
+<td class="text-right"><p>2</p></td>
+<td class="text-right"><p>1,200</p></td>
+</tr>
+<tr class="row-odd"><td class="text-right"><p>93</p></td>
+<td><p>Study 1 – Gun Control (MTurk)</p></td>
+<td><p>TFIDF</p></td>
+<td><p>l2</p></td>
+<td><p>viewer_profile, state_text, ideo1, ideo2, pol_interest, religpew, freq_youtube, youtube_time, newsint, slate_source, educ, employ, child18, inputstate, income, participant_study</p></td>
 <td class="text-right"><p>0.301</p></td>
-<td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.178</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>1,200</p></td>
-</tr>
-<tr class="row-odd"><td class="text-right"><p>63</p></td>
-<td><p>Study 1 – Gun Control (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>l2</p></td>
-<td><p>viewer_profile, state_text, slate_source</p></td>
-<td class="text-right"><p>0.279</p></td>
 <td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>-0.261</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>-0.239</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>64</p></td>
+<tr class="row-even"><td class="text-right"><p>94</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
-<td><p>viewer_profile, state_text, slate_source</p></td>
-<td class="text-right"><p>0.343</p></td>
+<td><p>viewer_profile, state_text, ideo1, ideo2, pol_interest, religpew, freq_youtube, youtube_time, newsint, slate_source, educ, employ, child18, inputstate, income, participant_study</p></td>
+<td class="text-right"><p>0.332</p></td>
 <td class="text-right"><p>0.368</p></td>
-<td class="text-right"><p>-0.025</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>-0.036</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>65</p></td>
+<tr class="row-odd"><td class="text-right"><p>95</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
-<td><p>viewer_profile, state_text, slate_source</p></td>
-<td class="text-right"><p>0.295</p></td>
+<td><p>viewer_profile, state_text, ideo1, ideo2, pol_interest, religpew, freq_youtube, youtube_time, newsint, slate_source, educ, employ, child18, inputstate, income, participant_study</p></td>
+<td class="text-right"><p>0.300</p></td>
 <td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.184</p></td>
-<td class="text-right"><p>5</p></td>
-<td class="text-right"><p>1,200</p></td>
-</tr>
-<tr class="row-even"><td class="text-right"><p>66</p></td>
-<td><p>Study 1 – Gun Control (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>l2</p></td>
-<td><p>viewer_profile, state_text, educ</p></td>
-<td class="text-right"><p>0.279</p></td>
-<td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>-0.261</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>548</p></td>
-</tr>
-<tr class="row-odd"><td class="text-right"><p>67</p></td>
-<td><p>Study 2 – Minimum Wage (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>l2</p></td>
-<td><p>viewer_profile, state_text, educ</p></td>
-<td class="text-right"><p>0.343</p></td>
-<td class="text-right"><p>0.368</p></td>
-<td class="text-right"><p>-0.025</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>671</p></td>
-</tr>
-<tr class="row-even"><td class="text-right"><p>68</p></td>
-<td><p>Study 3 – Minimum Wage (YouGov)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>l2</p></td>
-<td><p>viewer_profile, state_text, educ</p></td>
-<td class="text-right"><p>0.293</p></td>
-<td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.186</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>1,200</p></td>
-</tr>
-<tr class="row-odd"><td class="text-right"><p>69</p></td>
-<td><p>Study 1 – Gun Control (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>l2</p></td>
-<td><p>viewer_profile, state_text, employ</p></td>
-<td class="text-right"><p>0.279</p></td>
-<td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>-0.261</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>548</p></td>
-</tr>
-<tr class="row-even"><td class="text-right"><p>70</p></td>
-<td><p>Study 2 – Minimum Wage (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>l2</p></td>
-<td><p>viewer_profile, state_text, employ</p></td>
-<td class="text-right"><p>0.343</p></td>
-<td class="text-right"><p>0.368</p></td>
-<td class="text-right"><p>-0.025</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>671</p></td>
-</tr>
-<tr class="row-odd"><td class="text-right"><p>71</p></td>
-<td><p>Study 3 – Minimum Wage (YouGov)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>l2</p></td>
-<td><p>viewer_profile, state_text, employ</p></td>
-<td class="text-right"><p>0.299</p></td>
-<td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.180</p></td>
-<td class="text-right"><p>5</p></td>
-<td class="text-right"><p>1,200</p></td>
-</tr>
-<tr class="row-even"><td class="text-right"><p>72</p></td>
-<td><p>Study 1 – Gun Control (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>l2</p></td>
-<td><p>viewer_profile, state_text, child18</p></td>
-<td class="text-right"><p>0.279</p></td>
-<td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>-0.261</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>548</p></td>
-</tr>
-<tr class="row-odd"><td class="text-right"><p>73</p></td>
-<td><p>Study 2 – Minimum Wage (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>l2</p></td>
-<td><p>viewer_profile, state_text, child18</p></td>
-<td class="text-right"><p>0.343</p></td>
-<td class="text-right"><p>0.368</p></td>
-<td class="text-right"><p>-0.025</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>671</p></td>
-</tr>
-<tr class="row-even"><td class="text-right"><p>74</p></td>
-<td><p>Study 3 – Minimum Wage (YouGov)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>l2</p></td>
-<td><p>viewer_profile, state_text, child18</p></td>
-<td class="text-right"><p>0.294</p></td>
-<td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.185</p></td>
-<td class="text-right"><p>5</p></td>
-<td class="text-right"><p>1,200</p></td>
-</tr>
-<tr class="row-odd"><td class="text-right"><p>75</p></td>
-<td><p>Study 1 – Gun Control (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>l2</p></td>
-<td><p>viewer_profile, state_text, inputstate</p></td>
-<td class="text-right"><p>0.279</p></td>
-<td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>-0.261</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>548</p></td>
-</tr>
-<tr class="row-even"><td class="text-right"><p>76</p></td>
-<td><p>Study 2 – Minimum Wage (MTurk)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>l2</p></td>
-<td><p>viewer_profile, state_text, inputstate</p></td>
-<td class="text-right"><p>0.343</p></td>
-<td class="text-right"><p>0.368</p></td>
-<td class="text-right"><p>-0.025</p></td>
-<td class="text-right"><p>3</p></td>
-<td class="text-right"><p>671</p></td>
-</tr>
-<tr class="row-odd"><td class="text-right"><p>77</p></td>
-<td><p>Study 3 – Minimum Wage (YouGov)</p></td>
-<td><p>TFIDF</p></td>
-<td><p>l2</p></td>
-<td><p>viewer_profile, state_text, inputstate</p></td>
-<td class="text-right"><p>0.297</p></td>
-<td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.182</p></td>
-<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>-0.179</p></td>
+<td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
 </tbody>
@@ -1250,7 +789,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 </thead>
 <tbody>
 <tr class="row-even"><td><p><strong>Study 1 – Gun Control (MTurk)</strong></p></td>
-<td><p>cosine</p></td>
+<td><p>l2</p></td>
 <td><p>viewer_profile, state_text</p></td>
 <td><p>—</p></td>
 <td class="text-right"><p>—</p></td>
@@ -1259,16 +798,70 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>0.704</p></td>
 <td class="text-right"><p>0.074</p></td>
 <td class="text-right"><p>+0.630</p></td>
-<td class="text-right"><p>25</p></td>
+<td class="text-right"><p>50</p></td>
 <td class="text-right"><p>162</p></td>
-<td class="text-right"><p>0.031</p></td>
-<td class="text-right"><p>-0.006</p></td>
+<td class="text-right"><p>0.030</p></td>
+<td class="text-right"><p>-0.007</p></td>
 <td class="text-right"><p>0.038</p></td>
-<td class="text-right"><p>0.982</p></td>
+<td class="text-right"><p>0.983</p></td>
 <td class="text-right"><p>162</p></td>
 </tr>
 <tr class="row-odd"><td><p>Study 1 – Gun Control (MTurk)</p></td>
-<td><p>cosine</p></td>
+<td><p>l2</p></td>
+<td><p>viewer_profile, state_text, ideo1</p></td>
+<td><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>0.704</p></td>
+<td class="text-right"><p>0.074</p></td>
+<td class="text-right"><p>+0.630</p></td>
+<td class="text-right"><p>50</p></td>
+<td class="text-right"><p>162</p></td>
+<td class="text-right"><p>0.030</p></td>
+<td class="text-right"><p>-0.007</p></td>
+<td class="text-right"><p>0.038</p></td>
+<td class="text-right"><p>0.983</p></td>
+<td class="text-right"><p>162</p></td>
+</tr>
+<tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
+<td><p>l2</p></td>
+<td><p>viewer_profile, state_text, ideo2</p></td>
+<td><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>0.704</p></td>
+<td class="text-right"><p>0.074</p></td>
+<td class="text-right"><p>+0.630</p></td>
+<td class="text-right"><p>50</p></td>
+<td class="text-right"><p>162</p></td>
+<td class="text-right"><p>0.030</p></td>
+<td class="text-right"><p>-0.007</p></td>
+<td class="text-right"><p>0.038</p></td>
+<td class="text-right"><p>0.983</p></td>
+<td class="text-right"><p>162</p></td>
+</tr>
+<tr class="row-odd"><td><p>Study 1 – Gun Control (MTurk)</p></td>
+<td><p>l2</p></td>
+<td><p>viewer_profile, state_text, pol_interest</p></td>
+<td><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>0.704</p></td>
+<td class="text-right"><p>0.074</p></td>
+<td class="text-right"><p>+0.630</p></td>
+<td class="text-right"><p>50</p></td>
+<td class="text-right"><p>162</p></td>
+<td class="text-right"><p>0.030</p></td>
+<td class="text-right"><p>-0.007</p></td>
+<td class="text-right"><p>0.038</p></td>
+<td class="text-right"><p>0.983</p></td>
+<td class="text-right"><p>162</p></td>
+</tr>
+<tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
+<td><p>l2</p></td>
 <td><p>viewer_profile, state_text, religpew</p></td>
 <td><p>—</p></td>
 <td class="text-right"><p>—</p></td>
@@ -1277,84 +870,30 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>0.704</p></td>
 <td class="text-right"><p>0.074</p></td>
 <td class="text-right"><p>+0.630</p></td>
-<td class="text-right"><p>25</p></td>
+<td class="text-right"><p>50</p></td>
 <td class="text-right"><p>162</p></td>
-<td class="text-right"><p>0.031</p></td>
-<td class="text-right"><p>-0.006</p></td>
+<td class="text-right"><p>0.030</p></td>
+<td class="text-right"><p>-0.007</p></td>
 <td class="text-right"><p>0.038</p></td>
-<td class="text-right"><p>0.982</p></td>
-<td class="text-right"><p>162</p></td>
-</tr>
-<tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
-<td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, youtube_time</p></td>
-<td><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>0.704</p></td>
-<td class="text-right"><p>0.074</p></td>
-<td class="text-right"><p>+0.630</p></td>
-<td class="text-right"><p>25</p></td>
-<td class="text-right"><p>162</p></td>
-<td class="text-right"><p>0.031</p></td>
-<td class="text-right"><p>-0.006</p></td>
-<td class="text-right"><p>0.038</p></td>
-<td class="text-right"><p>0.982</p></td>
-<td class="text-right"><p>162</p></td>
-</tr>
-<tr class="row-odd"><td><p>Study 1 – Gun Control (MTurk)</p></td>
-<td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, newsint</p></td>
-<td><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>0.704</p></td>
-<td class="text-right"><p>0.074</p></td>
-<td class="text-right"><p>+0.630</p></td>
-<td class="text-right"><p>25</p></td>
-<td class="text-right"><p>162</p></td>
-<td class="text-right"><p>0.031</p></td>
-<td class="text-right"><p>-0.006</p></td>
-<td class="text-right"><p>0.038</p></td>
-<td class="text-right"><p>0.982</p></td>
-<td class="text-right"><p>162</p></td>
-</tr>
-<tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
-<td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, educ</p></td>
-<td><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>0.704</p></td>
-<td class="text-right"><p>0.074</p></td>
-<td class="text-right"><p>+0.630</p></td>
-<td class="text-right"><p>25</p></td>
-<td class="text-right"><p>162</p></td>
-<td class="text-right"><p>0.031</p></td>
-<td class="text-right"><p>-0.006</p></td>
-<td class="text-right"><p>0.038</p></td>
-<td class="text-right"><p>0.982</p></td>
+<td class="text-right"><p>0.983</p></td>
 <td class="text-right"><p>162</p></td>
 </tr>
 <tr class="row-odd"><td><p><strong>Study 2 – Minimum Wage (MTurk)</strong></p></td>
 <td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, freq_youtube</p></td>
+<td><p>viewer_profile, state_text</p></td>
 <td><p>—</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
-<td class="text-right"><p>0.558</p></td>
+<td class="text-right"><p>0.527</p></td>
 <td class="text-right"><p>0.061</p></td>
-<td class="text-right"><p>+0.497</p></td>
-<td class="text-right"><p>25</p></td>
+<td class="text-right"><p>+0.467</p></td>
+<td class="text-right"><p>50</p></td>
 <td class="text-right"><p>165</p></td>
-<td class="text-right"><p>0.092</p></td>
-<td class="text-right"><p>-0.004</p></td>
-<td class="text-right"><p>0.127</p></td>
-<td class="text-right"><p>0.788</p></td>
+<td class="text-right"><p>0.093</p></td>
+<td class="text-right"><p>-0.003</p></td>
+<td class="text-right"><p>0.128</p></td>
+<td class="text-right"><p>0.786</p></td>
 <td class="text-right"><p>165</p></td>
 </tr>
 <tr class="row-even"><td><p>Study 2 – Minimum Wage (MTurk)</p></td>
@@ -1364,159 +903,159 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
-<td class="text-right"><p>0.545</p></td>
+<td class="text-right"><p>0.527</p></td>
 <td class="text-right"><p>0.061</p></td>
-<td class="text-right"><p>+0.485</p></td>
-<td class="text-right"><p>25</p></td>
+<td class="text-right"><p>+0.467</p></td>
+<td class="text-right"><p>50</p></td>
 <td class="text-right"><p>165</p></td>
 <td class="text-right"><p>0.093</p></td>
-<td class="text-right"><p>-0.004</p></td>
+<td class="text-right"><p>-0.003</p></td>
 <td class="text-right"><p>0.128</p></td>
-<td class="text-right"><p>0.787</p></td>
+<td class="text-right"><p>0.786</p></td>
 <td class="text-right"><p>165</p></td>
 </tr>
 <tr class="row-odd"><td><p>Study 2 – Minimum Wage (MTurk)</p></td>
-<td><p>l2</p></td>
-<td><p>viewer_profile, state_text, freq_youtube</p></td>
+<td><p>cosine</p></td>
+<td><p>viewer_profile, state_text, ideo2</p></td>
 <td><p>—</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
-<td class="text-right"><p>0.564</p></td>
+<td class="text-right"><p>0.527</p></td>
 <td class="text-right"><p>0.061</p></td>
-<td class="text-right"><p>+0.503</p></td>
-<td class="text-right"><p>25</p></td>
+<td class="text-right"><p>+0.467</p></td>
+<td class="text-right"><p>50</p></td>
 <td class="text-right"><p>165</p></td>
 <td class="text-right"><p>0.093</p></td>
-<td class="text-right"><p>-0.004</p></td>
-<td class="text-right"><p>0.127</p></td>
-<td class="text-right"><p>0.788</p></td>
+<td class="text-right"><p>-0.003</p></td>
+<td class="text-right"><p>0.128</p></td>
+<td class="text-right"><p>0.786</p></td>
 <td class="text-right"><p>165</p></td>
 </tr>
 <tr class="row-even"><td><p>Study 2 – Minimum Wage (MTurk)</p></td>
-<td><p>l2</p></td>
-<td><p>viewer_profile, state_text, ideo1</p></td>
-<td><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>0.552</p></td>
-<td class="text-right"><p>0.061</p></td>
-<td class="text-right"><p>+0.491</p></td>
-<td class="text-right"><p>25</p></td>
-<td class="text-right"><p>165</p></td>
-<td class="text-right"><p>0.093</p></td>
-<td class="text-right"><p>-0.004</p></td>
-<td class="text-right"><p>0.128</p></td>
-<td class="text-right"><p>0.787</p></td>
-<td class="text-right"><p>165</p></td>
-</tr>
-<tr class="row-odd"><td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>cosine</p></td>
 <td><p>viewer_profile, state_text, pol_interest</p></td>
 <td><p>—</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
-<td class="text-right"><p>0.539</p></td>
+<td class="text-right"><p>0.527</p></td>
 <td class="text-right"><p>0.061</p></td>
-<td class="text-right"><p>+0.479</p></td>
-<td class="text-right"><p>25</p></td>
+<td class="text-right"><p>+0.467</p></td>
+<td class="text-right"><p>50</p></td>
 <td class="text-right"><p>165</p></td>
 <td class="text-right"><p>0.093</p></td>
-<td class="text-right"><p>-0.004</p></td>
+<td class="text-right"><p>-0.003</p></td>
 <td class="text-right"><p>0.128</p></td>
-<td class="text-right"><p>0.787</p></td>
+<td class="text-right"><p>0.786</p></td>
+<td class="text-right"><p>165</p></td>
+</tr>
+<tr class="row-odd"><td><p>Study 2 – Minimum Wage (MTurk)</p></td>
+<td><p>cosine</p></td>
+<td><p>viewer_profile, state_text, religpew</p></td>
+<td><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>0.527</p></td>
+<td class="text-right"><p>0.061</p></td>
+<td class="text-right"><p>+0.467</p></td>
+<td class="text-right"><p>50</p></td>
+<td class="text-right"><p>165</p></td>
+<td class="text-right"><p>0.093</p></td>
+<td class="text-right"><p>-0.003</p></td>
+<td class="text-right"><p>0.128</p></td>
+<td class="text-right"><p>0.786</p></td>
 <td class="text-right"><p>165</p></td>
 </tr>
 <tr class="row-even"><td><p><strong>Study 3 – Minimum Wage (YouGov)</strong></p></td>
 <td><p>l2</p></td>
-<td><p>viewer_profile, state_text, employ</p></td>
+<td><p>viewer_profile, state_text</p></td>
 <td><p>—</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
-<td class="text-right"><p>0.518</p></td>
+<td class="text-right"><p>0.490</p></td>
 <td class="text-right"><p>0.058</p></td>
-<td class="text-right"><p>+0.459</p></td>
-<td class="text-right"><p>25</p></td>
+<td class="text-right"><p>+0.432</p></td>
+<td class="text-right"><p>50</p></td>
 <td class="text-right"><p>257</p></td>
 <td class="text-right"><p>0.088</p></td>
 <td class="text-right"><p>+0.004</p></td>
-<td class="text-right"><p>0.126</p></td>
-<td class="text-right"><p>0.767</p></td>
+<td class="text-right"><p>0.125</p></td>
+<td class="text-right"><p>0.771</p></td>
 <td class="text-right"><p>257</p></td>
 </tr>
 <tr class="row-odd"><td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>l2</p></td>
-<td><p>viewer_profile, state_text, child18</p></td>
+<td><p>viewer_profile, state_text, ideo1</p></td>
 <td><p>—</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
-<td class="text-right"><p>0.529</p></td>
+<td class="text-right"><p>0.490</p></td>
 <td class="text-right"><p>0.058</p></td>
-<td class="text-right"><p>+0.471</p></td>
-<td class="text-right"><p>25</p></td>
+<td class="text-right"><p>+0.432</p></td>
+<td class="text-right"><p>50</p></td>
 <td class="text-right"><p>257</p></td>
 <td class="text-right"><p>0.088</p></td>
 <td class="text-right"><p>+0.004</p></td>
-<td class="text-right"><p>0.126</p></td>
-<td class="text-right"><p>0.767</p></td>
+<td class="text-right"><p>0.125</p></td>
+<td class="text-right"><p>0.771</p></td>
 <td class="text-right"><p>257</p></td>
 </tr>
 <tr class="row-even"><td><p>Study 3 – Minimum Wage (YouGov)</p></td>
-<td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, employ</p></td>
+<td><p>l2</p></td>
+<td><p>viewer_profile, state_text, ideo2</p></td>
 <td><p>—</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
-<td class="text-right"><p>0.514</p></td>
+<td class="text-right"><p>0.490</p></td>
 <td class="text-right"><p>0.058</p></td>
-<td class="text-right"><p>+0.455</p></td>
-<td class="text-right"><p>25</p></td>
+<td class="text-right"><p>+0.432</p></td>
+<td class="text-right"><p>50</p></td>
 <td class="text-right"><p>257</p></td>
 <td class="text-right"><p>0.088</p></td>
 <td class="text-right"><p>+0.004</p></td>
-<td class="text-right"><p>0.126</p></td>
-<td class="text-right"><p>0.767</p></td>
+<td class="text-right"><p>0.125</p></td>
+<td class="text-right"><p>0.771</p></td>
 <td class="text-right"><p>257</p></td>
 </tr>
 <tr class="row-odd"><td><p>Study 3 – Minimum Wage (YouGov)</p></td>
-<td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, child18</p></td>
-<td><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>0.521</p></td>
-<td class="text-right"><p>0.058</p></td>
-<td class="text-right"><p>+0.463</p></td>
-<td class="text-right"><p>25</p></td>
-<td class="text-right"><p>257</p></td>
-<td class="text-right"><p>0.088</p></td>
-<td class="text-right"><p>+0.004</p></td>
-<td class="text-right"><p>0.126</p></td>
-<td class="text-right"><p>0.767</p></td>
-<td class="text-right"><p>257</p></td>
-</tr>
-<tr class="row-even"><td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>l2</p></td>
 <td><p>viewer_profile, state_text, pol_interest</p></td>
 <td><p>—</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
-<td class="text-right"><p>0.502</p></td>
+<td class="text-right"><p>0.490</p></td>
 <td class="text-right"><p>0.058</p></td>
-<td class="text-right"><p>+0.444</p></td>
-<td class="text-right"><p>25</p></td>
+<td class="text-right"><p>+0.432</p></td>
+<td class="text-right"><p>50</p></td>
 <td class="text-right"><p>257</p></td>
 <td class="text-right"><p>0.088</p></td>
 <td class="text-right"><p>+0.004</p></td>
-<td class="text-right"><p>0.126</p></td>
-<td class="text-right"><p>0.767</p></td>
+<td class="text-right"><p>0.125</p></td>
+<td class="text-right"><p>0.771</p></td>
+<td class="text-right"><p>257</p></td>
+</tr>
+<tr class="row-even"><td><p>Study 3 – Minimum Wage (YouGov)</p></td>
+<td><p>l2</p></td>
+<td><p>viewer_profile, state_text, religpew</p></td>
+<td><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>0.490</p></td>
+<td class="text-right"><p>0.058</p></td>
+<td class="text-right"><p>+0.432</p></td>
+<td class="text-right"><p>50</p></td>
+<td class="text-right"><p>257</p></td>
+<td class="text-right"><p>0.088</p></td>
+<td class="text-right"><p>+0.004</p></td>
+<td class="text-right"><p>0.125</p></td>
+<td class="text-right"><p>0.771</p></td>
 <td class="text-right"><p>257</p></td>
 </tr>
 </tbody>
@@ -1527,17 +1066,17 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <ul class="simple">
 <li><p>Weighted MAE 0.073 across 2,920 participants.</p></li>
 <li><p>Weighted baseline MAE 0.074 (+0.001 vs. final).</p></li>
-<li><p>Weighted directional accuracy 0.578 across 2,920 participants.</p></li>
-<li><p>Weighted baseline accuracy 0.063 (+0.515 vs. final).</p></li>
+<li><p>Weighted directional accuracy 0.560 across 2,920 participants.</p></li>
+<li><p>Weighted baseline accuracy 0.063 (+0.497 vs. final).</p></li>
 <li><p>Weighted RMSE (change) 0.102 (+0.005 vs. baseline).</p></li>
-<li><p>Weighted calibration ECE 0.022 (— vs. baseline).</p></li>
-<li><p>Weighted KL divergence 7.524 (+10.911 vs. baseline).</p></li>
+<li><p>Weighted calibration ECE 0.019 (— vs. baseline).</p></li>
+<li><p>Weighted KL divergence 8.631 (+9.804 vs. baseline).</p></li>
 <li><p>Largest MAE reduction: TFIDF – Study 3 – Minimum Wage (YouGov) (+0.004).</p></li>
-<li><p>Largest RMSE(change) reduction: TFIDF – Study 2 – Minimum Wage (MTurk) (+0.011).</p></li>
-<li><p>Lowest MAE: TFIDF – Study 1 – Gun Control (MTurk) (0.031); Highest MAE: TFIDF – Study 2 – Minimum Wage (MTurk) (0.093).</p></li>
-<li><p>Biggest KL divergence reduction: TFIDF – Study 2 – Minimum Wage (MTurk) (+11.953).</p></li>
+<li><p>Largest RMSE(change) reduction: TFIDF – Study 2 – Minimum Wage (MTurk) (+0.010).</p></li>
+<li><p>Lowest MAE: TFIDF – Study 1 – Gun Control (MTurk) (0.030); Highest MAE: TFIDF – Study 2 – Minimum Wage (MTurk) (0.093).</p></li>
+<li><p>Biggest KL divergence reduction: TFIDF – Study 1 – Gun Control (MTurk) (+10.467).</p></li>
 <li><p>Highest directional accuracy: TFIDF – Study 1 – Gun Control (MTurk) (0.704).</p></li>
-<li><p>Lowest directional accuracy: TFIDF – Study 3 – Minimum Wage (YouGov) (0.502).</p></li>
+<li><p>Lowest directional accuracy: TFIDF – Study 3 – Minimum Wage (YouGov) (0.490).</p></li>
 <li><p>Largest accuracy gain vs. baseline: TFIDF – Study 1 – Gun Control (MTurk) (+0.630).</p></li>
 </ul>
 </section>
@@ -1546,9 +1085,9 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <ul class="simple">
 <li><p>TFIDF:</p>
 <ul>
-<li><p>Study 1 – Gun Control (MTurk): <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">opinion</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">gun_control</span> <span class="pre">--participant-studies</span> <span class="pre">study1</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">25</span> <span class="pre">--knn-k-sweep</span> <span class="pre">25</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text</span></code></p></li>
-<li><p>Study 2 – Minimum Wage (MTurk): <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">opinion</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">minimum_wage</span> <span class="pre">--participant-studies</span> <span class="pre">study2</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">25</span> <span class="pre">--knn-k-sweep</span> <span class="pre">25</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text,freq_youtube</span></code></p></li>
-<li><p>Study 3 – Minimum Wage (YouGov): <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">opinion</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">minimum_wage</span> <span class="pre">--participant-studies</span> <span class="pre">study3</span> <span class="pre">--knn-metric</span> <span class="pre">l2</span> <span class="pre">--knn-k</span> <span class="pre">25</span> <span class="pre">--knn-k-sweep</span> <span class="pre">25</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text,employ</span></code></p></li>
+<li><p>Study 1 – Gun Control (MTurk): <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">opinion</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">gun_control</span> <span class="pre">--participant-studies</span> <span class="pre">study1</span> <span class="pre">--knn-metric</span> <span class="pre">l2</span> <span class="pre">--knn-k</span> <span class="pre">50</span> <span class="pre">--knn-k-sweep</span> <span class="pre">50</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text</span></code></p></li>
+<li><p>Study 2 – Minimum Wage (MTurk): <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">opinion</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">minimum_wage</span> <span class="pre">--participant-studies</span> <span class="pre">study2</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">50</span> <span class="pre">--knn-k-sweep</span> <span class="pre">50</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text</span></code></p></li>
+<li><p>Study 3 – Minimum Wage (YouGov): <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">opinion</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">minimum_wage</span> <span class="pre">--participant-studies</span> <span class="pre">study3</span> <span class="pre">--knn-metric</span> <span class="pre">l2</span> <span class="pre">--knn-k</span> <span class="pre">50</span> <span class="pre">--knn-k-sweep</span> <span class="pre">50</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text</span></code></p></li>
 </ul>
 </li>
 </ul>

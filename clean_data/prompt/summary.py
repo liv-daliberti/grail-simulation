@@ -60,7 +60,13 @@ def summarize_feature(
     label: str,
     output_path: Path,
 ) -> Dict[str, Dict[str, float | int]]:
-    """Render plots for a feature and return summary statistics."""
+    """Render plots for a feature and return summary statistics.
+
+    :param pair: Training/validation series plus backing dataframes for the feature.
+    :param label: Human-readable label used for chart titles.
+    :param output_path: Path where the rendered figure will be written.
+    :returns: Mapping of split name to numeric or categorical summary metrics.
+    """
 
     numeric_train = convert_numeric(pair.train_series)
     numeric_val = convert_numeric(pair.val_series)
@@ -95,7 +101,14 @@ def summarize_features(
     val_df: pd.DataFrame,
     figures_dir: Path,
 ) -> Tuple[Dict[str, Dict[str, Dict[str, float | int]]], List[str]]:
-    """Generate plots/statistics for all prompt features."""
+    """Generate plots/statistics for all prompt features.
+
+    :param train_df: Training split dataframe containing prompt rows.
+    :param val_df: Validation split dataframe containing prompt rows.
+    :param figures_dir: Directory used to persist per-feature figures.
+    :returns: Tuple of ``(feature_summary, skipped_features)`` where the summary maps
+        feature names to split-level metrics and ``skipped_features`` lists empty signals.
+    """
 
     summary: Dict[str, Dict[str, Dict[str, float | int]]] = {}
     skipped: List[str] = []
@@ -122,7 +135,13 @@ def profile_summary(
     val_df: pd.DataFrame,
     profile_col: Optional[str],
 ) -> Dict[str, Dict[str, float]]:
-    """Return profile availability counts for each split."""
+    """Return profile availability counts for each split.
+
+    :param train_df: Training split dataframe whose rows represent prompt examples.
+    :param val_df: Validation split dataframe whose rows represent prompt examples.
+    :param profile_col: Column containing the viewer profile text, or ``None`` when absent.
+    :returns: Mapping with per-split counts for total rows and rows missing profile text.
+    """
 
     if profile_col is not None:
         train_series = clean_viewer_profile(train_df.get(profile_col, pd.Series(dtype=object)))
@@ -148,7 +167,14 @@ def prior_history_summary(
     val_df: pd.DataFrame,
     figures_dir: Path,
 ) -> Tuple[Dict[str, Dict[int, int]], Path]:
-    """Compute prior-history counts and render the corresponding chart."""
+    """Compute prior-history counts and render the corresponding chart.
+
+    :param train_df: Training split dataframe containing interaction history columns.
+    :param val_df: Validation split dataframe containing interaction history columns.
+    :param figures_dir: Directory where the generated histogram will be saved.
+    :returns: Tuple of ``(counts, figure_path)`` with per-split prior-history counts
+        and the path to the rendered figure.
+    """
 
     train_prior = train_df.apply(count_prior_history, axis=1)
     val_prior = val_df.apply(count_prior_history, axis=1)
@@ -171,7 +197,14 @@ def n_options_summary(
     val_df: pd.DataFrame,
     figures_dir: Path,
 ) -> Tuple[Dict[str, Dict[int, int]], Path]:
-    """Summarize slate sizes and render their distribution chart."""
+    """Summarize slate sizes and render their distribution chart.
+
+    :param train_df: Training split dataframe containing ``n_options`` values.
+    :param val_df: Validation split dataframe containing ``n_options`` values.
+    :param figures_dir: Directory where the slate-size histogram will be written.
+    :returns: Tuple of ``(counts, figure_path)`` with per-split slate-size counts
+        and the path to the rendered figure.
+    """
 
     train_series = pd.to_numeric(
         train_df.get("n_options", pd.Series(dtype="float64")), errors="coerce"
@@ -198,7 +231,14 @@ def demographic_missing_summary(  # pylint: disable=too-many-locals
     val_df: pd.DataFrame,
     figures_dir: Path,
 ) -> Tuple[Dict[str, Dict[str, float]], Path]:
-    """Report rows missing all demographic feature columns and render a bar chart."""
+    """Report rows missing all demographic feature columns and render a bar chart.
+
+    :param train_df: Training split dataframe to evaluate.
+    :param val_df: Validation split dataframe to evaluate.
+    :param figures_dir: Directory where the demographic bar chart will be stored.
+    :returns: Tuple of ``(summaries, figure_path)`` with per-split missing metrics
+        and the path to the rendered figure.
+    """
 
     demo_columns = [
         col
@@ -289,7 +329,12 @@ def unique_content_counts(
     train_df: pd.DataFrame,
     val_df: pd.DataFrame,
 ) -> Dict[str, Dict[str, int]]:
-    """Return counts of unique content per split."""
+    """Return counts of unique content per split.
+
+    :param train_df: Training split dataframe containing prompt metadata.
+    :param val_df: Validation split dataframe containing prompt metadata.
+    :returns: Mapping of split name to counts of unique videos, slates, and texts.
+    """
 
     def _count_unique(data_frame: pd.DataFrame, column: str) -> int:
         """Return the number of unique non-empty values for ``column``.
@@ -366,7 +411,12 @@ def participant_counts_summary(
     train_df: pd.DataFrame,
     val_df: pd.DataFrame,
 ) -> Dict[str, Dict[str, Any]]:
-    """Summarize participant counts for each split and overall."""
+    """Summarize participant counts for each split and overall.
+
+    :param train_df: Training split dataframe containing participant metadata.
+    :param val_df: Validation split dataframe containing participant metadata.
+    :returns: Mapping with overall counts plus breakouts by issue and study per split.
+    """
 
     combined_df = pd.concat([train_df, val_df], ignore_index=True)
     return {

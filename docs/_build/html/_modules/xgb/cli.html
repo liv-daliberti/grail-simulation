@@ -284,6 +284,16 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.evaluate</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_eval</span>
 
+<span class="c1"># Align default extra text fields with KNN to reduce signal disparity.</span>
+<span class="c1"># These fields augment the base viewer_profile/state_text from prompt_docs.</span>
+<span class="n">DEFAULT_XGB_TEXT_FIELDS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;pid1,pid2,ideo1,ideo2,pol_interest,religpew,educ,employ,child18,inputstate,&quot;</span>
+    <span class="s2">&quot;freq_youtube,youtube_time,newsint,q31,participant_study,slate_source,&quot;</span>
+    <span class="s2">&quot;minwage_text_w2,minwage_text_w1,mw_support_w2,mw_support_w1,minwage15_w2,&quot;</span>
+    <span class="s2">&quot;minwage15_w1,mw_index_w2,mw_index_w1,gun_importance,gun_index,gun_enthusiasm,&quot;</span>
+    <span class="s2">&quot;gun_identity&quot;</span>
+<span class="p">)</span>
+
 
 <div class="viewcode-block" id="build_parser">
 <a class="viewcode-back" href="../../api/xgb.html#xgb.cli.build_parser">[docs]</a>
@@ -337,8 +347,11 @@
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--extra_text_fields&quot;</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Comma-separated additional columns appended to the prompt document.&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_XGB_TEXT_FIELDS</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Comma-separated additional columns appended to the prompt document. &quot;</span>
+            <span class="s2">&quot;Defaults mirror KNN&#39;s extended text fields.&quot;</span>
+        <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--text_vectorizer&quot;</span><span class="p">,</span>
@@ -470,6 +483,24 @@
         <span class="n">flags</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;--participant-studies&quot;</span><span class="p">,</span> <span class="s2">&quot;--participant_studies&quot;</span><span class="p">),</span>
         <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;participant_studies&quot;</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Comma-separated participant study keys to evaluate (defaults to all).&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">add_comma_separated_argument</span><span class="p">(</span>
+        <span class="n">parser</span><span class="p">,</span>
+        <span class="n">flags</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;--train-participant-studies&quot;</span><span class="p">,</span> <span class="s2">&quot;--train_participant_studies&quot;</span><span class="p">),</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;train_participant_studies&quot;</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Comma-separated participant study keys used for TRAINING. &quot;</span>
+            <span class="s2">&quot;Defaults to --participant-studies when unset.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">add_comma_separated_argument</span><span class="p">(</span>
+        <span class="n">parser</span><span class="p">,</span>
+        <span class="n">flags</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;--eval-participant-studies&quot;</span><span class="p">,</span> <span class="s2">&quot;--eval_participant_studies&quot;</span><span class="p">),</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;eval_participant_studies&quot;</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Comma-separated participant study keys used for EVALUATION. &quot;</span>
+            <span class="s2">&quot;Defaults to --participant-studies when unset.&quot;</span>
+        <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--cache_dir&quot;</span><span class="p">,</span>

@@ -70,43 +70,44 @@ DEFAULT_TITLE_DIRS: list[str] = [
 # ---------------------------------------------------------------------------
 # Prompt template
 # ---------------------------------------------------------------------------
-SYSTEM_PROMPT: str = """You are choosing EXACTLY ONE item from the list of OPTIONS for a specific VIEWER.
-
-Input you will see:
-  • Viewer profile and optional context/history
-  • An "OPTIONS:" list with items numbered 1..N
-    – Each item is shown as either a title (preferred) or an id
-
-Your job:
-  • Think briefly in <think>…</think> using the viewer’s profile, context, and options.
-  • Compare the top 2–3 candidates, then choose the single best option.
-  • Never invent new items; choose only from the given OPTIONS list.
-
-Output format (STRICT):
-  • Always include BOTH tags in this order: <think>…</think> followed by <answer>…</answer>.
-  • First output your hidden reasoning in <think>…</think>.
-    – In your thinking, reference candidates by their numbers and names (or ids)
-      to justify the choice.
-  • Then output ONLY the chosen option’s NUMBER inside <answer>…</answer>.
-    – Do NOT output the name, id, or any extra text—ONLY the number.
-    – Do NOT include punctuation, quotes,
-      or a period after the number.
-
-Examples of valid <answer>:
-  <think>
-  WHY YOU THINK THIS IS THE RIGHT CHOICE
-  </think>
-  <answer>
-  3
-  </answer>
-
-Examples of INVALID <answer> (never do these):
-  <think></think><answer>3.</answer>                 ← trailing period
-  <think></think><answer>"3"</answer>                ← quoted
-  <think></think><answer>Option 3</answer>           ← extra words
-  <think></think><answer>Parkland …</answer>         ← name instead of number
-  You only have 100 tokens to think and 50 tokens to answer.
-"""
+SYSTEM_PROMPT: str = (
+    "You are choosing EXACTLY ONE item from the list of OPTIONS for a specific VIEWER.\n"
+    "\n"
+    "Input you will see:\n"
+    "  • Viewer profile and optional context/history\n"
+    "  • An \"OPTIONS:\" list with items numbered 1..N\n"
+    "    – Each item is shown as either a title (preferred) or an id\n"
+    "\n"
+    "Your job:\n"
+    "  • Think briefly in <think>…</think> using the viewer’s profile, context, and options.\n"
+    "  • Compare the top 2–3 candidates, then choose the single best option.\n"
+    "  • Never invent new items; choose only from the given OPTIONS list.\n"
+    "\n"
+    "Output format (STRICT):\n"
+    "  • Always include BOTH tags in this order: <think>…</think> followed by <answer>…</answer>.\n"
+    "  • First output your hidden reasoning in <think>…</think>.\n"
+    "    – In your thinking, reference candidates by their numbers and names (or ids)\n"
+    "      to justify the choice.\n"
+    "  • Then output ONLY the chosen option’s NUMBER inside <answer>…</answer>.\n"
+    "    – Do NOT output the name, id, or any extra text—ONLY the number.\n"
+    "    – Do NOT include punctuation, quotes,\n"
+    "      or a period after the number.\n"
+    "\n"
+    "Examples of valid <answer>:\n"
+    "  <think>\n"
+    "  WHY YOU THINK THIS IS THE RIGHT CHOICE\n"
+    "  </think>\n"
+    "  <answer>\n"
+    "  3\n"
+    "  </answer>\n"
+    "\n"
+    "Examples of INVALID <answer> (never do these):\n"
+    "  <think></think><answer>3.</answer>                 ← trailing period\n"
+    "  <think></think><answer>\"3\"</answer>                ← quoted\n"
+    "  <think></think><answer>Option 3</answer>           ← extra words\n"
+    "  <think></think><answer>Parkland …</answer>         ← name instead of number\n"
+    "  You only have 100 tokens to think and 50 tokens to answer.\n"
+)
 
 OPINION_SYSTEM_PROMPT: str = """You estimate how a viewer’s opinion index changes
 after watching a recommended video.

@@ -13,139 +13,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Pipeline runner for the GPT-4o slate baseline.
+"""Pipeline runner for the GPT-4o slate baseline."""
 
-It assembles sweep planning, evaluation, and report-generation steps for
-the GPT-4o workflow used in Grail Simulation experiments."""
-
-# pylint: disable=duplicate-code
+# pylint: disable=too-many-lines
 
 from __future__ import annotations
 
 import argparse
-import csv
-import json
 import logging
-import math
 import os
-import shutil
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Mapping, Sequence, Tuple
+from typing import List, Sequence, Tuple
 
 from common.cli.args import add_comma_separated_argument
 from common.cli.options import add_log_level_argument, add_overwrite_argument
-from common.opinion.metrics import compute_opinion_metrics
-from common.pipeline.io import load_metrics_json, write_markdown_lines
-from common.reports.utils import start_markdown_report
 
-from .cli import build_parser as build_gpt_parser
-from .evaluate import run_eval
-from .opinion import (
-    OpinionArtifacts,
-    OpinionEvaluationResult,
-    OpinionMetricBundle,
-    OpinionStudyResult,
-    run_opinion_evaluations,
-)
-from .utils import qa_log_path_for
+from .opinion import OpinionEvaluationResult, run_opinion_evaluations
+from .pipeline_cache import run_reports_stage
+from .pipeline_models import PipelinePaths, SweepConfig, SweepOutcome
+from .pipeline_reports import ReportContext, generate_reports
+from .pipeline_sweeps import promote_sweep_results, run_sweeps, select_best
 
 LOGGER = logging.getLogger("gpt4o.pipeline")
-
-
-# ---------------------------------------------------------------------------
-# Data structures
-# ---------------------------------------------------------------------------
-
-
-@dataclass(frozen=True)
-class SweepConfig:
-    """Describe a GPT-4o configuration evaluated during sweeps."""
-
-    temperature: float
-    max_tokens: int
-    top_p: float
-
-    def label(self) -> str:
-        """Return a filesystem-friendly identifier."""
-
-        temp_token = f"temp{self.temperature:g}".replace(".", "p")
-        tok_token = f"tok{self.max_tokens}"
-        top_p_token = f"tp{self.top_p:g}".replace(".", "p")
-        return f"{temp_token}_{tok_token}_{top_p_token}"
-
-    def cli_args(self) -> List[str]:
-        """Return CLI overrides encoding this configuration."""
-
-        return [
-            "--temperature",
-            str(self.temperature),
-            "--max_tokens",
-            str(self.max_tokens),
-            "--top_p",
-            str(self.top_p),
-        ]
-
-
-@dataclass
-class SweepOutcome:
-    """Capture metrics gathered during a sweep run."""
-
-    config: SweepConfig
-    accuracy: float
-    parsed_rate: float
-    format_rate: float
-    metrics_path: Path
-    metrics: Mapping[str, object]
-
-
-@dataclass(frozen=True)
-class PipelinePaths:
-    """Convenience container aggregating resolved output directories."""
-
-    out_dir: Path
-    final_out_dir: Path
-    opinion_dir: Path
-    sweep_dir: Path
-    reports_dir: Path
-    cache_dir: str
-
-
-# ---------------------------------------------------------------------------
-# Utility helpers
-# ---------------------------------------------------------------------------
-
-
-def _coerce_float(value: object, default: float = 0.0) -> float:
-    """Return ``value`` coerced to ``float`` when possible."""
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return default
-
-
-def _decode_label_token(token: str, prefix: str, *, cast) -> float | int:
-    """Parse a configuration token embedded within ``token``."""
-    if not token.startswith(prefix):
-        raise ValueError(f"Token '{token}' missing prefix '{prefix}'.")
-    raw = token[len(prefix) :]
-    if not raw:
-        raise ValueError(f"Token '{token}' missing value.")
-    if cast is int:
-        return cast(raw)
-    normalised = raw.replace("p", ".")
-    return cast(normalised)
-
-
-def _parse_config_label(label: str) -> SweepConfig:
-    """Return a :class:`SweepConfig` reconstructed from ``label``."""
-    parts = label.split("_")
-    if len(parts) != 3:
-        raise ValueError(f"Unrecognised sweep label '{label}'.")
-    temperature = float(_decode_label_token(parts[0], "temp", cast=float))
-    max_tokens = int(_decode_label_token(parts[1], "tok", cast=int))
-    top_p = float(_decode_label_token(parts[2], "tp", cast=float))
-    return SweepConfig(temperature=temperature, max_tokens=max_tokens, top_p=top_p)
 
 
 # ---------------------------------------------------------------------------
@@ -154,10 +43,11 @@ def _parse_config_label(label: str) -> SweepConfig:
 
 
 def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[str]]:
-    """Parse pipeline arguments while preserving additional CLI options.
+    """
+    Parse pipeline arguments while preserving additional CLI options.
 
     :param argv: Optional iterable of CLI tokens to parse (defaults to ``sys.argv``).
-    :returns: ``(namespace, extra_args)`` tuple containing parsed options and leftovers.
+    :returns: Tuple containing the parsed namespace and a list of unconsumed tokens.
     """
 
     parser = argparse.ArgumentParser(
@@ -232,18 +122,14 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
         "--opinion-max-participants",
         type=int,
         default=0,
-        help=(
-            "Optional cap on participants per opinion study during GPT-4o "
-            "evaluation (0 keeps all)."
-        ),
+        help="Optional cap on participants per opinion study during GPT-4o evaluation (0 keeps all).",
     )
     parser.add_argument(
         "--opinion-direction-tolerance",
         type=float,
         default=1e-6,
         help=(
-            "Tolerance for treating opinion deltas as no-change when computing "
-            "direction accuracy."
+            "Tolerance for treating opinion deltas as no-change when computing direction accuracy."
         ),
     )
     parser.add_argument(
@@ -277,8 +163,14 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
     return parsed, list(extra)
 
 
+# ---------------------------------------------------------------------------
+# Path helpers
+# ---------------------------------------------------------------------------
+
+
 def _repo_root() -> Path:
-    """Return the repository root used to derive default directories.
+    """
+    Return the repository root used to derive default directories.
 
     :returns: Absolute path to the repository root.
     """
@@ -287,7 +179,8 @@ def _repo_root() -> Path:
 
 
 def _default_out_dir(root: Path) -> Path:
-    """Return the default pipeline output directory rooted at ``root``.
+    """
+    Return the default pipeline output directory rooted at ``root``.
 
     :param root: Repository root path.
     :returns: Path to the default GPT-4o output directory.
@@ -297,7 +190,8 @@ def _default_out_dir(root: Path) -> Path:
 
 
 def _default_cache_dir(root: Path) -> Path:
-    """Return the default Hugging Face cache location under ``root``.
+    """
+    Return the default Hugging Face cache location under ``root``.
 
     :param root: Repository root path.
     :returns: Path to the Hugging Face cache directory.
@@ -307,7 +201,8 @@ def _default_cache_dir(root: Path) -> Path:
 
 
 def _default_reports_dir(root: Path) -> Path:
-    """Return the default reports directory rooted at ``root``.
+    """
+    Return the default reports directory rooted at ``root``.
 
     :param root: Repository root path.
     :returns: Path to the reports directory.
@@ -317,7 +212,8 @@ def _default_reports_dir(root: Path) -> Path:
 
 
 def _split_tokens(raw: str) -> List[str]:
-    """Split a comma-separated string into trimmed, non-empty tokens.
+    """
+    Split a comma-separated string into trimmed, non-empty tokens.
 
     :param raw: Raw comma-delimited input string.
     :returns: Ordered list of trimmed tokens.
@@ -329,7 +225,8 @@ def _split_tokens(raw: str) -> List[str]:
 
 
 def _parse_float_grid(raw: str, fallback: float) -> List[float]:
-    """Parse a comma-separated list of floats, falling back to ``fallback``.
+    """
+    Parse a comma-separated list of floats, falling back to ``fallback``.
 
     :param raw: Raw comma-separated string of floats.
     :param fallback: Value to use when parsing yields no valid entries.
@@ -347,7 +244,8 @@ def _parse_float_grid(raw: str, fallback: float) -> List[float]:
 
 
 def _parse_int_grid(raw: str, fallback: int) -> List[int]:
-    """Parse a comma-separated list of integers, falling back to ``fallback``.
+    """
+    Parse a comma-separated list of integers, falling back to ``fallback``.
 
     :param raw: Raw comma-separated string of integers.
     :param fallback: Value to use when parsing yields no valid entries.
@@ -365,7 +263,8 @@ def _parse_int_grid(raw: str, fallback: int) -> List[int]:
 
 
 def _resolve_paths(args: argparse.Namespace) -> PipelinePaths:
-    """Return the resolved output/report directories for the pipeline run.
+    """
+    Resolve the output and report directories for the pipeline run.
 
     :param args: Parsed CLI arguments supplied to ``main``.
     :returns: Aggregated pipeline path configuration.
@@ -392,7 +291,8 @@ def _resolve_paths(args: argparse.Namespace) -> PipelinePaths:
 
 
 def _configure_environment(cache_dir: str) -> None:
-    """Ensure HuggingFace caches default to ``cache_dir``.
+    """
+    Ensure HuggingFace caches default to ``cache_dir``.
 
     :param cache_dir: Filesystem location used as the HF cache.
     :returns: ``None``.
@@ -403,7 +303,8 @@ def _configure_environment(cache_dir: str) -> None:
 
 
 def _build_base_cli_args(args: argparse.Namespace, *, cache_dir: str) -> List[str]:
-    """Return common CLI arguments forwarded to ``gpt4o.cli``.
+    """
+    Assemble the common CLI arguments forwarded to ``gpt4o.cli``.
 
     :param args: Parsed pipeline namespace.
     :param cache_dir: Resolved Hugging Face cache directory.
@@ -428,9 +329,7 @@ def _build_base_cli_args(args: argparse.Namespace, *, cache_dir: str) -> List[st
     if getattr(args, "opinion_studies", ""):
         base_cli.extend(["--opinion_studies", args.opinion_studies])
     if getattr(args, "opinion_max_participants", 0):
-        base_cli.extend(
-            ["--opinion_max_participants", str(args.opinion_max_participants)]
-        )
+        base_cli.extend(["--opinion_max_participants", str(args.opinion_max_participants)])
     if getattr(args, "opinion_direction_tolerance", None) is not None:
         base_cli.extend(
             ["--opinion_direction_tolerance", str(args.opinion_direction_tolerance)]
@@ -445,7 +344,8 @@ def _build_base_cli_args(args: argparse.Namespace, *, cache_dir: str) -> List[st
 
 
 def _build_sweep_configs(args: argparse.Namespace) -> List[SweepConfig]:
-    """Construct the Cartesian product of temperature, max-token, and top-p sweeps.
+    """
+    Construct the Cartesian product of temperature, max-token, and top-p sweeps.
 
     :param args: Parsed pipeline namespace containing grid definitions.
     :returns: List of sweep configurations to evaluate.
@@ -458,881 +358,74 @@ def _build_sweep_configs(args: argparse.Namespace) -> List[SweepConfig]:
     for temp in temperatures:
         for max_tokens in max_tokens_values:
             for top_p in top_p_values:
-                configs.append(
-                    SweepConfig(temperature=temp, max_tokens=max_tokens, top_p=top_p)
-                )
+                configs.append(SweepConfig(temperature=temp, max_tokens=max_tokens, top_p=top_p))
     return configs
 
 
-# ---------------------------------------------------------------------------
-# Execution helpers
-# ---------------------------------------------------------------------------
-
-
-def _run_gpt_cli(cli_args: Sequence[str]) -> None:
-    """Invoke the GPT-4o CLI entry point with the provided arguments.
-
-    :param cli_args: Iterable of CLI tokens forwarded to ``gpt4o.cli``.
-    :returns: ``None``. Exceptions propagate to the caller.
-    """
-
-    parser = build_gpt_parser()
-    namespace = parser.parse_args(list(cli_args))
-    run_eval(namespace)
-
-
-def _promote_sweep_results(
+def _run_full_pipeline(
     *,
-    selected: SweepOutcome,
-    sweep_dir: Path,
-    final_out_dir: Path,
-    overwrite: bool,
-) -> Tuple[Path, Mapping[str, object]]:
-    """Copy the best sweep artefacts into the final directory.
-
-    :param selected: Sweep outcome chosen for promotion.
-    :param sweep_dir: Root directory containing per-configuration artefacts.
-    :param final_out_dir: Destination directory for promoted results.
-    :param overwrite: Whether existing final directories should be replaced.
-    :returns: Tuple of destination directory and loaded metrics payload.
-    :raises FileNotFoundError: If the selected sweep directory is missing.
-    """
-
-    source_dir = sweep_dir / selected.config.label()
-    if not source_dir.exists():
-        raise FileNotFoundError(f"Sweep artefacts not found at {source_dir}")
-    dest_dir = final_out_dir / selected.config.label()
-    if dest_dir.exists():
-        if overwrite:
-            LOGGER.info("[PROMOTE] Overwrite enabled; clearing %s", dest_dir)
-            shutil.rmtree(dest_dir)
-        else:
-            LOGGER.info("[PROMOTE] Reusing existing final directory %s", dest_dir)
-            metrics_path = dest_dir / "metrics.json"
-            return dest_dir, load_metrics_json(metrics_path)
-
-    LOGGER.info("[PROMOTE] Copying sweep artefacts %s -> %s", source_dir, dest_dir)
-    shutil.copytree(source_dir, dest_dir)
-    metrics_path = dest_dir / "metrics.json"
-    metrics = load_metrics_json(metrics_path)
-    return dest_dir, metrics
-
-def _run_sweeps(
-    *,
-    configs: Sequence[SweepConfig],
-    base_cli: Sequence[str],
+    args: argparse.Namespace,
     extra_cli: Sequence[str],
-    sweep_dir: Path,
-) -> List[SweepOutcome]:
-    """Run GPT-4o sweeps for each configuration and collect outcomes.
-
-    :param configs: Iterable of sweep configurations to evaluate.
-    :param base_cli: CLI tokens shared by every sweep invocation.
-    :param extra_cli: Additional CLI tokens preserved from ``main``.
-    :param sweep_dir: Root directory receiving sweep outputs.
-    :returns: Ordered list of sweep outcomes with metrics metadata.
-    """
-
-    outcomes: List[SweepOutcome] = []
-    for config in configs:
-        run_dir = sweep_dir / config.label()
-        cli_args: List[str] = []
-        cli_args.extend(base_cli)
-        cli_args.extend(config.cli_args())
-        cli_args.extend(["--out_dir", str(run_dir)])
-        cli_args.extend(extra_cli)
-        LOGGER.info("[SWEEP] config=%s", config.label())
-        _run_gpt_cli(cli_args)
-        metrics_path = run_dir / "metrics.json"
-        metrics = load_metrics_json(metrics_path)
-        outcomes.append(
-            SweepOutcome(
-                config=config,
-                accuracy=float(metrics.get("accuracy_overall", 0.0)),
-                parsed_rate=float(metrics.get("parsed_rate", 0.0)),
-                format_rate=float(metrics.get("format_rate", 0.0)),
-                metrics_path=metrics_path,
-                metrics=metrics,
-            )
-        )
-    return outcomes
-
-
-def _select_best(outcomes: Sequence[SweepOutcome]) -> SweepOutcome:
-    """Return the best sweep outcome by accuracy, parsed rate, then format rate.
-
-    :param outcomes: Sequence of evaluated sweep outcomes.
-    :returns: Selected outcome achieving the best metrics.
-    :raises RuntimeError: If ``outcomes`` is empty.
-    """
-
-    if not outcomes:
-        raise RuntimeError("No sweep outcomes available for selection.")
-    best = outcomes[0]
-    for outcome in outcomes[1:]:
-        if outcome.accuracy > best.accuracy + 1e-9:
-            best = outcome
-            continue
-        if abs(outcome.accuracy - best.accuracy) <= 1e-9:
-            if outcome.parsed_rate > best.parsed_rate + 1e-9:
-                best = outcome
-                continue
-            if abs(outcome.parsed_rate - best.parsed_rate) <= 1e-9:
-                if outcome.format_rate > best.format_rate + 1e-9:
-                    best = outcome
-    return best
-
-
-def _run_final_evaluation(
-    *,
-    config: SweepConfig,
-    base_cli: Sequence[str],
-    extra_cli: Sequence[str],
-    out_dir: Path,
-) -> Tuple[Path, Mapping[str, object]]:
-    """Run a final evaluation for the selected configuration.
-
-    :param config: Winning sweep configuration.
-    :param base_cli: CLI tokens shared between sweep and final invocations.
-    :param extra_cli: Additional CLI tokens supplied by the user.
-    :param out_dir: Directory where final evaluation results are written.
-    :returns: Tuple of run directory and loaded metrics payload.
-    :rtype: tuple[pathlib.Path, collections.abc.Mapping[str, object]]
-    """
-
-    run_dir = out_dir / config.label()
-    cli_args: List[str] = []
-    cli_args.extend(base_cli)
-    cli_args.extend(config.cli_args())
-    cli_args.extend(["--out_dir", str(run_dir)])
-    cli_args.extend(extra_cli)
-    LOGGER.info("[FINAL] config=%s -> %s", config.label(), run_dir)
-    _run_gpt_cli(cli_args)
-    metrics_path = run_dir / "metrics.json"
-    metrics = load_metrics_json(metrics_path)
-    return run_dir, metrics
-
-
-# ---------------------------------------------------------------------------
-# Reports-only helpers
-# ---------------------------------------------------------------------------
-
-
-def _load_sweep_outcomes_from_disk(sweep_dir: Path) -> List[SweepOutcome]:
-    """Return sweep outcomes reconstructed from existing artefacts."""
-    outcomes: List[SweepOutcome] = []
-    if not sweep_dir.exists():
-        return outcomes
-    for candidate in sorted(sweep_dir.iterdir()):
-        if not candidate.is_dir():
-            continue
-        metrics_path = candidate / "metrics.json"
-        if not metrics_path.exists():
-            continue
-        try:
-            metrics = load_metrics_json(metrics_path)
-        except (FileNotFoundError, json.JSONDecodeError):
-            LOGGER.warning(
-                "[REPORTS] Skipping sweep artefacts at %s (unreadable metrics).",
-                metrics_path,
-            )
-            continue
-        try:
-            config = _parse_config_label(candidate.name)
-        except ValueError:
-            LOGGER.warning(
-                "[REPORTS] Skipping sweep directory '%s' (invalid label).",
-                candidate.name,
-            )
-            continue
-        outcomes.append(
-            SweepOutcome(
-                config=config,
-                accuracy=_coerce_float(metrics.get("accuracy_overall")),
-                parsed_rate=_coerce_float(metrics.get("parsed_rate")),
-                format_rate=_coerce_float(metrics.get("format_rate")),
-                metrics_path=metrics_path,
-                metrics=metrics,
-            )
-        )
-    outcomes.sort(key=lambda item: item.config.label())
-    return outcomes
-
-
-def _load_selected_outcome_from_disk(
-    paths: PipelinePaths, outcomes: List[SweepOutcome]
-) -> Tuple[SweepOutcome, Mapping[str, object]]:
-    """Return the selected outcome and final metrics using cached artefacts."""
-    selected: SweepOutcome | None = None
-    final_metrics: Mapping[str, object] | None = None
-
-    if paths.final_out_dir.exists():
-        for directory in sorted(paths.final_out_dir.iterdir()):
-            if not directory.is_dir():
-                continue
-            metrics_path = directory / "metrics.json"
-            if not metrics_path.exists():
-                continue
-            try:
-                metrics = load_metrics_json(metrics_path)
-            except (FileNotFoundError, json.JSONDecodeError):
-                LOGGER.warning(
-                    "[REPORTS] Skipping final artefacts at %s (unreadable metrics).",
-                    metrics_path,
-                )
-                continue
-            label = directory.name
-            match = next(
-                (outcome for outcome in outcomes if outcome.config.label() == label),
-                None,
-            )
-            if match is None:
-                try:
-                    config = _parse_config_label(label)
-                except ValueError:
-                    LOGGER.warning(
-                        "[REPORTS] Skipping final directory '%s' (invalid label).",
-                        label,
-                    )
-                    continue
-                match = SweepOutcome(
-                    config=config,
-                    accuracy=_coerce_float(metrics.get("accuracy_overall")),
-                    parsed_rate=_coerce_float(metrics.get("parsed_rate")),
-                    format_rate=_coerce_float(metrics.get("format_rate")),
-                    metrics_path=metrics_path,
-                    metrics=metrics,
-                )
-                outcomes.append(match)
-                outcomes.sort(key=lambda item: item.config.label())
-            selected = match
-            final_metrics = metrics
-            break
-
-    if selected is None:
-        if not outcomes:
-            raise RuntimeError(
-                "No GPT-4o sweep artefacts were found; run sweeps before generating reports."
-            )
-        selected = _select_best(outcomes)
-        final_metrics = selected.metrics
-
-    assert final_metrics is not None  # narrow Optional for type checkers
-    return selected, final_metrics
-
-
-def _load_prediction_vectors(
-    predictions_path: Path,
-) -> Tuple[List[float], List[float], List[float]]:
-    """Return opinion prediction vectors parsed from ``predictions_path``."""
-    truth_before: List[float] = []
-    truth_after: List[float] = []
-    pred_after: List[float] = []
-    if not predictions_path.exists():
-        return truth_before, truth_after, pred_after
-    try:
-        with predictions_path.open("r", encoding="utf-8") as handle:
-            for line in handle:
-                try:
-                    row = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-                try:
-                    before = float(row.get("before"))
-                    after = float(row.get("after"))
-                    predicted = float(row.get("predicted_after"))
-                except (TypeError, ValueError):
-                    continue
-                truth_before.append(before)
-                truth_after.append(after)
-                pred_after.append(predicted)
-    except OSError:
-        LOGGER.warning(
-            "[REPORTS] Unable to read opinion predictions at %s.", predictions_path
-        )
-    return truth_before, truth_after, pred_after
-
-
-def _load_opinion_result_from_disk(
-    paths: PipelinePaths, config_label: str
+    paths: PipelinePaths,
 ) -> OpinionEvaluationResult | None:
-    """Rehydrate opinion evaluation results from cached artefacts."""
-    opinion_root = paths.opinion_dir / config_label
-    if not opinion_root.exists():
+    """
+    Execute sweeps, selection, final evaluation, and report regeneration.
+
+    :param args: Parsed CLI arguments forwarded from :func:`main`.
+    :param extra_cli: Additional CLI tokens preserved from user input.
+    :param paths: Resolved filesystem paths required by the pipeline.
+    :returns: Opinion evaluation result or ``None`` when running a dry run.
+    """
+
+    configs = _build_sweep_configs(args)
+    LOGGER.info("Planned %d GPT-4o configurations.", len(configs))
+    LOGGER.info("Hyper-parameter sweeps evaluate the validation split only (no training stage).")
+
+    if args.dry_run:
+        for config in configs:
+            LOGGER.info("[DRY-RUN] would evaluate config=%s", config.label())
         return None
 
-    combined_before: List[float] = []
-    combined_after: List[float] = []
-    combined_pred: List[float] = []
-    studies: Dict[str, OpinionStudyResult] = {}
+    base_cli = _build_base_cli_args(args, cache_dir=paths.cache_dir)
 
-    for study_dir in sorted(opinion_root.iterdir()):
-        if not study_dir.is_dir():
-            continue
-        metrics_path = study_dir / "metrics.json"
-        if not metrics_path.exists():
-            continue
-        try:
-            with metrics_path.open("r", encoding="utf-8") as handle:
-                payload = json.load(handle)
-        except (OSError, json.JSONDecodeError):
-            LOGGER.warning(
-                "[REPORTS] Skipping opinion study at %s (unreadable metrics).",
-                metrics_path,
-            )
-            continue
+    outcomes = run_sweeps(
+        configs=configs,
+        base_cli=base_cli,
+        extra_cli=extra_cli,
+        sweep_dir=paths.sweep_dir,
+    )
+    selected = select_best(outcomes)
+    LOGGER.info("Selected configuration: %s", selected.config.label())
 
-        metrics = payload.get("metrics", {}) or {}
-        baseline = payload.get("baseline", {}) or {}
-        participants = int(payload.get("participants", 0) or 0)
-        study_key = str(payload.get("study", study_dir.name))
-        study_label = str(payload.get("study_label", study_key))
-        issue = str(payload.get("issue", ""))
-        eligible = int(metrics.get("eligible", participants))
-
-        predictions_path = study_dir / "predictions.jsonl"
-        before_vals, after_vals, pred_vals = _load_prediction_vectors(predictions_path)
-        if before_vals:
-            combined_before.extend(before_vals)
-        if after_vals:
-            combined_after.extend(after_vals)
-        if pred_vals:
-            combined_pred.extend(pred_vals)
-
-        if not participants and after_vals:
-            participants = len(after_vals)
-        if not eligible and after_vals:
-            eligible = len(after_vals)
-
-        artifacts = OpinionArtifacts(
-            metrics=metrics_path,
-            predictions=predictions_path,
-            qa_log=qa_log_path_for(study_dir),
-        )
-        bundle = OpinionMetricBundle(metrics=metrics, baseline=baseline)
-        studies[study_key] = OpinionStudyResult(
-            study_key=study_key,
-            study_label=study_label,
-            issue=issue,
-            participants=participants,
-            eligible=eligible,
-            artifacts=artifacts,
-            metric_bundle=bundle,
-        )
-
-    if not studies:
-        return None
-
-    combined_metrics: Mapping[str, object] = {}
-    if combined_after and len(combined_after) == len(combined_pred):
-        combined_metrics = compute_opinion_metrics(
-            truth_after=combined_after,
-            truth_before=combined_before[: len(combined_after)],
-            pred_after=combined_pred,
-            direction_tolerance=1e-6,
-        )
-
-    return OpinionEvaluationResult(
-        studies=studies,
-        combined_metrics=combined_metrics,
-        config_label=config_label,
+    final_dir, final_metrics = promote_sweep_results(
+        selected=selected,
+        sweep_dir=paths.sweep_dir,
+        final_out_dir=paths.final_out_dir,
+        overwrite=args.overwrite,
     )
 
+    LOGGER.info("Running opinion-shift evaluation for %s", selected.config.label())
+    opinion_result = run_opinion_evaluations(
+        args=args,
+        config_label=selected.config.label(),
+        out_dir=paths.opinion_dir / selected.config.label(),
+    )
 
-def _run_reports_stage(paths: PipelinePaths) -> None:
-    """Generate GPT-4o reports using cached sweep/final artefacts."""
-    LOGGER.info("Rebuilding GPT-4o reports from existing artefacts.")
-    outcomes = _load_sweep_outcomes_from_disk(paths.sweep_dir)
-    if not outcomes:
-        raise RuntimeError(
-            f"No GPT-4o sweep metrics found under {paths.sweep_dir}. "
-            "Run the pipeline sweeps before rebuilding reports."
-        )
-    selected, final_metrics = _load_selected_outcome_from_disk(paths, outcomes)
-    opinion_result = _load_opinion_result_from_disk(paths, selected.config.label())
-
-    _write_reports(
-        reports_dir=paths.reports_dir,
+    LOGGER.info("Final metrics stored under %s", final_dir)
+    context = ReportContext(reports_dir=paths.reports_dir, repo_root=_repo_root())
+    generate_reports(
+        context=context,
         outcomes=outcomes,
         selected=selected,
         final_metrics=final_metrics,
         opinion_result=opinion_result,
     )
-    LOGGER.info("GPT-4o reports refreshed at %s.", paths.reports_dir)
-
-
-def _format_rate(value: float) -> str:
-    """Format a numeric rate with three decimal places.
-
-    :param value: Raw numeric rate.
-    :returns: String representation with three decimal places.
-    """
-
-    return f"{value:.3f}"
-
-
-def _group_highlights(payload: Mapping[str, Mapping[str, object]]) -> List[str]:
-    """Return bullet highlights for group-level accuracy extremes.
-
-    :param payload: Mapping of group identifiers to metrics payloads.
-    :returns: Markdown bullet lines highlighting best/worst accuracy groups.
-    """
-
-    entries: List[Tuple[float, str, int]] = []
-    for raw_group, stats in payload.items():
-        accuracy = stats.get("accuracy")
-        try:
-            accuracy_value = float(accuracy)
-        except (TypeError, ValueError):
-            continue
-        eligible_raw = stats.get("n_eligible", 0)
-        try:
-            eligible_value = int(eligible_raw)
-        except (TypeError, ValueError):
-            eligible_value = 0
-        group_name = str(raw_group or "unspecified")
-        entries.append((accuracy_value, group_name, eligible_value))
-    if not entries:
-        return []
-    entries.sort(key=lambda item: item[0], reverse=True)
-    lines = [
-        f"- Highest accuracy: {entries[0][1]} "
-        f"({_format_rate(entries[0][0])}, eligible {entries[0][2]})."
-    ]
-    if len(entries) > 1:
-        lowest = entries[-1]
-        lines.append(
-            f"- Lowest accuracy: {lowest[1]} "
-            f"({_format_rate(lowest[0])}, eligible {lowest[2]})."
-        )
-    return lines
-
-
-def _write_catalog_report(reports_dir: Path) -> None:
-    """Create the top-level GPT-4o report catalog README.
-
-    :param reports_dir: Directory that will contain the catalog README.
-    :returns: ``None``.
-    """
-
-    reports_dir.mkdir(parents=True, exist_ok=True)
-    path = reports_dir / "README.md"
-    lines = [
-        "# GPT-4o Report Catalog",
-        "",
-        "Generated artifacts for the GPT-4o slate-selection baseline:",
-        "",
-        "- `next_video/` – summary metrics and fairness cuts for the selected configuration.",
-        "- `opinion/` – opinion-shift regression metrics across participant studies.",
-        "- `hyperparameter_tuning/` – sweep results across temperature and max token settings.",
-        "",
-        "Model predictions and metrics JSON files live under `models/gpt-4o/`.",
-        "",
-    ]
-    write_markdown_lines(path, lines)
-
-
-def _write_sweep_report(
-    directory: Path,
-    outcomes: Sequence[SweepOutcome],
-    selected: SweepOutcome,
-) -> None:
-    """Write the hyper-parameter sweep report summarising all outcomes.
-
-    :param directory: Destination directory for the sweep report.
-    :param outcomes: All observed sweep outcomes.
-    :param selected: Outcome chosen as the final configuration.
-    :returns: ``None``.
-    """
-
-    path, lines = start_markdown_report(directory, title="GPT-4o Hyper-parameter Sweep")
-    if not outcomes:
-        lines.append("No sweep runs were executed.")
-        lines.append("")
-        write_markdown_lines(path, lines)
-        return
-    lines.append(
-        "The table below captures validation accuracy on eligible slates plus "
-        "formatting/parse rates for each temperature/top-p/max-token configuration. "
-        "The selected configuration is marked with ✓."
-    )
-    lines.append("")
-    header_cells = [
-        "Config",
-        "Temperature",
-        "Top-p",
-        "Max tokens",
-        "Accuracy ↑",
-        "Parsed ↑",
-        "Formatted ↑",
-        "Selected",
-    ]
-    lines.append("| " + " | ".join(header_cells) + " |")
-    lines.append("| --- | ---: | ---: | ---: | ---: | ---: | --- |")
-    for outcome in outcomes:
-        mark = "✓" if outcome.config == selected.config else ""
-        lines.append(
-            f"| `{outcome.config.label()}` | {outcome.config.temperature:.2f} | "
-            f"{outcome.config.top_p:.2f} | {outcome.config.max_tokens} | "
-            f"{_format_rate(outcome.accuracy)} | "
-            f"{_format_rate(outcome.parsed_rate)} | "
-            f"{_format_rate(outcome.format_rate)} | {mark} |"
-        )
-    lines.append("")
-    write_markdown_lines(path, lines)
-
-
-def _write_next_video_report(  # pylint: disable=too-many-statements
-    directory: Path,
-    selected: SweepOutcome,
-    metrics: Mapping[str, object],
-) -> None:
-    """Write the next-video evaluation report for the selected configuration.
-
-    :param directory: Destination directory for the report.
-    :param selected: Winning sweep outcome metadata.
-    :param metrics: Final evaluation metrics payload.
-    :returns: ``None``.
-    """
-
-    path, lines = start_markdown_report(directory, title="GPT-4o Next-Video Baseline")
-    lines.append(
-        f"- **Selected configuration:** `{selected.config.label()}` "
-        f"(temperature={selected.config.temperature:.2f}, top_p={selected.config.top_p:.2f}, "
-        f"max_tokens={selected.config.max_tokens})"
-    )
-    lines.append(
-        f"- **Accuracy:** {_format_rate(float(metrics.get('accuracy_overall', 0.0)))} "
-        f"on {int(metrics.get('n_eligible', 0))} eligible slates "
-        f"out of {int(metrics.get('n_total', 0))} processed."
-    )
-    lines.append(
-        f"- **Parsed rate:** {_format_rate(float(metrics.get('parsed_rate', 0.0)))}  "
-        f"**Formatted rate:** {_format_rate(float(metrics.get('format_rate', 0.0)))}"
-    )
-    filters = metrics.get("filters", {})
-    issue_filter = ", ".join(filters.get("issues", [])) if isinstance(filters, Mapping) else ""
-    study_filter = ", ".join(filters.get("studies", [])) if isinstance(filters, Mapping) else ""
-    filter_parts: List[str] = []
-    if issue_filter:
-        filter_parts.append(f"issues: {issue_filter}")
-    if study_filter:
-        filter_parts.append(f"studies: {study_filter}")
-    if filter_parts:
-        lines.append("- **Filters:** " + ", ".join(filter_parts))
-    lines.append("")
-    group_metrics = metrics.get("group_metrics", {})
-
-    def _render_group_table(title: str, payload: Mapping[str, Mapping[str, object]]) -> None:
-        """Append a Markdown table capturing group-level metrics.
-
-        :param title: Section title used in the report.
-        :param payload: Mapping of group identifiers to metric dictionaries.
-        :returns: ``None``.
-        """
-        if not payload:
-            return
-        lines.append(f"## {title}")
-        lines.append("")
-        lines.append("| Group | Seen | Eligible | Accuracy ↑ | Parsed ↑ | Formatted ↑ |")
-        lines.append("| --- | ---: | ---: | ---: | ---: | ---: |")
-        for group, stats in payload.items():
-            seen = int(stats.get("n_seen", 0))
-            eligible = int(stats.get("n_eligible", 0))
-            accuracy = _format_rate(float(stats.get("accuracy", 0.0)))
-            parsed_rate = _format_rate(float(stats.get("parsed_rate", 0.0)))
-            format_rate = _format_rate(float(stats.get("format_rate", 0.0)))
-            group_name = group or "unspecified"
-            line = (
-                f"| {group_name} | {seen} | {eligible} | {accuracy} | "
-                f"{parsed_rate} | {format_rate} |"
-            )
-            lines.append(line)
-        lines.append("")
-        highlight_lines = _group_highlights(payload)
-        if highlight_lines:
-            lines.append("### Highlights")
-            lines.append("")
-            lines.extend(highlight_lines)
-            lines.append("")
-
-    if isinstance(group_metrics, Mapping):
-        by_issue = group_metrics.get("by_issue")
-        if isinstance(by_issue, Mapping):
-            _render_group_table("Accuracy by Issue", by_issue)  # type: ignore[arg-type]
-        by_study = group_metrics.get("by_participant_study")
-        if isinstance(by_study, Mapping):
-            _render_group_table("Accuracy by Participant Study", by_study)  # type: ignore[arg-type]
-
-    notes = metrics.get("notes")
-    if isinstance(notes, str) and notes.strip():
-        lines.append("### Notes")
-        lines.append("")
-        lines.append(notes.strip())
-        lines.append("")
-
-    write_markdown_lines(path, lines)
-
-
-def _fmt_opinion_value(value: object, digits: int = 3) -> str:
-    """Format opinion metrics with a consistent fallback.
-
-    :param value: Raw opinion metric value.
-    :param digits: Number of decimal places to display.
-    :returns: Stringified metric or ``"n/a"`` if unavailable.
-    """
-
-    try:
-        numeric = float(value)
-    except (TypeError, ValueError):
-        return "n/a"
-    if math.isnan(numeric):
-        return "n/a"
-    return f"{numeric:.{digits}f}"
-
-
-OPINION_CSV_FIELDS = [
-    "study",
-    "issue",
-    "participants",
-    "eligible",
-    "mae_after",
-    "rmse_after",
-    "direction_accuracy",
-    "baseline_direction_accuracy",
-    "mae_change",
-    "rmse_change",
-]
-
-
-def _opinion_summary_lines(
-    selected: SweepOutcome, opinion: OpinionEvaluationResult
-) -> List[str]:
-    """Return headline opinion metrics for the report introduction.
-
-    :param selected: Winning sweep configuration.
-    :param opinion: Aggregated opinion evaluation results.
-    :returns: Markdown bullet lines describing the evaluation summary.
-    """
-    lines = [
-        (
-            f"- **Selected configuration:** `{selected.config.label()}` "
-            f"(temperature={selected.config.temperature:.2f}, "
-            f"top_p={selected.config.top_p:.2f}, max_tokens="
-            f"{selected.config.max_tokens})"
-        )
-    ]
-    total_participants = sum(result.participants for result in opinion.studies.values())
-    lines.append(f"- **Participants evaluated:** {total_participants}")
-    combined = opinion.combined_metrics or {}
-    if combined:
-        lines.append(
-            "- **Overall metrics:** "
-            f"MAE={_fmt_opinion_value(combined.get('mae_after'))}, "
-            f"RMSE={_fmt_opinion_value(combined.get('rmse_after'))}, "
-            f"Direction accuracy={_fmt_opinion_value(combined.get('direction_accuracy'))}"
-        )
-    lines.append("")
-    return lines
-
-
-def _build_opinion_table(
-    opinion: OpinionEvaluationResult,
-) -> Tuple[List[str], List[Dict[str, object]]]:
-    """Build the Markdown opinion table and CSV export rows.
-
-    :param opinion: Aggregated opinion evaluation results.
-    :returns: Tuple of markdown lines and CSV row dictionaries.
-    """
-    table_lines: List[str] = []
-    csv_rows: List[Dict[str, object]] = []
-    header = [
-        "Study",
-        "Issue",
-        "Participants",
-        "Eligible",
-        "MAE (after)",
-        "RMSE (after)",
-        "Direction ↑",
-        "No-change ↑",
-        "Δ Accuracy",
-    ]
-    table_lines.append("| " + " | ".join(header) + " |")
-    table_lines.append("| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
-
-    for result in opinion.studies.values():
-        metrics = result.metrics
-        baseline = result.baseline
-        direction_accuracy = metrics.get("direction_accuracy")
-        baseline_direction = baseline.get("direction_accuracy")
-        delta = (
-            float(direction_accuracy) - float(baseline_direction)
-            if isinstance(direction_accuracy, (int, float))
-            and isinstance(baseline_direction, (int, float))
-            else None
-        )
-
-        table_lines.append(
-            "| "
-            + " | ".join(
-                [
-                    result.study_label,
-                    result.issue.replace("_", " "),
-                    str(result.participants),
-                    str(result.eligible),
-                    _fmt_opinion_value(metrics.get("mae_after")),
-                    _fmt_opinion_value(metrics.get("rmse_after")),
-                    _fmt_opinion_value(direction_accuracy),
-                    _fmt_opinion_value(baseline_direction),
-                    _fmt_opinion_value(delta),
-                ]
-            )
-            + " |"
-        )
-
-        csv_rows.append(
-            {
-                "study": result.study_key,
-                "issue": result.issue,
-                "participants": result.participants,
-                "eligible": result.eligible,
-                "mae_after": metrics.get("mae_after"),
-                "rmse_after": metrics.get("rmse_after"),
-                "direction_accuracy": direction_accuracy,
-                "baseline_direction_accuracy": baseline_direction,
-                "mae_change": metrics.get("mae_change"),
-                "rmse_change": metrics.get("rmse_change"),
-            }
-        )
-
-    table_lines.append("")
-    return table_lines, csv_rows
-
-
-def _write_opinion_csv(directory: Path, rows: Sequence[Mapping[str, object]]) -> Path:
-    """Write the opinion metrics CSV and return its path.
-
-    :param directory: Directory where the CSV should be stored.
-    :param rows: Iterable of opinion metric rows to serialise.
-    :returns: Path to the written CSV file.
-    """
-    csv_path = directory / "opinion_metrics.csv"
-    if not rows:
-        if csv_path.exists():
-            csv_path.unlink()
-        return csv_path
-    with csv_path.open("w", encoding="utf-8", newline="") as csv_handle:
-        writer = csv.DictWriter(csv_handle, fieldnames=OPINION_CSV_FIELDS)
-        writer.writeheader()
-        writer.writerows(rows)
-    return csv_path
-
-
-def _artifact_lines(opinion: OpinionEvaluationResult, repo_root: Path) -> List[str]:
-    """Return Markdown bullets linking to opinion artefacts.
-
-    :param opinion: Opinion evaluation payload containing artefact paths.
-    :param repo_root: Repository root used for relative path rendering.
-    :returns: Markdown bullet lines referencing metrics, predictions, and QA logs.
-    """
-    lines: List[str] = []
-    for result in opinion.studies.values():
-        metrics_rel = _relative_path(repo_root, result.metrics_path)
-        preds_rel = _relative_path(repo_root, result.predictions_path)
-        qa_rel = _relative_path(repo_root, result.qa_log_path)
-        lines.append(
-            f"- `{result.study_label}` metrics: `{metrics_rel}` "
-            f"predictions: `{preds_rel}` QA log: `{qa_rel}`"
-        )
-    lines.append("")
-    return lines
-
-
-def _relative_path(root: Path, target: Path) -> Path:
-    """Return ``target`` relative to ``root`` when possible.
-
-    :param root: Root directory for relative resolution.
-    :param target: Filesystem path to convert.
-    :returns: Relative path when ``target`` lives under ``root``; otherwise ``target``.
-    """
-    try:
-        return target.relative_to(root)
-    except ValueError:
-        return target
-
-
-def _write_opinion_report(
-    directory: Path,
-    *,
-    selected: SweepOutcome,
-    opinion: OpinionEvaluationResult | None,
-) -> None:
-    """Create the opinion regression summary document.
-
-    :param directory: Destination directory for the opinion report.
-    :param selected: Winning sweep configuration.
-    :param opinion: Opinion evaluation payload (may be ``None``).
-    :returns: ``None``.
-    """
-
-    directory.mkdir(parents=True, exist_ok=True)
-    path = directory / "README.md"
-    lines: List[str] = ["# GPT-4o Opinion Shift", ""]
-
-    if opinion is None or not opinion.studies:
-        lines.append("No opinion evaluations were produced during this pipeline invocation.")
-        lines.append("")
-        write_markdown_lines(path, lines)
-        return
-
-    lines.extend(_opinion_summary_lines(selected, opinion))
-
-    table_lines, csv_rows = _build_opinion_table(opinion)
-    lines.extend(table_lines)
-    lines.append("`opinion_metrics.csv` summarises per-study metrics.")
-    lines.append("")
-
-    _write_opinion_csv(directory, csv_rows)
-
-    repo_root = _repo_root()
-    lines.append("### Artefacts")
-    lines.append("")
-    lines.extend(_artifact_lines(opinion, repo_root))
-
-    write_markdown_lines(path, lines)
-
-
-def _write_reports(
-    *,
-    reports_dir: Path,
-    outcomes: Sequence[SweepOutcome],
-    selected: SweepOutcome,
-    final_metrics: Mapping[str, object],
-    opinion_result: OpinionEvaluationResult | None,
-) -> None:
-    """Regenerate catalog, sweep, opinion, and next-video reports.
-
-    :param reports_dir: Root reports directory.
-    :param outcomes: All sweep outcomes produced during the run.
-    :param selected: Outcome chosen as the final configuration.
-    :param final_metrics: Metrics payload from the promoted evaluation.
-    :param opinion_result: Opinion evaluation payload (may be ``None``).
-    :returns: ``None``.
-    """
-
-    _write_catalog_report(reports_dir)
-    _write_sweep_report(reports_dir / "hyperparameter_tuning", outcomes, selected)
-    _write_next_video_report(reports_dir / "next_video", selected, final_metrics)
-    _write_opinion_report(reports_dir / "opinion", selected=selected, opinion=opinion_result)
-
-
-# ---------------------------------------------------------------------------
-# Public entrypoint
-# ---------------------------------------------------------------------------
+    return opinion_result
 
 
 def main(argv: Sequence[str] | None = None) -> None:
-    """Execute sweeps, selection, final evaluation, and report regeneration.
+    """
+    Entry point that orchestrates sweep execution and report generation.
 
     :param argv: Optional CLI argument sequence supplied by callers.
     :returns: ``None``.
@@ -1348,52 +441,14 @@ def main(argv: Sequence[str] | None = None) -> None:
     _configure_environment(paths.cache_dir)
 
     if args.stage == "reports":
-        _run_reports_stage(paths)
+        run_reports_stage(paths, repo_root=_repo_root())
         return
 
-    configs = _build_sweep_configs(args)
-    LOGGER.info("Planned %d GPT-4o configurations.", len(configs))
-    LOGGER.info("Hyper-parameter sweeps evaluate the validation split only (no training stage).")
-
-    if args.dry_run:
-        for config in configs:
-            LOGGER.info("[DRY-RUN] would evaluate config=%s", config.label())
-        return
-
-    base_cli = _build_base_cli_args(args, cache_dir=paths.cache_dir)
-
-    outcomes = _run_sweeps(
-        configs=configs,
-        base_cli=base_cli,
-        extra_cli=extra_cli,
-        sweep_dir=paths.sweep_dir,
-    )
-    selected = _select_best(outcomes)
-    LOGGER.info("Selected configuration: %s", selected.config.label())
-
-    final_dir, final_metrics = _promote_sweep_results(
-        selected=selected,
-        sweep_dir=paths.sweep_dir,
-        final_out_dir=paths.final_out_dir,
-        overwrite=args.overwrite,
-    )
-
-    LOGGER.info("Running opinion-shift evaluation for %s", selected.config.label())
-    opinion_result = run_opinion_evaluations(
-        args=args,
-        config_label=selected.config.label(),
-        out_dir=paths.opinion_dir / selected.config.label(),
-    )
-
-    LOGGER.info("Final metrics stored under %s", final_dir)
-    _write_reports(
-        reports_dir=paths.reports_dir,
-        outcomes=outcomes,
-        selected=selected,
-        final_metrics=final_metrics,
-        opinion_result=opinion_result,
-    )
+    _run_full_pipeline(args=args, extra_cli=extra_cli, paths=paths)
 
 
 if __name__ == "__main__":  # pragma: no cover
     main()
+
+
+__all__ = ["main", "SweepConfig", "SweepOutcome", "PipelinePaths"]

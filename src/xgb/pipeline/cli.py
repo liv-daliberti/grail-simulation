@@ -313,7 +313,7 @@ def _repo_root() -> Path:
     :rtype: Path
     """
 
-    return Path(__file__).resolve().parents[2]
+    return Path(__file__).resolve().parents[3]
 
 
 def _default_out_dir(root: Path) -> Path:

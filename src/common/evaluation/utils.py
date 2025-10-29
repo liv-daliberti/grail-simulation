@@ -17,13 +17,24 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import os
-from typing import Any, Callable, Mapping, Optional, Sequence, Tuple, TypeVar, Dict
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, TypeVar
 
 import numpy as np
 
 
 _Dataset = TypeVar("_Dataset")
+
+
+@dataclass(frozen=True)
+class BootstrapSummaryConfig:
+    """Metadata describing the bootstrap resampling configuration."""
+
+    n_groups: int
+    n_rows: int
+    n_bootstrap: int
+    seed: int
 
 
 def safe_div(numerator: float, denominator: float, *, default: float = 0.0) -> float:
@@ -124,15 +135,35 @@ def group_key_for_example(example: Mapping[str, Any], fallback_index: int) -> st
     return f"row::{fallback_index}"
 
 
+def participant_bootstrap_summary(
+    *,
+    model_samples: Sequence[float],
+    baseline_samples: Sequence[float] | None,
+    grouped_count: int,
+    row_count: int,
+    replicates: int,
+    seed: int,
+) -> Dict[str, Any]:
+    """Summarise participant bootstrap samples using the shared helper."""
+    return summarise_bootstrap_samples(
+        model_samples=model_samples,
+        baseline_samples=baseline_samples,
+        method="participant_bootstrap",
+        config=BootstrapSummaryConfig(
+            n_groups=grouped_count,
+            n_rows=row_count,
+            n_bootstrap=replicates,
+            seed=seed,
+        ),
+    )
+
+
 def summarise_bootstrap_samples(
     *,
     model_samples: Sequence[float],
     baseline_samples: Sequence[float] | None,
     method: str,
-    n_groups: int,
-    n_rows: int,
-    n_bootstrap: int,
-    seed: int,
+    config: BootstrapSummaryConfig,
 ) -> Dict[str, Any]:
     """
     Return a standardised summary dictionary for bootstrap accuracy samples.
@@ -142,10 +173,7 @@ def summarise_bootstrap_samples(
     :param model_samples: Bootstrap samples for the primary model accuracy.
     :param baseline_samples: Optional bootstrap samples for the baseline accuracy.
     :param method: Human-readable description of the uncertainty estimation method.
-    :param n_groups: Number of grouped resampling buckets.
-    :param n_rows: Number of eligible rows considered during bootstrapping.
-    :param n_bootstrap: Number of bootstrap replicates executed.
-    :param seed: Random seed used during resampling.
+    :param config: Bootstrap resampling metadata (group count, rows, replicates, seed).
     :returns: Dictionary containing summary statistics for model and baseline samples.
     """
 
@@ -160,10 +188,10 @@ def summarise_bootstrap_samples(
 
     summary: Dict[str, Any] = {
         "method": method,
-        "n_groups": int(n_groups),
-        "n_rows": int(n_rows),
-        "n_bootstrap": int(n_bootstrap),
-        "seed": int(seed),
+        "n_groups": int(config.n_groups),
+        "n_rows": int(config.n_rows),
+        "n_bootstrap": int(config.n_bootstrap),
+        "seed": int(config.seed),
         "model": {
             "mean": float(np.mean(model_samples)),
             "ci95": _ci95(model_samples),
@@ -178,9 +206,11 @@ def summarise_bootstrap_samples(
 
 
 __all__ = [
+    "BootstrapSummaryConfig",
     "compose_issue_slug",
     "ensure_hf_cache",
     "group_key_for_example",
+    "participant_bootstrap_summary",
     "prepare_dataset",
     "safe_div",
     "summarise_bootstrap_samples",

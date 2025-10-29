@@ -21,8 +21,8 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, Optional, Sequence
 
 
-@dataclass  # pylint: disable=too-many-instance-attributes
-class IssueMetrics:
+@dataclass
+class IssueMetrics:  # pylint: disable=too-many-instance-attributes
     """Container describing evaluation metrics for a single issue.
 
     :ivar issue: Human-readable issue label.
@@ -113,8 +113,8 @@ class IssueEvaluationContext:
     eval_study_tokens: Sequence[str]
 
 
-@dataclass(frozen=True)  # pylint: disable=too-many-instance-attributes
-class PredictionOutcome:
+@dataclass(frozen=True)
+class PredictionOutcome:  # pylint: disable=too-many-instance-attributes
     """Result bundle for a single evaluation example.
 
     :ivar prediction_index: 1-based predicted option index (``None`` when abstaining).
@@ -151,7 +151,8 @@ class ProbabilityContext:
 
     :ivar best_probability: Probability assigned to the chosen candidate.
     :ivar record_probability: ``True`` when the probability should be recorded.
-    :ivar known_candidate_hit: ``True`` when the predicted candidate matches the gold id and was known.
+    :ivar known_candidate_hit: ``True`` when the predicted candidate matches the gold id
+        and was known.
     """
 
     best_probability: float
@@ -159,8 +160,8 @@ class ProbabilityContext:
     known_candidate_hit: bool
 
 
-@dataclass(frozen=True)  # pylint: disable=too-many-instance-attributes
-class OutcomeSummary:
+@dataclass(frozen=True)
+class OutcomeSummary:  # pylint: disable=too-many-instance-attributes
     """Aggregated metrics derived from prediction outcomes.
 
     :ivar evaluated: Number of evaluation rows processed.

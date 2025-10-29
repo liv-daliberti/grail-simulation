@@ -9,7 +9,7 @@ import math
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Mapping, MutableMapping, Optional, Sequence, Tuple
+from typing import Dict, IO, Iterable, List, Mapping, MutableMapping, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -191,6 +191,35 @@ class StudyPredictionBatch:
     pred_after: List[float]
 
 
+@dataclass(frozen=True)
+class StudyMetricsPayload:
+    """Bundle metrics and participant counts for artefact generation."""
+
+    participants: int
+    metrics: Mapping[str, object]
+    baseline: Mapping[str, object]
+
+
+@dataclass(frozen=True)
+class CachedStudyPayload:
+    """Cached metrics payload reconstructed from disk."""
+
+    participants: int
+    metrics: Mapping[str, object]
+    baseline: Mapping[str, object]
+    study_label: str
+    issue: str
+
+
+@dataclass(frozen=True)
+class CachedPredictionVectors:
+    """Cached prediction vectors reconstructed from disk."""
+
+    truth_before: List[float]
+    truth_after: List[float]
+    pred_after: List[float]
+
+
 def _parse_tokens(raw: str) -> Tuple[List[str], set[str]]:
     """Return the requested token list and a lowercase set for fast membership tests.
 
@@ -363,6 +392,54 @@ def _resolve_spec_keys(raw: str | None) -> List[str]:
     return tokens
 
 
+def _settings_from_args(args) -> OpinionSettings:
+    """Construct :class:`OpinionSettings` from CLI or programmatic arguments."""
+
+    dataset_name = str(getattr(args, "dataset", "") or DATASET_NAME)
+    cache_dir = getattr(args, "cache_dir", None)
+
+    issues_raw = str(getattr(args, "issues", "") or "")
+    studies_raw = str(getattr(args, "studies", "") or "")
+    _, issue_filter = _parse_tokens(issues_raw)
+    _, study_filter = _parse_tokens(studies_raw)
+    filters = OpinionFilters(issues=issue_filter, studies=study_filter)
+
+    requested_specs = _resolve_spec_keys(getattr(args, "opinion_studies", None))
+
+    eval_max = getattr(args, "opinion_max_participants", 0) or getattr(args, "eval_max", 0)
+    direction_tolerance = float(
+        getattr(
+            args,
+            "opinion_direction_tolerance",
+            getattr(args, "direction_tolerance", 1e-6),
+        )
+    )
+    overwrite = bool(getattr(args, "overwrite", False))
+    limits = OpinionLimits(
+        eval_max=int(eval_max or 0),
+        direction_tolerance=direction_tolerance,
+        overwrite=overwrite,
+    )
+
+    runtime = OpinionRuntime(
+        temperature=float(getattr(args, "temperature", 0.0)),
+        max_tokens=int(getattr(args, "max_tokens", 32)),
+        top_p=getattr(args, "top_p", None),
+        deployment=getattr(args, "deployment", None),
+        retries=max(1, int(getattr(args, "request_retries", 5) or 5)),
+        retry_delay=max(0.0, float(getattr(args, "request_retry_delay", 1.0) or 0.0)),
+    )
+
+    return OpinionSettings(
+        dataset_name=dataset_name,
+        cache_dir=cache_dir,
+        filters=filters,
+        requested_specs=requested_specs,
+        limits=limits,
+        runtime=runtime,
+    )
+
+
 class OpinionEvaluationRunner:
     """Stateful helper running GPT-4o opinion evaluations."""
 
@@ -383,45 +460,7 @@ class OpinionEvaluationRunner:
         self._out_dir = out_dir
         self._out_dir.mkdir(parents=True, exist_ok=True)
 
-        dataset_name = str(getattr(args, "dataset", "") or DATASET_NAME)
-        cache_dir = getattr(args, "cache_dir", None)
-
-        issues_raw = str(getattr(args, "issues", "") or "")
-        studies_raw = str(getattr(args, "studies", "") or "")
-        _, issue_filter = _parse_tokens(issues_raw)
-        _, study_filter = _parse_tokens(studies_raw)
-        filters = OpinionFilters(issues=issue_filter, studies=study_filter)
-
-        requested_specs = _resolve_spec_keys(getattr(args, "opinion_studies", None))
-
-        eval_max = getattr(args, "opinion_max_participants", 0) or getattr(args, "eval_max", 0)
-        direction_tolerance = float(
-            getattr(args, "opinion_direction_tolerance", getattr(args, "direction_tolerance", 1e-6))
-        )
-        overwrite = bool(getattr(args, "overwrite", False))
-        limits = OpinionLimits(
-            eval_max=int(eval_max or 0),
-            direction_tolerance=direction_tolerance,
-            overwrite=overwrite,
-        )
-
-        runtime = OpinionRuntime(
-            temperature=float(getattr(args, "temperature", 0.0)),
-            max_tokens=int(getattr(args, "max_tokens", 32)),
-            top_p=getattr(args, "top_p", None),
-            deployment=getattr(args, "deployment", None),
-            retries=max(1, int(getattr(args, "request_retries", 5) or 5)),
-            retry_delay=max(0.0, float(getattr(args, "request_retry_delay", 1.0) or 0.0)),
-        )
-
-        self._settings = OpinionSettings(
-            dataset_name=dataset_name,
-            cache_dir=cache_dir,
-            filters=filters,
-            requested_specs=requested_specs,
-            limits=limits,
-            runtime=runtime,
-        )
+        self._settings = _settings_from_args(args)
 
     @property
     def settings(self) -> OpinionSettings:
@@ -679,22 +718,87 @@ class OpinionEvaluationRunner:
             for payload in predictions:
                 handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
 
+    @staticmethod
+    def _load_cached_metrics_payload(
+        metrics_path: Path,
+        *,
+        study_key: str,
+        default_label: str,
+        default_issue: str,
+    ) -> CachedStudyPayload | None:
+        """Return cached study metrics when available and well-formed."""
+        try:
+            with metrics_path.open("r", encoding="utf-8") as handle:
+                cached_payload = json.load(handle)
+        except (OSError, json.JSONDecodeError):
+            LOGGER.warning(
+                "[OPINION] Cached metrics malformed for study=%s; recomputing.",
+                study_key,
+            )
+            return None
+
+        metrics = cached_payload.get("metrics", {}) or {}
+        baseline = cached_payload.get("baseline", {}) or {}
+        participants = int(cached_payload.get("participants", 0) or 0)
+        study_label = str(cached_payload.get("study_label", default_label or study_key))
+        issue = str(cached_payload.get("issue", default_issue))
+        return CachedStudyPayload(
+            participants=participants,
+            metrics=metrics,
+            baseline=baseline,
+            study_label=study_label,
+            issue=issue,
+        )
+
+    @staticmethod
+    def _load_cached_prediction_vectors(
+        predictions_path: Path,
+        *,
+        study_key: str,
+    ) -> CachedPredictionVectors | None:
+        """Return cached prediction vectors when available and well-formed."""
+        truth_before: List[float] = []
+        truth_after: List[float] = []
+        pred_after: List[float] = []
+        try:
+            with predictions_path.open("r", encoding="utf-8") as handle:
+                for line in handle:
+                    try:
+                        row = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    try:
+                        truth_before.append(float(row.get("before")))
+                        truth_after.append(float(row.get("after")))
+                        pred_after.append(float(row.get("predicted_after")))
+                    except (TypeError, ValueError):
+                        continue
+        except OSError:
+            LOGGER.warning(
+                "[OPINION] Unable to read cached predictions for study=%s; recomputing.",
+                study_key,
+            )
+            return None
+        return CachedPredictionVectors(
+            truth_before=truth_before,
+            truth_after=truth_after,
+            pred_after=pred_after,
+        )
+
     def _write_metrics_file(
         self,
         spec: OpinionSpec,
         artifacts: OpinionArtifacts,
-        participants: int,
-        metrics: Mapping[str, object],
-        baseline: Mapping[str, object],
+        payload: StudyMetricsPayload,
     ) -> None:
         """Write the metrics JSON payload for ``spec``."""
-        payload = {
+        content = {
             "study": spec.key,
             "issue": spec.issue,
             "study_label": spec.label,
-            "participants": participants,
-            "metrics": metrics,
-            "baseline": baseline,
+            "participants": payload.participants,
+            "metrics": payload.metrics,
+            "baseline": payload.baseline,
             "config": {
                 "temperature": self.runtime.temperature,
                 "max_tokens": self.runtime.max_tokens,
@@ -702,7 +806,7 @@ class OpinionEvaluationRunner:
             },
         }
         with artifacts.metrics.open("w", encoding="utf-8") as handle:
-            json.dump(payload, handle, ensure_ascii=False, indent=2)
+            json.dump(content, handle, ensure_ascii=False, indent=2)
 
     def _load_cached_result(
         self,
@@ -713,58 +817,102 @@ class OpinionEvaluationRunner:
         """Load cached artefacts when reuse is permitted."""
         if not artifacts.metrics.exists() or not artifacts.predictions.exists():
             return None
-        try:
-            with artifacts.metrics.open("r", encoding="utf-8") as handle:
-                cached_payload = json.load(handle)
-        except (OSError, json.JSONDecodeError):
-            LOGGER.warning(
-                "[OPINION] Cached metrics malformed for study=%s; recomputing.",
-                spec.key,
-            )
+        metrics_payload = self._load_cached_metrics_payload(
+            artifacts.metrics,
+            study_key=spec.key,
+            default_label=spec.label,
+            default_issue=spec.issue,
+        )
+        if metrics_payload is None:
             return None
 
-        metrics = cached_payload.get("metrics", {})
-        baseline = cached_payload.get("baseline", {})
-        participants = int(cached_payload.get("participants", 0) or 0)
-
-        local_truth_before: List[float] = []
-        local_truth_after: List[float] = []
-        local_pred_after: List[float] = []
-        try:
-            with artifacts.predictions.open("r", encoding="utf-8") as handle:
-                for line in handle:
-                    try:
-                        row = json.loads(line)
-                    except json.JSONDecodeError:
-                        continue
-                    try:
-                        local_truth_before.append(float(row.get("before")))
-                        local_truth_after.append(float(row.get("after")))
-                        local_pred_after.append(float(row.get("predicted_after")))
-                    except (TypeError, ValueError):
-                        continue
-        except OSError:
-            LOGGER.warning(
-                "[OPINION] Unable to read cached predictions for study=%s; recomputing.",
-                spec.key,
-            )
+        vectors = self._load_cached_prediction_vectors(
+            artifacts.predictions,
+            study_key=spec.key,
+        )
+        if vectors is None:
             return None
 
-        accumulator.extend(local_truth_before, local_truth_after, local_pred_after)
-        eligible = int(metrics.get("eligible", len(local_truth_after)))
-        bundle = OpinionMetricBundle(metrics=metrics, baseline=baseline)
+        accumulator.extend(vectors.truth_before, vectors.truth_after, vectors.pred_after)
+        eligible = int(metrics_payload.metrics.get("eligible", len(vectors.truth_after)))
+        bundle = OpinionMetricBundle(
+            metrics=metrics_payload.metrics,
+            baseline=metrics_payload.baseline,
+        )
+        participants = metrics_payload.participants or len(vectors.truth_after)
         LOGGER.info(
             "[OPINION][SKIP] study=%s (metrics cached).",
             spec.key,
         )
         return OpinionStudyResult(
             study_key=spec.key,
-            study_label=spec.label,
-            issue=spec.issue,
-            participants=participants or len(local_truth_after),
+            study_label=metrics_payload.study_label or spec.label,
+            issue=metrics_payload.issue or spec.issue,
+            participants=participants,
             eligible=eligible,
             artifacts=artifacts,
             metric_bundle=bundle,
+        )
+
+    def _write_qa_log_entry(
+        self,
+        qa_log: IO[str],
+        *,
+        idx: int,
+        spec: OpinionSpec,
+        messages: Sequence[Mapping[str, object]],
+        raw_output: str,
+    ) -> None:
+        """Write a single QA log entry for the participant."""
+        system_prompt, question = self._extract_log_messages(messages)
+        qa_log.write(f"### Participant {idx}\n")
+        qa_log.write(f"Study: {spec.key} | Issue: {spec.issue}\n")
+        qa_log.write("SYSTEM:\n")
+        qa_log.write(f"{system_prompt}\n")
+        qa_log.write("QUESTION:\n")
+        qa_log.write(f"{question}\n")
+        qa_log.write("ANSWER:\n")
+        qa_log.write(f"{raw_output.strip()}\n\n")
+        qa_log.flush()
+
+    def _process_example(
+        self,
+        *,
+        spec: OpinionSpec,
+        example: Mapping[str, object],
+        idx: int,
+        qa_log: IO[str],
+        batch: StudyPredictionBatch,
+    ) -> None:
+        """Run inference for a single participant example and update artefacts."""
+        messages = self._build_messages(spec, example)
+        prediction, raw_output = self._infer_prediction(messages)
+        if math.isnan(prediction):
+            prediction = example["before"]
+        prediction = _clip_prediction(prediction)
+
+        batch.payloads.append(
+            {
+                "participant_id": example["participant_id"],
+                "study": spec.key,
+                "issue": spec.issue,
+                "before": example["before"],
+                "after": example["after"],
+                "predicted_after": prediction,
+                "messages": messages,
+                "raw_output": raw_output,
+            }
+        )
+        batch.truth_before.append(float(example["before"]))
+        batch.truth_after.append(float(example["after"]))
+        batch.pred_after.append(float(prediction))
+
+        self._write_qa_log_entry(
+            qa_log,
+            idx=idx,
+            spec=spec,
+            messages=messages,
+            raw_output=raw_output,
         )
 
     def _gather_predictions(
@@ -774,51 +922,23 @@ class OpinionEvaluationRunner:
         qa_log_path: Path,
     ) -> StudyPredictionBatch:
         """Invoke GPT-4o for ``examples`` and capture artefacts."""
-        payloads: List[Mapping[str, object]] = []
-        truth_before: List[float] = []
-        truth_after: List[float] = []
-        pred_after: List[float] = []
-
+        batch = StudyPredictionBatch(
+            payloads=[],
+            truth_before=[],
+            truth_after=[],
+            pred_after=[],
+        )
         with qa_log_path.open("w", encoding="utf-8") as qa_log:
             for idx, example in enumerate(examples, start=1):
-                messages = self._build_messages(spec, example)
-                prediction, raw_output = self._infer_prediction(messages)
-                if math.isnan(prediction):
-                    prediction = example["before"]
-                prediction = _clip_prediction(prediction)
+                self._process_example(
+                    spec=spec,
+                    example=example,
+                    idx=idx,
+                    qa_log=qa_log,
+                    batch=batch,
+                )
 
-                payload = {
-                    "participant_id": example["participant_id"],
-                    "study": spec.key,
-                    "issue": spec.issue,
-                    "before": example["before"],
-                    "after": example["after"],
-                    "predicted_after": prediction,
-                    "messages": messages,
-                    "raw_output": raw_output,
-                }
-                payloads.append(payload)
-                truth_before.append(float(example["before"]))
-                truth_after.append(float(example["after"]))
-                pred_after.append(float(prediction))
-
-                system_prompt, question = self._extract_log_messages(messages)
-                qa_log.write(f"### Participant {idx}\n")
-                qa_log.write(f"Study: {spec.key} | Issue: {spec.issue}\n")
-                qa_log.write("SYSTEM:\n")
-                qa_log.write(f"{system_prompt}\n")
-                qa_log.write("QUESTION:\n")
-                qa_log.write(f"{question}\n")
-                qa_log.write("ANSWER:\n")
-                qa_log.write(f"{raw_output.strip()}\n\n")
-                qa_log.flush()
-
-        return StudyPredictionBatch(
-            payloads=payloads,
-            truth_before=truth_before,
-            truth_after=truth_after,
-            pred_after=pred_after,
-        )
+        return batch
 
     def _evaluate_study(
         self,
@@ -851,9 +971,11 @@ class OpinionEvaluationRunner:
         self._write_metrics_file(
             spec,
             artifacts,
-            len(examples),
-            metrics,
-            baseline,
+            StudyMetricsPayload(
+                participants=len(examples),
+                metrics=metrics,
+                baseline=baseline,
+            ),
         )
 
         accumulator.extend(batch.truth_before, batch.truth_after, batch.pred_after)

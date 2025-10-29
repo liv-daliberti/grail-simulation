@@ -725,8 +725,39 @@ def make_conversation_record(example: dict) -> Dict[str, Any]:
     )
 
     slate_pairs = _PROMPT_DOC_BUILDER.extract_slate_items(example)
-    gold_raw = str(example.get(SOLUTION_COLUMN, "")).strip()
+
+    def _coerce_positive_index(value: object) -> int:
+        """Return a strictly positive integer parsed from ``value``."""
+
+        try:
+            candidate = int(value)
+        except (TypeError, ValueError):
+            return -1
+        return candidate if candidate > 0 else -1
+
+    candidate_keys: tuple[str, ...] = tuple(
+        key
+        for key in (
+            SOLUTION_COLUMN if isinstance(SOLUTION_COLUMN, str) else "",
+            "gold_id",
+            "next_video_id",
+        )
+        if key
+    )
     gold_index = -1
+    gold_raw = ""
+    for key in candidate_keys:
+        if not key:
+            continue
+        value = example.get(key)
+        if not isinstance(value, str):
+            continue
+        cleaned = value.strip()
+        if not cleaned:
+            continue
+        gold_raw = cleaned
+        break
+
     if gold_raw and slate_pairs:
         gold_id_canon = canon_video_id(gold_raw)
         gold_title_canon = canon_text(gold_raw)
@@ -740,6 +771,14 @@ def make_conversation_record(example: dict) -> Dict[str, Any]:
             ):
                 gold_index = idx
                 break
+    if gold_index <= 0:
+        dataset_index = _coerce_positive_index(example.get("gold_index"))
+        if dataset_index > 0 and (not slate_pairs or dataset_index <= len(slate_pairs)):
+            gold_index = dataset_index
+    if gold_index <= 0:
+        answer_index = _coerce_positive_index(example.get("answer"))
+        if answer_index > 0 and (not slate_pairs or answer_index <= len(slate_pairs)):
+            gold_index = answer_index
 
     now_watching = _PROMPT_DOC_BUILDER.extract_now_watching(example)
     if now_watching:

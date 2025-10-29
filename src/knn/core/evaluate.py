@@ -36,9 +36,9 @@ from common.visualization.matplotlib import plt
 from common.evaluation.utils import (
     compose_issue_slug,
     group_key_for_example,
+    participant_bootstrap_summary,
     prepare_dataset,
     safe_div,
-    summarise_bootstrap_samples,
 )
 from common.prompts.docs import merge_default_extra_fields
 
@@ -339,13 +339,12 @@ def _bootstrap_uncertainty(
         if baseline_index is not None:
             baseline_samples.append(_baseline_accuracy_for_rows(sampled_rows, baseline_index))
 
-    return summarise_bootstrap_samples(
+    return participant_bootstrap_summary(
         model_samples=model_samples,
         baseline_samples=baseline_samples or None,
-        method="participant_bootstrap",
-        n_groups=len(grouped),
-        n_rows=len(eligible_rows),
-        n_bootstrap=replicates,
+        grouped_count=len(grouped),
+        row_count=len(eligible_rows),
+        replicates=replicates,
         seed=seed,
     )
 

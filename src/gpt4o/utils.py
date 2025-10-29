@@ -24,14 +24,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
-from .client import ds_call
-
 from common.text import (
     canon_text as _canon_text,
     canon_video_id as _canon_video_id,
     resolve_paths_from_env as _resolve_paths_from_env,
     split_env_list as _split_env_list,
 )
+
+from .client import ds_call
 
 ANS_TAG = re.compile(r"(?si)<answer>\s*([^<\n]+?)\s*</answer>")
 THINK_BLOCK = re.compile(r"(?si)<think>.+?</think>")

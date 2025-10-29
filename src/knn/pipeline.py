@@ -191,21 +191,21 @@ def _align_sentence_transformer_context(
             "Detected cached sentence-transformer device '%s'; overriding configuration.",
             device,
         )
-        context.sentence_device = device
+        object.__setattr__(context, "sentence_device", device)
     batch_size = overrides.get("batch_size")
     if batch_size is not None and context.sentence_batch_size != batch_size:
         LOGGER.info(
             "Detected cached sentence-transformer batch size %d; overriding configuration.",
             batch_size,
         )
-        context.sentence_batch_size = batch_size
+        object.__setattr__(context, "sentence_batch_size", batch_size)
     if "normalize" in overrides and context.sentence_normalize != overrides["normalize"]:
         normalize = bool(overrides["normalize"])
         LOGGER.info(
             "Detected cached sentence-transformer normalization=%s; overriding configuration.",
             "enabled" if normalize else "disabled",
         )
-        context.sentence_normalize = normalize
+        object.__setattr__(context, "sentence_normalize", normalize)
 
 
 def _describe_sweep_outcome(outcome: "SweepOutcome") -> str:

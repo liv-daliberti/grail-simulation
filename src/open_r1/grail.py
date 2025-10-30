@@ -20,12 +20,15 @@ reward derived from a learned discriminator when ``$GAIL_USE=1``. The
 underlying user prompt construction is shared with ``open_r1.grpo`` through the
 ``prompt_builder`` utilities.
 """
+# pylint: disable=too-many-lines
 
 from __future__ import annotations
 
+import inspect
 import logging
 import os
 import re
+import types
 from typing import (
     Any,
     Dict,
@@ -39,8 +42,13 @@ from typing import (
 )
 
 import numpy as np
-import torch  # pylint: disable=import-error
-from torch import nn, optim  # pylint: disable=import-error
+try:
+    import torch  # pylint: disable=import-error
+    from torch import nn, optim  # pylint: disable=import-error
+except ImportError:  # pragma: no cover - optional dependency
+    torch = None  # type: ignore[assignment]
+    nn = None  # type: ignore[assignment]
+    optim = None  # type: ignore[assignment]
 from transformers import (  # pylint: disable=import-error
     AutoConfig,
     AutoModelForSequenceClassification,
@@ -73,6 +81,151 @@ from open_r1.utils import get_dataset, get_tokenizer
 logger = logging.getLogger(__name__)
 
 COMPONENT_FACTORY = build_default_component_factory()
+
+_TORCH_FALLBACK_DEVICE = "cpu"
+
+
+class _TensorStub:
+    """Minimal tensor stub to satisfy documentation builds without torch."""
+
+    # pylint: disable=missing-function-docstring
+
+    def __init__(
+        self,
+        data: Optional[Sequence[float]] = None,
+        *,
+        device: Any = None,
+        **_unused: Any,
+    ):
+        self._data = list(data) if data is not None else []
+        self.device = device or _TORCH_FALLBACK_DEVICE
+
+    def numel(self) -> int:
+        return len(self._data)
+
+    def sum(self, dim: int | None = None):
+        del dim
+        return self
+
+    def unsqueeze(self, dim: int):
+        del dim
+        return self
+
+    def detach(self):
+        return self
+
+    def cpu(self):
+        return self
+
+    def mean(self):
+        return self
+
+    def item(self) -> float:
+        return float(self._data[0]) if self._data else 0.0
+
+    def to(self, *_args, **_kwargs):
+        return self
+
+    def tolist(self) -> List[float]:
+        return list(self._data)
+
+    def __mul__(self, _other):
+        return self
+
+    def __rmul__(self, _other):
+        return self
+
+    def __add__(self, _other):
+        return self
+
+    def __radd__(self, _other):
+        return self
+
+    def __bool__(self) -> bool:
+        return bool(self._data)
+
+
+def _install_torch_stubs() -> None:
+    """Provide lightweight fallbacks when torch is unavailable or mocked."""
+
+    # pylint: disable=global-statement
+    global torch, nn, optim  # type: ignore[global-statement]
+
+    class _CudaStub:  # pylint: disable=too-few-public-methods
+        CudaError = RuntimeError
+
+        @staticmethod
+        def is_available() -> bool:
+            return False
+
+    class _ModuleStub:  # pylint: disable=too-few-public-methods
+        def __init__(self, *_args: Any, **_kwargs: Any) -> None:
+            pass
+
+        def register_buffer(self, *_args: Any, **_kwargs: Any) -> None:
+            return None
+
+    class _ParameterStub:  # pylint: disable=too-few-public-methods
+        def __init__(self, value: Any) -> None:
+            self.value = value
+
+    class _AdamStub:  # pylint: disable=too-few-public-methods
+        def __init__(self, *_args: Any, **_kwargs: Any) -> None:
+            pass
+
+        def zero_grad(self, *_args: Any, **_kwargs: Any) -> None:
+            return None
+
+        def step(self) -> None:
+            return None
+
+    def _make_tensor(*args: Any, **kwargs: Any) -> _TensorStub:
+        data = None
+        if args:
+            candidate = args[0]
+            if isinstance(candidate, int):
+                data = [0.0] * candidate
+            elif isinstance(candidate, (list, tuple)):
+                data = list(candidate)
+        return _TensorStub(data, device=kwargs.get("device"))
+
+    torch = types.SimpleNamespace(  # type: ignore[assignment]
+        Tensor=_TensorStub,
+        tensor=_make_tensor,
+        zeros=lambda *args, **kwargs: _TensorStub(
+            [0.0] * int(args[0]) if args else [], device=kwargs.get("device")
+        ),
+        zeros_like=lambda *_args, **_kwargs: _TensorStub(),
+        ones=lambda *args, **kwargs: _TensorStub(
+            [1.0] * int(args[0]) if args else [], device=kwargs.get("device")
+        ),
+        ones_like=lambda *_args, **_kwargs: _TensorStub(),
+        stack=lambda *_args, **_kwargs: _TensorStub(),
+        softmax=lambda *_args, **_kwargs: _TensorStub(),
+        no_grad=lambda: (lambda func: func),
+        isfinite=lambda *_args, **_kwargs: types.SimpleNamespace(all=lambda: True),
+        allclose=lambda *_args, **_kwargs: False,
+        cuda=_CudaStub(),
+        device=lambda spec: spec,
+        log=lambda *_args, **_kwargs: _TensorStub(),
+        float32="float32",
+    )
+    nn = types.SimpleNamespace(
+        Module=_ModuleStub,
+        Parameter=_ParameterStub,
+    )  # type: ignore[assignment]
+    optim = types.SimpleNamespace(Adam=_AdamStub)  # type: ignore[assignment]
+
+
+try:
+    if not inspect.isclass(getattr(nn, "Module", None)):  # type: ignore[arg-type]
+        raise AttributeError("nn.Module is not a class")
+    if not callable(getattr(optim, "Adam", None)):  # type: ignore[arg-type]
+        raise AttributeError("optim.Adam is not callable")
+    if not hasattr(torch, "cuda") or not hasattr(torch.cuda, "is_available"):
+        raise AttributeError("torch.cuda missing expected attributes")
+except (NameError, AttributeError):
+    _install_torch_stubs()
 
 ANS_RE = re.compile(r"(?si)<answer>\s*([^<\n]+?)\s*</answer>")
 IDX_ONLY = re.compile(r"^\s*(?:option\s*)?(\d+)\s*$", re.I)
@@ -329,6 +482,14 @@ class RewardContext(NamedTuple):
     gold_index: int
 
 
+class MixerSetup(NamedTuple):
+    """Configuration used to initialise :class:`LearnableRewardMixer`."""
+
+    base_reward_fns: Sequence[Any]
+    base_weights: Sequence[float]
+    initial_mix: Tuple[float, float]
+
+
 def _ensure_list(value: Any, count: int) -> List[Any]:
     """Return ``value`` as a list, repeating scalars ``count`` times."""
 
@@ -346,25 +507,24 @@ def _safe_int(value: Any, default: int = -1) -> int:
         return default
 
 
-def _context_from_completion(  # pylint: disable=too-many-arguments
+def _context_from_completion(
     completion: Any,
     viewer: Any,
     state: Any,
     *,
-    items: Any,
-    gold_id: Any,
-    gold_idx: Any,
+    metadata: Mapping[str, Any],
 ) -> RewardContext:
     """Construct a :class:`RewardContext` from a completion and metadata."""
 
-    safe_items = items if isinstance(items, list) else []
+    safe_items = metadata.get("items")
+    safe_items = safe_items if isinstance(safe_items, list) else []
     parsed_idx = _parse_index_from_answer_block(_completion_text(completion))
     is_valid = isinstance(parsed_idx, int) and 1 <= parsed_idx <= len(safe_items)
     chosen_index = parsed_idx if is_valid else -1
     choice = safe_items[chosen_index - 1] if is_valid else {}
     surface = (choice.get("title") or choice.get("id") or "") if choice else ""
     action_id = choice.get("id") if choice else None
-    gold_index = _safe_int(gold_idx)
+    gold_index = _safe_int(metadata.get("gold_index"))
     policy_text = (
         _render_disc_text(
             str(viewer or ""),
@@ -383,7 +543,7 @@ def _context_from_completion(  # pylint: disable=too-many-arguments
         viewer=str(viewer or ""),
         state=str(state or ""),
         items=safe_items or [],
-        gold_id=str(gold_id or "").strip(),
+        gold_id=str(metadata.get("gold_id") or "").strip(),
         gold_index=gold_index,
     )
 
@@ -404,22 +564,23 @@ def _build_reward_contexts(
     gold_id_list = _ensure_list(kwargs.get("gold_id") or "", num_completions)
     gold_idx_list = _ensure_list(kwargs.get("gold_index") or -1, num_completions)
 
+    metadata_list = [
+        {"items": items, "gold_id": gold_id, "gold_index": gold_idx}
+        for items, gold_id, gold_idx in zip(items_list, gold_id_list, gold_idx_list)
+    ]
+
     return [
         _context_from_completion(
             completion,
             viewer,
             state,
-            items=items,
-            gold_id=gold_id,
-            gold_idx=gold_idx,
+            metadata=metadata,
         )
-        for completion, viewer, state, items, gold_id, gold_idx in zip(
+        for completion, viewer, state, metadata in zip(
             completions,
             viewer_list,
             state_list,
-            items_list,
-            gold_id_list,
-            gold_idx_list,
+            metadata_list,
         )
     ]
 
@@ -496,29 +657,24 @@ class LearnableRewardMixer(nn.Module):
 
     def __init__(
         self,
-        base_reward_fns: Sequence[Any],
-        base_weights: Sequence[float],
+        setup: MixerSetup,
         discriminator_reward_fn: Callable[..., Sequence[float]],
-        initial_mix: Tuple[float, float],
         *,
         learning_rate: float = 5e-2,
     ) -> None:
         """
-        :param base_reward_fns: Reward callables that form the environment reward.
-        :param base_weights: Initial weights for ``base_reward_fns`` (pre-normalisation).
+        :param setup: Base reward configuration containing functions, weights, and mixture.
         :param discriminator_reward_fn: Callable returning discriminator rewards.
-        :param initial_mix: Tuple of ``(alpha, beta)`` initial weights for environment and
-            discriminator rewards (pre-softmax).
         :param learning_rate: Optimiser learning rate for the mixture weights.
         """
         super().__init__()
-        if not base_reward_fns:
+        if not setup.base_reward_fns:
             raise ValueError("LearnableRewardMixer requires at least one base reward function")
 
-        self.base_reward_fns = tuple(base_reward_fns)
+        self.base_reward_fns = tuple(setup.base_reward_fns)
         self.discriminator_reward_fn = discriminator_reward_fn
 
-        base_weights_tensor = torch.tensor(base_weights, dtype=torch.float32)
+        base_weights_tensor = torch.tensor(setup.base_weights, dtype=torch.float32)
         if base_weights_tensor.numel() == 0 or not torch.isfinite(base_weights_tensor).all():
             base_weights_tensor = torch.ones(len(self.base_reward_fns), dtype=torch.float32)
         if torch.allclose(base_weights_tensor, torch.zeros_like(base_weights_tensor)):
@@ -527,8 +683,8 @@ class LearnableRewardMixer(nn.Module):
 
         self.register_buffer("_base_weights", base_weights_tensor, persistent=False)
 
-        alpha_init = float(max(initial_mix[0], 1e-6))
-        beta_init = float(max(initial_mix[1], 1e-6))
+        alpha_init = float(max(setup.initial_mix[0], 1e-6))
+        beta_init = float(max(setup.initial_mix[1], 1e-6))
         logits_init = torch.log(torch.tensor([alpha_init, beta_init], dtype=torch.float32))
         self.logits = nn.Parameter(logits_init)
         self._optim = optim.Adam([self.logits], lr=learning_rate)
@@ -798,10 +954,12 @@ def _apply_reward_mixer(
     alpha_init = sum(base_weights) if base_weights else max(1.0 - beta_init, 1e-6)
     mixer_lr = float(os.environ.get("GRAIL_WEIGHT_LR", "5e-2"))
     mixer = LearnableRewardMixer(
-        base_reward_fns=base_reward_fns,
-        base_weights=base_weights,
+        setup=MixerSetup(
+            base_reward_fns=base_reward_fns,
+            base_weights=base_weights,
+            initial_mix=(alpha_init, beta_init),
+        ),
         discriminator_reward_fn=gail_reward_fn,
-        initial_mix=(alpha_init, beta_init),
         learning_rate=mixer_lr,
     )
     alpha0, beta0 = mixer.current_alpha_beta()

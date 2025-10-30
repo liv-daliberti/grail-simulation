@@ -8,7 +8,7 @@ from typing import Any, List
 import pytest
 
 try:
-    from open_r1.grail import LearnableRewardMixer
+    from open_r1.grail import LearnableRewardMixer, MixerSetup
 except ImportError as exc:  # pragma: no cover - optional dependency guard
     pytest.skip(f"Skipping mixer tests: {exc}", allow_module_level=True)
 
@@ -30,10 +30,12 @@ def test_learnable_reward_mixer_prefers_stronger_signal(monkeypatch):
     disc_reward_fn = _constant_reward(0.1)
 
     mixer = LearnableRewardMixer(
-        base_reward_fns=[base_reward_fn],
-        base_weights=[1.0],
+        setup=MixerSetup(
+            base_reward_fns=[base_reward_fn],
+            base_weights=[1.0],
+            initial_mix=(0.5, 0.5),
+        ),
         discriminator_reward_fn=disc_reward_fn,
-        initial_mix=(0.5, 0.5),
         learning_rate=0.2,
     )
 

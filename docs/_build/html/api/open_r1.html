@@ -831,6 +831,66 @@ reward derived from a learned discriminator when <code class="docutils literal n
 underlying user prompt construction is shared with <code class="docutils literal notranslate"><span class="pre">open_r1.grpo</span></code> through the
 <code class="docutils literal notranslate"><span class="pre">prompt_builder</span></code> utilities.</p>
 <dl class="py class">
+<dt class="sig sig-object py" id="open_r1.grail.LearnableRewardMixer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">open_r1.grail.</span></span><span class="sig-name descname"><span class="pre">LearnableRewardMixer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_reward_fns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">discriminator_reward_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_mix</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">learning_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/grail.html#LearnableRewardMixer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.grail.LearnableRewardMixer" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">open_r1.grail._install_torch_stubs.&lt;locals&gt;._ModuleStub</span></code></p>
+<p>Combine base and discriminator rewards via trainable mixture weights.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base_reward_fns</strong> (<em>Sequence</em><em>[</em><em>Any</em><em>]</em>)</p></li>
+<li><p><strong>base_weights</strong> (<em>Sequence</em><em>[</em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>discriminator_reward_fn</strong> (<em>Callable</em><em>[</em><em>...</em><em>, </em><em>Sequence</em><em>[</em><em>float</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>initial_mix</strong> (<em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>learning_rate</strong> (<em>float</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="open_r1.grail.LearnableRewardMixer.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_reward_fns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">discriminator_reward_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_mix</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">learning_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/grail.html#LearnableRewardMixer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.grail.LearnableRewardMixer.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base_reward_fns</strong> (<em>Sequence</em><em>[</em><em>Any</em><em>]</em>) – Reward callables that form the environment reward.</p></li>
+<li><p><strong>base_weights</strong> (<em>Sequence</em><em>[</em><em>float</em><em>]</em>) – Initial weights for <code class="docutils literal notranslate"><span class="pre">base_reward_fns</span></code> (pre-normalisation).</p></li>
+<li><p><strong>discriminator_reward_fn</strong> (<em>Callable</em><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><em>Sequence</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Callable returning discriminator rewards.</p></li>
+<li><p><strong>initial_mix</strong> (<em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em>) – Tuple of <code class="docutils literal notranslate"><span class="pre">(alpha,</span> <span class="pre">beta)</span></code> initial weights for environment and
+discriminator rewards (pre-softmax).</p></li>
+<li><p><strong>learning_rate</strong> (<em>float</em>) – Optimiser learning rate for the mixture weights.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="open_r1.grail.LearnableRewardMixer.current_alpha_beta">
+<span class="sig-name descname"><span class="pre">current_alpha_beta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/grail.html#LearnableRewardMixer.current_alpha_beta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.grail.LearnableRewardMixer.current_alpha_beta" title="Link to this definition">¶</a></dt>
+<dd><p>Return the current alpha/beta weights as floats.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tuple</em>[float, float]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="open_r1.grail.LearnableRewardMixer.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">completions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/grail.html#LearnableRewardMixer.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.grail.LearnableRewardMixer.forward" title="Link to this definition">¶</a></dt>
+<dd><p>Return combined rewards with learnable mixture weights.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>List</em>[float]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="open_r1.grail.OnlineDiscriminator">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">open_r1.grail.</span></span><span class="sig-name descname"><span class="pre">OnlineDiscriminator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learning_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2e-05</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/grail.html#OnlineDiscriminator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.grail.OnlineDiscriminator" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
@@ -852,7 +912,7 @@ underlying user prompt construction is shared with <code class="docutils literal
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model_name</strong> (<em>str</em>) – Hugging Face model identifier for the classifier.</p></li>
-<li><p><strong>device</strong> (<em>torch.device</em>) – Torch device where the model should live.</p></li>
+<li><p><strong>device</strong> (<em>open_r1.grail._install_torch_stubs.&lt;locals&gt;.&lt;lambda&gt;</em>) – Torch device where the model should live.</p></li>
 <li><p><strong>learning_rate</strong> (<em>float</em>) – Learning rate used for the discriminator optimiser.</p></li>
 </ul>
 </dd>
@@ -861,7 +921,7 @@ underlying user prompt construction is shared with <code class="docutils literal
 
 <dl class="py method">
 <dt class="sig sig-object py" id="open_r1.grail.OnlineDiscriminator.prob_positive">
-<span class="sig-name descname"><span class="pre">prob_positive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">texts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#open_r1.grail.OnlineDiscriminator.prob_positive" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">prob_positive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">texts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/open_r1/grail.html#OnlineDiscriminator.prob_positive"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#open_r1.grail.OnlineDiscriminator.prob_positive" title="Link to this definition">¶</a></dt>
 <dd><p>Return the positive-class probability for each input string.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2420,6 +2480,12 @@ requests.</p>
 </li>
 <li><a class="reference internal" href="#open_r1.generate.build_distilabel_pipeline"><code class="docutils literal notranslate"><span class="pre">build_distilabel_pipeline()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.generate.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li><a class="reference internal" href="#open_r1.grail.LearnableRewardMixer"><code class="docutils literal notranslate"><span class="pre">LearnableRewardMixer</span></code></a><ul>
+<li><a class="reference internal" href="#open_r1.grail.LearnableRewardMixer.__init__"><code class="docutils literal notranslate"><span class="pre">LearnableRewardMixer.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#open_r1.grail.LearnableRewardMixer.current_alpha_beta"><code class="docutils literal notranslate"><span class="pre">LearnableRewardMixer.current_alpha_beta()</span></code></a></li>
+<li><a class="reference internal" href="#open_r1.grail.LearnableRewardMixer.forward"><code class="docutils literal notranslate"><span class="pre">LearnableRewardMixer.forward()</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#open_r1.grail.OnlineDiscriminator"><code class="docutils literal notranslate"><span class="pre">OnlineDiscriminator</span></code></a><ul>
 <li><a class="reference internal" href="#open_r1.grail.OnlineDiscriminator.__init__"><code class="docutils literal notranslate"><span class="pre">OnlineDiscriminator.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#open_r1.grail.OnlineDiscriminator.prob_positive"><code class="docutils literal notranslate"><span class="pre">OnlineDiscriminator.prob_positive()</span></code></a></li>

@@ -21,9 +21,18 @@ import math
 import re
 import textwrap
 from dataclasses import dataclass
-from typing import Dict, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
-from common.opinion import float_or_none
+try:
+    from common.opinion import float_or_none
+except ImportError:  # pragma: no cover - optional dependency for linting environments
+    def float_or_none(value: Any) -> Optional[float]:
+        """Best-effort local fallback mirroring the upstream helper."""
+
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
 
 
 def _wrap_text(text: str, width: Optional[int]) -> str:

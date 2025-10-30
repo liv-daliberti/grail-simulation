@@ -29,7 +29,7 @@ import json
 import os
 import re
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Mapping, Optional
 
 import pandas as pd
 
@@ -44,6 +44,7 @@ from clean_data.sessions import (
     gold_index_from_items,
     load_slate_items,
 )
+from common.opinion.models import DEFAULT_SPECS
 
 
 def _clean_str(value: Any) -> str:
@@ -194,6 +195,43 @@ def _format_youtube_freq(freq: Any) -> Optional[str]:
     if freq_key in YOUTUBE_FREQ_MAP:
         return f"watches YouTube {YOUTUBE_FREQ_MAP[freq_key]}"
     return None
+
+
+_OPINION_TOLERANCE = 1e-6
+_OPINION_SPEC_LOOKUP = {
+    (spec.issue.lower(), spec.key.lower()): spec for spec in DEFAULT_SPECS
+}
+
+
+def _normalise_direction(value: Any) -> float:
+    """Return ``value`` cast to float when possible, otherwise NaN."""
+
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return float("nan")
+
+
+def _opinion_direction_label(example: Mapping[str, Any]) -> Optional[str]:
+    """Compute the opinion-direction label for ``example`` when metadata exists."""
+
+    issue = str(example.get("issue") or "").strip().lower()
+    study = str(example.get("participant_study") or "").strip().lower()
+    spec = _OPINION_SPEC_LOOKUP.get((issue, study))
+    if spec is None:
+        return None
+
+    before = _normalise_direction(example.get(spec.before_column))
+    after = _normalise_direction(example.get(spec.after_column))
+    if not (before == before and after == after):  # NaN comparisons
+        return None
+
+    delta = after - before
+    if delta > _OPINION_TOLERANCE:
+        return "increase"
+    if delta < -_OPINION_TOLERANCE:
+        return "decrease"
+    return "no_change"
 
 
 def _synthesize_viewer_sentence(ex: dict) -> str:
@@ -609,6 +647,7 @@ def row_to_example(
         "mix_copy_idx": -1,
     }
     out["slate_items_with_meta"] = _as_list_json(ex.get("slate_items_json"))
+    out["opinion_direction"] = _opinion_direction_label(ex)
 
     for extra in PASSTHROUGH_COLUMNS:
         if extra in ex:

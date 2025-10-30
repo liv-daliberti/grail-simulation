@@ -1,61 +1,10 @@
-"""Tests for :mod:`open_r1.configs` ensuring dataset handling logic works without TRL."""
+"""Tests for :mod:`open_r1.configs` dataset handling logic."""
 
 from __future__ import annotations
 
-import sys
-import types
-from dataclasses import dataclass
-
 import pytest
 
-
-def _install_trl_stub() -> None:
-    """Inject a lightweight ``trl`` module so imports succeed during testing."""
-
-    if "trl" in sys.modules:
-        return
-
-    trl_stub = types.ModuleType("trl")
-
-    @dataclass
-    class _BaseScriptArguments:
-        """Minimal base class compatible with dataclass inheritance."""
-
-    @dataclass
-    class _BaseGRPOConfig:
-        chat_template: str | None = None
-        gradient_checkpointing: bool = False
-
-    @dataclass
-    class _BaseSFTConfig:
-        chat_template: str | None = None
-        gradient_checkpointing: bool = False
-
-    @dataclass
-    class _ModelConfig:
-        model_name_or_path: str = "dummy"
-        model_revision: str | None = None
-        trust_remote_code: bool = False
-        attn_implementation: str | None = None
-        torch_dtype: str | None = None
-
-    def _get_kbit_device_map():
-        return None
-
-    def _get_quantization_config(_model_args):
-        return None
-
-    trl_stub.ScriptArguments = _BaseScriptArguments
-    trl_stub.GRPOConfig = _BaseGRPOConfig
-    trl_stub.SFTConfig = _BaseSFTConfig
-    trl_stub.ModelConfig = _ModelConfig
-    trl_stub.get_kbit_device_map = _get_kbit_device_map
-    trl_stub.get_quantization_config = _get_quantization_config
-
-    sys.modules["trl"] = trl_stub
-
-
-_install_trl_stub()
+pytest.importorskip("trl", reason="trl must be installed to run configuration tests.")
 
 from open_r1.configs import (  # pylint: disable=wrong-import-position
     DatasetConfig,

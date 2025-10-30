@@ -291,6 +291,168 @@
 <span class="n">synthesize_viewer_sentence</span> <span class="o">=</span> <span class="n">_synthesize_viewer_sentence</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_viewer_block</span><span class="p">(</span>
+    <span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">selected</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">profile</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Build the viewer summary section of the prompt.</span>
+
+<span class="sd">    :param ex: Interaction example containing viewer details.</span>
+<span class="sd">    :type ex: dict[str, Any]</span>
+<span class="sd">    :param selected: Selected row produced by :func:`load_selected_row`.</span>
+<span class="sd">    :type selected: dict[str, Any]</span>
+<span class="sd">    :param profile: Profile features rendered by :func:`render_profile`.</span>
+<span class="sd">    :type profile: dict[str, Any]</span>
+<span class="sd">    :returns: Lines describing the viewer context.</span>
+<span class="sd">    :rtype: list[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">lines</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">viewer_line</span> <span class="o">=</span> <span class="n">viewer_summary_line</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="n">profile</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">viewer_line</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;VIEWER </span><span class="si">{</span><span class="n">viewer_line</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;VIEWER (profile information unavailable)&quot;</span><span class="p">)</span>
+
+    <span class="n">viewpoint_line</span> <span class="o">=</span> <span class="n">initial_viewpoint_line</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">viewpoint_line</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Initial Viewpoint: </span><span class="si">{</span><span class="n">viewpoint_line</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">lines</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_current_block</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">show_ids</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Build the ``CURRENTLY WATCHING`` block.</span>
+
+<span class="sd">    :param ex: Interaction example containing the current video metadata.</span>
+<span class="sd">    :type ex: dict[str, Any]</span>
+<span class="sd">    :param show_ids: Whether identifiers should be displayed alongside titles.</span>
+<span class="sd">    :type show_ids: bool</span>
+<span class="sd">    :returns: Lines describing the current video.</span>
+<span class="sd">    :rtype: list[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">current_line</span> <span class="o">=</span> <span class="n">current_video_line</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">show_ids</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">current_line</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;CURRENTLY WATCHING </span><span class="si">{</span><span class="n">current_line</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;CURRENTLY WATCHING (current video unavailable)&quot;</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_history_block</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">show_ids</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">max_hist</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Build the recent history section.</span>
+
+<span class="sd">    :param ex: Interaction example containing history metadata.</span>
+<span class="sd">    :type ex: dict[str, Any]</span>
+<span class="sd">    :param show_ids: Whether identifiers should be displayed alongside titles.</span>
+<span class="sd">    :type show_ids: bool</span>
+<span class="sd">    :param max_hist: Maximum number of history items to include.</span>
+<span class="sd">    :type max_hist: int</span>
+<span class="sd">    :returns: Lines covering the watch history.</span>
+<span class="sd">    :rtype: list[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">lines</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;RECENTLY WATCHED (NEWEST LAST)&quot;</span><span class="p">]</span>
+    <span class="n">history_section</span> <span class="o">=</span> <span class="n">history_lines</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">show_ids</span><span class="p">,</span> <span class="n">max_hist</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">history_section</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">history_section</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;(no recently watched videos available)&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">lines</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_survey_block</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Build the survey highlights section when available.</span>
+
+<span class="sd">    :param ex: Interaction example containing survey answers.</span>
+<span class="sd">    :type ex: dict[str, Any]</span>
+<span class="sd">    :returns: Survey highlight lines or an empty list when missing.</span>
+<span class="sd">    :rtype: list[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">section</span> <span class="o">=</span> <span class="n">survey_lines</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">section</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;SURVEY HIGHLIGHTS&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">section</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_options_block</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">show_ids</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Build the options section for the prompt.</span>
+
+<span class="sd">    :param ex: Interaction example containing slate options.</span>
+<span class="sd">    :type ex: dict[str, Any]</span>
+<span class="sd">    :param show_ids: Whether identifiers should be displayed alongside titles.</span>
+<span class="sd">    :type show_ids: bool</span>
+<span class="sd">    :returns: Lines describing the recommendation options.</span>
+<span class="sd">    :rtype: list[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">option_lines</span> <span class="o">=</span> <span class="n">options_lines</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">show_ids</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">option_lines</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;OPTIONS&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">option_lines</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;OPTIONS&quot;</span><span class="p">,</span> <span class="s2">&quot;(no recommendation options available)&quot;</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_normalise_issue_label</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a human-readable opinion issue label.</span>
+
+<span class="sd">    :param ex: Interaction example containing an ``issue`` field.</span>
+<span class="sd">    :type ex: dict[str, Any]</span>
+<span class="sd">    :returns: Capitalised issue label suitable for the questionnaire.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">issue_label</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;issue&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;the issue&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">issue_label</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;The issue&quot;</span>
+    <span class="n">pretty_issue</span> <span class="o">=</span> <span class="n">issue_label</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">pretty_issue</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;The issue&quot;</span>
+    <span class="n">capitalised</span> <span class="o">=</span> <span class="n">pretty_issue</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">+</span> <span class="n">pretty_issue</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="k">return</span> <span class="n">capitalised</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_questions_block</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Build the final question section.</span>
+
+<span class="sd">    :param ex: Interaction example containing opinion metadata.</span>
+<span class="sd">    :type ex: dict[str, Any]</span>
+<span class="sd">    :returns: Lines encoding the downstream questions for the policy.</span>
+<span class="sd">    :rtype: list[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">pretty_issue</span> <span class="o">=</span> <span class="n">_normalise_issue_label</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="s2">&quot;QUESTIONS&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1. Which option number will the viewer watch next?&quot;</span><span class="p">,</span>
+        <span class="p">(</span>
+            <span class="s2">&quot;2. After this recommendation, will the viewer&#39;s opinion on &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pretty_issue</span><span class="si">}</span><span class="s2"> increase, decrease, or stay the same?&quot;</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_strip_trailing_blank_lines</span><span class="p">(</span><span class="n">lines</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Remove trailing blank lines introduced during section assembly.</span>
+
+<span class="sd">    :param lines: Prompt lines that may contain trailing blanks.</span>
+<span class="sd">    :type lines: list[str]</span>
+<span class="sd">    :returns: Lines without trailing blanks.</span>
+<span class="sd">    :rtype: list[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">while</span> <span class="n">lines</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">lines</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">lines</span>
+
+
 <div class="viewcode-block" id="build_user_prompt">
 <a class="viewcode-back" href="../../api/prompt_builder.html#prompt_builder.build_user_prompt">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_user_prompt</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">max_hist</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">12</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -309,51 +471,23 @@
     <span class="n">profile</span> <span class="o">=</span> <span class="n">render_profile</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
     <span class="n">selected</span> <span class="o">=</span> <span class="n">load_selected_row</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
 
-    <span class="n">lines</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">assembled</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="p">(</span>
+        <span class="n">_viewer_block</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="n">profile</span><span class="p">),</span>
+        <span class="n">_current_block</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">show_ids</span><span class="p">),</span>
+        <span class="n">_history_block</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">show_ids</span><span class="p">,</span> <span class="n">max_hist</span><span class="p">),</span>
+        <span class="n">_survey_block</span><span class="p">(</span><span class="n">ex</span><span class="p">),</span>
+        <span class="n">_options_block</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">show_ids</span><span class="p">),</span>
+        <span class="n">_questions_block</span><span class="p">(</span><span class="n">ex</span><span class="p">),</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">block</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">assembled</span><span class="p">:</span>
+            <span class="n">assembled</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">assembled</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
 
-    <span class="n">viewer_line</span> <span class="o">=</span> <span class="n">viewer_summary_line</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="n">profile</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">viewer_line</span><span class="p">:</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;VIEWER </span><span class="si">{</span><span class="n">viewer_line</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;VIEWER (profile information unavailable)&quot;</span><span class="p">)</span>
-
-    <span class="n">viewpoint_line</span> <span class="o">=</span> <span class="n">initial_viewpoint_line</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">selected</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">viewpoint_line</span><span class="p">:</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Initial Viewpoint: </span><span class="si">{</span><span class="n">viewpoint_line</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
-
-    <span class="n">current_line</span> <span class="o">=</span> <span class="n">current_video_line</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">show_ids</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">current_line</span><span class="p">:</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CURRENTLY WATCHING </span><span class="si">{</span><span class="n">current_line</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;CURRENTLY WATCHING (current video unavailable)&quot;</span><span class="p">)</span>
-
-    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
-    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;RECENTLY WATCHED (NEWEST LAST)&quot;</span><span class="p">)</span>
-    <span class="n">history_section</span> <span class="o">=</span> <span class="n">history_lines</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">show_ids</span><span class="p">,</span> <span class="n">max_hist</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">history_section</span><span class="p">:</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">history_section</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;(no recently watched videos available)&quot;</span><span class="p">)</span>
-
-    <span class="n">survey_section</span> <span class="o">=</span> <span class="n">survey_lines</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">survey_section</span><span class="p">:</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;SURVEY HIGHLIGHTS&quot;</span><span class="p">)</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">survey_section</span><span class="p">)</span>
-
-    <span class="n">option_lines</span> <span class="o">=</span> <span class="n">options_lines</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">show_ids</span><span class="p">)</span>
-    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
-    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;OPTIONS&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">option_lines</span><span class="p">:</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">option_lines</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;(no recommendation options available)&quot;</span><span class="p">)</span>
-
-    <span class="k">while</span> <span class="n">lines</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">lines</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
-    <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+    <span class="n">trimmed</span> <span class="o">=</span> <span class="n">_strip_trailing_blank_lines</span><span class="p">(</span><span class="n">assembled</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">trimmed</span><span class="p">)</span></div>
 
 
 

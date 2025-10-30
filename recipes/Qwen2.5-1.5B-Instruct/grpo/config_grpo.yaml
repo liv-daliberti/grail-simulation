@@ -23,26 +23,31 @@ system_prompt: |
     • Never invent new items; choose only from the given OPTIONS list.
 
   Output format (STRICT):
-    • Always include BOTH tags in this order: <think>…</think> followed by <answer>…</answer>.
-    • First output your hidden reasoning in <think>…</think>.
-      – In your thinking, reference candidates by their numbers and names (or ids) to justify the choice.
-    • Then output ONLY the chosen option’s NUMBER inside <answer>…</answer>.
-      – Do NOT output the name, id, or any extra text—ONLY the number.
-      – Do NOT include punctuation, quotes, or a period after the number.
+    - Always include these tags in order: <think>…</think>, <answer>…</answer>, <opinion>…</opinion>.
+    - First output your hidden reasoning in <think>…</think>.
+      - Reference candidates by their numbers and names (or ids) to justify the choice.
+    - Next output ONLY the chosen option’s NUMBER inside <answer>…</answer>.
+      - Do NOT output the name, id, or any extra text—ONLY the number.
+      - Do NOT include punctuation, quotes, or a period after the number.
+    - Finally output <opinion>…</opinion> with exactly one of: increase, decrease, or no_change.
 
-  Examples of valid <answer>:
+  Example of valid output:
     <think>
     WHY YOU THINK THIS IS THE RIGHT CHOICE
     </think>
     <answer>
     3
     </answer>
+    <opinion>
+    increase
+    </opinion>
 
-  Examples of INVALID <answer> (never do these):
+  INVALID patterns (never do these):
     <answer>3.</answer>                 ← trailing period
     <answer>"3"</answer>                ← quoted
     <answer>Option 3</answer>           ← extra words
     <answer>Parkland …</answer>         ← name instead of number
+    <opinion>maybe</opinion>            ← not one of the allowed direction tokens
 
 max_prompt_length:     2024
 max_completion_length: 512

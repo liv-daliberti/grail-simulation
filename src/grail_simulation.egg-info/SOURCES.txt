@@ -181,6 +181,7 @@ setup.py
 ../src/open_r1/rewards.py
 ../src/open_r1/rewards_code.py
 ../src/open_r1/shared.py
+../src/open_r1/torch_stub_utils.py
 ../src/open_r1/utils/__init__.py
 ../src/open_r1/utils/callbacks.py
 ../src/open_r1/utils/code_providers.py

@@ -13,21 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# coding=utf-8
-# Copyright 2025 The HuggingFace Team. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 """Reward functions used by the GRPO training pipeline."""
 
 from __future__ import annotations
@@ -38,6 +23,14 @@ import os
 import re
 from functools import partial, update_wrapper
 from typing import Any, Callable, Dict, List, Optional, Tuple
+
+from .pure_accuracy_utils import (
+    PureAccuracyContext,
+    PureAccuracyStats,
+    expand_to_batch,
+    log_pure_accuracy_metrics,
+    parse_index_from_completion,
+)
 
 try:  # pragma: no cover - optional dependency
     from latex2sympy2_extended import NormalizationConfig  # type: ignore[import]
@@ -84,14 +77,11 @@ from .rewards_code import (
     extract_code as _extract_code,
     get_code_format_reward as _get_code_format_reward,
     match_pattern_reward as _match_pattern_reward,
-    ioi_code_reward as _ioi_code_reward,
 )
 
 PURE_ACC_ENV_FLAG = "PUREACC_ALLOW_BARE_NUMBER"
 PURE_ACC_TRUE_VALUES = {"1", "true", "t", "yes", "y"}
 BINARY_THRESHOLD = _BINARY_THRESHOLD
-ioi_code_reward = _ioi_code_reward
-ioi_code_reward.__module__ = __name__
 binary_code_reward = _binary_code_reward
 binary_code_reward.__module__ = __name__
 code_reward = _code_reward
@@ -101,6 +91,7 @@ extract_code.__module__ = __name__
 get_code_format_reward = _get_code_format_reward
 get_code_format_reward.__module__ = __name__
 HAS_MATH_REWARD_DEPS = LatexExtractionConfig is not None and NormalizationConfig is not None
+_parse_index_from_completion = parse_index_from_completion
 
 if HAS_MATH_REWARD_DEPS:
     LEN_EXTRACTION_CONFIG = [
@@ -204,126 +195,80 @@ def _completion_text(comp: Any) -> str:
             pass
     return str(comp)
 
-_ANS_PAT = re.compile(r"(?si)<answer>\s*([^<\n]+?)\s*</answer>")
-_INDEX_ONLY_RE = re.compile(r'^\s*(?:option\s*)?(\d+)\s*$', re.I)
-
-def _safe_int(value: Any) -> Optional[int]:
-    """Return an int if possible, otherwise None."""
-    try:
-        return int(value)
-    except (TypeError, ValueError):
-        return None
-
-
-def _parse_index_from_completion(text: str, allow_bare: bool) -> Optional[int]:
-    """Extract numeric answer from completion text."""
-    answer_match = _ANS_PAT.search(text)
-    if answer_match:
-        payload = answer_match.group(1).strip()
-    elif allow_bare:
-        payload = text.strip()
-    else:
-        return None
-
-    index_match = _INDEX_ONLY_RE.match(payload)
-    if not index_match:
-        return None
-    return _safe_int(index_match.group(1))
-
 def pure_accuracy_reward(  # pylint: disable=too-many-locals
     completions: List[Any],
-    _answer: List[str],  # unused; kept for interface parity
+    _answer: Optional[List[str]] = None,  # unused; kept for interface parity
     **kwargs,
 ) -> List[float]:
     """
-    Score completions using index-only accuracy.
+    Score completions on next-video accuracy and opinion-direction agreement.
 
     Steps:
 
-    1. Parse the numeric answer from ``<answer>…</answer>`` blocks (or bare numbers when
-       the ``PUREACC_ALLOW_BARE_NUMBER`` environment flag is enabled).
-    2. Compare the parsed value to ``gold_index`` (1-based).
-    3. Optionally ensure ``1 <= NUMBER <= n_options`` if option counts are provided.
+    1. Parse the numeric answer from ``<answer>…</answer>`` (or bare numbers when
+       the ``PUREACC_ALLOW_BARE_NUMBER`` environment flag is enabled) and compare it
+       against ``gold_index`` (1-based).
+    2. Parse ``<opinion>…</opinion>`` (or aliases) and compare it to the canonicalised
+       ``opinion_direction`` label (increase/decrease/no_change).
+    3. Return the average reward across the available sub-tasks so the model earns partial
+       credit when only one prediction is correct.
 
     :param completions: Model completions whose answers should be evaluated.
     :type completions: list[Any]
-    :param _answer: Placeholder argument kept for API compatibility; ignored.
-    :type _answer: list[str]
-    :param kwargs: Additional metadata such as ``gold_index`` (the reference index) and
-        ``n_options`` (optional option counts).
+    :param _answer: Optional compatibility argument (falls back to ``answer`` in ``kwargs``).
+    :type _answer: list[str] | None
+    :param kwargs: Additional metadata such as ``gold_index``, ``n_options``, and
+        ``opinion_direction``.
     :type kwargs: dict
-    :returns: Per-sample accuracy scores (``1.0`` or ``0.0``).
+    :returns: Per-sample rewards in the inclusive range ``[0.0, 1.0]``.
     :rtype: list[float]
     """
-    gold_idx_arr = kwargs.get("gold_index")
-    option_counts = kwargs.get("n_options")
-
-    # Normalize to lists
-    if isinstance(gold_idx_arr, int):
-        gold_idx_arr = [gold_idx_arr] * len(completions)
-    if gold_idx_arr is None:
-        # No gold index? Nothing to score.
-        return [0.0] * len(completions)
-
-    if isinstance(option_counts, int):
-        option_counts = [option_counts] * len(completions)
-    if option_counts is None:
-        option_counts = [None] * len(completions)
-
-    # Optional: allow bare "3" without <think>/<answer> for early ramp
-    allow_bare = (
-        os.environ.get(PURE_ACC_ENV_FLAG, "0").lower() in PURE_ACC_TRUE_VALUES
-    )
-
-    outs: List[float] = []
-    pred_ok = elig_ok = 0
-
-    for comp, gidx, nopt in zip(completions, gold_idx_arr, option_counts):
-        txt = _completion_text(comp)
-        predicted_index = _parse_index_from_completion(txt, allow_bare)
-        if predicted_index is None:
-            outs.append(0.0)
-            continue
-        pred_ok += 1
-
-        gold_idx = _safe_int(gidx)
-        if gold_idx is None or gold_idx <= 0:
-            outs.append(0.0)
-            continue
-        elig_ok += 1
-
-        max_options = _safe_int(nopt)
-        if max_options is not None:
-            if max_options <= 0 or not 1 <= predicted_index <= max_options:
-                outs.append(0.0)
-                continue
-
-        outs.append(1.0 if predicted_index == gold_idx else 0.0)
+    if _answer is None:
+        _answer = kwargs.get("answer")
+    _ = _answer  # noqa: F841  # parity with legacy signature
 
     total = len(completions)
-    logger = globals().get("_wb_log")
-    if callable(logger) and total:
-        parse_rate = pred_ok / total
-        eligible_rate = elig_ok / total
-        batch_mean = sum(outs) / len(outs) if outs else math.nan
-        try:
-            logger(
-                {
-                    "reward/pure_acc/parsed_rate": parse_rate,
-                    "reward/pure_acc/eligible_rate": eligible_rate,
-                    "reward/pure_acc/batch_mean": batch_mean,
-                }
-            )
-        except (TypeError, ValueError):
-            pass
+    allow_bare = os.environ.get(PURE_ACC_ENV_FLAG, "0").lower() in PURE_ACC_TRUE_VALUES
 
+    stats = PureAccuracyStats()
+    context = PureAccuracyContext(
+        allow_bare=allow_bare,
+        stats=stats,
+        completion_to_text=_completion_text,
+    )
+    outs: List[float] = []
+
+    metadata_iter = zip(
+        completions,
+        expand_to_batch(kwargs.get("gold_index"), total),
+        expand_to_batch(kwargs.get("n_options"), total),
+        expand_to_batch(
+            kwargs.get("opinion_direction")
+            or kwargs.get("opinion_answer")
+            or kwargs.get("opinion_change")
+            or [],
+            total,
+        ),
+    )
+    for completion, gold_value, option_value, opinion_target in metadata_iter:
+        outs.append(
+            context.score(
+                completion,
+                gold_value,
+                option_value,
+                opinion_target,
+            )
+        )
+
+    logger = globals().get("_wb_log")
+    log_pure_accuracy_metrics(total, outs, stats, logger)
     return outs
 
 
 def accuracy_reward(
     completions: list[list[dict[str, str]]],
-   solution: list[str],
-   **kwargs,
+    solution: list[str],
+    **kwargs,
 ) -> list[Optional[float]]:
     """
     Reward function that checks if a completion matches the ground truth.
@@ -843,7 +788,6 @@ def get_reward_funcs(
             partial(
                 code_reward,
                 num_parallel=script_args.parallel_code_exec_per_proc,
-                provider_type=script_args.code_provider,
                 enforce_same_language=enforce_same_language,
             ),
             code_reward,
@@ -852,18 +796,9 @@ def get_reward_funcs(
             partial(
                 binary_code_reward,
                 num_parallel=script_args.parallel_code_exec_per_proc,
-                provider_type=script_args.code_provider,
                 enforce_same_language=enforce_same_language,
             ),
             binary_code_reward,
-        ),
-        "ioi_code": update_wrapper(
-            partial(
-                ioi_code_reward,
-                test_batch_size=script_args.code_eval_test_batch_size,
-                provider_type=getattr(script_args, "ioi_provider", "piston"),
-            ),
-            ioi_code_reward,
         ),
         "code_format": get_code_format_reward(language=script_args.code_language),
         "tag_count": tag_count_reward,

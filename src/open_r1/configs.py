@@ -310,7 +310,7 @@ class GRPOScriptArguments(ScriptArguments):  # pylint: disable=too-many-instance
 
     :param reward_funcs: List of reward functions. Possible values: ``"accuracy"``,
         ``"format"``, ``"reasoning_steps"``, ``"cosine"``, ``"repetition_penalty"``,
-        ``"length"``, ``"tag_count"``, ``"code"``, ``"ioi_code"``, ``"code_format"``,
+        ``"length"``, ``"tag_count"``, ``"code"``, ``"code_format"``,
         ``"soft_overlong_punishment"``.
     :type reward_funcs: list[str]
     :param cosine_min_value_wrong: Minimum reward for cosine scaling for wrong answers.
@@ -339,8 +339,7 @@ class GRPOScriptArguments(ScriptArguments):  # pylint: disable=too-many-instance
             "help": (
                 "List of reward functions. Possible values: 'accuracy', 'format', "
                 "'reasoning_steps', 'cosine', 'repetition_penalty', 'length', "
-                "'tag_count', 'code', 'ioi_code', 'code_format', "
-                "'soft_overlong_punishment'."
+                "'tag_count', 'code', 'code_format', 'soft_overlong_punishment'."
             )
         },
     )
@@ -379,8 +378,8 @@ class GRPOScriptArguments(ScriptArguments):  # pylint: disable=too-many-instance
         # '(?:python|cpp)'
         metadata={
             "help": (
-                "Language for code format reward. Based on the E2B supported languages "
-                "documented at https://e2b.dev/docs/code-interpreting/supported-languages."
+                "Language for code format reward. Choose any language with templates "
+                "supported by the local format checker."
             ),
             "choices": ["python", "javascript", "r", "java", "bash", "cpp"],
         },
@@ -409,8 +408,7 @@ class GRPOScriptArguments(ScriptArguments):  # pylint: disable=too-many-instance
         default=2,
         metadata={
             "help": (
-                "Number of parallel E2B code executions per process. Default of 2 is "
-                "suitable for the Free Hobby tier of E2B when training with 8 GPUs."
+                "Retained for compatibility; local code evaluation ignores this value."
             )
         },
     )
@@ -422,32 +420,6 @@ class GRPOScriptArguments(ScriptArguments):  # pylint: disable=too-many-instance
     dataset_solution_column: str = field(
         default="answer",
         metadata={"help": "Column to use as the gold solution/answer for training."},
-    )
-
-    e2b_router_url: Optional[str] = field(
-        default=None,
-        metadata={"help": "URL for the E2B router. See scripts/e2b_router.py"},
-    )
-
-    morph_router_url: Optional[str] = field(
-        default=None,
-        metadata={"help": "URL for the MorphCloud router. See scripts/morph_router.py"},
-    )
-
-    code_provider: Optional[str] = field(
-        default="e2b",
-        metadata={
-            "help": "Provider for code execution. Options: 'e2b', 'local', 'morph'.",
-            "choices": ["e2b", "local", "morph"],
-        },
-    )
-
-    ioi_provider: Optional[str] = field(
-        default="piston",
-        metadata={
-            "help": "Provider for IOI code execution. Options: 'piston', 'morph'.",
-            "choices": ["piston", "morph"],
-        },
     )
 
     max_completion_len: int = field(

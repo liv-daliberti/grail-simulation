@@ -583,7 +583,7 @@
 
 <span class="sd">    :param reward_funcs: List of reward functions. Possible values: ``&quot;accuracy&quot;``,</span>
 <span class="sd">        ``&quot;format&quot;``, ``&quot;reasoning_steps&quot;``, ``&quot;cosine&quot;``, ``&quot;repetition_penalty&quot;``,</span>
-<span class="sd">        ``&quot;length&quot;``, ``&quot;tag_count&quot;``, ``&quot;code&quot;``, ``&quot;ioi_code&quot;``, ``&quot;code_format&quot;``,</span>
+<span class="sd">        ``&quot;length&quot;``, ``&quot;tag_count&quot;``, ``&quot;code&quot;``, ``&quot;code_format&quot;``,</span>
 <span class="sd">        ``&quot;soft_overlong_punishment&quot;``.</span>
 <span class="sd">    :type reward_funcs: list[str]</span>
 <span class="sd">    :param cosine_min_value_wrong: Minimum reward for cosine scaling for wrong answers.</span>
@@ -612,8 +612,7 @@
             <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="p">(</span>
                 <span class="s2">&quot;List of reward functions. Possible values: &#39;accuracy&#39;, &#39;format&#39;, &quot;</span>
                 <span class="s2">&quot;&#39;reasoning_steps&#39;, &#39;cosine&#39;, &#39;repetition_penalty&#39;, &#39;length&#39;, &quot;</span>
-                <span class="s2">&quot;&#39;tag_count&#39;, &#39;code&#39;, &#39;ioi_code&#39;, &#39;code_format&#39;, &quot;</span>
-                <span class="s2">&quot;&#39;soft_overlong_punishment&#39;.&quot;</span>
+                <span class="s2">&quot;&#39;tag_count&#39;, &#39;code&#39;, &#39;code_format&#39;, &#39;soft_overlong_punishment&#39;.&quot;</span>
             <span class="p">)</span>
         <span class="p">},</span>
     <span class="p">)</span>
@@ -652,8 +651,8 @@
         <span class="c1"># &#39;(?:python|cpp)&#39;</span>
         <span class="n">metadata</span><span class="o">=</span><span class="p">{</span>
             <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="p">(</span>
-                <span class="s2">&quot;Language for code format reward. Based on the E2B supported languages &quot;</span>
-                <span class="s2">&quot;documented at https://e2b.dev/docs/code-interpreting/supported-languages.&quot;</span>
+                <span class="s2">&quot;Language for code format reward. Choose any language with templates &quot;</span>
+                <span class="s2">&quot;supported by the local format checker.&quot;</span>
             <span class="p">),</span>
             <span class="s2">&quot;choices&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="s2">&quot;javascript&quot;</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="s2">&quot;java&quot;</span><span class="p">,</span> <span class="s2">&quot;bash&quot;</span><span class="p">,</span> <span class="s2">&quot;cpp&quot;</span><span class="p">],</span>
         <span class="p">},</span>
@@ -682,8 +681,7 @@
         <span class="n">default</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
         <span class="n">metadata</span><span class="o">=</span><span class="p">{</span>
             <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="p">(</span>
-                <span class="s2">&quot;Number of parallel E2B code executions per process. Default of 2 is &quot;</span>
-                <span class="s2">&quot;suitable for the Free Hobby tier of E2B when training with 8 GPUs.&quot;</span>
+                <span class="s2">&quot;Retained for compatibility; local code evaluation ignores this value.&quot;</span>
             <span class="p">)</span>
         <span class="p">},</span>
     <span class="p">)</span>
@@ -695,32 +693,6 @@
     <span class="n">dataset_solution_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="s2">&quot;answer&quot;</span><span class="p">,</span>
         <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Column to use as the gold solution/answer for training.&quot;</span><span class="p">},</span>
-    <span class="p">)</span>
-
-    <span class="n">e2b_router_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;URL for the E2B router. See scripts/e2b_router.py&quot;</span><span class="p">},</span>
-    <span class="p">)</span>
-
-    <span class="n">morph_router_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;URL for the MorphCloud router. See scripts/morph_router.py&quot;</span><span class="p">},</span>
-    <span class="p">)</span>
-
-    <span class="n">code_provider</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;e2b&quot;</span><span class="p">,</span>
-        <span class="n">metadata</span><span class="o">=</span><span class="p">{</span>
-            <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Provider for code execution. Options: &#39;e2b&#39;, &#39;local&#39;, &#39;morph&#39;.&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;choices&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;e2b&quot;</span><span class="p">,</span> <span class="s2">&quot;local&quot;</span><span class="p">,</span> <span class="s2">&quot;morph&quot;</span><span class="p">],</span>
-        <span class="p">},</span>
-    <span class="p">)</span>
-
-    <span class="n">ioi_provider</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;piston&quot;</span><span class="p">,</span>
-        <span class="n">metadata</span><span class="o">=</span><span class="p">{</span>
-            <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Provider for IOI code execution. Options: &#39;piston&#39;, &#39;morph&#39;.&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;choices&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;piston&quot;</span><span class="p">,</span> <span class="s2">&quot;morph&quot;</span><span class="p">],</span>
-        <span class="p">},</span>
     <span class="p">)</span>
 
     <span class="n">max_completion_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>

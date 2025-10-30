@@ -285,7 +285,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 
@@ -300,6 +300,7 @@
     <span class="n">gold_index_from_items</span><span class="p">,</span>
     <span class="n">load_slate_items</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.opinion.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_SPECS</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_clean_str</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -450,6 +451,43 @@
     <span class="k">if</span> <span class="n">freq_key</span> <span class="ow">in</span> <span class="n">YOUTUBE_FREQ_MAP</span><span class="p">:</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;watches YouTube </span><span class="si">{</span><span class="n">YOUTUBE_FREQ_MAP</span><span class="p">[</span><span class="n">freq_key</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
     <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="n">_OPINION_TOLERANCE</span> <span class="o">=</span> <span class="mf">1e-6</span>
+<span class="n">_OPINION_SPEC_LOOKUP</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">issue</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">()):</span> <span class="n">spec</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">DEFAULT_SPECS</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_normalise_direction</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``value`` cast to float when possible, otherwise NaN.&quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_opinion_direction_label</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the opinion-direction label for ``example`` when metadata exists.&quot;&quot;&quot;</span>
+
+    <span class="n">issue</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;issue&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">study</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;participant_study&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">spec</span> <span class="o">=</span> <span class="n">_OPINION_SPEC_LOOKUP</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">issue</span><span class="p">,</span> <span class="n">study</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">before</span> <span class="o">=</span> <span class="n">_normalise_direction</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">before_column</span><span class="p">))</span>
+    <span class="n">after</span> <span class="o">=</span> <span class="n">_normalise_direction</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">after_column</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">before</span> <span class="o">==</span> <span class="n">before</span> <span class="ow">and</span> <span class="n">after</span> <span class="o">==</span> <span class="n">after</span><span class="p">):</span>  <span class="c1"># NaN comparisons</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">delta</span> <span class="o">=</span> <span class="n">after</span> <span class="o">-</span> <span class="n">before</span>
+    <span class="k">if</span> <span class="n">delta</span> <span class="o">&gt;</span> <span class="n">_OPINION_TOLERANCE</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;increase&quot;</span>
+    <span class="k">if</span> <span class="n">delta</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">_OPINION_TOLERANCE</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;decrease&quot;</span>
+    <span class="k">return</span> <span class="s2">&quot;no_change&quot;</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_synthesize_viewer_sentence</span><span class="p">(</span><span class="n">ex</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -867,6 +905,7 @@
         <span class="s2">&quot;mix_copy_idx&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
     <span class="p">}</span>
     <span class="n">out</span><span class="p">[</span><span class="s2">&quot;slate_items_with_meta&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_as_list_json</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;slate_items_json&quot;</span><span class="p">))</span>
+    <span class="n">out</span><span class="p">[</span><span class="s2">&quot;opinion_direction&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_opinion_direction_label</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">extra</span> <span class="ow">in</span> <span class="n">PASSTHROUGH_COLUMNS</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">extra</span> <span class="ow">in</span> <span class="n">ex</span><span class="p">:</span>

@@ -283,7 +283,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">types</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Any</span><span class="p">,</span>
     <span class="n">Dict</span><span class="p">,</span>
@@ -311,6 +311,7 @@
     <span class="n">set_seed</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">trl</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelConfig</span>  <span class="c1"># pylint: disable=import-error</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.data.hf_datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetDict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">prompt_builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">as_list_json</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">GRPOConfig</span><span class="p">,</span> <span class="n">GRPOScriptArguments</span>
@@ -332,150 +333,25 @@
     <span class="n">parse_and_run</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_dataset</span><span class="p">,</span> <span class="n">get_tokenizer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">open_r1.torch_stub_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_torch_stubs</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <span class="n">COMPONENT_FACTORY</span> <span class="o">=</span> <span class="n">build_default_component_factory</span><span class="p">()</span>
 
-<span class="n">_TORCH_FALLBACK_DEVICE</span> <span class="o">=</span> <span class="s2">&quot;cpu&quot;</span>
 
-
-<span class="k">class</span><span class="w"> </span><span class="nc">_TensorStub</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Minimal tensor stub to satisfy documentation builds without torch.&quot;&quot;&quot;</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">data</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="o">*</span><span class="p">,</span>
-        <span class="n">device</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">_unused</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span> <span class="ow">or</span> <span class="n">_TORCH_FALLBACK_DEVICE</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">numel</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">sum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-        <span class="k">del</span> <span class="n">dim</span>
-        <span class="k">return</span> <span class="bp">self</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">unsqueeze</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-        <span class="k">del</span> <span class="n">dim</span>
-        <span class="k">return</span> <span class="bp">self</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">detach</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">cpu</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">item</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="k">else</span> <span class="mf">0.0</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">tolist</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="fm">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="fm">__rmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="fm">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="fm">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_install_torch_stubs</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Provide lightweight fallbacks when torch is unavailable or mocked.&quot;&quot;&quot;</span>
-
-    <span class="c1"># pylint: disable=global-statement</span>
-    <span class="k">global</span> <span class="n">torch</span><span class="p">,</span> <span class="n">nn</span><span class="p">,</span> <span class="n">optim</span>  <span class="c1"># type: ignore[global-statement]</span>
-
-    <span class="k">class</span><span class="w"> </span><span class="nc">_CudaStub</span><span class="p">:</span>
-        <span class="n">CudaError</span> <span class="o">=</span> <span class="ne">RuntimeError</span>
-
-        <span class="nd">@staticmethod</span>
-        <span class="k">def</span><span class="w"> </span><span class="nf">is_available</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">False</span>
-
-    <span class="k">class</span><span class="w"> </span><span class="nc">_ModuleStub</span><span class="p">:</span>
-        <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">_args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">pass</span>
-
-        <span class="k">def</span><span class="w"> </span><span class="nf">register_buffer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">_args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
-
-    <span class="k">class</span><span class="w"> </span><span class="nc">_ParameterStub</span><span class="p">:</span>
-        <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
-
-    <span class="k">class</span><span class="w"> </span><span class="nc">_AdamStub</span><span class="p">:</span>
-        <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">_args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">pass</span>
-
-        <span class="k">def</span><span class="w"> </span><span class="nf">zero_grad</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">_args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
-
-        <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_make_tensor</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_TensorStub</span><span class="p">:</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="n">args</span><span class="p">:</span>
-            <span class="n">candidate</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-                <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">*</span> <span class="n">candidate</span>
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
-                <span class="n">data</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">_TensorStub</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;device&quot;</span><span class="p">))</span>
-
-    <span class="n">torch</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">SimpleNamespace</span><span class="p">(</span>  <span class="c1"># type: ignore[assignment]</span>
-        <span class="n">Tensor</span><span class="o">=</span><span class="n">_TensorStub</span><span class="p">,</span>
-        <span class="n">tensor</span><span class="o">=</span><span class="n">_make_tensor</span><span class="p">,</span>
-        <span class="n">zeros</span><span class="o">=</span><span class="k">lambda</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">_TensorStub</span><span class="p">(</span>
-            <span class="p">[</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">args</span> <span class="k">else</span> <span class="p">[],</span> <span class="n">device</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;device&quot;</span><span class="p">)</span>
-        <span class="p">),</span>
-        <span class="n">zeros_like</span><span class="o">=</span><span class="k">lambda</span> <span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">:</span> <span class="n">_TensorStub</span><span class="p">(),</span>
-        <span class="n">ones</span><span class="o">=</span><span class="k">lambda</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">_TensorStub</span><span class="p">(</span>
-            <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">args</span> <span class="k">else</span> <span class="p">[],</span> <span class="n">device</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;device&quot;</span><span class="p">)</span>
-        <span class="p">),</span>
-        <span class="n">ones_like</span><span class="o">=</span><span class="k">lambda</span> <span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">:</span> <span class="n">_TensorStub</span><span class="p">(),</span>
-        <span class="n">stack</span><span class="o">=</span><span class="k">lambda</span> <span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">:</span> <span class="n">_TensorStub</span><span class="p">(),</span>
-        <span class="n">softmax</span><span class="o">=</span><span class="k">lambda</span> <span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">:</span> <span class="n">_TensorStub</span><span class="p">(),</span>
-        <span class="n">no_grad</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">func</span><span class="p">:</span> <span class="n">func</span><span class="p">),</span>
-        <span class="n">isfinite</span><span class="o">=</span><span class="k">lambda</span> <span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">SimpleNamespace</span><span class="p">(</span><span class="nb">all</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">True</span><span class="p">),</span>
-        <span class="n">allclose</span><span class="o">=</span><span class="k">lambda</span> <span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">cuda</span><span class="o">=</span><span class="n">_CudaStub</span><span class="p">(),</span>
-        <span class="n">device</span><span class="o">=</span><span class="k">lambda</span> <span class="n">spec</span><span class="p">:</span> <span class="n">spec</span><span class="p">,</span>
-        <span class="n">log</span><span class="o">=</span><span class="k">lambda</span> <span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">:</span> <span class="n">_TensorStub</span><span class="p">(),</span>
-        <span class="n">float32</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">nn</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">SimpleNamespace</span><span class="p">(</span><span class="n">Module</span><span class="o">=</span><span class="n">_ModuleStub</span><span class="p">,</span> <span class="n">Parameter</span><span class="o">=</span><span class="n">_ParameterStub</span><span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-    <span class="n">optim</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">SimpleNamespace</span><span class="p">(</span><span class="n">Adam</span><span class="o">=</span><span class="n">_AdamStub</span><span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
-
-
-<span class="k">try</span><span class="p">:</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">nn</span><span class="p">,</span> <span class="s2">&quot;Module&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)):</span>  <span class="c1"># type: ignore[arg-type]</span>
-        <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;nn.Module is not a class&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">optim</span><span class="p">,</span> <span class="s2">&quot;Adam&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)):</span>  <span class="c1"># type: ignore[arg-type]</span>
-        <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;optim.Adam is not callable&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">torch</span><span class="p">,</span> <span class="s2">&quot;cuda&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="p">,</span> <span class="s2">&quot;is_available&quot;</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;torch.cuda missing expected attributes&quot;</span><span class="p">)</span>
-<span class="k">except</span> <span class="p">(</span><span class="ne">NameError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
-    <span class="n">_install_torch_stubs</span><span class="p">()</span>
+<span class="k">if</span> <span class="n">torch</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">nn</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">optim</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">torch</span><span class="p">,</span> <span class="n">nn</span><span class="p">,</span> <span class="n">optim</span> <span class="o">=</span> <span class="n">build_torch_stubs</span><span class="p">()</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">nn</span><span class="p">,</span> <span class="s2">&quot;Module&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)):</span>  <span class="c1"># type: ignore[arg-type]</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;nn.Module is not a class&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">optim</span><span class="p">,</span> <span class="s2">&quot;Adam&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)):</span>  <span class="c1"># type: ignore[arg-type]</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;optim.Adam is not callable&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">torch</span><span class="p">,</span> <span class="s2">&quot;cuda&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="p">,</span> <span class="s2">&quot;is_available&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;torch.cuda missing expected attributes&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+        <span class="n">torch</span><span class="p">,</span> <span class="n">nn</span><span class="p">,</span> <span class="n">optim</span> <span class="o">=</span> <span class="n">build_torch_stubs</span><span class="p">()</span>
 
 <span class="n">ANS_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(?si)&lt;answer&gt;\s*([^&lt;\n]+?)\s*&lt;/answer&gt;&quot;</span><span class="p">)</span>
 <span class="n">IDX_ONLY</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\s*(?:option\s*)?(\d+)\s*$&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">I</span><span class="p">)</span>
@@ -747,6 +623,17 @@
 
 
 
+<div class="viewcode-block" id="MixerSetup">
+<a class="viewcode-back" href="../../api/open_r1.html#open_r1.grail.MixerSetup">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MixerSetup</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration used to initialise :class:`LearnableRewardMixer`.&quot;&quot;&quot;</span>
+
+    <span class="n">base_reward_fns</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
+    <span class="n">base_weights</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+    <span class="n">initial_mix</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span></div>
+
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_ensure_list</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">count</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``value`` as a list, repeating scalars ``count`` times.&quot;&quot;&quot;</span>
 
@@ -764,25 +651,24 @@
         <span class="k">return</span> <span class="n">default</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_context_from_completion</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-arguments</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_context_from_completion</span><span class="p">(</span>
     <span class="n">completion</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">viewer</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">state</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">items</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="n">gold_id</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="n">gold_idx</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">metadata</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RewardContext</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct a :class:`RewardContext` from a completion and metadata.&quot;&quot;&quot;</span>
 
-    <span class="n">safe_items</span> <span class="o">=</span> <span class="n">items</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="p">[]</span>
+    <span class="n">safe_items</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;items&quot;</span><span class="p">)</span>
+    <span class="n">safe_items</span> <span class="o">=</span> <span class="n">safe_items</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">safe_items</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="p">[]</span>
     <span class="n">parsed_idx</span> <span class="o">=</span> <span class="n">_parse_index_from_answer_block</span><span class="p">(</span><span class="n">_completion_text</span><span class="p">(</span><span class="n">completion</span><span class="p">))</span>
     <span class="n">is_valid</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parsed_idx</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">parsed_idx</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">safe_items</span><span class="p">)</span>
     <span class="n">chosen_index</span> <span class="o">=</span> <span class="n">parsed_idx</span> <span class="k">if</span> <span class="n">is_valid</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
     <span class="n">choice</span> <span class="o">=</span> <span class="n">safe_items</span><span class="p">[</span><span class="n">chosen_index</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">is_valid</span> <span class="k">else</span> <span class="p">{}</span>
     <span class="n">surface</span> <span class="o">=</span> <span class="p">(</span><span class="n">choice</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">choice</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">choice</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
     <span class="n">action_id</span> <span class="o">=</span> <span class="n">choice</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">choice</span> <span class="k">else</span> <span class="kc">None</span>
-    <span class="n">gold_index</span> <span class="o">=</span> <span class="n">_safe_int</span><span class="p">(</span><span class="n">gold_idx</span><span class="p">)</span>
+    <span class="n">gold_index</span> <span class="o">=</span> <span class="n">_safe_int</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gold_index&quot;</span><span class="p">))</span>
     <span class="n">policy_text</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">_render_disc_text</span><span class="p">(</span>
             <span class="nb">str</span><span class="p">(</span><span class="n">viewer</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
@@ -801,7 +687,7 @@
         <span class="n">viewer</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">viewer</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
         <span class="n">state</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">state</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
         <span class="n">items</span><span class="o">=</span><span class="n">safe_items</span> <span class="ow">or</span> <span class="p">[],</span>
-        <span class="n">gold_id</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">gold_id</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+        <span class="n">gold_id</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gold_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
         <span class="n">gold_index</span><span class="o">=</span><span class="n">gold_index</span><span class="p">,</span>
     <span class="p">)</span>
 
@@ -822,22 +708,23 @@
     <span class="n">gold_id_list</span> <span class="o">=</span> <span class="n">_ensure_list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gold_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">num_completions</span><span class="p">)</span>
     <span class="n">gold_idx_list</span> <span class="o">=</span> <span class="n">_ensure_list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gold_index&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_completions</span><span class="p">)</span>
 
+    <span class="n">metadata_list</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">{</span><span class="s2">&quot;items&quot;</span><span class="p">:</span> <span class="n">items</span><span class="p">,</span> <span class="s2">&quot;gold_id&quot;</span><span class="p">:</span> <span class="n">gold_id</span><span class="p">,</span> <span class="s2">&quot;gold_index&quot;</span><span class="p">:</span> <span class="n">gold_idx</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">items</span><span class="p">,</span> <span class="n">gold_id</span><span class="p">,</span> <span class="n">gold_idx</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">items_list</span><span class="p">,</span> <span class="n">gold_id_list</span><span class="p">,</span> <span class="n">gold_idx_list</span><span class="p">)</span>
+    <span class="p">]</span>
+
     <span class="k">return</span> <span class="p">[</span>
         <span class="n">_context_from_completion</span><span class="p">(</span>
             <span class="n">completion</span><span class="p">,</span>
             <span class="n">viewer</span><span class="p">,</span>
             <span class="n">state</span><span class="p">,</span>
-            <span class="n">items</span><span class="o">=</span><span class="n">items</span><span class="p">,</span>
-            <span class="n">gold_id</span><span class="o">=</span><span class="n">gold_id</span><span class="p">,</span>
-            <span class="n">gold_idx</span><span class="o">=</span><span class="n">gold_idx</span><span class="p">,</span>
+            <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">for</span> <span class="n">completion</span><span class="p">,</span> <span class="n">viewer</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">items</span><span class="p">,</span> <span class="n">gold_id</span><span class="p">,</span> <span class="n">gold_idx</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+        <span class="k">for</span> <span class="n">completion</span><span class="p">,</span> <span class="n">viewer</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">metadata</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
             <span class="n">completions</span><span class="p">,</span>
             <span class="n">viewer_list</span><span class="p">,</span>
             <span class="n">state_list</span><span class="p">,</span>
-            <span class="n">items_list</span><span class="p">,</span>
-            <span class="n">gold_id_list</span><span class="p">,</span>
-            <span class="n">gold_idx_list</span><span class="p">,</span>
+            <span class="n">metadata_list</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">]</span>
 
@@ -918,29 +805,24 @@
 <a class="viewcode-back" href="../../api/open_r1.html#open_r1.grail.LearnableRewardMixer.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">base_reward_fns</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
-        <span class="n">base_weights</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">setup</span><span class="p">:</span> <span class="n">MixerSetup</span><span class="p">,</span>
         <span class="n">discriminator_reward_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span>
-        <span class="n">initial_mix</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5e-2</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :param base_reward_fns: Reward callables that form the environment reward.</span>
-<span class="sd">        :param base_weights: Initial weights for ``base_reward_fns`` (pre-normalisation).</span>
+<span class="sd">        :param setup: Base reward configuration containing functions, weights, and mixture.</span>
 <span class="sd">        :param discriminator_reward_fn: Callable returning discriminator rewards.</span>
-<span class="sd">        :param initial_mix: Tuple of ``(alpha, beta)`` initial weights for environment and</span>
-<span class="sd">            discriminator rewards (pre-softmax).</span>
 <span class="sd">        :param learning_rate: Optimiser learning rate for the mixture weights.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">base_reward_fns</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">setup</span><span class="o">.</span><span class="n">base_reward_fns</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;LearnableRewardMixer requires at least one base reward function&quot;</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">base_reward_fns</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">base_reward_fns</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_reward_fns</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">setup</span><span class="o">.</span><span class="n">base_reward_fns</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">discriminator_reward_fn</span> <span class="o">=</span> <span class="n">discriminator_reward_fn</span>
 
-        <span class="n">base_weights_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">base_weights</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">base_weights_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">setup</span><span class="o">.</span><span class="n">base_weights</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">base_weights_tensor</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">base_weights_tensor</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
             <span class="n">base_weights_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_reward_fns</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">base_weights_tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">base_weights_tensor</span><span class="p">)):</span>
@@ -949,8 +831,8 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">&quot;_base_weights&quot;</span><span class="p">,</span> <span class="n">base_weights_tensor</span><span class="p">,</span> <span class="n">persistent</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
-        <span class="n">alpha_init</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">initial_mix</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mf">1e-6</span><span class="p">))</span>
-        <span class="n">beta_init</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">initial_mix</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mf">1e-6</span><span class="p">))</span>
+        <span class="n">alpha_init</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">setup</span><span class="o">.</span><span class="n">initial_mix</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mf">1e-6</span><span class="p">))</span>
+        <span class="n">beta_init</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">setup</span><span class="o">.</span><span class="n">initial_mix</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mf">1e-6</span><span class="p">))</span>
         <span class="n">logits_init</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="n">alpha_init</span><span class="p">,</span> <span class="n">beta_init</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logits</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">logits_init</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_optim</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">logits</span><span class="p">],</span> <span class="n">lr</span><span class="o">=</span><span class="n">learning_rate</span><span class="p">)</span>
@@ -1049,14 +931,16 @@
         <span class="p">}</span>
 
         <span class="k">if</span> <span class="n">base_combined</span><span class="o">.</span><span class="n">numel</span><span class="p">():</span>
-            <span class="n">payload</span><span class="p">[</span><span class="s2">&quot;reward/mixer/base_mean&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">base_combined</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="n">base_mean</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">base_combined</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">payload</span><span class="p">[</span><span class="s2">&quot;reward/mixer/base_mean&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">base_mean</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">payload</span><span class="p">[</span><span class="s2">&quot;reward/mixer/base_mean&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">base_mean</span>
 
         <span class="k">if</span> <span class="n">disc_tensor</span><span class="o">.</span><span class="n">numel</span><span class="p">():</span>
-            <span class="n">payload</span><span class="p">[</span><span class="s2">&quot;reward/mixer/disc_mean&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">disc_tensor</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="n">disc_mean</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">disc_tensor</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">payload</span><span class="p">[</span><span class="s2">&quot;reward/mixer/disc_mean&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">disc_mean</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">payload</span><span class="p">[</span><span class="s2">&quot;reward/mixer/disc_mean&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">disc_mean</span>
 
         <span class="k">try</span><span class="p">:</span>
             <span class="n">logger_fn</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
@@ -1078,8 +962,14 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_should_train</span><span class="p">()</span> <span class="ow">and</span> <span class="n">combined</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">combined</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_optim</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">(</span><span class="n">set_to_none</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_optim</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span>
+                    <span class="s2">&quot;ignore&quot;</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Can&#39;t initialize NVML&quot;</span><span class="p">,</span>
+                    <span class="n">category</span><span class="o">=</span><span class="ne">UserWarning</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_optim</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
 
         <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_alpha_beta</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_log_state</span><span class="p">(</span><span class="n">base_combined</span><span class="p">,</span> <span class="n">disc_tensor</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span>
@@ -1092,9 +982,30 @@
 <div class="viewcode-block" id="make_gail_reward_fn">
 <a class="viewcode-back" href="../../api/open_r1.html#open_r1.grail.make_gail_reward_fn">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">make_gail_reward_fn</span><span class="p">(</span><span class="n">disc</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OnlineDiscriminator</span><span class="p">],</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrap discriminator scores so they plug into the GRPO reward interface.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrap discriminator scores so they plug into the GRPO reward interface.</span>
+
+<span class="sd">    :param disc: Online discriminator producing ``prob_positive`` scores.</span>
+<span class="sd">    :type disc: OnlineDiscriminator | None</span>
+<span class="sd">    :param alpha: Scaling factor applied to discriminator probabilities.</span>
+<span class="sd">    :type alpha: float</span>
+<span class="sd">    :returns: Reward function compatible with GRPO expectations.</span>
+<span class="sd">    :rtype: Callable[[Sequence[Any], Sequence[Any]], list[float]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_reward</span><span class="p">(</span><span class="n">completions</span><span class="p">,</span> <span class="n">answer</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return discriminator-based rewards for a batch of completions.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return discriminator-based rewards for a batch of completions.</span>
+
+<span class="sd">        :param completions: Policy completions that should be scored.</span>
+<span class="sd">        :type completions: Sequence[Any]</span>
+<span class="sd">        :param answer: Ground-truth answers (unused).</span>
+<span class="sd">        :type answer: Sequence[Any]</span>
+<span class="sd">        :param kwargs: Additional metadata forwarded to context builders.</span>
+<span class="sd">        :type kwargs: dict</span>
+<span class="sd">        :returns: Reward values aligned with the completion order.</span>
+<span class="sd">        :rtype: list[float]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">del</span> <span class="n">answer</span>
         <span class="k">if</span> <span class="n">disc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1231,10 +1142,12 @@
     <span class="n">alpha_init</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">base_weights</span><span class="p">)</span> <span class="k">if</span> <span class="n">base_weights</span> <span class="k">else</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">beta_init</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
     <span class="n">mixer_lr</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;GRAIL_WEIGHT_LR&quot;</span><span class="p">,</span> <span class="s2">&quot;5e-2&quot;</span><span class="p">))</span>
     <span class="n">mixer</span> <span class="o">=</span> <span class="n">LearnableRewardMixer</span><span class="p">(</span>
-        <span class="n">base_reward_fns</span><span class="o">=</span><span class="n">base_reward_fns</span><span class="p">,</span>
-        <span class="n">base_weights</span><span class="o">=</span><span class="n">base_weights</span><span class="p">,</span>
+        <span class="n">setup</span><span class="o">=</span><span class="n">MixerSetup</span><span class="p">(</span>
+            <span class="n">base_reward_fns</span><span class="o">=</span><span class="n">base_reward_fns</span><span class="p">,</span>
+            <span class="n">base_weights</span><span class="o">=</span><span class="n">base_weights</span><span class="p">,</span>
+            <span class="n">initial_mix</span><span class="o">=</span><span class="p">(</span><span class="n">alpha_init</span><span class="p">,</span> <span class="n">beta_init</span><span class="p">),</span>
+        <span class="p">),</span>
         <span class="n">discriminator_reward_fn</span><span class="o">=</span><span class="n">gail_reward_fn</span><span class="p">,</span>
-        <span class="n">initial_mix</span><span class="o">=</span><span class="p">(</span><span class="n">alpha_init</span><span class="p">,</span> <span class="n">beta_init</span><span class="p">),</span>
         <span class="n">learning_rate</span><span class="o">=</span><span class="n">mixer_lr</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">alpha0</span><span class="p">,</span> <span class="n">beta0</span> <span class="o">=</span> <span class="n">mixer</span><span class="o">.</span><span class="n">current_alpha_beta</span><span class="p">()</span>

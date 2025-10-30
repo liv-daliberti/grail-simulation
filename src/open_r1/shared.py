@@ -74,6 +74,7 @@ PASSTHROUGH_FIELDS = {
 BASE_TRAIN_KEEP_COLUMNS = {
     "prompt",
     "answer",
+    "opinion_direction",
     "gold_index",
     "gold_id",
     "n_options",

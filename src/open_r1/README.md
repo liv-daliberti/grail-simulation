@@ -14,10 +14,10 @@ fine-tuning utilities, and generation pipelines for synthetic data.
   hosted OpenAI-compatible endpoints to produce training data.
 - `configs.py` – dataclass extensions (`ScriptArguments`, `GRPOConfig`, `SFTConfig`)
   that add mixture support and logging knobs on top of TRL defaults.
-- `rewards.py` – reward functions (accuracy, formatting checks, tool integration)
-  plus helpers for interacting with external judging services.
-- `utils/` – shared building blocks (code execution providers, IOI tools,
-  dataset helpers) used by the reward functions and trainers.
+- `rewards.py` – reward functions (accuracy, formatting checks, lightweight code
+  evaluation) plus helpers for logging reward diagnostics.
+- `utils/` – shared building blocks (dataset helpers, callbacks, replay buffers)
+  used by the reward functions and trainers.
 
 Every script follows the same CLI shape exposed by TRL. Recipes under
 `recipes/<model>/<task>/` supply configuration; the scripts simply parse those

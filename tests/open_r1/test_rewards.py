@@ -136,52 +136,11 @@ def _install_reward_dep_stubs() -> None:
     utils_stub = types.ModuleType("open_r1.utils")
     utils_stub.__path__ = []  # mark as package for submodule imports
 
-    code_providers_stub = types.ModuleType("open_r1.utils.code_providers")
-
-    class _DummyProvider:
-        def execute_scripts(self, scripts, languages):
-            return [0.0] * len(scripts)
-
-    def _get_provider(*_args, **_kwargs):
-        return _DummyProvider()
-
-    code_providers_stub.get_provider = _get_provider
-
-    ioi_stub = types.ModuleType("open_r1.utils.ioi")
-
-    class _SubtaskResult:  # noqa: D401
-        """Placeholder for IOI scoring result."""
-
-    class _TestResult:
-        pass
-
-    def _add_includes(*_args, **_kwargs):
-        return ""
-
-    def _noop_client(*_args, **_kwargs):
-        return None
-
-    def _score_subtask(*_args, **_kwargs):
-        return _SubtaskResult()
-
-    ioi_stub.SubtaskResult = _SubtaskResult
-    ioi_stub.TestResult = _TestResult
-    ioi_stub.add_includes = _add_includes
-    ioi_stub.get_morph_client_from_env = _noop_client
-    ioi_stub.get_piston_client_from_env = _noop_client
-    ioi_stub.score_subtask = _score_subtask
-
-    utils_stub.code_providers = code_providers_stub
-    utils_stub.ioi = ioi_stub
     utils_stub.get_dataset = lambda *args, **kwargs: None  # type: ignore[assignment]
     utils_stub.get_model = lambda *args, **kwargs: None  # type: ignore[assignment]
     utils_stub.get_tokenizer = lambda *args, **kwargs: None  # type: ignore[assignment]
-    utils_stub.is_e2b_available = lambda: False  # type: ignore[assignment]
-    utils_stub.is_morph_available = lambda: False  # type: ignore[assignment]
 
     sys.modules["open_r1.utils"] = utils_stub
-    sys.modules["open_r1.utils.code_providers"] = code_providers_stub
-    sys.modules["open_r1.utils.ioi"] = ioi_stub
 
 
 _install_reward_dep_stubs()
@@ -249,23 +208,99 @@ def test_parse_index_from_completion_respects_env(monkeypatch: pytest.MonkeyPatc
 
 
 def test_pure_accuracy_reward_handles_varied_shapes(monkeypatch: pytest.MonkeyPatch) -> None:
-    completions = [{"content": "<answer>2</answer>"}]
-    rewards_outcome = rewards.pure_accuracy_reward(completions, _answer=[""], gold_index=[2])
+    completions = [{"content": "<answer>2</answer><opinion>increase</opinion>"}]
+    rewards_outcome = rewards.pure_accuracy_reward(
+        completions,
+        gold_index=[2],
+        opinion_direction=["increase"],
+    )
     assert rewards_outcome == [1.0]
 
     # Fails when outside the allowed options.
     rewards_outcome = rewards.pure_accuracy_reward(
         completions,
-        _answer=[""],
         gold_index=[2],
         n_options=[1],
+        opinion_direction=["increase"],
     )
-    assert rewards_outcome == [0.0]
+    assert rewards_outcome == [0.5]
 
     # Bare numbers only allowed when the environment flag is set.
     bare_completion = ["3"]
     monkeypatch.delenv(rewards.PURE_ACC_ENV_FLAG, raising=False)
-    assert rewards.pure_accuracy_reward(bare_completion, _answer=[""], gold_index=[3]) == [0.0]
+    assert rewards.pure_accuracy_reward(bare_completion, gold_index=[3]) == [0.0]
 
     monkeypatch.setenv(rewards.PURE_ACC_ENV_FLAG, "1")
-    assert rewards.pure_accuracy_reward(bare_completion, _answer=[""], gold_index=[3]) == [1.0]
+    assert rewards.pure_accuracy_reward(bare_completion, gold_index=[3]) == [1.0]
+
+
+def test_pure_accuracy_reward_awards_partial_credit() -> None:
+    completion = [{"content": "<answer>5</answer><opinion>no_change</opinion>"}]
+    reward_value = rewards.pure_accuracy_reward(
+        completion,
+        gold_index=[3],  # wrong next-video prediction
+        opinion_direction=["no_change"],  # correct opinion direction
+    )
+    assert reward_value == [0.5]
+
+
+def test_pure_accuracy_reward_normalises_opinion_labels() -> None:
+    completion = [{"content": "<answer>4</answer><opinion>Unchanged</opinion>"}]
+    reward_value = rewards.pure_accuracy_reward(
+        completion,
+        gold_index=[4],
+        opinion_direction=["no_change"],
+    )
+    assert reward_value == [1.0]
+
+
+def test_code_reward_executes_python_locally() -> None:
+    completion = [
+        {
+            "role": "assistant",
+            "content": "```python\nprint(input())\n```",
+        }
+    ]
+    verification_info = [
+        {
+            "language": "python",
+            "test_cases": [{"input": "42\n", "output": "42"}],
+        }
+    ]
+    rewards_outcome = rewards.code_reward(
+        [completion],
+        verification_info=verification_info,
+    )
+    assert rewards_outcome == [1.0]
+
+
+def test_binary_code_reward_thresholds_local_results() -> None:
+    completion = [
+        {
+            "role": "assistant",
+            "content": "```python\nprint(int(input()) + 1)\n```",
+        }
+    ]
+    verification_info = [
+        {
+            "language": "python",
+            "test_cases": [{"input": "2\n", "output": "3"}],
+        }
+    ]
+    rewards_outcome = rewards.binary_code_reward(
+        [completion],
+        verification_info=verification_info,
+    )
+    assert rewards_outcome == [1.0]
+
+    failing_verification = [
+        {
+            "language": "python",
+            "test_cases": [{"input": "2\n", "output": "99"}],
+        }
+    ]
+    rewards_outcome = rewards.binary_code_reward(
+        [completion],
+        verification_info=failing_verification,
+    )
+    assert rewards_outcome == [0.0]

@@ -17,8 +17,11 @@
 
 from __future__ import annotations
 
+import math
 import re
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence
+
+from common.opinion.models import DEFAULT_SPECS
 
 from prompt_builder import (
     as_list_json,
@@ -32,6 +35,41 @@ from .constants import DEFAULT_SYSTEM_PROMPT
 from .shared import build_training_example, collect_passthrough_fields
 
 _CANON_RE = re.compile(r"[^a-z0-9]+")
+_OPINION_TOLERANCE = 1e-6
+_OPINION_SPEC_LOOKUP = {
+    (spec.issue.lower(), spec.key.lower()): spec for spec in DEFAULT_SPECS
+}
+
+
+def _normalise_direction(value: float) -> float:
+    """Return ``value`` when finite, otherwise NaN."""
+
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return float("nan")
+
+
+def _opinion_direction_label(example: Mapping[str, Any]) -> Optional[str]:
+    """Compute the opinion-direction label for ``example`` when available."""
+
+    issue = str(example.get("issue") or "").strip().lower()
+    study = str(example.get("participant_study") or "").strip().lower()
+    spec = _OPINION_SPEC_LOOKUP.get((issue, study))
+    if spec is None:
+        return None
+
+    before = _normalise_direction(example.get(spec.before_column))
+    after = _normalise_direction(example.get(spec.after_column))
+    if math.isnan(before) or math.isnan(after):
+        return None
+
+    delta = after - before
+    if delta > _OPINION_TOLERANCE:
+        return "increase"
+    if delta < -_OPINION_TOLERANCE:
+        return "decrease"
+    return "no_change"
 
 
 def canon(value: str) -> str:
@@ -201,6 +239,7 @@ def row_to_training_example(
         extra_fields.update(passthrough_fn(example))
     if extra_fields_fn is not None:
         extra_fields.update(extra_fields_fn(example, items))
+    extra_fields["opinion_direction"] = _opinion_direction_label(example)
 
     payload_extra_fields = extra_fields or None
 

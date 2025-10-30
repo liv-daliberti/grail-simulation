@@ -19,9 +19,10 @@ from __future__ import annotations
 
 DEFAULT_SYSTEM_PROMPT = (
     "You are choosing EXACTLY ONE item from the list of OPTIONS for a specific VIEWER.\n"
-    "You MUST reason inside <think>…</think> and only then output the chosen option "
-    "NUMBER (1..N) inside <answer>…</answer>.\n"
-    "Format (STRICT): <think>…</think><answer>3</answer>"
+    "You MUST reason inside <think>…</think> and only then output two tags:\n"
+    "  - <answer>…</answer> containing ONLY the chosen option NUMBER (1..N).\n"
+    "  - <opinion>…</opinion> containing EXACTLY one of: increase, decrease, or no_change.\n"
+    "Format (STRICT): <think>…</think><answer>3</answer><opinion>increase</opinion>"
 )
 
 __all__ = ["DEFAULT_SYSTEM_PROMPT"]

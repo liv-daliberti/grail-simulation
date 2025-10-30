@@ -20,7 +20,6 @@ reward derived from a learned discriminator when ``$GAIL_USE=1``. The
 underlying user prompt construction is shared with ``open_r1.grpo`` through the
 ``prompt_builder`` utilities.
 """
-# pylint: disable=too-many-lines
 
 from __future__ import annotations
 
@@ -28,7 +27,7 @@ import inspect
 import logging
 import os
 import re
-import types
+import warnings
 from typing import (
     Any,
     Dict,
@@ -56,6 +55,7 @@ from transformers import (  # pylint: disable=import-error
     set_seed,
 )
 from trl import ModelConfig  # pylint: disable=import-error
+
 from common.data.hf_datasets import DatasetDict
 from prompt_builder import as_list_json
 from open_r1.configs import GRPOConfig, GRPOScriptArguments
@@ -77,155 +77,25 @@ from open_r1.shared import (
     parse_and_run,
 )
 from open_r1.utils import get_dataset, get_tokenizer
+from open_r1.torch_stub_utils import build_torch_stubs
 
 logger = logging.getLogger(__name__)
 
 COMPONENT_FACTORY = build_default_component_factory()
 
-_TORCH_FALLBACK_DEVICE = "cpu"
 
-
-class _TensorStub:
-    """Minimal tensor stub to satisfy documentation builds without torch."""
-
-    # pylint: disable=missing-function-docstring
-
-    def __init__(
-        self,
-        data: Optional[Sequence[float]] = None,
-        *,
-        device: Any = None,
-        **_unused: Any,
-    ):
-        self._data = list(data) if data is not None else []
-        self.device = device or _TORCH_FALLBACK_DEVICE
-
-    def numel(self) -> int:
-        return len(self._data)
-
-    def sum(self, dim: int | None = None):
-        del dim
-        return self
-
-    def unsqueeze(self, dim: int):
-        del dim
-        return self
-
-    def detach(self):
-        return self
-
-    def cpu(self):
-        return self
-
-    def mean(self):
-        return self
-
-    def item(self) -> float:
-        return float(self._data[0]) if self._data else 0.0
-
-    def to(self, *_args, **_kwargs):
-        return self
-
-    def tolist(self) -> List[float]:
-        return list(self._data)
-
-    def __mul__(self, _other):
-        return self
-
-    def __rmul__(self, _other):
-        return self
-
-    def __add__(self, _other):
-        return self
-
-    def __radd__(self, _other):
-        return self
-
-    def __bool__(self) -> bool:
-        return bool(self._data)
-
-
-def _install_torch_stubs() -> None:
-    """Provide lightweight fallbacks when torch is unavailable or mocked."""
-
-    # pylint: disable=global-statement
-    global torch, nn, optim  # type: ignore[global-statement]
-
-    class _CudaStub:  # pylint: disable=too-few-public-methods
-        CudaError = RuntimeError
-
-        @staticmethod
-        def is_available() -> bool:
-            return False
-
-    class _ModuleStub:  # pylint: disable=too-few-public-methods
-        def __init__(self, *_args: Any, **_kwargs: Any) -> None:
-            pass
-
-        def register_buffer(self, *_args: Any, **_kwargs: Any) -> None:
-            return None
-
-    class _ParameterStub:  # pylint: disable=too-few-public-methods
-        def __init__(self, value: Any) -> None:
-            self.value = value
-
-    class _AdamStub:  # pylint: disable=too-few-public-methods
-        def __init__(self, *_args: Any, **_kwargs: Any) -> None:
-            pass
-
-        def zero_grad(self, *_args: Any, **_kwargs: Any) -> None:
-            return None
-
-        def step(self) -> None:
-            return None
-
-    def _make_tensor(*args: Any, **kwargs: Any) -> _TensorStub:
-        data = None
-        if args:
-            candidate = args[0]
-            if isinstance(candidate, int):
-                data = [0.0] * candidate
-            elif isinstance(candidate, (list, tuple)):
-                data = list(candidate)
-        return _TensorStub(data, device=kwargs.get("device"))
-
-    torch = types.SimpleNamespace(  # type: ignore[assignment]
-        Tensor=_TensorStub,
-        tensor=_make_tensor,
-        zeros=lambda *args, **kwargs: _TensorStub(
-            [0.0] * int(args[0]) if args else [], device=kwargs.get("device")
-        ),
-        zeros_like=lambda *_args, **_kwargs: _TensorStub(),
-        ones=lambda *args, **kwargs: _TensorStub(
-            [1.0] * int(args[0]) if args else [], device=kwargs.get("device")
-        ),
-        ones_like=lambda *_args, **_kwargs: _TensorStub(),
-        stack=lambda *_args, **_kwargs: _TensorStub(),
-        softmax=lambda *_args, **_kwargs: _TensorStub(),
-        no_grad=lambda: (lambda func: func),
-        isfinite=lambda *_args, **_kwargs: types.SimpleNamespace(all=lambda: True),
-        allclose=lambda *_args, **_kwargs: False,
-        cuda=_CudaStub(),
-        device=lambda spec: spec,
-        log=lambda *_args, **_kwargs: _TensorStub(),
-        float32="float32",
-    )
-    nn = types.SimpleNamespace(
-        Module=_ModuleStub,
-        Parameter=_ParameterStub,
-    )  # type: ignore[assignment]
-    optim = types.SimpleNamespace(Adam=_AdamStub)  # type: ignore[assignment]
-
-
-try:
-    if not inspect.isclass(getattr(nn, "Module", None)):  # type: ignore[arg-type]
-        raise AttributeError("nn.Module is not a class")
-    if not callable(getattr(optim, "Adam", None)):  # type: ignore[arg-type]
-        raise AttributeError("optim.Adam is not callable")
-    if not hasattr(torch, "cuda") or not hasattr(torch.cuda, "is_available"):
-        raise AttributeError("torch.cuda missing expected attributes")
-except (NameError, AttributeError):
-    _install_torch_stubs()
+if torch is None or nn is None or optim is None:
+    torch, nn, optim = build_torch_stubs()
+else:
+    try:
+        if not inspect.isclass(getattr(nn, "Module", None)):  # type: ignore[arg-type]
+            raise AttributeError("nn.Module is not a class")
+        if not callable(getattr(optim, "Adam", None)):  # type: ignore[arg-type]
+            raise AttributeError("optim.Adam is not callable")
+        if not hasattr(torch, "cuda") or not hasattr(torch.cuda, "is_available"):
+            raise AttributeError("torch.cuda missing expected attributes")
+    except AttributeError:
+        torch, nn, optim = build_torch_stubs()
 
 ANS_RE = re.compile(r"(?si)<answer>\s*([^<\n]+?)\s*</answer>")
 IDX_ONLY = re.compile(r"^\s*(?:option\s*)?(\d+)\s*$", re.I)
@@ -779,14 +649,16 @@ class LearnableRewardMixer(nn.Module):
         }
 
         if base_combined.numel():
-            payload["reward/mixer/base_mean"] = float(base_combined.detach().mean().cpu().item())
+            base_mean = float(base_combined.detach().mean().cpu().item())
         else:
-            payload["reward/mixer/base_mean"] = 0.0
+            base_mean = 0.0
+        payload["reward/mixer/base_mean"] = base_mean
 
         if disc_tensor.numel():
-            payload["reward/mixer/disc_mean"] = float(disc_tensor.detach().mean().cpu().item())
+            disc_mean = float(disc_tensor.detach().mean().cpu().item())
         else:
-            payload["reward/mixer/disc_mean"] = 0.0
+            disc_mean = 0.0
+        payload["reward/mixer/disc_mean"] = disc_mean
 
         try:
             logger_fn(payload)
@@ -806,8 +678,14 @@ class LearnableRewardMixer(nn.Module):
         if self._should_train() and combined.numel() > 0:
             loss = -combined.mean()
             self._optim.zero_grad(set_to_none=True)
-            loss.backward()
-            self._optim.step()
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore",
+                    message="Can't initialize NVML",
+                    category=UserWarning,
+                )
+                loss.backward()
+                self._optim.step()
 
         alpha, beta = self.current_alpha_beta()
         self._log_state(base_combined, disc_tensor, alpha, beta)
@@ -816,9 +694,30 @@ class LearnableRewardMixer(nn.Module):
 
 
 def make_gail_reward_fn(disc: Optional[OnlineDiscriminator], alpha: float = 1.0):
-    """Wrap discriminator scores so they plug into the GRPO reward interface."""
+    """
+    Wrap discriminator scores so they plug into the GRPO reward interface.
+
+    :param disc: Online discriminator producing ``prob_positive`` scores.
+    :type disc: OnlineDiscriminator | None
+    :param alpha: Scaling factor applied to discriminator probabilities.
+    :type alpha: float
+    :returns: Reward function compatible with GRPO expectations.
+    :rtype: Callable[[Sequence[Any], Sequence[Any]], list[float]]
+    """
+
     def _reward(completions, answer, **kwargs):
-        """Return discriminator-based rewards for a batch of completions."""
+        """
+        Return discriminator-based rewards for a batch of completions.
+
+        :param completions: Policy completions that should be scored.
+        :type completions: Sequence[Any]
+        :param answer: Ground-truth answers (unused).
+        :type answer: Sequence[Any]
+        :param kwargs: Additional metadata forwarded to context builders.
+        :type kwargs: dict
+        :returns: Reward values aligned with the completion order.
+        :rtype: list[float]
+        """
 
         del answer
         if disc is None:

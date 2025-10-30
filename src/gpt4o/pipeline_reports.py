@@ -26,7 +26,7 @@ from typing import Dict, List, Mapping, Sequence, Tuple
 from common.pipeline.io import write_markdown_lines
 from common.reports.utils import start_markdown_report
 
-from .pipeline_models import PipelinePaths, SweepOutcome
+from common.pipeline.gpt4o_models import PipelinePaths, SweepOutcome
 from .opinion import OpinionEvaluationResult
 
 

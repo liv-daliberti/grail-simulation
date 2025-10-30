@@ -24,7 +24,12 @@ from pathlib import Path
 from typing import Callable, List, Mapping, Optional, Sequence, Tuple
 
 from common.reports.utils import extract_curve_sections, extract_numeric_series
-from common.opinion.plots import plot_opinion_change_heatmap, plot_post_opinion_heatmap
+from common.opinion.plots import (
+    OpinionHeatmapConfig,
+    OpinionHeatmapStyle,
+    plot_opinion_change_heatmap,
+    plot_post_opinion_heatmap,
+)
 
 from .shared import LOGGER, _slugify_label, plt
 
@@ -485,8 +490,10 @@ def _plot_opinion_change_heatmap(
         actual_changes=actual_changes,
         predicted_changes=predicted_changes,
         output_path=output_path,
-        logger=LOGGER,
-        log_prefix="[XGB][OPINION]",
+        config=OpinionHeatmapConfig(
+            logger=LOGGER,
+            log_prefix="[XGB][OPINION]",
+        ),
     )
 
 
@@ -501,9 +508,17 @@ def _plot_opinion_post_heatmap(
         actual_after=actual_after,
         predicted_after=predicted_after,
         output_path=output_path,
-        logger=LOGGER,
-        log_prefix="[XGB][OPINION]",
-        title="Predicted vs. actual opinion index",
+        config=OpinionHeatmapConfig(
+            logger=LOGGER,
+            log_prefix="[XGB][OPINION]",
+            style=OpinionHeatmapStyle(
+                bins=40,
+                xlabel="Actual post-study opinion index",
+                ylabel="Predicted post-study opinion index",
+                title="Predicted vs. actual opinion index",
+                show_zero_guides=False,
+            ),
+        ),
     )
 
 

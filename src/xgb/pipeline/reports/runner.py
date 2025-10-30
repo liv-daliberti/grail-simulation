@@ -30,7 +30,7 @@ from ..context import (
 from .catalog import _write_catalog_report
 from .hyperparameter import _write_hyperparameter_report
 from .next_video import _write_next_video_report
-from .opinion import _write_opinion_report
+from .opinion import OpinionReportOptions, _write_opinion_report
 from .shared import _write_disabled_report
 from .features import _write_feature_report
 
@@ -139,11 +139,13 @@ def _write_reports(
         _write_opinion_report(
             reports_dir / "opinion",
             opinion.metrics,
-            allow_incomplete=allow_incomplete,
-            title=opinion.title,
-            description_lines=opinion.description_lines,
-            predictions_root=opinion.predictions_root,
-            regenerate_plots=opinion.regenerate_plots,
+            OpinionReportOptions(
+                allow_incomplete=allow_incomplete,
+                title=opinion.title,
+                description_lines=opinion.description_lines,
+                predictions_root=opinion.predictions_root,
+                regenerate_plots=opinion.regenerate_plots,
+            ),
         )
     else:
         _write_disabled_report(
@@ -155,11 +157,13 @@ def _write_reports(
         _write_opinion_report(
             reports_dir / "opinion_from_next",
             opinion_from_next.metrics,
-            allow_incomplete=allow_incomplete,
-            title=opinion_from_next.title,
-            description_lines=opinion_from_next.description_lines,
-            predictions_root=opinion_from_next.predictions_root,
-            regenerate_plots=opinion_from_next.regenerate_plots,
+            OpinionReportOptions(
+                allow_incomplete=allow_incomplete,
+                title=opinion_from_next.title,
+                description_lines=opinion_from_next.description_lines,
+                predictions_root=opinion_from_next.predictions_root,
+                regenerate_plots=opinion_from_next.regenerate_plots,
+            ),
         )
     _write_feature_report(
         reports_dir / "additional_features",

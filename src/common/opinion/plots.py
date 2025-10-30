@@ -18,8 +18,9 @@
 from __future__ import annotations
 
 import math
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Sequence, Tuple
+from typing import Any, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -27,6 +28,81 @@ from common.visualization.matplotlib import plt
 
 
 _ArrayPair = Tuple[np.ndarray, np.ndarray]
+
+
+@dataclass(frozen=True)
+class OpinionHeatmapStyle:
+    """
+    Visual configuration applied to opinion heatmaps.
+
+    :ivar bins: Histogram bin count used when rendering.
+    :ivar xlabel: Label rendered on the x-axis.
+    :ivar ylabel: Label rendered on the y-axis.
+    :ivar title: Figure title describing the chart.
+    :ivar show_zero_guides: Whether zero-baseline guide lines should be drawn.
+    """
+
+    bins: int
+    xlabel: str
+    ylabel: str
+    title: str
+    show_zero_guides: bool
+
+
+@dataclass(frozen=True)
+class OpinionHeatmapConfig:
+    """
+    Context describing how heatmaps should be rendered and logged.
+
+    :ivar logger: Logger instance used for diagnostic output.
+    :ivar log_prefix: Prefix prepended to log messages.
+    :ivar style: Optional style overrides applied to the plot.
+    """
+
+    logger: Any
+    log_prefix: str
+    style: OpinionHeatmapStyle | None = None
+
+
+@dataclass(frozen=True)
+class HeatmapRenderParams:
+    """
+    Aggregated rendering parameters forwarded to the plotting helper.
+
+    :ivar arrays: Tuple of numpy arrays holding actual/predicted values.
+    :ivar output_path: Destination path for the generated plot.
+    :ivar bins: Histogram bin count used for both axes.
+    :ivar bounds: Tuple describing shared axis limits.
+    :ivar xlabel: X-axis label.
+    :ivar ylabel: Y-axis label.
+    :ivar title: Figure title.
+    :ivar show_zero_guides: Whether zero-baseline guide lines should be drawn.
+    """
+
+    arrays: _ArrayPair
+    output_path: Path
+    bins: int
+    bounds: Tuple[float, float]
+    xlabel: str
+    ylabel: str
+    title: str
+    show_zero_guides: bool
+
+
+_DEFAULT_CHANGE_STYLE = OpinionHeatmapStyle(
+    bins=40,
+    xlabel="Actual opinion change (post - pre)",
+    ylabel="Predicted opinion change",
+    title="Predicted vs. actual opinion change",
+    show_zero_guides=True,
+)
+_DEFAULT_POST_STYLE = OpinionHeatmapStyle(
+    bins=40,
+    xlabel="Actual post-study opinion index",
+    ylabel="Predicted post-study opinion index",
+    title="Predicted vs. actual post-study opinion index",
+    show_zero_guides=False,
+)
 
 
 def _prepare_heatmap_inputs(
@@ -109,38 +185,21 @@ def _padded_bounds(actual: np.ndarray, predicted: np.ndarray) -> Tuple[float, fl
     return min_val, max_val
 
 
-def _render_heatmap(
-    *,
-    arrays: _ArrayPair,
-    output_path: Path,
-    bins: int,
-    bounds: Tuple[float, float],
-    xlabel: str,
-    ylabel: str,
-    title: str,
-    show_zero_guides: bool,
-) -> None:
+def _render_heatmap(*, params: HeatmapRenderParams) -> None:
     """
     Render a ``matplotlib.pyplot.hist2d`` chart with consistent styling.
 
-    :param arrays: Tuple containing the actual and predicted arrays.
-    :param output_path: Destination path for the generated figure.
-    :param bins: Number of bins passed to ``hist2d``.
-    :param bounds: Lower and upper axis limits (shared between x/y).
-    :param xlabel: Label applied to the x-axis.
-    :param ylabel: Label applied to the y-axis.
-    :param title: Figure title summarising the chart content.
-    :param show_zero_guides: Whether to overlay horizontal/vertical guides at zero.
+    :param params: Aggregated render instructions.
     :returns: ``None``.
     """
-    actual, predicted = arrays
-    min_val, max_val = bounds
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    actual, predicted = params.arrays
+    min_val, max_val = params.bounds
+    params.output_path.parent.mkdir(parents=True, exist_ok=True)
     plt.figure(figsize=(5.5, 4.5))  # type: ignore[union-attr]
     hist = plt.hist2d(  # type: ignore[union-attr]
         actual,
         predicted,
-        bins=bins,
+        bins=params.bins,
         range=[[min_val, max_val], [min_val, max_val]],
         cmap="magma",
         cmin=1,
@@ -156,14 +215,14 @@ def _render_heatmap(
     plt.xlim(min_val, max_val)  # type: ignore[union-attr]
     plt.ylim(min_val, max_val)  # type: ignore[union-attr]
     plt.gca().set_aspect("equal", adjustable="box")  # type: ignore[union-attr]
-    if show_zero_guides:
+    if params.show_zero_guides:
         plt.axhline(0.0, color="grey", linestyle=":", linewidth=0.8)  # type: ignore[union-attr]
         plt.axvline(0.0, color="grey", linestyle=":", linewidth=0.8)  # type: ignore[union-attr]
-    plt.xlabel(xlabel)  # type: ignore[union-attr]
-    plt.ylabel(ylabel)  # type: ignore[union-attr]
-    plt.title(title)  # type: ignore[union-attr]
+    plt.xlabel(params.xlabel)  # type: ignore[union-attr]
+    plt.ylabel(params.ylabel)  # type: ignore[union-attr]
+    plt.title(params.title)  # type: ignore[union-attr]
     plt.tight_layout()  # type: ignore[union-attr]
-    plt.savefig(output_path, dpi=150)  # type: ignore[union-attr]
+    plt.savefig(params.output_path, dpi=150)  # type: ignore[union-attr]
     plt.close()  # type: ignore[union-attr]
 
 
@@ -172,12 +231,7 @@ def plot_opinion_change_heatmap(
     actual_changes: Sequence[float],
     predicted_changes: Sequence[float],
     output_path: Path,
-    logger,
-    log_prefix: str,
-    bins: int = 40,
-    xlabel: str = "Actual opinion change (post - pre)",
-    ylabel: str = "Predicted opinion change",
-    title: str = "Predicted vs. actual opinion change",
+    config: OpinionHeatmapConfig,
 ) -> None:
     """
     Render a symmetric heatmap comparing predicted and actual opinion deltas.
@@ -185,35 +239,33 @@ def plot_opinion_change_heatmap(
     :param actual_changes: Observed change values derived from participant data.
     :param predicted_changes: Model-predicted change values aligned with ``actual_changes``.
     :param output_path: Destination path for the PNG artefact.
-    :param logger: Logger instance originating from the caller.
-    :param log_prefix: Text prepended to log messages to distinguish the source pipeline.
-    :param bins: Histogram bin count used for both axes.
-    :param xlabel: Label applied to the x-axis.
-    :param ylabel: Label applied to the y-axis.
-    :param title: Title describing the rendered plot.
+    :param config: Logging and styling configuration for the plot.
     :returns: ``None``.
     """
 
     arrays = _prepare_heatmap_inputs(
         actual=actual_changes,
         predicted=predicted_changes,
-        logger=logger,
-        log_prefix=log_prefix,
+        logger=config.logger,
+        log_prefix=config.log_prefix,
         descriptor="opinion-change heatmap",
     )
     if arrays is None:
         return
 
+    style = config.style or _DEFAULT_CHANGE_STYLE
     bounds = _symmetric_bounds(*arrays)
     _render_heatmap(
-        arrays=arrays,
-        output_path=output_path,
-        bins=bins,
-        bounds=bounds,
-        xlabel=xlabel,
-        ylabel=ylabel,
-        title=title,
-        show_zero_guides=True,
+        params=HeatmapRenderParams(
+            arrays=arrays,
+            output_path=output_path,
+            bins=style.bins,
+            bounds=bounds,
+            xlabel=style.xlabel,
+            ylabel=style.ylabel,
+            title=style.title,
+            show_zero_guides=style.show_zero_guides,
+        )
     )
 
 
@@ -222,12 +274,7 @@ def plot_post_opinion_heatmap(
     actual_after: Sequence[float],
     predicted_after: Sequence[float],
     output_path: Path,
-    logger,
-    log_prefix: str,
-    bins: int = 40,
-    xlabel: str = "Actual post-study opinion index",
-    ylabel: str = "Predicted post-study opinion index",
-    title: str = "Predicted vs. actual post-study opinion index",
+    config: OpinionHeatmapConfig,
 ) -> None:
     """
     Render a padded-range heatmap comparing predicted and actual post-study indices.
@@ -235,39 +282,39 @@ def plot_post_opinion_heatmap(
     :param actual_after: Observed post-study opinion indices.
     :param predicted_after: Predicted post-study opinion indices returned by the model.
     :param output_path: Destination path for the PNG artefact.
-    :param logger: Logger instance originating from the caller.
-    :param log_prefix: Text prepended to log messages to distinguish the source pipeline.
-    :param bins: Histogram bin count used for both axes.
-    :param xlabel: Label applied to the x-axis.
-    :param ylabel: Label applied to the y-axis.
-    :param title: Title describing the rendered plot.
+    :param config: Logging and styling configuration for the plot.
     :returns: ``None``.
     """
 
     arrays = _prepare_heatmap_inputs(
         actual=actual_after,
         predicted=predicted_after,
-        logger=logger,
-        log_prefix=log_prefix,
+        logger=config.logger,
+        log_prefix=config.log_prefix,
         descriptor="post-vs-predicted heatmap",
     )
     if arrays is None:
         return
 
+    style = config.style or _DEFAULT_POST_STYLE
     bounds = _padded_bounds(*arrays)
     _render_heatmap(
-        arrays=arrays,
-        output_path=output_path,
-        bins=bins,
-        bounds=bounds,
-        xlabel=xlabel,
-        ylabel=ylabel,
-        title=title,
-        show_zero_guides=False,
+        params=HeatmapRenderParams(
+            arrays=arrays,
+            output_path=output_path,
+            bins=style.bins,
+            bounds=bounds,
+            xlabel=style.xlabel,
+            ylabel=style.ylabel,
+            title=style.title,
+            show_zero_guides=style.show_zero_guides,
+        )
     )
 
 
 __all__ = [
     "plot_opinion_change_heatmap",
     "plot_post_opinion_heatmap",
+    "OpinionHeatmapConfig",
+    "OpinionHeatmapStyle",
 ]

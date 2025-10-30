@@ -23,7 +23,8 @@ pipeline's caching semantics.
 from __future__ import annotations
 
 import logging
-from typing import Dict, Mapping, Sequence
+from pathlib import Path
+from typing import Dict, Mapping, Sequence, List
 
 from common.pipeline.utils import (
     compose_cli_args,
@@ -41,6 +42,23 @@ from .sweeps import run_knn_cli
 from .utils import ensure_dir
 
 LOGGER = logging.getLogger("knn.pipeline.evaluate")
+
+
+def _opinion_prediction_paths(base_dir: Path, feature_space: str, study_key: str) -> List[Path]:
+    """
+    Return candidate locations for cached opinion prediction archives.
+
+    Older runs stored predictions under ``<out>/<feature>/`` whereas newer
+    runs use ``<out>/opinion/<feature>/``. Report regeneration expects the
+    JSONL artefact to exist in either location, so we probe both when
+    deciding whether we can safely reuse cached metrics.
+    """
+
+    filename = f"opinion_knn_{study_key}_validation.jsonl"
+    return [
+        base_dir / "opinion" / feature_space / study_key / filename,
+        base_dir / feature_space / study_key / filename,
+    ]
 
 # pylint: disable=too-many-locals
 def run_final_evaluations(
@@ -160,13 +178,21 @@ def run_opinion_evaluations(
             selection = per_study.get(study.key)
             if selection is None:
                 continue
-            if context.reuse_existing and study.key in cached_metrics:
+            prediction_paths = _opinion_prediction_paths(feature_out_dir, feature_space, study.key)
+            predictions_cached = any(path.exists() for path in prediction_paths)
+            if context.reuse_existing and study.key in cached_metrics and predictions_cached:
                 LOGGER.info(
                     "[OPINION][SKIP] feature=%s study=%s (metrics cached).",
                     feature_space,
                     study.key,
                 )
                 continue
+            if context.reuse_existing and study.key in cached_metrics and not predictions_cached:
+                LOGGER.info(
+                    "[OPINION][REFRESH] feature=%s study=%s cached metrics found but predictions missing; rerunning evaluation.",
+                    feature_space,
+                    study.key,
+                )
             LOGGER.info("[OPINION] study=%s issue=%s", study.key, study.issue)
             model_dir = None
             if feature_space == "word2vec":
@@ -220,13 +246,21 @@ def run_opinion_from_next_evaluations(
             selection = per_study.get(study.key)
             if selection is None:
                 continue
-            if context.reuse_existing and study.key in cached_metrics:
+            prediction_paths = _opinion_prediction_paths(base_out_dir, feature_space, study.key)
+            predictions_cached = any(path.exists() for path in prediction_paths)
+            if context.reuse_existing and study.key in cached_metrics and predictions_cached:
                 LOGGER.info(
                     "[OPINION][FROM-NEXT][SKIP] feature=%s study=%s (metrics cached).",
                     feature_space,
                     study.key,
                 )
                 continue
+            if context.reuse_existing and study.key in cached_metrics and not predictions_cached:
+                LOGGER.info(
+                    "[OPINION][FROM-NEXT][REFRESH] feature=%s study=%s cached metrics found but predictions missing; rerunning evaluation.",
+                    feature_space,
+                    study.key,
+                )
             LOGGER.info(
                 "[OPINION][FROM-NEXT] study=%s issue=%s",
                 study.key,

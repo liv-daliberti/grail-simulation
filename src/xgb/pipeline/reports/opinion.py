@@ -825,28 +825,64 @@ def _opinion_curve_lines(
 
 @dataclass
 class _OpinionPredictionVectors:
-    """Container for opinion prediction series extracted from cached outputs."""
+    """
+    Collect opinion prediction sequences extracted from cached inference rows.
 
-    actual_after: List[float]
-    predicted_after: List[float]
-    actual_changes: List[float]
-    predicted_changes: List[float]
-    errors: List[float]
+    :ivar actual_after: Observed post-study opinion indices.
+    :ivar predicted_after: Predicted post-study opinion indices.
+    :ivar actual_changes: Observed opinion deltas (post - pre).
+    :ivar predicted_changes: Predicted opinion deltas.
+    :ivar errors: Absolute prediction errors for the post-study index.
+    """
+
+    actual_after: List[float] = field(default_factory=list)
+    predicted_after: List[float] = field(default_factory=list)
+    actual_changes: List[float] = field(default_factory=list)
+    predicted_changes: List[float] = field(default_factory=list)
+    errors: List[float] = field(default_factory=list)
+
+    def append_sample(
+        self,
+        *,
+        before: float,
+        after: float,
+        predicted_after: float,
+        predicted_change: float,
+    ) -> None:
+        """
+        Record a single participant snapshot.
+
+        :param before: Baseline opinion index prior to treatment.
+        :param after: Observed post-study opinion index.
+        :param predicted_after: Model-predicted post-study opinion index.
+        :param predicted_change: Model-predicted opinion delta.
+        """
+
+        self.actual_after.append(after)
+        self.predicted_after.append(predicted_after)
+        self.errors.append(abs(predicted_after - after))
+        self.actual_changes.append(after - before)
+        self.predicted_changes.append(predicted_change)
 
     def has_post_indices(self) -> bool:
-        """Return True when post-study predictions are available."""
+        """Return ``True`` when post-study predictions are available."""
 
         return bool(self.actual_after and self.predicted_after)
 
     def has_change_series(self) -> bool:
-        """Return True when change deltas are available."""
+        """Return ``True`` when change deltas are available."""
 
         return bool(self.actual_changes and self.predicted_changes)
 
     def has_errors(self) -> bool:
-        """Return True when prediction errors were recorded."""
+        """Return ``True`` when prediction errors were recorded."""
 
         return bool(self.errors)
+
+    def has_observations(self) -> bool:
+        """Return ``True`` when any accumulated sequences are non-empty."""
+
+        return bool(self.actual_after or self.actual_changes or self.errors)
 
 
 def _collect_opinion_prediction_vectors(
@@ -857,9 +893,16 @@ def _collect_opinion_prediction_vectors(
 ) -> _OpinionPredictionVectors | None:
     """
     Load cached prediction rows and extract series needed for diagnostic plots.
+
+    :param predictions_path: Filesystem path to the cached prediction JSONL file.
+    :param feature_space: Feature-space identifier (e.g. ``tfidf``).
+    :param study_key: Participant study identifier.
+    :returns: Populated :class:`_OpinionPredictionVectors` or ``None`` when empty.
     """
 
-    def _parse_prediction_row(payload: Mapping[str, object]) -> tuple[float, float, float, float] | None:
+    def _parse_prediction_row(
+        payload: Mapping[str, object],
+    ) -> tuple[float, float, float, float] | None:
         before = payload.get("before")
         after_value = payload.get("after")
         pred_after = payload.get("prediction")
@@ -881,12 +924,7 @@ def _collect_opinion_prediction_vectors(
                 pred_change_f = pred_after_f - before_f
         return (before_f, after_f, pred_after_f, pred_change_f)
 
-    actual_changes: List[float] = []
-    predicted_changes: List[float] = []
-    actual_after: List[float] = []
-    predicted_after: List[float] = []
-    errors: List[float] = []
-
+    vectors = _OpinionPredictionVectors()
     with predictions_path.open("r", encoding="utf-8") as handle:
         for line in handle:
             record = line.strip()
@@ -905,22 +943,17 @@ def _collect_opinion_prediction_vectors(
             if parsed is None:
                 continue
             before_f, after_f, pred_after_f, pred_change_f = parsed
-            actual_after.append(after_f)
-            predicted_after.append(pred_after_f)
-            errors.append(abs(pred_after_f - after_f))
-            actual_changes.append(after_f - before_f)
-            predicted_changes.append(pred_change_f)
+            vectors.append_sample(
+                before=before_f,
+                after=after_f,
+                predicted_after=pred_after_f,
+                predicted_change=pred_change_f,
+            )
 
-    if not (actual_after or actual_changes or errors):
+    if not vectors.has_observations():
         return None
 
-    return _OpinionPredictionVectors(
-        actual_after=actual_after,
-        predicted_after=predicted_after,
-        actual_changes=actual_changes,
-        predicted_changes=predicted_changes,
-        errors=errors,
-    )
+    return vectors
 
 
 def _render_opinion_prediction_plots(
@@ -929,7 +962,14 @@ def _render_opinion_prediction_plots(
     study_key: str,
     vectors: _OpinionPredictionVectors,
 ) -> None:
-    """Dispatch plotting helpers for the supplied prediction series."""
+    """
+    Dispatch plotting helpers for the supplied prediction series.
+
+    :param feature_dir: Directory receiving generated PNG artefacts.
+    :param study_key: Study identifier used when naming outputs.
+    :param vectors: Prediction sequences extracted from cached outputs.
+    :returns: ``None``.
+    """
 
     if vectors.has_post_indices():
         _plot_opinion_post_heatmap(
@@ -957,7 +997,12 @@ def _regenerate_opinion_feature_plots(
     predictions_root: Path | None,
 ) -> None:
     """
-    Rebuild supplementary opinion plots (heatmaps, error histograms) from cached predictions.
+    Rebuild supplementary opinion plots from cached predictions.
+
+    :param report_dir: Output directory for the opinion report bundle.
+    :param metrics: Opinion metrics keyed by feature space and study.
+    :param predictions_root: Directory containing cached prediction records.
+    :returns: ``None``.
     """
     if not metrics or predictions_root is None:
         return
@@ -1126,22 +1171,43 @@ def _opinion_cross_study_diagnostics(
     return lines
 
 
+@dataclass(frozen=True)
+class OpinionReportOptions:
+    """
+    Configuration bundle for generating opinion regression reports.
+
+    :ivar allow_incomplete: Whether warnings for missing metrics should be emitted.
+    :ivar title: Markdown title applied to the report.
+    :ivar description_lines: Optional explanatory copy inserted after the title.
+    :ivar predictions_root: Directory containing cached prediction artefacts.
+    :ivar regenerate_plots: Whether supplementary plots should be rebuilt.
+    """
+
+    allow_incomplete: bool
+    title: str = "XGBoost Opinion Regression"
+    description_lines: Sequence[str] | None = None
+    predictions_root: Path | None = None
+    regenerate_plots: bool = True
+
+
 def _write_opinion_report(
     directory: Path,
     metrics: Mapping[str, Mapping[str, object]],
-    *,
-    allow_incomplete: bool,
-    title: str = "XGBoost Opinion Regression",
-    description_lines: Sequence[str] | None = None,
-    predictions_root: Path | None = None,
-    regenerate_plots: bool = True,
+    options: OpinionReportOptions,
 ) -> None:
-    """Create the opinion regression summary document."""
+    """
+    Create the opinion regression summary document.
 
-    path, lines = start_markdown_report(directory, title=title)
+    :param directory: Destination directory for the Markdown report.
+    :param metrics: Nested mapping of opinion metrics indexed by study.
+    :param options: Configuration values controlling report generation.
+    :returns: ``None``.
+    """
+
+    path, lines = start_markdown_report(directory, title=options.title)
     if not metrics:
         lines.append("No opinion runs were produced during this pipeline invocation.")
-        if allow_incomplete:
+        if options.allow_incomplete:
             lines.append(
                 "Rerun the pipeline with `--stage finalize` to populate this section once "
                 "opinion metrics are available."
@@ -1149,12 +1215,13 @@ def _write_opinion_report(
         lines.append("")
         write_markdown_lines(path, lines)
         return
-    if regenerate_plots:
+    if options.regenerate_plots:
         _regenerate_opinion_feature_plots(
             report_dir=directory,
             metrics=metrics,
-            predictions_root=predictions_root,
+            predictions_root=options.predictions_root,
         )
+    description_lines = options.description_lines
     if description_lines is None:
         description_lines = [
             "This summary captures the opinion-regression baselines trained with XGBoost "
@@ -1205,6 +1272,7 @@ def _write_opinion_report(
 __all__ = [
     "_OpinionPortfolioAccumulator",
     "_WeightedMetricAccumulator",
+    "OpinionReportOptions",
     "_extract_opinion_summary",
     "_opinion_cross_study_diagnostics",
     "_opinion_observations",

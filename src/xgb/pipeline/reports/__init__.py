@@ -29,7 +29,7 @@ from .catalog import _write_catalog_report
 from .features import _write_feature_report
 from .hyperparameter import _write_hyperparameter_report
 from .next_video import _extract_next_video_summary, _write_next_video_report
-from .opinion import _extract_opinion_summary, _write_opinion_report
+from .opinion import OpinionReportOptions, _extract_opinion_summary, _write_opinion_report
 from .runner import OpinionReportData, ReportSections, SweepReportData, _write_reports
 from .shared import (
     _format_shell_command,
@@ -49,6 +49,7 @@ __all__ = [
     "_write_next_video_report",
     "_extract_opinion_summary",
     "_write_opinion_report",
+    "OpinionReportOptions",
     "_write_reports",
     "_write_catalog_report",
     "_write_feature_report",

@@ -30,7 +30,7 @@ from common.cli.options import add_log_level_argument, add_overwrite_argument, a
 
 from .opinion import OpinionEvaluationResult, run_opinion_evaluations
 from .pipeline_cache import run_reports_stage
-from .pipeline_models import PipelinePaths, SweepConfig, SweepOutcome
+from common.pipeline.gpt4o_models import PipelinePaths, SweepConfig, SweepOutcome
 from .pipeline_reports import ReportContext, run_report_generation
 from .pipeline_sweeps import promote_sweep_results, run_sweeps, select_best
 

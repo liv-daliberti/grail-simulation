@@ -26,7 +26,7 @@ from common.pipeline.io import load_metrics_json
 
 from .cli import build_parser as build_gpt_parser
 from .evaluate import run_eval
-from .pipeline_models import SweepConfig, SweepOutcome
+from common.pipeline.gpt4o_models import SweepConfig, SweepOutcome
 
 LOGGER = logging.getLogger("gpt4o.pipeline.sweeps")
 

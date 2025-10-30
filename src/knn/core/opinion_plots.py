@@ -22,7 +22,11 @@ from pathlib import Path
 from typing import Dict, Sequence
 
 from common.visualization.matplotlib import plt
-from common.opinion.plots import plot_opinion_change_heatmap, plot_post_opinion_heatmap
+from common.opinion.plots import (
+    OpinionHeatmapConfig,
+    plot_opinion_change_heatmap,
+    plot_post_opinion_heatmap,
+)
 
 LOGGER = logging.getLogger("knn.opinion")
 
@@ -88,8 +92,10 @@ def _plot_change_heatmap(
         actual_changes=actual_changes,
         predicted_changes=predicted_changes,
         output_path=output_path,
-        logger=LOGGER,
-        log_prefix="[OPINION]",
+        config=OpinionHeatmapConfig(
+            logger=LOGGER,
+            log_prefix="[OPINION]",
+        ),
     )
 
 
@@ -113,8 +119,10 @@ def _plot_post_prediction_heatmap(
         actual_after=actual_after,
         predicted_after=predicted_after,
         output_path=output_path,
-        logger=LOGGER,
-        log_prefix="[OPINION]",
+        config=OpinionHeatmapConfig(
+            logger=LOGGER,
+            log_prefix="[OPINION]",
+        ),
     )
 
 

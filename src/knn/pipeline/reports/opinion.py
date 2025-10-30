@@ -73,6 +73,25 @@ class OpinionReportOptions:
     asset_subdir: str = "opinion"
 
 
+@dataclass(frozen=True)
+class _StudyPlotContext:
+    """
+    Context describing a feature-space/study combination for plot regeneration.
+
+    :ivar feature_dir: Output directory receiving generated artefacts.
+    :ivar feature_space: Feature-space identifier (e.g. ``tfidf``).
+    :ivar study_key: Study identifier.
+    :ivar predictions_root: Optional root directory for cached predictions.
+    :ivar asset_subdir: Subdirectory used when locating cached predictions.
+    """
+
+    feature_dir: Path
+    feature_space: str
+    study_key: str
+    predictions_root: Optional[Path]
+    asset_subdir: str
+
+
 @dataclass
 class _PredictionVectors:
     """Container for vectors used when regenerating opinion plots."""
@@ -198,12 +217,14 @@ def _refresh_opinion_plots(
         )
         for study_key, payload in per_feature.items():
             _refresh_study_plots(
-                feature_dir=feature_dir,
-                feature_space=feature_space,
-                study_key=study_key,
                 payload=payload,
-                predictions_root=predictions_root,
-                asset_subdir=asset_subdir,
+                context=_StudyPlotContext(
+                    feature_dir=feature_dir,
+                    feature_space=feature_space,
+                    study_key=study_key,
+                    predictions_root=predictions_root,
+                    asset_subdir=asset_subdir,
+                ),
             )
 
 
@@ -216,37 +237,47 @@ def _ensure_feature_dir(output_root: Path, feature_space: str, *, asset_subdir: 
 
 def _refresh_study_plots(
     *,
-    feature_dir: Path,
-    feature_space: str,
-    study_key: str,
     payload: Mapping[str, object],
-    predictions_root: Optional[Path],
-    asset_subdir: str,
+    context: _StudyPlotContext,
 ) -> None:
-    """Rebuild opinion plots for a single feature-space/study pair."""
-    _plot_numeric_metrics(feature_dir, study_key, payload.get("metrics_by_k"))
+    """
+    Rebuild opinion plots for a single feature-space/study pair.
+
+    :param payload: Metrics payload for the selected study.
+    :param context: Plotting context describing directories and feature metadata.
+    """
+
+    _plot_numeric_metrics(context.feature_dir, context.study_key, payload.get("metrics_by_k"))
     best_k = _extract_best_k(payload.get("best_k"))
-    if best_k is None or predictions_root is None:
+    if best_k is None or context.predictions_root is None:
         return
-    filename = f"opinion_knn_{study_key}_validation.jsonl"
+    filename = f"opinion_knn_{context.study_key}_validation.jsonl"
     candidates = [
-        predictions_root / asset_subdir / feature_space / study_key / filename,
-        predictions_root / feature_space / study_key / filename,
+        context.predictions_root
+        / context.asset_subdir
+        / context.feature_space
+        / context.study_key
+        / filename,
+        context.predictions_root / context.feature_space / context.study_key / filename,
     ]
     predictions_path = next((path for path in candidates if path.exists()), None)
     if predictions_path is None:
         LOGGER.debug(
             "[KNN][OPINION] Prediction archive missing for %s/%s (checked: %s).",
-            feature_space,
-            study_key,
+            context.feature_space,
+            context.study_key,
             ", ".join(str(path) for path in candidates),
         )
         return
-    rows = _load_prediction_rows(predictions_path, feature_space, study_key)
+    rows = _load_prediction_rows(
+        predictions_path,
+        context.feature_space,
+        context.study_key,
+    )
     if not rows:
         return
     vectors = _build_prediction_vectors(rows, best_k)
-    _render_prediction_plots(feature_dir, study_key, vectors)
+    _render_prediction_plots(context.feature_dir, context.study_key, vectors)
 
 
 def _plot_numeric_metrics(

@@ -1,27 +1,9 @@
 # GPT-4o Hyper-parameter Sweep
 
-`python -m gpt4o.pipeline --stage sweeps` records every temperature /
-top-p / max-token combination evaluated on the validation split. The generated Markdown
-links to the leaderboard CSV and highlights whichever configuration advanced to
-the finalize stage.
+The table below captures validation accuracy on eligible slates plus formatting/parse rates for each temperature/top-p/max-token configuration. The selected configuration is marked with ✓.
 
-Each row in the table corresponds to a single call to `gpt4o.evaluate.run`,
-showing:
-
-- deployment metadata (model, temperature, max tokens, top-p);
-- validation accuracy and coverage;
-- formatting / parse success rate, which must stay near 100 %;
-- mean latency and total token usage, useful for budgeting Azure quota.
-
-Refresh the sweep after updating prompt templates or the dataset:
-
-```bash
-PYTHONPATH=src python -m gpt4o.pipeline \
-  --out-dir models/gpt-4o \
-  --reports-dir reports/gpt4o \
-  --stage sweeps \
-  --stage reports
-```
-
-Skipping `--stage finalize` keeps the best configuration unchanged while still
-publishing the new leaderboard.
+| Config | Temperature | Top-p | Max tokens | Accuracy ↑ | Parsed ↑ | Formatted ↑ | Selected |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `temp0_tok500_tp1` | 0.00 | 1.00 | 500 | 0.263 | 1.000 | 1.000 | ✓ |
+| `temp0p2_tok500_tp1` | 0.20 | 1.00 | 500 | 0.262 | 1.000 | 1.000 |  |
+| `temp0p4_tok500_tp1` | 0.40 | 1.00 | 500 | 0.253 | 1.000 | 1.000 |  |

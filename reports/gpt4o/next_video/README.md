@@ -1,27 +1,34 @@
 # GPT-4o Next-Video Baseline
 
-This report summarizes the promoted GPT-4o configuration from
-`python -m gpt4o.pipeline --stage finalize`. When populated it contains:
+- **Selected configuration:** `temp0_tok500_tp1` (temperature=0.00, top_p=1.00, max_tokens=500)
+- **Accuracy:** 0.263 on 2419 eligible slates out of 2419 processed.
+- **Parsed rate:** 1.000  **Formatted rate:** 1.000
 
-- **Overall metrics** – accuracy, gold-in-slate coverage, formatting / parse
-  success rate, and mean confidence for the validation split.
-- **Fairness breakdowns** – tables grouped by issue and participant study so
-  regressions in a single cohort surface quickly.
-- **Telemetry** – pointers to the `metrics.json` and `predictions.jsonl` written
-  under `models/gpt-4o/<temperature>_<tok>_<tp>/`, which include the per-example traces and
-  timestamps for auditing.
+## Accuracy by Issue
 
-Regenerate this page after refreshing credentials or prompt templates:
+| Group | Seen | Eligible | Accuracy ↑ | Parsed ↑ | Formatted ↑ |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| gun_control | 548 | 548 | 0.261 | 1.000 | 1.000 |
+| minimum_wage | 1871 | 1871 | 0.263 | 1.000 | 1.000 |
 
-```bash
-PYTHONPATH=src python -m gpt4o.pipeline \
-  --out-dir models/gpt-4o \
-  --reports-dir reports/gpt4o \
-  --stage finalize \
-  --stage reports
-```
+### Highlights
 
-The command above reuses the last sweep winner; add `--stage sweeps` if you need
-to rescore the candidate configurations first. When no evaluation has been run
-the tables remain empty—populate them by running the finalize stage at least
-once.
+- Highest accuracy: minimum_wage (0.263, eligible 1871).
+- Lowest accuracy: gun_control (0.261, eligible 548).
+
+## Accuracy by Participant Study
+
+| Group | Seen | Eligible | Accuracy ↑ | Parsed ↑ | Formatted ↑ |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| study1 | 548 | 548 | 0.261 | 1.000 | 1.000 |
+| study2 | 671 | 671 | 0.286 | 1.000 | 1.000 |
+| study3 | 1200 | 1200 | 0.251 | 1.000 | 1.000 |
+
+### Highlights
+
+- Highest accuracy: study2 (0.286, eligible 671).
+- Lowest accuracy: study3 (0.251, eligible 1200).
+
+### Notes
+
+Accuracy computed over eligible rows (gold_index>0). Buckets: 1..4, 5+, unknown.

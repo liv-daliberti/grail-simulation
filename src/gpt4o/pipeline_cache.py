@@ -25,7 +25,12 @@ from typing import Dict, List, Mapping, Tuple
 from common.pipeline.io import load_metrics_json
 from common.opinion.metrics import compute_opinion_metrics
 
-from .pipeline_models import PipelinePaths, SweepOutcome, coerce_float, parse_config_label
+from common.pipeline.gpt4o_models import (
+    PipelinePaths,
+    SweepOutcome,
+    coerce_float,
+    parse_config_label,
+)
 from .pipeline_reports import ReportContext, run_report_generation
 from .opinion import (
     OpinionArtifacts,

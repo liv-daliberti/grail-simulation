@@ -50,7 +50,13 @@ def extract_code(completion: str, language: str = "python") -> str:
 
 
 def _run_python_test_cases(code: str, test_cases: list[dict[str, Any]], timeout: float) -> float:
-    """Execute ``code`` against :mod:`python` test cases and return the success rate."""
+    """Execute ``code`` against :mod:`python` test cases and return the success rate.
+
+    :param code: Python source snippet to evaluate.
+    :param test_cases: Iterable of dictionaries containing ``input`` and ``output`` keys.
+    :param timeout: Timeout in seconds for each subprocess execution.
+    :returns: Fraction of test cases that passed.
+    """
     if not test_cases:
         return 0.0
 
@@ -154,7 +160,15 @@ def binary_code_reward(
     exec_timeout: float = 5.0,
     **kwargs,
 ) -> list[Optional[float]]:
-    """Convert execution rewards into binary success scores."""
+    """Convert execution rewards into binary success scores.
+
+    :param completions: Chat completions containing candidate code blocks.
+    :param num_parallel: Retained for backwards compatibility (unused).
+    :param enforce_same_language: Enforce a consistent language across test cases.
+    :param exec_timeout: Execution timeout forwarded to the subprocess runner.
+    :param kwargs: Additional metadata forwarded to :func:`code_reward`.
+    :returns: Binary success indicators per completion (``None`` for missing rewards).
+    """
     rewards = code_reward(
         completions,
         num_parallel=num_parallel,
@@ -174,10 +188,20 @@ def binary_code_reward(
 
 
 def get_code_format_reward(language: str = "python") -> Callable[[list[Any]], list[float]]:
-    """Format reward function specifically for code responses."""
+    """Format reward function specifically for code responses.
+
+    :param language: Expected language for the fenced code block in the answer.
+    :returns: Callable returning binary rewards based on tag and fence structure.
+    """
     pattern = rf"^<think>\n.*?\n</think>\n<answer>\n.*?```{language}.*?```.*?\n</answer>$"
 
     def code_format_reward(completions, **kwargs):
+        """Score completions on structural compliance with the code-format template.
+
+        :param completions: Model completions to evaluate.
+        :param kwargs: Additional keyword arguments (unused).
+        :returns: Binary rewards signalling whether the format matches expectations.
+        """
         _ = kwargs
         return match_pattern_reward(completions, pattern)
 
@@ -190,7 +214,13 @@ def match_pattern_reward(
     *,
     flags: int = re.DOTALL | re.MULTILINE,
 ) -> list[float]:
-    """Return 1.0 when the first message content matches ``pattern``."""
+    """Return 1.0 when the first message content matches ``pattern``.
+
+    :param completions: Completions whose first message content is inspected.
+    :param pattern: Regular expression applied to the extracted text.
+    :param flags: ``re`` module flags that control matching semantics.
+    :returns: Reward values where 1.0 indicates a match.
+    """
 
     contents: list[str] = []
     for completion in completions:

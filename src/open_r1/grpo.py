@@ -63,7 +63,10 @@ COMPONENT_FACTORY = build_default_component_factory()
 
 
 def _ensure_training_dependencies() -> None:
-    """Ensure optional training dependencies are installed before execution."""
+    """Ensure optional training dependencies are installed before execution.
+
+    :returns: ``None``. Raises ``ImportError`` when required packages are missing.
+    """
 
     if set_seed is None:  # pragma: no cover - optional dependency guard
         raise ImportError(
@@ -155,6 +158,7 @@ def _ensure_reward_weights(training_args: GRPOConfig, reward_fns: List[Any]) -> 
     :param training_args: Training arguments where weights are stored.
     :param reward_fns: List of reward functions enabled for the run.
     :raises ValueError: If the configured list length does not match ``reward_fns``.
+    :returns: ``None``. Normalises weights in-place.
     """
 
     weights = getattr(training_args, "reward_weights", None)
@@ -177,7 +181,13 @@ def main(
     training_args: GRPOConfig,
     model_args: ModelConfig,
 ) -> None:
-    """Orchestrate dataset preparation, trainer construction, and the training loop."""
+    """Orchestrate dataset preparation, trainer construction, and the training loop.
+
+    :param script_args: High-level script arguments sourced from CLI/YAML.
+    :param training_args: Training configuration for GRPO runs.
+    :param model_args: Model configuration required to build tokenizers/models.
+    :returns: ``None``. Executes training for its side effects (logging, checkpoints).
+    """
     _ensure_training_dependencies()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     set_seed(training_args.seed)

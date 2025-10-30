@@ -174,10 +174,8 @@ class ScriptArguments(ScriptArgumentsBase):
 
 # NOTE: Consider adding shared options with a mixin to reduce code duplication.
 @dataclass
-class GRPOConfig(GRPOConfigBase):
+class GRPOConfig(GRPOConfigBase):  # pylint: disable=too-many-instance-attributes
     """Arguments for callbacks, benchmarks, and related settings."""
-
-    # pylint: disable=too-many-instance-attributes
 
     benchmarks: list[str] = field(
         default_factory=lambda: [],
@@ -185,7 +183,12 @@ class GRPOConfig(GRPOConfigBase):
     )
     callbacks: list[str] = field(
         default_factory=lambda: [],
-        metadata={"help": "The callbacks to run during training."},
+        metadata={
+            "help": (
+                "The callbacks to run during training. Recognised values currently "
+                "include 'push_to_hub_revision' to enable automatic checkpoint syncing."
+            )
+        },
     )
     chat_template: Optional[str] = field(
         default=None,
@@ -205,7 +208,12 @@ class GRPOConfig(GRPOConfigBase):
     )
     push_to_hub_revision: bool = field(
         default=False,
-        metadata={"help": "Whether to push to a Hub revision/branch."},
+        metadata={
+            "help": (
+                "Whether to push checkpoints to a unique Hub revision whenever the trainer "
+                "saves. Requires `hub_model_id` and (optionally) honours `hub_model_revision`."
+            )
+        },
     )
     system_prompt: Optional[str] = field(
         default=None,
@@ -234,7 +242,10 @@ class GRPOConfig(GRPOConfigBase):
     )
 
     def __post_init__(self) -> None:
-        """Validate optional dependencies before continuing configuration."""
+        """Validate optional dependencies before continuing configuration.
+
+        :returns: ``None``. Raises informative errors when dependencies are missing.
+        """
 
         if trl is None:  # pragma: no cover - optional dependency guard
             raise ImportError(
@@ -256,7 +267,12 @@ class SFTConfig(SFTConfigBase):
     )
     callbacks: list[str] = field(
         default_factory=lambda: [],
-        metadata={"help": "The callbacks to run during training."},
+        metadata={
+            "help": (
+                "The callbacks to run during training. Recognised values currently "
+                "include 'push_to_hub_revision' to enable automatic checkpoint syncing."
+            )
+        },
     )
     chat_template: Optional[str] = field(
         default=None,
@@ -276,7 +292,12 @@ class SFTConfig(SFTConfigBase):
     )
     push_to_hub_revision: bool = field(
         default=False,
-        metadata={"help": "Whether to push to a Hub revision/branch."},
+        metadata={
+            "help": (
+                "Whether to push checkpoints to a unique Hub revision whenever the trainer "
+                "saves. Requires `hub_model_id` and (optionally) honours `hub_model_revision`."
+            )
+        },
     )
     wandb_entity: Optional[str] = field(
         default=None,
@@ -292,7 +313,10 @@ class SFTConfig(SFTConfigBase):
     )
 
     def __post_init__(self) -> None:
-        """Validate optional dependencies before continuing configuration."""
+        """Validate optional dependencies before continuing configuration.
+
+        :returns: ``None``. Raises informative errors when dependencies are missing.
+        """
 
         if trl is None:  # pragma: no cover - optional dependency guard
             raise ImportError(

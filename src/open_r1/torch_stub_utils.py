@@ -171,6 +171,7 @@ def build_torch_stubs() -> Tuple[Any, Any, Any]:
 
             :param _args: Positional arguments forwarded from callers.
             :param _kwargs: Keyword arguments forwarded from callers.
+            :returns: ``None``. Stores no internal state.
             """
             del _args, _kwargs
 
@@ -197,6 +198,7 @@ def build_torch_stubs() -> Tuple[Any, Any, Any]:
             """Persist the provided value without tensor semantics.
 
             :param value: Object that should be wrapped by the stub.
+            :returns: ``None``. Stores the value for later inspection.
             """
             self.value = value
 
@@ -225,6 +227,7 @@ def build_torch_stubs() -> Tuple[Any, Any, Any]:
 
             :param _args: Positional arguments forwarded from callers.
             :param _kwargs: Keyword arguments forwarded from callers.
+            :returns: ``None``. Keeps no optimiser state.
             """
             del _args, _kwargs
 

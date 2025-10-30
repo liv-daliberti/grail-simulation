@@ -62,7 +62,10 @@ except ImportError as exc:  # pragma: no cover
 # ---------------------------------------------------------------------------
 
 def _slurm_available() -> bool:
-    """Return ``True`` when the `sinfo` binary is available (SLURM)."""
+    """Return ``True`` when the ``sinfo`` binary is available (SLURM).
+
+    :returns: ``True`` if ``sinfo`` can be executed successfully, ``False`` otherwise.
+    """
 
     try:
         subprocess.run(
@@ -83,7 +86,11 @@ class PushToHubRevisionCallback(TrainerCallback):  # pylint: disable=too-few-pub
     """Callback that pushes checkpoints to the Hub using revision tags."""
 
     def __init__(self, model_cfg):
-        """Store the model configuration used when scheduling pushes."""
+        """Store the model configuration used when scheduling pushes.
+
+        :param model_cfg: Transformer model configuration namespace.
+        :returns: ``None``. Initialises logger handles for later use.
+        """
         super().__init__()
         self.model_cfg = model_cfg
         self.log = logging.getLogger("PushToHub")
@@ -95,7 +102,14 @@ class PushToHubRevisionCallback(TrainerCallback):  # pylint: disable=too-few-pub
         _control: TrainerControl,
         **_kwargs,
     ) -> None:
-        """Push the current checkpoint to the Hub and optionally schedule benchmarks."""
+        """Push the current checkpoint to the Hub and optionally schedule benchmarks.
+
+        :param args: Training arguments describing Hub targets and output dirs.
+        :param state: Trainer state containing the current global step.
+        :param _control: Trainer control object (unused).
+        :param _kwargs: Additional arguments ignored by this hook.
+        :returns: ``None``. Enqueues push jobs and optional follow-up benchmarks.
+        """
         if not state.is_world_process_zero:
             return
 
@@ -119,7 +133,11 @@ class PushToHubRevisionCallback(TrainerCallback):  # pylint: disable=too-few-pub
 
                 :param _: Completed future returned by the upload helper.
                 """
-                from .evaluation import run_benchmark_jobs  # pylint: disable=import-outside-toplevel
+                try:
+                    from .evaluation import run_benchmark_jobs  # pylint: disable=import-outside-toplevel
+                except ImportError as exc:  # pragma: no cover - optional dependency
+                    self.log.warning("Upload finished but evaluation helpers missing: %s", exc)
+                    return
                 self.log.info("Upload done – submitting benchmark job.")
                 dummy.benchmarks = args.benchmarks
                 run_benchmark_jobs(dummy, self.model_cfg)

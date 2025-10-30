@@ -24,7 +24,12 @@ _distilabel_cache: Dict[str, Any] = {"imports": None, "error": None}
 
 
 def _require_distilabel() -> tuple[Any, Any, Any, Any]:
-    """Return distilabel helpers or raise an informative installation error."""
+    """Return distilabel helpers or raise an informative installation error.
+
+    :returns: Tuple containing ``Pipeline``, ``OpenAILLM``, ``StepResources``, and
+        ``TextGeneration`` classes.
+    :raises ImportError: If the ``distilabel`` dependency cannot be imported.
+    """
 
     cache = _distilabel_cache
     cached_imports = cache.get("imports")
@@ -60,7 +65,11 @@ def _require_distilabel() -> tuple[Any, Any, Any, Any]:
 
 
 def _require_datasets_loader():
-    """Return ``datasets.load_dataset`` or raise an informative error."""
+    """Return ``datasets.load_dataset`` or raise an informative error.
+
+    :returns: Callable for loading Hugging Face datasets.
+    :raises ImportError: If the ``datasets`` package is not installed.
+    """
 
     try:
         return importlib.import_module("datasets").load_dataset
@@ -93,6 +102,8 @@ class DistilabelPipelineConfig:  # pylint: disable=too-many-instance-attributes
 
         The method centralises the logic for handling optional sampling parameters so
         callers keep the outer function signature small enough for linting.
+
+        :returns: Dictionary of keyword arguments passed to ``TextGeneration``.
         """
 
         kwargs: Dict[str, Any] = {"max_new_tokens": self.max_new_tokens}
@@ -107,7 +118,12 @@ def build_distilabel_pipeline(
     model: str,
     config: Optional[DistilabelPipelineConfig] = None,
 ) -> "Pipeline":
-    """Construct a distilabel pipeline configured for OpenAI-compatible endpoints."""
+    """Construct a distilabel pipeline configured for OpenAI-compatible endpoints.
+
+    :param model: Model identifier accessible via an OpenAI-compatible endpoint.
+    :param config: Optional pipeline configuration override.
+    :returns: Initialised distilabel ``Pipeline`` ready to execute.
+    """
 
     cfg = config or DistilabelPipelineConfig()
     pipeline_cls, openai_llm_cls, step_resources_cls, text_generation_cls = _require_distilabel()
@@ -137,7 +153,10 @@ def build_distilabel_pipeline(
 
 
 def _build_arg_parser() -> argparse.ArgumentParser:
-    """Return the CLI argument parser used when running the module as a script."""
+    """Return the CLI argument parser used when running the module as a script.
+
+    :returns: Configured :class:`argparse.ArgumentParser` for the CLI entrypoint.
+    """
     parser = argparse.ArgumentParser(
         description=(
             "Run a distilabel pipeline for generating responses with the DeepSeek R1 model"
@@ -245,7 +264,11 @@ def _build_arg_parser() -> argparse.ArgumentParser:
 
 
 def _create_pipeline_config(args: argparse.Namespace) -> DistilabelPipelineConfig:
-    """Convert CLI arguments into a :class:`DistilabelPipelineConfig` instance."""
+    """Convert CLI arguments into a :class:`DistilabelPipelineConfig` instance.
+
+    :param args: Parsed CLI arguments.
+    :returns: Populated :class:`DistilabelPipelineConfig`.
+    """
     return DistilabelPipelineConfig(
         base_url=args.vllm_server_url,
         prompt_column=args.prompt_column,
@@ -262,7 +285,11 @@ def _create_pipeline_config(args: argparse.Namespace) -> DistilabelPipelineConfi
 
 
 def _log_cli_arguments(args: argparse.Namespace) -> None:
-    """Print the CLI arguments for transparency in CLI usage."""
+    """Print the CLI arguments for transparency in CLI usage.
+
+    :param args: Parsed CLI arguments to display.
+    :returns: ``None``. Writes human-readable summaries to ``stdout``.
+    """
     print("\nRunning with arguments:")
     for arg, value in vars(args).items():
         print(f"  {arg}: {value}")
@@ -275,7 +302,10 @@ def _log_cli_arguments(args: argparse.Namespace) -> None:
 
 
 def main() -> None:
-    """Entry point for running the module as a CLI script."""
+    """Entry point for running the module as a CLI script.
+
+    :returns: ``None``. Runs the distilabel pipeline for its side effects.
+    """
     parser = _build_arg_parser()
     args = parser.parse_args()
     _log_cli_arguments(args)

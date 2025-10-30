@@ -97,7 +97,11 @@ def expand_to_batch(value: Any, total: int) -> List[Any]:
 
 
 def _safe_int(value: Any) -> Optional[int]:
-    """Return an int if possible, otherwise ``None``."""
+    """Return an int if possible, otherwise ``None``.
+
+    :param value: Value that should represent an integer.
+    :returns: Parsed integer or ``None`` when conversion fails.
+    """
 
     try:
         return int(value)
@@ -132,7 +136,11 @@ def parse_index_from_completion(text: str, allow_bare: bool) -> Optional[int]:
 
 
 def _normalise_opinion_label(value: Any) -> Optional[str]:
-    """Map free-form direction tokens onto canonical labels."""
+    """Map free-form direction tokens onto canonical labels.
+
+    :param value: Free-form opinion direction label.
+    :returns: Canonical opinion direction or ``None`` if unrecognised.
+    """
 
     if not isinstance(value, str):
         return None
@@ -149,7 +157,11 @@ def _normalise_opinion_label(value: Any) -> Optional[str]:
 
 
 def _parse_opinion_direction(text: str) -> Optional[str]:
-    """Extract the opinion-direction label from completion text."""
+    """Extract the opinion-direction label from completion text.
+
+    :param text: Completion text emitted by the policy.
+    :returns: Canonical opinion direction or ``None`` if not present.
+    """
 
     for pattern in _OPINION_PATTERNS:
         match = pattern.search(text)
@@ -294,6 +306,7 @@ def log_pure_accuracy_metrics(
     :type stats: PureAccuracyStats
     :param logger: Logging callback, typically wandb's ``log``.
     :type logger: Callable[[dict[str, float]], None] | None
+    :returns: ``None``. Emits metrics through ``logger`` when provided.
     """
 
     if total == 0:

@@ -17,11 +17,17 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple
 
 from open_r1.utils import get_model
+
+try:  # pragma: no cover - optional dependency
+    from open_r1.utils.callbacks import PushToHubRevisionCallback
+except ImportError:  # pragma: no cover - optional dependency
+    PushToHubRevisionCallback = None  # type: ignore[assignment]
 
 try:  # pragma: no cover - optional dependency
     from transformers.trainer_utils import IntervalStrategy, get_last_checkpoint
@@ -95,7 +101,11 @@ BASE_TRAIN_KEEP_COLUMNS = {
 
 
 def collect_passthrough_fields(example: Mapping[str, Any]) -> Dict[str, Any]:
-    """Return a mapping containing the shared passthrough metadata."""
+    """Return a mapping containing the shared passthrough metadata.
+
+    :param example: Dataset row providing passthrough fields.
+    :returns: Subset of ``example`` limited to :data:`PASSTHROUGH_FIELDS`.
+    """
 
     return {field: example[field] for field in PASSTHROUGH_FIELDS if field in example}
 
@@ -116,7 +126,23 @@ def build_training_example(  # pylint: disable=too-many-arguments
     current_video_title: str,
     extra_fields: Mapping[str, Any] | None = None,
 ) -> Dict[str, Any]:
-    """Assemble the common training example payload used by GRPO variants."""
+    """Assemble the common training example payload used by GRPO variants.
+
+    :param system_prompt: System prompt inserted as the first message.
+    :param user_prompt: User prompt forming the main training input.
+    :param gold_index: 1-based index of the correct answer.
+    :param gold_id: Identifier corresponding to the correct slate item.
+    :param n_options: Number of options presented in the slate.
+    :param viewer_profile: Natural-language description of the viewer.
+    :param slate_items: Sequence of slate metadata dictionaries.
+    :param slate_text: Human-readable slate text included in the prompt.
+    :param watched_detailed_json: Historical watch metadata (detailed).
+    :param watched_vids_json: Historical watch metadata (video ids).
+    :param current_video_id: Identifier of the current video.
+    :param current_video_title: Title of the current video.
+    :param extra_fields: Optional additional fields to merge into the payload.
+    :returns: Dictionary representing a GRPO training example.
+    """
 
     example: Dict[str, Any] = {
         "prompt": [
@@ -155,7 +181,15 @@ def prepare_eval_dataset(
     logger: Any,
     prefix: str,
 ) -> Optional[Any]:
-    """Return the evaluation dataset subset when ``do_eval`` is enabled."""
+    """Return the evaluation dataset subset when ``do_eval`` is enabled.
+
+    :param dataset: Dataset dictionary containing train/eval splits.
+    :param script_args: Script arguments including split names.
+    :param training_args: Training configuration with evaluation flags.
+    :param logger: Logger used to emit informational messages.
+    :param prefix: Prefix added to log messages.
+    :returns: Prepared evaluation dataset or ``None`` when evaluation is disabled.
+    """
 
     if not getattr(training_args, "do_eval", False):
         return None
@@ -182,7 +216,14 @@ def configure_eval(
     logger: Any,
     prefix: str,
 ) -> None:
-    """Adjust evaluation scheduling to ensure periodic evaluation runs."""
+    """Adjust evaluation scheduling to ensure periodic evaluation runs.
+
+    :param training_args: Training arguments to update in-place.
+    :param eval_ds: Evaluation dataset (``None`` disables configuration).
+    :param logger: Logger used when mutating evaluation fields.
+    :param prefix: Prefix added to log messages.
+    :returns: ``None``. Mutates ``training_args`` when evaluation is enabled.
+    """
 
     if not getattr(training_args, "do_eval", False) or eval_ds is None:
         return
@@ -198,7 +239,11 @@ def configure_eval(
 
 
 def resolve_checkpoint(training_args: Any) -> Optional[str]:
-    """Return the checkpoint path used to resume GRPO training, if available."""
+    """Return the checkpoint path used to resume GRPO training, if available.
+
+    :param training_args: Training arguments possibly containing resume information.
+    :returns: Filesystem path to the latest checkpoint or ``None``.
+    """
 
     resume = getattr(training_args, "resume_from_checkpoint", None)
     if resume:
@@ -284,7 +329,13 @@ class GrpoComponentFactory:
         tokenizer: Any,
         evaluate_fn_factory: Optional[EvalFnFactory] = None,
     ) -> GrpoPipelineComponents:
-        """Return a :class:`GrpoPipelineComponents` instance with cached defaults."""
+        """Return a :class:`GrpoPipelineComponents` instance with cached defaults.
+
+        :param reward_funcs: Reward functions to include in the pipeline.
+        :param tokenizer: Tokenizer used by the GRPO trainer.
+        :param evaluate_fn_factory: Optional factory producing evaluation wrappers.
+        :returns: Component bundle ready to build and run a trainer.
+        """
 
         return GrpoPipelineComponents(
             model_builder=self.model_builder,
@@ -297,7 +348,10 @@ class GrpoComponentFactory:
 
 
 def build_default_component_factory() -> GrpoComponentFactory:
-    """Return the default :class:`GrpoComponentFactory` used by GRPO entrypoints."""
+    """Return the default :class:`GrpoComponentFactory` used by GRPO entrypoints.
+
+    :returns: Component factory wired to default model builders and trainers.
+    """
 
     return GrpoComponentFactory(
         model_builder=get_model,
@@ -315,7 +369,16 @@ def build_grpo_context(  # pylint: disable=too-many-arguments
     *,
     prefix: str,
 ) -> GrpoPipelineContext:
-    """Return a :class:`GrpoPipelineContext` populated with the supplied arguments."""
+    """Return a :class:`GrpoPipelineContext` populated with the supplied arguments.
+
+    :param dataset: Dataset mapping containing train/eval splits.
+    :param script_args: Parsed script arguments for the run.
+    :param training_args: Training configuration namespace.
+    :param model_args: Model configuration namespace.
+    :param logger: Logger used for informational messages.
+    :param prefix: Prefix used for logging statements.
+    :returns: Context capturing all pipeline state.
+    """
 
     return GrpoPipelineContext(
         dataset=dataset,
@@ -347,6 +410,20 @@ def build_grpo_pipeline_bundle(  # pylint: disable=too-many-arguments
 
     Centralises the repeated constructor invocations used by the GRPO entry
     points so that pylint's duplicate-code check sees a single implementation.
+
+    :param model_builder: Callable used to construct the GRPO model.
+    :param trainer_cls: Trainer class implementing the GRPO interface.
+    :param reward_funcs: Reward functions to include in the trainer.
+    :param tokenizer: Tokenizer passed to the trainer.
+    :param dataset: Dataset mapping containing the training split.
+    :param script_args: Script configuration namespace.
+    :param training_args: Training arguments namespace.
+    :param model_args: Model configuration namespace.
+    :param logger: Logger used for informational output.
+    :param prefix: Prefix applied to log messages.
+    :param peft_config_fn: Optional callable producing PEFT configuration.
+    :param evaluate_fn_factory: Optional factory for evaluation wrappers.
+    :returns: Tuple of pipeline components and execution context.
     """
 
     components = GrpoPipelineComponents(
@@ -369,7 +446,12 @@ def build_grpo_pipeline_bundle(  # pylint: disable=too-many-arguments
 
 
 def build_grpo_trainer(*, setup: GrpoTrainerSetup, datasets: GrpoTrainerDatasets) -> Any:
-    """Instantiate a GRPO trainer with the shared configuration knobs."""
+    """Instantiate a GRPO trainer with the shared configuration knobs.
+
+    :param setup: Trainer setup bundle containing model, args, and reward functions.
+    :param datasets: Training and evaluation datasets for the trainer.
+    :returns: Constructed GRPO trainer instance.
+    """
 
     peft_config = (
         setup.peft_config_fn(setup.model_args) if setup.peft_config_fn is not None else None
@@ -383,6 +465,53 @@ def build_grpo_trainer(*, setup: GrpoTrainerSetup, datasets: GrpoTrainerDatasets
         peft_config=peft_config,
         processing_class=setup.tokenizer,
     )
+
+
+def _attach_trainer_callbacks(trainer: Any, training_args: Any, model_args: Any) -> None:
+    """Register optional callbacks (e.g. push-to-hub) on the configured trainer.
+
+    :param trainer: Trainer instance exposing ``add_callback``.
+    :param training_args: Training configuration containing callback options.
+    :param model_args: Model configuration forwarded to callback constructors.
+    :returns: ``None``. Mutates ``trainer`` by attaching callbacks when required.
+    """
+
+    callback_names = [
+        str(name).strip().lower()
+        for name in (getattr(training_args, "callbacks", []) or [])
+    ]
+    enable_push_to_hub = (
+        getattr(training_args, "push_to_hub_revision", False)
+        or "push_to_hub_revision" in callback_names
+    )
+    if not enable_push_to_hub:
+        return
+
+    hub_model_id = getattr(training_args, "hub_model_id", None)
+    if not hub_model_id:
+        raise ValueError(
+            "push_to_hub_revision requires `hub_model_id` to be set on the training configuration."
+        )
+
+    if PushToHubRevisionCallback is None:  # pragma: no cover - exercised in runtime environments
+        raise ImportError(
+            "transformers must be installed to attach push-to-hub callbacks "
+            "(pip install transformers)."
+        )
+
+    handler = getattr(trainer, "callback_handler", None)
+    existing = getattr(handler, "callbacks", []) if handler is not None else []
+    if any(isinstance(cb, PushToHubRevisionCallback) for cb in existing):
+        return
+
+    hub_revision = getattr(training_args, "hub_model_revision", "main")
+    _LOG.info(
+        "[callbacks] enabling push_to_hub_revision → repo=%s revision=%s",
+        hub_model_id,
+        hub_revision,
+    )
+    trainer.add_callback(PushToHubRevisionCallback(model_args))
+
 def run_trainer_loop(
     trainer: Any,
     training_args: Any,
@@ -434,6 +563,13 @@ def run_trainer_with_script_args(
 
     Centralises the common pattern of pulling ``dataset_name`` from CLI arguments
     before running the training loop.
+
+    :param trainer: Configured GRPO trainer.
+    :param training_args: Training configuration namespace.
+    :param script_args: Parsed CLI arguments providing metadata such as dataset name.
+    :param eval_dataset: Evaluation dataset or ``None``.
+    :param evaluate_fn: Optional evaluation callable overriding ``trainer.evaluate``.
+    :returns: Tuple mirroring :func:`run_trainer_loop`.
     """
 
     dataset_name = str(getattr(script_args, "dataset_name", ""))
@@ -473,6 +609,7 @@ def configure_and_run_grpo_trainer(
             eval_dataset=data_config.eval_dataset,
         ),
     )
+    _attach_trainer_callbacks(trainer, setup.training_args, setup.model_args)
     evaluate_fn = (
         evaluate_fn_factory(trainer) if evaluate_fn_factory is not None else None
     )
@@ -555,6 +692,16 @@ def execute_grpo_pipeline(  # pylint: disable=too-many-arguments
     """
     Assemble components via ``component_factory`` and execute the shared GRPO pipeline.
 
+    :param component_factory: Factory that constructs pipeline components.
+    :param reward_funcs: Reward functions to use during training.
+    :param tokenizer: Tokenizer supplied to the trainer.
+    :param dataset: Dataset mapping providing train/eval splits.
+    :param script_args: Script configuration namespace.
+    :param training_args: Training arguments namespace.
+    :param model_args: Model configuration namespace.
+    :param logger: Logger used for informational output.
+    :param prefix: Prefix applied to log messages.
+    :param evaluate_fn_factory: Optional factory for evaluation wrappers.
     :returns: Tuple mirroring :func:`prepare_model_eval_and_run_grpo`.
     """
 
@@ -592,6 +739,19 @@ def make_grpo_execute_kwargs(  # pylint: disable=too-many-arguments
 
     Small helper used by entrypoints to avoid repeating long keyword argument
     lists, which also helps silence duplicate-code warnings across modules.
+
+    :param component_factory: Optional component factory override.
+    :param reward_funcs: Optional reward function sequence override.
+    :param tokenizer: Optional tokenizer override.
+    :param dataset: Optional dataset mapping override.
+    :param script_args: Optional script arguments override.
+    :param training_args: Optional training arguments override.
+    :param model_args: Optional model arguments override.
+    :param logger: Optional logger override.
+    :param prefix: Logging prefix propagated to downstream helpers.
+    :param evaluate_fn_factory: Optional evaluation factory override.
+    :param namespace: Mapping used to infer missing keyword arguments.
+    :returns: Dictionary suitable for ``execute_grpo_pipeline``.
     """
 
     if namespace is not None:
@@ -635,6 +795,9 @@ def collect_grpo_pipeline_kwargs(namespace: Mapping[str, Any]) -> Dict[str, Any]
     """Extract shared pipeline keyword arguments from ``namespace``.
 
     Expected to be used with a module's ``locals()`` mapping.
+
+    :param namespace: Mapping containing module-level variables.
+    :returns: Dictionary with keyword arguments for :func:`execute_grpo_pipeline`.
     """
 
     return {
@@ -647,7 +810,12 @@ def parse_and_run(
     main_fn: Callable[[Any, Any, Any], None],
     argument_classes: Tuple[type, type, type],
 ) -> None:
-    """Parse CLI arguments using ``argument_classes`` and execute ``main_fn``."""
+    """Parse CLI arguments using ``argument_classes`` and execute ``main_fn``.
+
+    :param main_fn: Entrypoint accepting parsed argument namespaces.
+    :param argument_classes: Tuple of dataclass types defining CLI arguments.
+    :returns: ``None``. Delegates to ``main_fn`` after parsing.
+    """
 
     if TrlParser is None:  # pragma: no cover - optional dependency guard
         raise ImportError(
@@ -656,3 +824,4 @@ def parse_and_run(
         )
     parser = TrlParser(argument_classes)
     main_fn(*parser.parse_args_and_config())
+_LOG = logging.getLogger(__name__)

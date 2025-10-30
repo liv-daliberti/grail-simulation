@@ -104,7 +104,11 @@ PASSTHROUGH_FIELDS = _SHARED_PASSTHROUGH_FIELDS
 
 
 def _completion_text(payload: Any) -> str:
-    """Extract the assistant text payload from chat-style or raw completion objects."""
+    """Extract the assistant text payload from chat-style or raw completion objects.
+
+    :param payload: Chat completion response, message list, or raw string emitted by the model.
+    :returns: Assistant message content with surrounding whitespace removed.
+    """
     if isinstance(payload, str):
         return payload
     if isinstance(payload, dict):
@@ -126,7 +130,11 @@ def _completion_text(payload: Any) -> str:
 
 
 def _parse_index_from_answer_block(text: str) -> Optional[int]:
-    """Parse the integer inside <answer> tags; return None when the format is invalid."""
+    """Parse the integer inside ``<answer>`` tags.
+
+    :param text: Completion body that may contain an ``<answer>`` block with a numeric choice.
+    :returns: Parsed integer index or ``None`` when the format is invalid.
+    """
     match = ANS_RE.search(text or "")
     payload = (match.group(1).strip() if match else (text or "").strip())
     match_idx = IDX_ONLY.match(payload)
@@ -142,7 +150,12 @@ def _grail_extra_fields(
     example: Mapping[str, Any],
     _: Sequence[Mapping[str, Any]],
 ) -> Mapping[str, Any]:
-    """Return additional metadata fields to attach to each GRPO training example."""
+    """Return additional metadata fields to attach to each GRPO training example.
+
+    :param example: Raw dataset row containing slate metadata.
+    :param _: Ignored additional rows supplied by `datasets`.
+    :returns: Mapping of supplemental fields that should accompany the example.
+    """
 
     return {
         "slate_items_with_meta": as_list_json(example.get("slate_items_json")),
@@ -157,7 +170,15 @@ def _render_disc_text(
     action_surface: str,
     action_id: Optional[str],
 ) -> str:
-    """Render a discriminator input string that mirrors the policy observation format."""
+    """Render a discriminator input string that mirrors the policy observation format.
+
+    :param viewer: Viewer identifier used in the prompt.
+    :param state_text: Textual description of the current state.
+    :param slate_items: Slate metadata objects produced by the environment.
+    :param action_surface: Surface text of the chosen action.
+    :param action_id: Optional identifier for the selected action.
+    :returns: Formatted multi-line discriminator prompt.
+    """
     show_ids = os.getenv("GRAIL_DISC_SHOW_IDS", "0") == "1"
     names = [
         f"{i}. {(it.get('title') or (it.get('id') if show_ids else '') or '(untitled)')}"
@@ -247,6 +268,7 @@ class OnlineDiscriminator:
         :param model_name: Hugging Face model identifier for the classifier.
         :param device: Torch device where the model should live.
         :param learning_rate: Learning rate used for the discriminator optimiser.
+        :returns: ``None``. Constructs tokenizer, model, and optimiser in-place.
         """
         self._model_name = model_name
         self._learning_rate = learning_rate
@@ -272,7 +294,10 @@ class OnlineDiscriminator:
         self._sanity_check_embeddings()
 
     def _sanity_check_embeddings(self) -> None:
-        """Reload the model if the embedding matrix was sharded away by HF lazy loading."""
+        """Reload the model if the embedding matrix was sharded away by HF lazy loading.
+
+        :returns: ``None``. Reloads the model in-place when sharded weights are detected.
+        """
         embeddings = self.model.get_input_embeddings()
         weights = getattr(embeddings, "weight", None)
         is_invalid = weights is None or getattr(weights, "dim", lambda: 0)() != 2
@@ -280,7 +305,10 @@ class OnlineDiscriminator:
             self._reload_clean()
 
     def _reload_clean(self) -> None:
-        """Hard reset the discriminator weights to keep training numerically stable."""
+        """Hard reset the discriminator weights to keep training numerically stable.
+
+        :returns: ``None``. Recreates the model and optimiser on the configured device.
+        """
         model = AutoModelForSequenceClassification.from_pretrained(
             self._model_name,
             torch_dtype=torch.float32,
@@ -294,7 +322,11 @@ class OnlineDiscriminator:
 
     @torch.no_grad()
     def prob_positive(self, texts: List[str]) -> np.ndarray:
-        """Return the positive-class probability for each input string."""
+        """Return the positive-class probability for each input string.
+
+        :param texts: Sequence of discriminator inputs to score.
+        :returns: Array containing the probability of the positive class for each input.
+        """
         if not texts:
             return np.zeros((0,), dtype=np.float32)
         payload = [t if isinstance(t, str) and t.strip() else "[PAD]" for t in texts]
@@ -321,7 +353,12 @@ class OnlineDiscriminator:
             self.model.train()
 
     def train_batch(self, texts: List[str], labels: List[int]) -> Optional[float]:
-        """Perform one gradient step on the discriminator; returns the loss for logging."""
+        """Perform one gradient step on the discriminator.
+
+        :param texts: Batched discriminator inputs to score.
+        :param labels: Target labels aligned with ``texts``.
+        :returns: Training loss as a float, or ``None`` when no texts were provided.
+        """
         if not texts:
             return None
         payload = [t if isinstance(t, str) and t.strip() else "[PAD]" for t in texts]
@@ -361,7 +398,12 @@ class MixerSetup(NamedTuple):
 
 
 def _ensure_list(value: Any, count: int) -> List[Any]:
-    """Return ``value`` as a list, repeating scalars ``count`` times."""
+    """Return ``value`` as a list, repeating scalars ``count`` times.
+
+    :param value: Existing list or scalar to broadcast.
+    :param count: Expected number of elements in the output list.
+    :returns: List of length ``count`` with either the original list or repeated scalar.
+    """
 
     if isinstance(value, list):
         return value
@@ -369,7 +411,12 @@ def _ensure_list(value: Any, count: int) -> List[Any]:
 
 
 def _safe_int(value: Any, default: int = -1) -> int:
-    """Cast ``value`` to ``int`` and fall back to ``default`` on failure."""
+    """Cast ``value`` to ``int`` and fall back to ``default`` on failure.
+
+    :param value: Value that should represent an integer.
+    :param default: Fallback value returned when casting fails.
+    :returns: Parsed integer or ``default`` when conversion raises.
+    """
 
     try:
         return int(value)
@@ -384,7 +431,14 @@ def _context_from_completion(
     *,
     metadata: Mapping[str, Any],
 ) -> RewardContext:
-    """Construct a :class:`RewardContext` from a completion and metadata."""
+    """Construct a :class:`RewardContext` from a completion and metadata.
+
+    :param completion: Raw completion payload produced by the policy.
+    :param viewer: Viewer identifier associated with the completion.
+    :param state: State text describing the context for the completion.
+    :param metadata: Additional fields containing slate items and labels.
+    :returns: Structured reward context ready for training or evaluation.
+    """
 
     safe_items = metadata.get("items")
     safe_items = safe_items if isinstance(safe_items, list) else []
@@ -422,7 +476,12 @@ def _build_reward_contexts(
     completions: Sequence[Any],
     kwargs: Dict[str, Any],
 ) -> List[RewardContext]:
-    """Return reward contexts for all completions in a batch."""
+    """Return reward contexts for all completions in a batch.
+
+    :param completions: Policy completions to analyse.
+    :param kwargs: Ancillary tensors/metadata from the GRPO forward pass.
+    :returns: Populated reward contexts aligned with ``completions``.
+    """
 
     num_completions = len(completions)
     if num_completions == 0:
@@ -457,9 +516,14 @@ def _build_reward_contexts(
 
 def _train_discriminator_from_contexts(
     disc: OnlineDiscriminator,
-    contexts: Sequence[RewardContext],
+   contexts: Sequence[RewardContext],
 ) -> None:
-    """Train the online discriminator on positive/negative examples."""
+    """Train the online discriminator on positive/negative examples.
+
+    :param disc: Online discriminator to update.
+    :param contexts: Reward contexts mined from the most recent batch.
+    :returns: ``None``. Performs in-place training on ``disc``.
+    """
 
     pos_texts: List[str] = []
     pos_labels: List[int] = []
@@ -495,7 +559,10 @@ def _train_discriminator_from_contexts(
 
 
 def _select_disc_device() -> torch.device:
-    """Return the torch device used for online discriminator training."""
+    """Return the torch device used for online discriminator training.
+
+    :returns: Torch device derived from environment hints or CUDA availability.
+    """
 
     override = (os.getenv("GAIL_DEVICE", "").strip() or "").lower()
     device_hint = os.getenv("GAIL_DEVICE", "").strip()
@@ -536,6 +603,7 @@ class LearnableRewardMixer(nn.Module):
         :param setup: Base reward configuration containing functions, weights, and mixture.
         :param discriminator_reward_fn: Callable returning discriminator rewards.
         :param learning_rate: Optimiser learning rate for the mixture weights.
+        :returns: ``None``. Initialises learnable mixture parameters and optimiser.
         """
         super().__init__()
         if not setup.base_reward_fns:
@@ -564,18 +632,27 @@ class LearnableRewardMixer(nn.Module):
 
     @staticmethod
     def _should_train() -> bool:
-        """Return whether the mixer should update weights for the current invocation."""
+        """Return whether the mixer should update weights for the current invocation.
+
+        :returns: ``True`` when training is enabled and not in eval mode.
+        """
         return (
             os.getenv("GAIL_TRAIN", "1") == "1"
             and os.getenv("GAIL_EVAL_MODE", "0") != "1"
         )
 
     def _current_weights(self) -> torch.Tensor:
-        """Return the simplex-projected mixture weights."""
+        """Return the simplex-projected mixture weights.
+
+        :returns: 2-element tensor of softmax-normalised mixture weights.
+        """
         return torch.softmax(self.logits, dim=0)
 
     def current_alpha_beta(self) -> Tuple[float, float]:
-        """Return the current alpha/beta weights as floats."""
+        """Return the current alpha/beta weights as floats.
+
+        :returns: Tuple containing the base (alpha) and discriminator (beta) weights.
+        """
         weights = self._current_weights().detach().cpu().tolist()
         alpha = float(weights[0]) if weights else 0.5
         beta = float(weights[1]) if len(weights) > 1 else 0.5
@@ -587,7 +664,13 @@ class LearnableRewardMixer(nn.Module):
         answer: Any,
         params: Dict[str, Any],
     ) -> torch.Tensor:
-        """Return weighted environment rewards as a tensor on the correct device."""
+        """Return weighted environment rewards as a tensor on the correct device.
+
+        :param completions: Policy completions produced by GRPO.
+        :param answer: Reference answer forwarded to underlying reward functions.
+        :param params: Keyword arguments to pass through to reward functions.
+        :returns: Tensor holding the weighted combination of environment rewards.
+        """
 
         device = self.logits.device
         size = len(completions)
@@ -617,7 +700,14 @@ class LearnableRewardMixer(nn.Module):
         params: Dict[str, Any],
         expected_len: int,
     ) -> torch.Tensor:
-        """Return discriminator rewards as a tensor with fallback zero fill."""
+        """Return discriminator rewards as a tensor with fallback zero fill.
+
+        :param completions: Policy completions produced by GRPO.
+        :param answer: Reference answer forwarded to the discriminator reward.
+        :param params: Additional arguments forwarded to the discriminator reward function.
+        :param expected_len: Number of samples expected in the output tensor.
+        :returns: Tensor containing discriminator-provided rewards.
+        """
 
         device = self.logits.device
         rewards = self.discriminator_reward_fn(completions, answer, **params)
@@ -637,7 +727,14 @@ class LearnableRewardMixer(nn.Module):
         alpha: float,
         beta: float,
     ) -> None:
-        """Emit wandb-friendly logging for the current mixer state."""
+        """Emit wandb-friendly logging for the current mixer state.
+
+        :param base_combined: Tensor with the aggregated base rewards.
+        :param disc_tensor: Tensor with the discriminator rewards.
+        :param alpha: Current base reward weight.
+        :param beta: Current discriminator weight.
+        :returns: ``None``. Logging side effects are attempted best-effort.
+        """
 
         logger_fn = globals().get("_wb_log")
         if not callable(logger_fn):
@@ -666,7 +763,13 @@ class LearnableRewardMixer(nn.Module):
             pass
 
     def forward(self, completions, answer, **kwargs) -> List[float]:
-        """Return combined rewards with learnable mixture weights."""
+        """Return combined rewards with learnable mixture weights.
+
+        :param completions: Policy completions to evaluate.
+        :param answer: Ground-truth answers supplied by the environment.
+        :param kwargs: Additional contextual information for reward functions.
+        :returns: Reward values after mixing base and discriminator signals.
+        """
         params = dict(kwargs)
         base_combined = self._base_reward_tensor(completions, answer, params)
         expected_len = base_combined.shape[0] if base_combined.ndim else len(completions)
@@ -746,7 +849,12 @@ def make_gail_reward_fn(disc: Optional[OnlineDiscriminator], alpha: float = 1.0)
 
 
 def _resolve_reward_functions(script_args: GRPOScriptArguments, tokenizer) -> List[Any]:
-    """Load baseline reward functions for GRPO training."""
+    """Load baseline reward functions for GRPO training.
+
+    :param script_args: Parsed GRPO script arguments loaded from YAML.
+    :param tokenizer: Tokenizer instance forwarded to reward factories.
+    :returns: Sequence of reward callables compatible with GRPO.
+    """
 
     try:
         return get_reward_funcs(script_args, _ref_model=None, _tokenizer=tokenizer)
@@ -756,7 +864,11 @@ def _resolve_reward_functions(script_args: GRPOScriptArguments, tokenizer) -> Li
 
 
 def _maybe_enable_gail(reward_fns: List[Any]) -> bool:
-    """Optionally append a GAIL reward function based on environment variables."""
+    """Optionally append a GAIL reward function based on environment variables.
+
+    :param reward_fns: Mutable list of reward functions configured for GRPO.
+    :returns: ``True`` when a GAIL reward function was added, ``False`` otherwise.
+    """
 
     use_gail = os.environ.get("GAIL_USE", "1") != "0"
     if not use_gail:
@@ -790,7 +902,13 @@ def _adjust_reward_weights(
     reward_fns: Sequence[Any],
     use_gail: bool,
 ) -> None:
-    """Normalise reward weights and append a GAIL weight when required."""
+    """Normalise reward weights and append a GAIL weight when required.
+
+    :param training_args: Training configuration containing reward weights.
+    :param reward_fns: Sequence of reward functions currently active.
+    :param use_gail: Whether a GAIL reward is enabled and expects a weight.
+    :returns: ``None``. Updates ``training_args.reward_weights`` in-place.
+    """
 
     weights = getattr(training_args, "reward_weights", None)
     if weights is None:
@@ -821,7 +939,13 @@ def _apply_reward_mixer(
     reward_fns: List[Any],
     use_gail: bool,
 ) -> List[Any]:
-    """Return reward functions with optional learnable mixer applied."""
+    """Return reward functions with optional learnable mixer applied.
+
+    :param training_args: Training configuration containing reward weights.
+    :param reward_fns: Reward functions configured for GRPO.
+    :param use_gail: Whether GAIL shaping is enabled.
+    :returns: List of reward callables after applying the learnable mixer when needed.
+    """
 
     initial_weights = list(training_args.reward_weights or [])
     if not use_gail or not reward_fns:
@@ -877,7 +1001,13 @@ def _build_dataset_and_tokenizer(
     training_args: GRPOConfig,
     model_args: ModelConfig,
 ) -> Tuple[DatasetDict, Any]:
-    """Return processed dataset and tokenizer for the GAIL pipeline."""
+    """Return processed dataset and tokenizer for the GAIL pipeline.
+
+    :param script_args: Script arguments describing dataset sources.
+    :param training_args: Training configuration used to build prompts.
+    :param model_args: Model configuration for resolving tokenizers.
+    :returns: Tuple containing the processed dataset and tokenizer.
+    """
 
     raw_dataset = get_dataset(script_args)
     tokenizer = get_tokenizer(model_args, training_args)
@@ -898,7 +1028,13 @@ def main(
     training_args: GRPOConfig,
     model_args: ModelConfig,
 ) -> None:
-    """Launch the GRPO + optional GAIL training loop with the configured rewards."""
+    """Launch the GRPO + optional GAIL training loop with the configured rewards.
+
+    :param script_args: Script arguments parsed from YAML/CLI.
+    :param training_args: Training configuration for GRPO and GAIL.
+    :param model_args: Model configuration containing tokenizer and model identifiers.
+    :returns: ``None``. Runs training for its side effects.
+    """
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     set_seed(training_args.seed)
 
@@ -917,9 +1053,17 @@ def main(
     )
 
     def _gail_eval_factory(grpo_trainer: Any) -> Callable[[], Mapping[str, Any]]:
-        """Return an evaluation wrapper that freezes GAIL gradients."""
+        """Return an evaluation wrapper that freezes GAIL gradients.
+
+        :param grpo_trainer: GRPO trainer instance providing :meth:`evaluate`.
+        :returns: Callable that temporarily sets evaluation mode for GAIL.
+        """
 
         def _evaluate_with_gail() -> Mapping[str, Any]:
+            """Evaluate the GRPO trainer with GAIL gradients disabled.
+
+            :returns: Metrics mapping produced by the trainer evaluation.
+            """
             os.environ["GAIL_EVAL_MODE"] = "1"
             try:
                 return grpo_trainer.evaluate()

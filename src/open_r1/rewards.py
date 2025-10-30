@@ -47,6 +47,10 @@ except ImportError:  # pragma: no cover - optional dependency
     LatexExtractionConfig = None  # type: ignore[assignment]
 
     def _math_missing(*_, **__) -> Any:
+        """Raise an informative error when optional math verification deps are absent.
+
+        :raises ImportError: Always raised to signal missing dependencies.
+        """
         raise ImportError(
             "math_verify and latex2sympy2_extended are required for math-based rewards "
             "(pip install math-verify latex2sympy2_extended)."
@@ -68,6 +72,11 @@ try:  # pragma: no cover - optional dependency
 except (ImportError, AttributeError):  # pragma: no cover - optional dependency
 
     def _is_package_available(_: str) -> bool:
+        """Fallback that reports transformers extras as unavailable.
+
+        :param _: Unused package name supplied by Transformers.
+        :returns: Always ``False`` to disable optional features.
+        """
         return False
 
 from .rewards_code import (
@@ -115,7 +124,10 @@ else:  # pragma: no cover - optional dependency
 
 
 def _require_math_reward_deps() -> None:
-    """Raise an informative error when math reward dependencies are missing."""
+    """Raise an informative error when math reward dependencies are missing.
+
+    :returns: ``None``. Raises ``ImportError`` if optional math dependencies are absent.
+    """
     if not HAS_MATH_REWARD_DEPS:
         raise ImportError(
             "math_verify and latex2sympy2_extended are required for math-based rewards. "
@@ -128,14 +140,24 @@ def _require_math_reward_deps() -> None:
 _NUM_ONLY = re.compile(r"^\s*(?:option\s*)?(\d+)\s*[\.)]?\s*$", re.I)
 
 def _canon(text: str) -> str:
-    """Return a lowercase alphanumeric representation for fuzzy matching."""
+    """Return a lowercase alphanumeric representation for fuzzy matching.
+
+    :param text: Raw text to normalise.
+    :returns: Canonical alphanumeric token.
+    """
 
     normalised = text.replace("’", "'").strip().lower()
     normalised = re.sub(r"\s+", " ", normalised)
     return re.sub(r"[^a-z0-9]+", "", normalised)
 
 def _parse_slate_names(slate: str) -> Tuple[List[str], dict[int, str]]:
-    """Return (names_in_order, index→name). Supports '1. Title', '1) Title', or '- Title'."""
+    """Return (names_in_order, index→name) extracted from slate text.
+
+    Supports ``\"1. Title\"``, ``\"1) Title\"``, or bullet-prefixed options.
+
+    :param slate: Slate text containing numbered or bulleted options.
+    :returns: Tuple of option names and an index-to-name mapping.
+    """
     names: List[str] = []
     idxmap: dict[int, str] = {}
     for line in (slate or "").splitlines():
@@ -157,7 +179,12 @@ def _parse_slate_names(slate: str) -> Tuple[List[str], dict[int, str]]:
     return names, idxmap
 
 def _gold_index_from_gold_and_slate(gold: str, slate: str) -> int:
-    """Return 1-based gold index, or -1 if not resolvable."""
+    """Return 1-based gold index, or ``-1`` if not resolvable.
+
+    :param gold: Gold identifier or option text.
+    :param slate: Slate text containing the list of options.
+    :returns: 1-based index of the gold option, ``-1`` otherwise.
+    """
     gold = (gold or "").strip()
     match_num_only = _NUM_ONLY.match(gold)
     if match_num_only:
@@ -174,7 +201,11 @@ def _gold_index_from_gold_and_slate(gold: str, slate: str) -> int:
     return -1
 
 def _completion_text(comp: Any) -> str:
-    """Extract plain assistant text from various completion shapes."""
+    """Extract plain assistant text from various completion shapes.
+
+    :param comp: Completion payload (string, dict, or list of messages).
+    :returns: Assistant message content with whitespace trimmed.
+    """
     if isinstance(comp, str):
         return comp
     if isinstance(comp, dict):
@@ -426,7 +457,12 @@ def tag_count_reward(completions, **kwargs) -> list[float]:
 
 
 def _compute_length_correctness(contents: List[str], solution: List[str]) -> List[bool]:
-    """Return per-sample correctness for length-based rewards."""
+    """Return per-sample correctness for length-based rewards.
+
+    :param contents: Generated completion texts to evaluate.
+    :param solution: Gold solutions used for verification.
+    :returns: Boolean flags indicating whether each completion matches the solution.
+    """
     _require_math_reward_deps()
     correctness: List[bool] = []
     for content, sol in zip(contents, solution):

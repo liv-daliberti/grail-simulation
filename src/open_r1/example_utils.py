@@ -42,7 +42,11 @@ _OPINION_SPEC_LOOKUP = {
 
 
 def _normalise_direction(value: float) -> float:
-    """Return ``value`` when finite, otherwise NaN."""
+    """Return ``value`` when finite, otherwise ``NaN``.
+
+    :param value: Numeric opinion delta to normalise.
+    :returns: Float value or ``NaN`` when conversion fails.
+    """
 
     try:
         return float(value)
@@ -51,7 +55,11 @@ def _normalise_direction(value: float) -> float:
 
 
 def _opinion_direction_label(example: Mapping[str, Any]) -> Optional[str]:
-    """Compute the opinion-direction label for ``example`` when available."""
+    """Compute the opinion-direction label for ``example`` when available.
+
+    :param example: Dataset row containing opinion fields.
+    :returns: One of ``\"increase\"``, ``\"decrease\"``, ``\"no_change\"``, or ``None``.
+    """
 
     issue = str(example.get("issue") or "").strip().lower()
     study = str(example.get("participant_study") or "").strip().lower()
@@ -73,13 +81,21 @@ def _opinion_direction_label(example: Mapping[str, Any]) -> Optional[str]:
 
 
 def canon(value: str) -> str:
-    """Return a lowercase, punctuation-stripped token for fuzzy comparisons."""
+    """Return a lowercase, punctuation-stripped token for fuzzy comparisons.
+
+    :param value: Raw text to normalise.
+    :returns: Canonicalised token ready for string matching.
+    """
 
     return _CANON_RE.sub("", (value or "").lower().strip())
 
 
 def load_slate_items(example: Mapping[str, Any]) -> List[Dict[str, Any]]:
-    """Extract and normalise slate metadata from ``example``."""
+    """Extract and normalise slate metadata from ``example``.
+
+    :param example: Dataset row containing slate metadata JSON.
+    :returns: Cleaned list of slate item dictionaries with stable keys.
+    """
 
     arr = as_list_json(example.get("slate_items_json"))
     keep_keys = {
@@ -143,7 +159,12 @@ def load_slate_items(example: Mapping[str, Any]) -> List[Dict[str, Any]]:
 
 
 def gold_index_from_items(gold: str, items: Sequence[Mapping[str, Any]]) -> int:
-    """Return the 1-based index of ``gold`` within ``items`` or ``-1`` when missing."""
+    """Return the 1-based index of ``gold`` within ``items`` or ``-1`` when missing.
+
+    :param gold: Gold identifier expected to be present in the slate.
+    :param items: Slate items to search for the identifier.
+    :returns: 1-based index of the gold item or ``-1`` when not found.
+    """
 
     gold = (gold or "").strip()
     if not gold or not items:
@@ -160,7 +181,12 @@ def gold_index_from_items(gold: str, items: Sequence[Mapping[str, Any]]) -> int:
 
 
 def derive_next_from_history(example: Mapping[str, Any], current_id: str) -> str:
-    """Infer the next-click identifier from historical watch data."""
+    """Infer the next-click identifier from historical watch data.
+
+    :param example: Dataset row containing historical watch information.
+    :param current_id: Identifier of the current video in the viewer session.
+    :returns: Derived next video identifier or an empty string when unavailable.
+    """
 
     vids = as_list_json(example.get("watched_vids_json"))
     if current_id and isinstance(vids, list) and vids:
@@ -186,7 +212,12 @@ def derive_next_from_history(example: Mapping[str, Any], current_id: str) -> str
 
 
 def get_gold_next_id(example: Mapping[str, Any], solution_key: Optional[str]) -> str:
-    """Return the preferred next-video identifier from ``example``."""
+    """Return the preferred next-video identifier from ``example``.
+
+    :param example: Dataset row containing next-video fields.
+    :param solution_key: Optional override for the column holding the gold id.
+    :returns: Gold identifier for the next recommendation.
+    """
 
     if solution_key and solution_key not in {"current_video_id", "current_id"}:
         value = example.get(solution_key)
@@ -216,6 +247,12 @@ def row_to_training_example(
     """
     Convert a raw dataset ``example`` into the GRPO training payload.
 
+    :param example: Dataset row describing the viewer slate and metadata.
+    :param system_prompt: Optional system prompt to include in the example.
+    :param solution_key: Column containing the gold recommendation identifier.
+    :param max_history: Maximum number of history entries to include.
+    :param passthrough_fn: Callable generating passthrough fields to retain.
+    :param extra_fields_fn: Optional callable returning additional fields.
     :returns: Training example dict or ``None`` when the slate/gold mapping is invalid.
     """
 
@@ -278,6 +315,14 @@ def call_row_to_training_example(
 
     Centralises the keyword arguments setup so higher-level modules can invoke the conversion
     without repeating identical boilerplate, keeping :mod:`pylint` duplicate-code checks quiet.
+
+    :param example: Dataset row describing the viewer slate and metadata.
+    :param system_prompt: Optional system prompt to pass through.
+    :param solution_key: Column containing the gold recommendation identifier.
+    :param max_history: Maximum history entries to include in prompts.
+    :param passthrough_fn: Callable providing passthrough fields; optional.
+    :param extra_fields_fn: Callable attaching extra fields to the training example.
+    :returns: Training example dict or ``None`` when the slate/gold mapping is invalid.
     """
 
     kwargs: Dict[str, Any] = {

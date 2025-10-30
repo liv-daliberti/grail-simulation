@@ -40,7 +40,16 @@ def slate_has_gold(  # pylint: disable=too-many-arguments
     resolve_gold_index: IndexResolver,
     minimum_index: int = 1,
 ) -> bool:
-    """Return ``True`` when ``example`` contains a slate and a matching gold answer."""
+    """Return ``True`` when ``example`` contains a slate and a matching gold answer.
+
+    :param example: Dataset row containing slate information.
+    :param solution_key: Optional column name holding the gold identifier.
+    :param load_slate_items: Callable extracting slate items from the row.
+    :param lookup_gold_id: Callable resolving the gold identifier for the row.
+    :param resolve_gold_index: Callable mapping gold identifier to an index.
+    :param minimum_index: Minimum index value considered valid.
+    :returns: ``True`` when the slate exists and the gold identifier is on it.
+    """
 
     items = load_slate_items(example)
     if not items:
@@ -58,7 +67,14 @@ def make_slate_validator(
     resolve_gold_index: IndexResolver,
     minimum_index: int = 1,
 ) -> Callable[[Dict[str, Any]], bool]:
-    """Return a partial of :func:`slate_has_gold` configured for dataset filtering."""
+    """Return a partial of :func:`slate_has_gold` configured for dataset filtering.
+
+    :param load_slate_items: Callable extracting slate items from a row.
+    :param lookup_gold_id: Callable producing the gold identifier for a row.
+    :param resolve_gold_index: Callable converting identifiers to slate indices.
+    :param minimum_index: Minimum index value considered valid.
+    :returns: Validator predicate suitable for :meth:`Dataset.filter`.
+    """
 
     return partial(
         slate_has_gold,
@@ -70,7 +86,12 @@ def make_slate_validator(
 
 
 def drop_marked_rows(dataset: DatasetDict, train_split: str) -> None:
-    """Remove rows flagged with ``__drop__`` from every split in-place."""
+    """Remove rows flagged with ``__drop__`` from every split in-place.
+
+    :param dataset: Hugging Face dataset dict to prune.
+    :param train_split: Name of the training split containing the ``__drop__`` column.
+    :returns: ``None``. Mutates the dataset to exclude flagged rows.
+    """
 
     if "__drop__" not in dataset[train_split].column_names:
         return

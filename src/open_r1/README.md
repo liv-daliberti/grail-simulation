@@ -55,6 +55,8 @@ Helpful CLI/environment toggles:
 - `--resume_from_checkpoint <path>` resumes training.
 - `--max_eval_samples` caps evaluation size when recipes enable validation.
 - `LOGLEVEL=DEBUG` surfaces detailed dataset filtering and reward wiring info.
+- Set `push_to_hub_revision: true` (and `hub_model_id`) in the YAML recipe to
+  mirror every saved checkpoint to the configured Hugging Face Hub repo.
 - `GRAIL_MAX_HISTORY` tunes the watch-history depth forwarded to the prompt
   builder.
 

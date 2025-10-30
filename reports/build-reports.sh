@@ -278,3 +278,44 @@ if [ "${SKIP_GPT4O}" != "1" ]; then
 fi
 
 log "Report refresh completed."
+
+GRPO_MODELS_DIR="${GRPO_MODELS_DIR:-${REPO_ROOT}/models/grpo}"
+GRPO_REPORTS_DIR="${GRPO_REPORTS_DIR:-${REPO_ROOT}/reports/grpo}"
+GRPO_NEXT_ROOT="${GRPO_MODELS_DIR}/next_video"
+GRPO_OPINION_ROOT="${GRPO_MODELS_DIR}/opinion"
+GRPO_LABEL="${GRPO_REPORT_LABEL:-}" 
+
+if [ -z "${GRPO_LABEL}" ]; then
+  if [ -d "${GRPO_NEXT_ROOT}" ]; then
+    mapfile -t _grpo_labels < <(find "${GRPO_NEXT_ROOT}" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
+  else
+    _grpo_labels=()
+  fi
+  if [ -z "${GRPO_LABEL}" ] && [ ${#_grpo_labels[@]} -eq 1 ]; then
+    GRPO_LABEL="${_grpo_labels[0]}"
+  fi
+fi
+
+if [ -z "${GRPO_LABEL}" ]; then
+  log "Skipping GRPO report regeneration (set GRPO_REPORT_LABEL or populate models/grpo)."
+else
+  if [ -d "${GRPO_REPORTS_DIR}" ]; then
+    log "Clearing existing GRPO reports at ${GRPO_REPORTS_DIR}"
+    rm -rf "${GRPO_REPORTS_DIR}"
+  fi
+  mkdir -p "${GRPO_REPORTS_DIR}"
+  log "Regenerating GRPO reports for label ${GRPO_LABEL}"
+  declare -a GRPO_ARGS=(
+    "--dataset" "${DATASET}"
+    "--out-dir" "${GRPO_MODELS_DIR}"
+    "--label" "${GRPO_LABEL}"
+    "--stage" "reports"
+  )
+  if [ ! -d "${GRPO_NEXT_ROOT}/${GRPO_LABEL}" ]; then
+    GRPO_ARGS+=("--no-next-video")
+  fi
+  if [ ! -d "${GRPO_OPINION_ROOT}/${GRPO_LABEL}" ]; then
+    GRPO_ARGS+=("--no-opinion")
+  fi
+  "${PYTHON_BIN}" -m grpo.pipeline "${GRPO_ARGS[@]}"
+fi

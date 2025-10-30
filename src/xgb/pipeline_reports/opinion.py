@@ -18,13 +18,23 @@
 from __future__ import annotations
 
 from ..pipeline.reports import opinion as _opinion
-from ..pipeline.reports.opinion import (
-    _OpinionPortfolioAccumulator,
-    _WeightedMetricAccumulator,
-    _extract_opinion_summary,
-    _opinion_cross_study_diagnostics,
-    _opinion_observations,
-    _write_opinion_report,
+
+_COMPAT_EXPORTS = (
+    "_OpinionPortfolioAccumulator",
+    "_WeightedMetricAccumulator",
+    "_extract_opinion_summary",
+    "_opinion_cross_study_diagnostics",
+    "_opinion_observations",
+    "_write_opinion_report",
 )
 
 __all__ = list(_opinion.__all__)
+__all__.extend(name for name in _COMPAT_EXPORTS if name not in __all__)
+
+
+def __getattr__(name: str):
+    return getattr(_opinion, name)
+
+
+def __dir__() -> list[str]:
+    return sorted(__all__)

@@ -285,16 +285,15 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">numpy.random</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_rng</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.text.embeddings</span><span class="w"> </span><span class="kn">import</span> <span class="n">SentenceTransformerConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.visualization.matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">plt</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.evaluation.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">build_participant_bootstrap_summary</span><span class="p">,</span>
     <span class="n">compose_issue_slug</span><span class="p">,</span>
     <span class="n">group_key_for_example</span><span class="p">,</span>
     <span class="n">prepare_dataset</span><span class="p">,</span>
     <span class="n">safe_div</span><span class="p">,</span>
+    <span class="n">summarise_grouped_accuracy_from_counts</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.prompts.docs</span><span class="w"> </span><span class="kn">import</span> <span class="n">merge_default_extra_fields</span>
 
@@ -582,26 +581,23 @@
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">grouped</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="n">keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">grouped</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-    <span class="n">rng</span> <span class="o">=</span> <span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
-    <span class="n">model_samples</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">baseline_samples</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">replicates</span><span class="p">):</span>
-        <span class="n">sampled_rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">sampled_indices</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">))</span>
-        <span class="k">for</span> <span class="n">key_idx</span> <span class="ow">in</span> <span class="n">sampled_indices</span><span class="p">:</span>
-            <span class="n">sampled_rows</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">grouped</span><span class="p">[</span><span class="n">keys</span><span class="p">[</span><span class="n">key_idx</span><span class="p">]])</span>
-        <span class="n">model_samples</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_accuracy_for_rows</span><span class="p">(</span><span class="n">sampled_rows</span><span class="p">,</span> <span class="n">best_k</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">baseline_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">baseline_samples</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_baseline_accuracy_for_rows</span><span class="p">(</span><span class="n">sampled_rows</span><span class="p">,</span> <span class="n">baseline_index</span><span class="p">))</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_model_metric</span><span class="p">(</span><span class="n">items</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_accuracy_for_rows</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="n">best_k</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">build_participant_bootstrap_summary</span><span class="p">(</span>
-        <span class="n">model_samples</span><span class="o">=</span><span class="n">model_samples</span><span class="p">,</span>
-        <span class="n">baseline_samples</span><span class="o">=</span><span class="n">baseline_samples</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">n_groups</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">grouped</span><span class="p">),</span>
+    <span class="n">baseline_metric</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">baseline_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_baseline_metric</span><span class="p">(</span><span class="n">items</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_baseline_accuracy_for_rows</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="n">baseline_index</span><span class="p">)</span>
+
+        <span class="n">baseline_metric</span> <span class="o">=</span> <span class="n">_baseline_metric</span>
+
+    <span class="k">return</span> <span class="n">summarise_grouped_accuracy_from_counts</span><span class="p">(</span>
+        <span class="n">grouped</span><span class="o">=</span><span class="n">grouped</span><span class="p">,</span>
         <span class="n">n_rows</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">eligible_rows</span><span class="p">),</span>
         <span class="n">n_bootstrap</span><span class="o">=</span><span class="n">replicates</span><span class="p">,</span>
         <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span>
+        <span class="n">model_metric</span><span class="o">=</span><span class="n">_model_metric</span><span class="p">,</span>
+        <span class="n">baseline_metric</span><span class="o">=</span><span class="n">baseline_metric</span><span class="p">,</span>
     <span class="p">)</span>
 
 <div class="viewcode-block" id="parse_k_values">

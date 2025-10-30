@@ -25,6 +25,7 @@ import numpy as np
 
 
 _Dataset = TypeVar("_Dataset")
+_GroupItem = TypeVar("_GroupItem")
 
 
 @dataclass(frozen=True)
@@ -32,6 +33,15 @@ class BootstrapSummaryConfig:
     """Metadata describing the bootstrap resampling configuration."""
 
     n_groups: int
+    n_rows: int
+    n_bootstrap: int
+    seed: int
+
+
+@dataclass(frozen=True)
+class BootstrapCounts:
+    """Scalar bootstrap parameters reused across grouped summary helpers."""
+
     n_rows: int
     n_bootstrap: int
     seed: int
@@ -172,6 +182,63 @@ def build_participant_bootstrap_summary(
     )
 
 
+def bootstrap_grouped_accuracy_summary(
+    *,
+    grouped: Mapping[str, Sequence[_GroupItem]],
+    summary_config: BootstrapSummaryConfig,
+    model_metric: Callable[[Sequence[_GroupItem]], float],
+    baseline_metric: Callable[[Sequence[_GroupItem]], float] | None = None,
+    rng_factory: Callable[[int], np.random.Generator] | None = None,
+) -> Dict[str, Any]:
+    """
+    Build a participant bootstrap summary by resampling grouped records.
+
+    :param grouped: Mapping of group identifiers to sampled records.
+    :param summary_config: Bootstrap metadata describing resampling parameters.
+    :param model_metric: Callable returning model accuracy for sampled records.
+    :param baseline_metric: Optional callable returning baseline accuracy.
+    :param rng_factory: Optional override for constructing the RNG.
+    :returns: Summary dictionary compatible with downstream reporting helpers.
+    """
+
+    if not grouped:
+        raise ValueError("grouped must contain at least one key.")
+    rng_constructor = rng_factory or np.random.default_rng
+    rng = rng_constructor(summary_config.seed)
+    keys = tuple(grouped.keys())
+
+    effective_config = summary_config
+    if summary_config.n_groups != len(keys):
+        effective_config = BootstrapSummaryConfig(
+            n_groups=len(keys),
+            n_rows=summary_config.n_rows,
+            n_bootstrap=summary_config.n_bootstrap,
+            seed=summary_config.seed,
+        )
+
+    def _resample_items() -> Sequence[_GroupItem]:
+        sampled_indices = rng.integers(0, len(keys), size=len(keys))
+        return [
+            item
+            for group_idx in sampled_indices
+            for item in grouped[keys[group_idx]]
+        ]
+
+    model_samples: list[float] = []
+    baseline_samples: list[float] | None = [] if baseline_metric else None
+    for _ in range(effective_config.n_bootstrap):
+        sampled_items = _resample_items()
+        model_samples.append(float(model_metric(sampled_items)))
+        if baseline_samples is not None and baseline_metric is not None:
+            baseline_samples.append(float(baseline_metric(sampled_items)))
+
+    return build_participant_bootstrap_summary(
+        model_samples=model_samples,
+        baseline_samples=baseline_samples if baseline_metric else None,
+        summary_config=effective_config,
+    )
+
+
 def summarise_bootstrap_samples(
     *,
     model_samples: Sequence[float],
@@ -219,11 +286,65 @@ def summarise_bootstrap_samples(
     return summary
 
 
+def summarise_grouped_accuracy(
+    *,
+    grouped: Mapping[str, Sequence[_GroupItem]],
+    config: BootstrapSummaryConfig,
+    model_metric: Callable[[Sequence[_GroupItem]], float],
+    baseline_metric: Callable[[Sequence[_GroupItem]], float] | None = None,
+) -> Dict[str, Any]:
+    """Compose a grouped bootstrap summary from primitive scalar parameters."""
+
+    summary_config = BootstrapSummaryConfig(
+        n_groups=len(grouped),
+        n_rows=config.n_rows,
+        n_bootstrap=config.n_bootstrap,
+        seed=config.seed,
+    )
+    return bootstrap_grouped_accuracy_summary(
+        grouped=grouped,
+        summary_config=summary_config,
+        model_metric=model_metric,
+        baseline_metric=baseline_metric,
+    )
+
+
+def summarise_grouped_accuracy_from_counts(
+    *,
+    grouped: Mapping[str, Sequence[_GroupItem]],
+    counts: BootstrapCounts,
+    model_metric: Callable[[Sequence[_GroupItem]], float],
+    baseline_metric: Callable[[Sequence[_GroupItem]], float] | None = None,
+) -> Dict[str, Any]:
+    """
+    Compose a grouped bootstrap summary from common scalar bootstrap arguments.
+
+    Avoids repeating boilerplate ``BootstrapSummaryConfig`` construction across modules.
+    """
+
+    summary_config = BootstrapSummaryConfig(
+        n_groups=len(grouped),
+        n_rows=counts.n_rows,
+        n_bootstrap=counts.n_bootstrap,
+        seed=counts.seed,
+    )
+    return summarise_grouped_accuracy(
+        grouped=grouped,
+        config=summary_config,
+        model_metric=model_metric,
+        baseline_metric=baseline_metric,
+    )
+
+
 __all__ = [
+    "BootstrapCounts",
     "BootstrapSummaryConfig",
+    "bootstrap_grouped_accuracy_summary",
     "compose_issue_slug",
     "ensure_hf_cache",
     "group_key_for_example",
+    "summarise_grouped_accuracy",
+    "summarise_grouped_accuracy_from_counts",
     "build_participant_bootstrap_summary",
     "participant_bootstrap_summary",
     "prepare_dataset",

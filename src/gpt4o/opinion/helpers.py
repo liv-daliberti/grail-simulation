@@ -1,0 +1,230 @@
+#!/usr/bin/env python
+# Copyright 2025 The Grail Simulation Contributors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Helper utilities for GPT-4o opinion evaluation."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Callable, Dict, Iterable, List, Mapping, MutableMapping, Sequence, Tuple
+
+import numpy as np
+
+from common.opinion import compute_opinion_metrics, float_or_none
+
+
+def document_from_example(example: Mapping[str, object]) -> str:
+    """Assemble the viewer profile/state text bundle used for opinion prompts."""
+    profile_source = (
+        example.get("viewer_profile")
+        or example.get("viewer_profile_sentence")
+        or ""
+    )
+    profile = str(profile_source).strip()
+    state_text = str(example.get("state_text") or "").strip()
+
+    sections: List[str] = []
+    if profile:
+        sections.append(f"Viewer profile:\n{profile}")
+    if state_text:
+        sections.append(f"Context:\n{state_text}")
+
+    current_title = str(example.get("current_video_title") or "").strip()
+    next_title = str(example.get("next_video_title") or "").strip()
+    if current_title:
+        sections.append(f"Currently watching: {current_title}")
+    if next_title:
+        sections.append(f"Next video shown: {next_title}")
+
+    return "\n\n".join(sections).strip()
+
+
+@dataclass(frozen=True)
+class CollectExampleHooks:
+    """Dependency injection hooks used while collecting opinion examples."""
+
+    float_parser: Callable[[object], float | None] = float_or_none
+    document_builder: Callable[[Mapping[str, object]], str] = document_from_example
+
+
+@dataclass(frozen=True)
+class CollectExamplesConfig:
+    """Configuration controlling opinion example collection and filtering."""
+
+    allows: Callable[[str, str], bool]
+    eval_max: int
+    hooks: CollectExampleHooks = field(default_factory=CollectExampleHooks)
+
+
+def clip_prediction(value: float) -> float:
+    """Clamp predictions to the 1–7 opinion index range."""
+    return max(1.0, min(7.0, float(value)))
+
+
+def baseline_metrics(
+    truth_before: Sequence[float], truth_after: Sequence[float]
+) -> Dict[str, object]:
+    """Compute baseline metrics mirroring the KNN/XGB implementations."""
+    after_arr = np.asarray(truth_after, dtype=np.float32)
+    before_arr = np.asarray(truth_before, dtype=np.float32)
+    if after_arr.size == 0:
+        return {}
+
+    baseline_mean = float(np.mean(after_arr))
+    baseline_predictions = np.full_like(after_arr, baseline_mean)
+    mae_mean = float(np.mean(np.abs(baseline_predictions - after_arr)))
+    rmse_mean = float(np.sqrt(np.mean((baseline_predictions - after_arr) ** 2)))
+
+    no_change = compute_opinion_metrics(
+        truth_after=after_arr,
+        truth_before=before_arr,
+        pred_after=before_arr,
+    )
+    direction_accuracy = no_change.get("direction_accuracy")
+    direction_accuracy = (
+        float(direction_accuracy) if isinstance(direction_accuracy, (int, float)) else None
+    )
+
+    return {
+        "global_mean_after": baseline_mean,
+        "mae_global_mean_after": mae_mean,
+        "rmse_global_mean_after": rmse_mean,
+        "mae_using_before": float(no_change.get("mae_after", float("nan"))),
+        "rmse_using_before": float(no_change.get("rmse_after", float("nan"))),
+        "mae_change_zero": float(no_change.get("mae_change", float("nan"))),
+        "rmse_change_zero": float(no_change.get("rmse_change", float("nan"))),
+        "calibration_slope_change_zero": no_change.get("calibration_slope"),
+        "calibration_intercept_change_zero": no_change.get("calibration_intercept"),
+        "calibration_ece_change_zero": no_change.get("calibration_ece"),
+        "calibration_bins_change_zero": no_change.get("calibration_bins"),
+        "kl_divergence_change_zero": no_change.get("kl_divergence_change"),
+        "direction_accuracy": direction_accuracy,
+    }
+
+
+def load_materialised_split(
+    dataset: object, preferred_split: str
+) -> Tuple[str, Iterable[Mapping[str, object]]]:
+    """Return the evaluation split from either a DatasetDict or single dataset."""
+    if dataset is None:
+        raise RuntimeError("Expected dataset to be materialised before opinion evaluation.")
+
+    eval_split = preferred_split
+    available: List[str] = []
+    if hasattr(dataset, "keys"):
+        try:
+            available = list(dataset.keys())  # type: ignore[attr-defined]
+        except Exception:  # pylint: disable=broad-except
+            available = []
+    if available:
+        for candidate in (preferred_split, "validation", "eval", "test", "train"):
+            if candidate in available:
+                eval_split = candidate
+                break
+        else:
+            eval_split = available[0]
+        split_dataset = dataset[eval_split]  # type: ignore[index]
+    else:
+        split_dataset = dataset
+    return eval_split, split_dataset
+
+
+def _normalise_example_entry(
+    entry: Mapping[str, object],
+    *,
+    spec,
+    issue: str,
+    study: str,
+    hooks: CollectExampleHooks,
+) -> Mapping[str, object] | None:
+    """Return a participant payload when ``entry`` satisfies the study spec."""
+
+    before = hooks.float_parser(entry.get(spec.before_column))
+    after = hooks.float_parser(entry.get(spec.after_column))
+    if before is None or after is None:
+        return None
+    participant_id = str(entry.get("participant_id") or "").strip()
+    if not participant_id:
+        return None
+    document = hooks.document_builder(entry)
+    if not document:
+        return None
+    try:
+        step_index = int(entry.get("step_index") or -1)
+    except (TypeError, ValueError):
+        step_index = -1
+    return {
+        "participant_id": participant_id,
+        "document": document,
+        "before": before,
+        "after": after,
+        "issue": issue,
+        "study": study,
+        "step_index": step_index,
+        "raw": entry,
+    }
+
+
+def collect_examples(
+    rows: Sequence[Mapping[str, object]],
+    spec,
+    config: CollectExamplesConfig,
+) -> Tuple[List[Mapping[str, object]], int]:
+    """Return filtered participant examples for the provided study spec."""
+    per_participant: MutableMapping[str, Tuple[int, Mapping[str, object]]] = {}
+
+    for entry in rows:
+        issue = str(entry.get("issue") or "").strip()
+        study = str(entry.get("participant_study") or "").strip()
+        if not config.allows(issue, study):
+            continue
+        if study.lower() != spec.key.lower():
+            continue
+        payload = _normalise_example_entry(
+            entry,
+            spec=spec,
+            issue=issue,
+            study=study,
+            hooks=config.hooks,
+        )
+        if payload is None:
+            continue
+        participant_id = payload["participant_id"]
+        existing = per_participant.get(participant_id)
+        step_index = payload["step_index"]
+        if existing is None or step_index >= existing[0]:
+            per_participant[participant_id] = (step_index, payload)
+
+    retained = sorted(
+        (payload for _, payload in per_participant.values()),
+        key=lambda item: (item["participant_id"], item["step_index"]),
+    )
+    original_count = len(retained)
+    eval_max = config.eval_max
+    if eval_max and len(retained) > eval_max:
+        retained = retained[: eval_max]
+    return retained, original_count
+
+
+__all__ = [
+    "baseline_metrics",
+    "clip_prediction",
+    "collect_examples",
+    "CollectExampleHooks",
+    "CollectExamplesConfig",
+    "document_from_example",
+    "float_or_none",
+    "load_materialised_split",
+]

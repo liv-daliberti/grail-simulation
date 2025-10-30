@@ -275,6 +275,9 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Final</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.pipeline.prompts</span><span class="w"> </span><span class="kn">import</span> <span class="n">STRICT_NUMBERED_ANSWER_GUIDE</span>
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
 <span class="c1"># Azure OpenAI defaults (can be overridden via environment variables)</span>
@@ -312,11 +315,12 @@
 <span class="c1"># ---------------------------------------------------------------------------</span>
 <span class="n">_LOCAL_DATASET</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="s2">&quot;data&quot;</span> <span class="o">/</span> <span class="s2">&quot;cleaned_grail&quot;</span>
 <span class="k">if</span> <span class="s2">&quot;GPT4O_DATASET&quot;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
-    <span class="n">DATASET_NAME</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;GPT4O_DATASET&quot;</span><span class="p">]</span>
+    <span class="n">_dataset_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;GPT4O_DATASET&quot;</span><span class="p">]</span>
 <span class="k">elif</span> <span class="n">_LOCAL_DATASET</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-    <span class="n">DATASET_NAME</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">_LOCAL_DATASET</span><span class="p">)</span>
+    <span class="n">_dataset_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">_LOCAL_DATASET</span><span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
-    <span class="n">DATASET_NAME</span> <span class="o">=</span> <span class="s2">&quot;od2961/grail-interactions&quot;</span>
+    <span class="n">_dataset_name</span> <span class="o">=</span> <span class="s2">&quot;od2961/grail-interactions&quot;</span>
+<span class="n">DATASET_NAME</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">_dataset_name</span>
 <span class="n">TRAIN_SPLIT</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;GPT4O_TRAIN_SPLIT&quot;</span><span class="p">,</span> <span class="s2">&quot;train&quot;</span><span class="p">)</span>
 <span class="n">EVAL_SPLIT</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;GPT4O_EVAL_SPLIT&quot;</span><span class="p">,</span> <span class="s2">&quot;validation&quot;</span><span class="p">)</span>
 <span class="n">PROMPT_COLUMN</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;GPT4O_PROMPT_COLUMN&quot;</span><span class="p">,</span> <span class="s2">&quot;state_text&quot;</span><span class="p">)</span>
@@ -357,21 +361,7 @@
     <span class="s2">&quot;    – Do NOT output the name, id, or any extra text—ONLY the number.</span><span class="se">\n</span><span class="s2">&quot;</span>
     <span class="s2">&quot;    – Do NOT include punctuation, quotes,</span><span class="se">\n</span><span class="s2">&quot;</span>
     <span class="s2">&quot;      or a period after the number.</span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="s2">&quot;Examples of valid &lt;answer&gt;:</span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="s2">&quot;  &lt;think&gt;</span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="s2">&quot;  WHY YOU THINK THIS IS THE RIGHT CHOICE</span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="s2">&quot;  &lt;/think&gt;</span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="s2">&quot;  &lt;answer&gt;</span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="s2">&quot;  3</span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="s2">&quot;  &lt;/answer&gt;</span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="s2">&quot;Examples of INVALID &lt;answer&gt; (never do these):</span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="s2">&quot;  &lt;think&gt;&lt;/think&gt;&lt;answer&gt;3.&lt;/answer&gt;                 ← trailing period</span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="s2">&quot;  &lt;think&gt;&lt;/think&gt;&lt;answer&gt;</span><span class="se">\&quot;</span><span class="s2">3</span><span class="se">\&quot;</span><span class="s2">&lt;/answer&gt;                ← quoted</span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="s2">&quot;  &lt;think&gt;&lt;/think&gt;&lt;answer&gt;Option 3&lt;/answer&gt;           ← extra words</span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="s2">&quot;  &lt;think&gt;&lt;/think&gt;&lt;answer&gt;Parkland …&lt;/answer&gt;         ← name instead of number</span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="s2">&quot;  You only have 100 tokens to think and 50 tokens to answer.</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">STRICT_NUMBERED_ANSWER_GUIDE</span><span class="si">}</span><span class="s2">&quot;</span>
 <span class="p">)</span>
 
 <span class="n">OPINION_SYSTEM_PROMPT</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;You estimate how a viewer’s opinion index changes</span>

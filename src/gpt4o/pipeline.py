@@ -27,11 +27,11 @@ from typing import List, Sequence, Tuple
 
 from common.cli.args import add_comma_separated_argument
 from common.cli.options import add_log_level_argument, add_overwrite_argument, add_studies_argument
+from common.pipeline.gpt4o_models import PipelinePaths, SweepConfig, SweepOutcome
 
 from .opinion import OpinionEvaluationResult, run_opinion_evaluations
 from .pipeline_cache import run_reports_stage
-from common.pipeline.gpt4o_models import PipelinePaths, SweepConfig, SweepOutcome
-from .pipeline_reports import ReportContext, run_report_generation
+from .pipeline_reports import ReportContext, trigger_report_generation
 from .pipeline_sweeps import promote_sweep_results, run_sweeps, select_best
 
 LOGGER = logging.getLogger("gpt4o.pipeline")
@@ -415,13 +415,7 @@ def _run_full_pipeline(
 
     LOGGER.info("Final metrics stored under %s", final_dir)
     context = ReportContext(reports_dir=paths.reports_dir, repo_root=_repo_root())
-    run_report_generation(
-        context=context,
-        outcomes=outcomes,
-        selected=selected,
-        final_metrics=final_metrics,
-        opinion_result=opinion_result,
-    )
+    trigger_report_generation(context, outcomes, selected, final_metrics, opinion_result)
     return opinion_result
 
 

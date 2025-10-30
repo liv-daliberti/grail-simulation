@@ -31,6 +31,7 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 import pandas as pd
+from common.opinion import float_or_none
 try:  # pragma: no cover - optional dependency
     from graphviz import Digraph
 except ImportError:  # pragma: no cover - optional dependency
@@ -82,6 +83,25 @@ class TreeData:
     edges: List[TreeEdge]
 
 
+@dataclass(frozen=True)
+class OpinionFieldSpec:
+    """Specification describing opinion score columns used by a viewer cohort."""
+
+    before_keys: Tuple[str, ...]
+    after_keys: Tuple[str, ...]
+    label: str
+
+
+@dataclass
+class OpinionAnnotation:
+    """Resolved opinion values ready for annotation on a session graph."""
+
+    issue: str
+    before_value: Optional[float]
+    after_value: Optional[float]
+    label: str
+
+
 class SafeDict(dict):
     """Dictionary that returns placeholder values for missing template keys.
 
@@ -98,6 +118,10 @@ class SafeDict(dict):
         :rtype: str
         """
         return ""
+
+
+DEFAULT_LABEL_TEMPLATE = "{originTitle}\n{id}"
+SESSION_DEFAULT_LABEL_TEMPLATE = "{title}"
 
 
 def _natural_sort_key(value: str) -> Tuple[int, str, str]:
@@ -129,6 +153,103 @@ def _wrap_text(text: str, width: Optional[int]) -> str:
     if not width or width <= 0:
         return text
     return "\n".join(textwrap.wrap(text, width))
+
+
+_OPINION_FIELD_MAP: Dict[str, OpinionFieldSpec] = {
+    "gun_control": OpinionFieldSpec(
+        before_keys=("gun_index", "gun_index_w1"),
+        after_keys=("gun_index_2", "gun_index_w2"),
+        label="Gun regulation support",
+    ),
+    "minimum_wage": OpinionFieldSpec(
+        before_keys=("mw_index_w1",),
+        after_keys=("mw_index_w2",),
+        label="Minimum wage support",
+    ),
+}
+
+
+def _first_numeric(sources: Sequence[Mapping[str, object]], keys: Sequence[str]) -> Optional[float]:
+    """Return the first numeric value located across ``keys`` and ``sources``."""
+
+    for key in keys:
+        for source in sources:
+            if not isinstance(source, Mapping):
+                continue
+            if key in source:
+                numeric = float_or_none(source[key])
+                if numeric is not None:
+                    return numeric
+    return None
+
+
+def _format_decimal(value: float) -> str:
+    """Format ``value`` with up to two decimal places, trimming trailing zeros."""
+
+    formatted = f"{value:.2f}"
+    if "." in formatted:
+        formatted = formatted.rstrip("0").rstrip(".")
+    return formatted
+
+
+def _opinion_label(
+    base_label: str,
+    stage: str,
+    value: Optional[float],
+    *,
+    delta: Optional[float] = None,
+) -> Optional[str]:
+    """Construct a human-readable label for an opinion score stage."""
+
+    if value is None:
+        return None
+    label = f"{stage} {base_label}: {_format_decimal(value)}"
+    if delta is not None and abs(delta) >= 0.005:
+        signed_delta = f"+{_format_decimal(delta)}" if delta > 0 else _format_decimal(delta)
+        label = f"{label} ({signed_delta})"
+    return label
+
+
+def _extract_opinion_annotation(
+    rows: Sequence[Mapping[str, object]],
+) -> Optional[OpinionAnnotation]:
+    """Resolve opinion indices for the viewer represented by ``rows``."""
+
+    if not rows:
+        return None
+    normalized_issue = ""
+    for row in rows:
+        issue_value = str(row.get("issue") or "").strip().lower()
+        if issue_value:
+            normalized_issue = issue_value
+            break
+    if not normalized_issue:
+        return None
+    spec = _OPINION_FIELD_MAP.get(normalized_issue)
+    if spec is None:
+        return None
+
+    before_value: Optional[float] = None
+    after_value: Optional[float] = None
+    for row in rows:
+        sources: List[Mapping[str, object]] = [row]
+        selected = row.get("selected_survey_row")
+        if isinstance(selected, Mapping):
+            sources.append(selected)
+        if before_value is None:
+            before_value = _first_numeric(sources, spec.before_keys)
+        if after_value is None:
+            after_value = _first_numeric(sources, spec.after_keys)
+        if before_value is not None and after_value is not None:
+            break
+    if before_value is None and after_value is None:
+        return None
+    return OpinionAnnotation(
+        issue=normalized_issue,
+        before_value=before_value,
+        after_value=after_value,
+        label=spec.label,
+    )
 
 
 def parse_issue_counts(spec: str) -> Dict[str, int]:
@@ -299,6 +420,7 @@ def format_node_label(
     metadata: Mapping[str, Mapping[str, object]],
     template: str,
     wrap_width: Optional[int],
+    append_id_if_missing: bool = True,
 ) -> str:
     """Render a node label based on the configured template.
 
@@ -316,6 +438,8 @@ def format_node_label(
     :type template: str
     :param wrap_width: Optional character width used to wrap the label text.
     :type wrap_width: int | None
+    :param append_id_if_missing: Whether to append ``node_id`` when the template omits it.
+    :type append_id_if_missing: bool
     :returns: Formatted label string with reasonable fallbacks and ``wrap_width`` applied.
     :rtype: str
     """
@@ -327,7 +451,7 @@ def format_node_label(
     if not label:
         label = str(context.get("originTitle") or context.get("title") or node_id)
     label = _wrap_text(label, wrap_width)
-    if "{id}" not in template and node_id not in label:
+    if append_id_if_missing and "{id}" not in template and node_id not in label:
         label = f"{label}\n({node_id})"
     return label
 
@@ -787,8 +911,55 @@ def build_session_graph(
         rows, key=lambda r: (r.get("display_step") or r.get("step_index") or 0)
     )
 
+    opinion_annotation = _extract_opinion_annotation(ordered_rows)
+    initial_opinion_node: Optional[str] = None
+    final_opinion_node: Optional[str] = None
+    initial_label: Optional[str] = None
+    final_label: Optional[str] = None
+    if opinion_annotation:
+        delta = None
+        if (
+            opinion_annotation.before_value is not None
+            and opinion_annotation.after_value is not None
+        ):
+            delta = opinion_annotation.after_value - opinion_annotation.before_value
+        initial_label = _opinion_label(
+            opinion_annotation.label,
+            "Initial",
+            opinion_annotation.before_value,
+        )
+        final_label = _opinion_label(
+            opinion_annotation.label,
+            "Final",
+            opinion_annotation.after_value,
+            delta=delta,
+        )
+        if initial_label:
+            initial_opinion_node = "opinion_initial"
+            graph.node(
+                initial_opinion_node,
+                label=initial_label,
+                shape="box",
+                style="filled,bold",
+                fillcolor="#fbeaea",
+                color="#bf616a",
+                fontname="Helvetica",
+            )
+        if final_label:
+            final_opinion_node = "opinion_final"
+            graph.node(
+                final_opinion_node,
+                label=final_label,
+                shape="box",
+                style="filled,bold",
+                fillcolor="#fbeaea",
+                color="#bf616a",
+                fontname="Helvetica",
+            )
+
     current_nodes: Dict[int, str] = {}
     chosen_nodes: Dict[int, str] = {}
+    chosen_option_details: Dict[int, Tuple[str, Mapping[str, object]]] = {}
 
     for row in ordered_rows:
         step = int(row.get("display_step") or row.get("step_index") or (len(current_nodes) + 1))
@@ -814,6 +985,7 @@ def build_session_graph(
             metadata=metadata,
             template=label_template,
             wrap_width=wrap_width,
+            append_id_if_missing=False,
         )
         node_attrs = {"shape": "ellipse", "style": "filled", "fillcolor": "#eef3ff"}
         if current_id in highlight_set:
@@ -851,11 +1023,13 @@ def build_session_graph(
                 metadata=metadata,
                 template=label_template,
                 wrap_width=wrap_width,
+                append_id_if_missing=False,
             )
             option_attrs = {"shape": "box", "style": "rounded,filled", "fillcolor": "#ffffff"}
             if option_id == chosen_id:
                 option_attrs.update({"fillcolor": "#d7f5d0", "penwidth": "2", "color": "#2d9c4a"})
                 chosen_option_node = option_node_key
+                chosen_option_details[step] = (option_id, dict(option_data))
             elif option_id in highlight_set:
                 option_attrs.update({"color": "#bf616a", "penwidth": "2"})
             graph.node(option_node_key, label=option_label, **option_attrs)
@@ -885,6 +1059,54 @@ def build_session_graph(
                 label="selected",
                 fontsize="10",
             )
+
+    if initial_opinion_node and ordered_steps:
+        first_current_node = current_nodes.get(ordered_steps[0])
+        if first_current_node:
+            graph.edge(
+                initial_opinion_node,
+                first_current_node,
+                color="#bf616a",
+                penwidth="2.5",
+            )
+    terminal_opinion_source: Optional[str] = None
+    if ordered_steps:
+        last_step = ordered_steps[-1]
+        terminal_opinion_source = current_nodes.get(last_step)
+        chosen_node = chosen_nodes.get(last_step)
+        chosen_detail = chosen_option_details.get(last_step)
+        if chosen_node and chosen_detail:
+            option_id, option_data = chosen_detail
+            final_current_node = f"step{last_step}_selected"
+            final_current_label = format_node_label(
+                option_id,
+                node_data=option_data,
+                metadata=metadata,
+                template=label_template,
+                wrap_width=wrap_width,
+                append_id_if_missing=False,
+            )
+            final_current_attrs = {"shape": "ellipse", "style": "filled", "fillcolor": "#eef3ff"}
+            if option_id in highlight_set:
+                final_current_attrs.update({"color": "#bf616a", "penwidth": "2"})
+            graph.node(final_current_node, label=final_current_label, **final_current_attrs)
+            graph.edge(
+                chosen_node,
+                final_current_node,
+                color="#2d9c4a",
+                penwidth="2.5",
+                style="dashed",
+                label="selected",
+                fontsize="10",
+            )
+            terminal_opinion_source = final_current_node
+    if final_opinion_node and terminal_opinion_source:
+        graph.edge(
+            terminal_opinion_source,
+            final_opinion_node,
+            color="#bf616a",
+            penwidth="2.5",
+        )
 
     return graph
 
@@ -1010,7 +1232,7 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--label-template",
-        default="{originTitle}\n{id}",
+        default=DEFAULT_LABEL_TEMPLATE,
         help=(
             "Python format string used to render node labels. "
             "Available fields include any column from the tree CSV or metadata."
@@ -1109,6 +1331,11 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
         output_dir = args.batch_output_dir
         output_dir.mkdir(parents=True, exist_ok=True)
         output_format = args.format or "svg"
+        session_label_template = (
+            SESSION_DEFAULT_LABEL_TEMPLATE
+            if args.label_template == DEFAULT_LABEL_TEMPLATE
+            else args.label_template
+        )
 
         emitted = 0
         for issue, count in issue_targets.items():
@@ -1127,7 +1354,7 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
                     session_rows = session_rows[: args.max_steps]
                 graph = build_session_graph(
                     session_rows,
-                    label_template=args.label_template,
+                    label_template=session_label_template,
                     wrap_width=args.wrap_width,
                     rankdir=args.rankdir,
                     engine=args.engine,
@@ -1153,9 +1380,14 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
             issue=args.issue,
             max_steps=args.max_steps,
         )
+        session_label_template = (
+            SESSION_DEFAULT_LABEL_TEMPLATE
+            if args.label_template == DEFAULT_LABEL_TEMPLATE
+            else args.label_template
+        )
         graph = build_session_graph(
             session_rows,
-            label_template=args.label_template,
+            label_template=session_label_template,
             wrap_width=args.wrap_width,
             rankdir=args.rankdir,
             engine=args.engine,

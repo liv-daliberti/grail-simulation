@@ -410,7 +410,10 @@ def prepare_sweep_execution(
 
     task_id = cli_task_id
     if task_id is None:
-        env_value = os.environ.get(env_var)
+        env_value_raw = os.environ.get(env_var)
+        env_value = env_value_raw.strip() if isinstance(env_value_raw, str) else env_value_raw
+        if isinstance(env_value, str) and not env_value:
+            env_value = None
         if env_value is None:
             raise RuntimeError(
                 "Sweep stage requires --sweep-task-id or the "
@@ -475,11 +478,31 @@ def execute_sweep_partitions(
     :param partitions: Ordered sequence of sweep partitions.
     :param logger: Logger used for diagnostics.
     :param options: Execution options controlling task selection logic.
-    :returns: Executed task id or ``None`` when no task is dispatched.
+    :returns: Executed task id or ``None`` when no task is dispatched. When neither a
+        CLI task id nor the expected environment variable is supplied, all pending
+        tasks are executed sequentially and ``None`` is returned.
     """
 
     options = options or SweepExecutionOptions()
     total_tasks = sum(partition.state.total_slots for partition in partitions)
+
+    cli_task_id = options.cli_task_id
+    env_value_raw = os.environ.get(options.env_var) if options.env_var else None
+    env_value = env_value_raw.strip() if isinstance(env_value_raw, str) else env_value_raw
+    if isinstance(env_value, str) and not env_value:
+        env_value = None
+    if cli_task_id is None and env_value is None:
+        if total_tasks == 0:
+            logger.info("No sweep tasks pending; existing metrics cover the grid.")
+            return None
+        logger.info(
+            "No sweep task id provided; executing all %d sweep tasks sequentially.",
+            total_tasks,
+        )
+        for task_index in range(total_tasks):
+            dispatch_sweep_task(partitions, task_id=task_index, logger=logger)
+        return None
+
     task_id = options.prepare(
         total_tasks=total_tasks,
         cli_task_id=options.cli_task_id,

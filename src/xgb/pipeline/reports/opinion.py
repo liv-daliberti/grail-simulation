@@ -1269,15 +1269,6 @@ def _write_opinion_report(
     write_markdown_lines(path, lines)
     # Emit CSV dump for downstream analysis
     _write_opinion_csv(directory, metrics)
-__all__ = [
-    "_OpinionPortfolioAccumulator",
-    "_WeightedMetricAccumulator",
-    "OpinionReportOptions",
-    "_extract_opinion_summary",
-    "_opinion_cross_study_diagnostics",
-    "_opinion_observations",
-    "_write_opinion_report",
-]
 
 
 def _write_opinion_csv(directory: Path, metrics: Mapping[str, Mapping[str, object]]) -> None:
@@ -1296,3 +1287,18 @@ def _write_opinion_csv(directory: Path, metrics: Mapping[str, Mapping[str, objec
                 summary, study_label=(summary.label or study_key)
             )
             writer.writerow(row)
+
+
+__all__ = [
+    name
+    for name in (
+        "_OpinionPortfolioAccumulator",
+        "_WeightedMetricAccumulator",
+        "OpinionReportOptions",
+        "_extract_opinion_summary",
+        "_opinion_cross_study_diagnostics",
+        "_opinion_observations",
+        "_write_opinion_report",
+    )
+    if name in globals()
+]

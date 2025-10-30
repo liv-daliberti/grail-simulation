@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=64
 #SBATCH --mem=256G
 #SBATCH --time=12:00:00
-#SBATCH --output=logs/slurm_%j.out
+#SBATCH --output=logs/grpo/slurm_%j.out
 
 set -euo pipefail
 
@@ -13,7 +13,7 @@ set -euo pipefail
 # Core paths (override via environment if needed)
 # ────────────────────────────────────────────────────────────────
 ROOT_DIR=${ROOT_DIR:-$PWD}
-LOG_DIR=${LOG_DIR:-"$ROOT_DIR/logs"}
+LOG_DIR=${LOG_DIR:-"$ROOT_DIR/logs/grpo"}
 RUN_NAME=${RUN_NAME:-Qwen1.5B-GRAIL}
 TIMESTAMP=${TIMESTAMP:-$(date +%Y%m%d_%H%M%S)}
 

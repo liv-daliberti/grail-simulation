@@ -120,7 +120,8 @@ All trainers load YAML recipes that share a common schema:
 
 Metrics stream to stdout and Weights & Biases when the relevant environment
 variables or recipe entries (`wandb_project`, `wandb_entity`) are set. Local logs
-land in `logs/train_*`; accelerator outputs and checkpoints follow the recipe’s
+land under `${LOG_DIR:-logs/grpo}` (for example `logs/grpo/train_*` when using
+`training-grpo.sh`); accelerator outputs and checkpoints follow the recipe’s
 `output_dir`.
 
 ## Workflow checklist

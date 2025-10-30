@@ -23,9 +23,9 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 import numpy as np
 
 from common.evaluation.utils import (
-    BootstrapSummaryConfig,
-    build_participant_bootstrap_summary,
+    BootstrapCounts,
     safe_div,
+    summarise_grouped_accuracy_from_counts,
 )
 
 from .evaluation_records import collect_prediction_records
@@ -69,9 +69,6 @@ def bootstrap_uncertainty(  # pylint: disable=too-many-locals
     if len(grouped) < 2 or not elig_indices:
         return None
 
-    keys = list(grouped.keys())
-    rng = np.random.default_rng(seed)
-
     def _acc_for_indices(indices: Sequence[int]) -> float:
         """Compute model accuracy for the given record ``indices``.
 
@@ -96,27 +93,19 @@ def bootstrap_uncertainty(  # pylint: disable=too-many-locals
                 correct += 1
         return correct / len(indices) if indices else 0.0
 
-    model_samples: List[float] = []
-    baseline_samples: List[float] = []
-    for _ in range(replicates):
-        sampled_rows: List[int] = []
-        sampled_group_indices = rng.integers(0, len(keys), size=len(keys))
-        for gidx in sampled_group_indices:
-            sampled_rows.extend(grouped[keys[gidx]])
-        model_samples.append(_acc_for_indices(sampled_rows))
-        if baseline_index is not None:
-            baseline_samples.append(_baseline_acc_for_indices(sampled_rows))
+    baseline_metric = None
+    if baseline_index is not None:
+        baseline_metric = _baseline_acc_for_indices
 
-    summary_config = BootstrapSummaryConfig(
-        n_groups=len(grouped),
-        n_rows=len(elig_indices),
-        n_bootstrap=replicates,
-        seed=seed,
-    )
-    return build_participant_bootstrap_summary(
-        model_samples=model_samples,
-        baseline_samples=baseline_samples or None,
-        summary_config=summary_config,
+    return summarise_grouped_accuracy_from_counts(
+        grouped=grouped,
+        counts=BootstrapCounts(
+            n_rows=len(elig_indices),
+            n_bootstrap=replicates,
+            seed=seed,
+        ),
+        model_metric=_acc_for_indices,
+        baseline_metric=baseline_metric,
     )
 
 

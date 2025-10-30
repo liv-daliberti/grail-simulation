@@ -17,7 +17,7 @@ ensure_datasets_stub()
 def test_parse_tokens_normalises_entries_and_handles_all_keyword() -> None:
     """The helper should keep ordering while clearing lowercase set on ``all``."""
 
-    tokens, lowered = opinion._parse_tokens("alpha, Bravo , all")  # pylint: disable=protected-access
+    tokens, lowered = opinion.parse_tokens("alpha, Bravo , all")
     assert tokens == ["alpha", "Bravo", "all"]
     assert lowered == set()
 
@@ -34,7 +34,7 @@ def test_parse_tokens_normalises_entries_and_handles_all_keyword() -> None:
 def test_float_or_none_handles_invalid_inputs(raw: object, expected: float | None) -> None:
     """Numeric parsing should discard invalid values while preserving floats."""
 
-    result = opinion._float_or_none(raw)  # pylint: disable=protected-access
+    result = opinion.float_or_none(raw)
     if expected is None:
         assert result is None
     else:
@@ -50,7 +50,7 @@ def test_document_from_example_combines_profile_context_and_titles() -> None:
         "current_video_title": "Current Title",
         "next_video_title": "Next Title",
     }
-    document = opinion._document_from_example(example)  # pylint: disable=protected-access
+    document = opinion.document_from_example(example)
     assert "Viewer profile:\nProfile text" in document
     assert "Context:\nContext line" in document
     assert "Currently watching: Current Title" in document
@@ -68,7 +68,7 @@ def test_document_from_example_combines_profile_context_and_titles() -> None:
 def test_clip_prediction_enforces_bounds(value: float, expected: float) -> None:
     """Predictions should be clipped to the inclusive [1, 7] interval."""
 
-    assert opinion._clip_prediction(value) == pytest.approx(expected)  # pylint: disable=protected-access
+    assert opinion.clip_prediction(value) == pytest.approx(expected)
 
 
 def test_baseline_metrics_matches_expected_statistics() -> None:
@@ -76,7 +76,7 @@ def test_baseline_metrics_matches_expected_statistics() -> None:
 
     truth_before = [2.0, 3.0, 4.0]
     truth_after = [4.0, 6.0, 5.0]
-    metrics = opinion._baseline_metrics(truth_before, truth_after)  # pylint: disable=protected-access
+    metrics = opinion.baseline_metrics(truth_before, truth_after)
 
     assert metrics["global_mean_after"] == pytest.approx(sum(truth_after) / len(truth_after))
     assert metrics["mae_global_mean_after"] == pytest.approx(2.0 / 3.0)
@@ -87,7 +87,6 @@ def test_resolve_spec_keys_defaults_to_known_specs() -> None:
     """Omitting overrides should fall back to the default opinion study list."""
 
     expected = [spec.key for spec in opinion.DEFAULT_SPECS]
-    assert opinion._resolve_spec_keys(None) == expected  # pylint: disable=protected-access
-
-    override = opinion._resolve_spec_keys(" first , second ")  # pylint: disable=protected-access
+    assert opinion.resolve_spec_keys(None) == expected
+    override = opinion.resolve_spec_keys(" first , second ")
     assert override == ["first", "second"]

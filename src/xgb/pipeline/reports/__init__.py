@@ -29,7 +29,11 @@ from .catalog import _write_catalog_report
 from .features import _write_feature_report
 from .hyperparameter import _write_hyperparameter_report
 from .next_video import _extract_next_video_summary, _write_next_video_report
-from .opinion import OpinionReportOptions, _extract_opinion_summary, _write_opinion_report
+from .opinion import (
+    OpinionReportOptions as _OpinionReportOptions,
+    _extract_opinion_summary,
+    _write_opinion_report,
+)
 from .runner import OpinionReportData, ReportSections, SweepReportData, _write_reports
 from .shared import (
     _format_shell_command,
@@ -39,27 +43,33 @@ from .shared import (
     _xgb_opinion_command,
 )
 
+OpinionReportOptions = _OpinionReportOptions
+
 __all__ = [
-    "_format_float",
-    "_format_optional_float",
-    "_format_delta",
-    "_format_count",
-    "_format_ratio",
-    "_extract_next_video_summary",
-    "_write_next_video_report",
-    "_extract_opinion_summary",
-    "_write_opinion_report",
-    "OpinionReportOptions",
-    "_write_reports",
-    "_write_catalog_report",
-    "_write_feature_report",
-    "_write_hyperparameter_report",
-    "_slugify_label",
-    "_format_shell_command",
-    "_xgb_next_video_command",
-    "_xgb_opinion_command",
-    "SweepReportData",
-    "OpinionReportData",
-    "ReportSections",
-    "_write_disabled_report",
+    name
+    for name in (
+        "_format_float",
+        "_format_optional_float",
+        "_format_delta",
+        "_format_count",
+        "_format_ratio",
+        "_extract_next_video_summary",
+        "_write_next_video_report",
+        "_extract_opinion_summary",
+        "_write_opinion_report",
+        "OpinionReportOptions",
+        "_write_reports",
+        "_write_catalog_report",
+        "_write_feature_report",
+        "_write_hyperparameter_report",
+        "_slugify_label",
+        "_format_shell_command",
+        "_xgb_next_video_command",
+        "_xgb_opinion_command",
+        "SweepReportData",
+        "OpinionReportData",
+        "ReportSections",
+        "_write_disabled_report",
+    )
+    if name in globals()
 ]

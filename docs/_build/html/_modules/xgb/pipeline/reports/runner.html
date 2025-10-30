@@ -286,7 +286,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.catalog</span><span class="w"> </span><span class="kn">import</span> <span class="n">_write_catalog_report</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.hyperparameter</span><span class="w"> </span><span class="kn">import</span> <span class="n">_write_hyperparameter_report</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.next_video</span><span class="w"> </span><span class="kn">import</span> <span class="n">_write_next_video_report</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.opinion</span><span class="w"> </span><span class="kn">import</span> <span class="n">_write_opinion_report</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.opinion</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpinionReportOptions</span><span class="p">,</span> <span class="n">_write_opinion_report</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.shared</span><span class="w"> </span><span class="kn">import</span> <span class="n">_write_disabled_report</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.features</span><span class="w"> </span><span class="kn">import</span> <span class="n">_write_feature_report</span>
 
@@ -404,11 +404,13 @@
         <span class="n">_write_opinion_report</span><span class="p">(</span>
             <span class="n">reports_dir</span> <span class="o">/</span> <span class="s2">&quot;opinion&quot;</span><span class="p">,</span>
             <span class="n">opinion</span><span class="o">.</span><span class="n">metrics</span><span class="p">,</span>
-            <span class="n">allow_incomplete</span><span class="o">=</span><span class="n">allow_incomplete</span><span class="p">,</span>
-            <span class="n">title</span><span class="o">=</span><span class="n">opinion</span><span class="o">.</span><span class="n">title</span><span class="p">,</span>
-            <span class="n">description_lines</span><span class="o">=</span><span class="n">opinion</span><span class="o">.</span><span class="n">description_lines</span><span class="p">,</span>
-            <span class="n">predictions_root</span><span class="o">=</span><span class="n">opinion</span><span class="o">.</span><span class="n">predictions_root</span><span class="p">,</span>
-            <span class="n">regenerate_plots</span><span class="o">=</span><span class="n">opinion</span><span class="o">.</span><span class="n">regenerate_plots</span><span class="p">,</span>
+            <span class="n">OpinionReportOptions</span><span class="p">(</span>
+                <span class="n">allow_incomplete</span><span class="o">=</span><span class="n">allow_incomplete</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="n">opinion</span><span class="o">.</span><span class="n">title</span><span class="p">,</span>
+                <span class="n">description_lines</span><span class="o">=</span><span class="n">opinion</span><span class="o">.</span><span class="n">description_lines</span><span class="p">,</span>
+                <span class="n">predictions_root</span><span class="o">=</span><span class="n">opinion</span><span class="o">.</span><span class="n">predictions_root</span><span class="p">,</span>
+                <span class="n">regenerate_plots</span><span class="o">=</span><span class="n">opinion</span><span class="o">.</span><span class="n">regenerate_plots</span><span class="p">,</span>
+            <span class="p">),</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">_write_disabled_report</span><span class="p">(</span>
@@ -420,11 +422,13 @@
         <span class="n">_write_opinion_report</span><span class="p">(</span>
             <span class="n">reports_dir</span> <span class="o">/</span> <span class="s2">&quot;opinion_from_next&quot;</span><span class="p">,</span>
             <span class="n">opinion_from_next</span><span class="o">.</span><span class="n">metrics</span><span class="p">,</span>
-            <span class="n">allow_incomplete</span><span class="o">=</span><span class="n">allow_incomplete</span><span class="p">,</span>
-            <span class="n">title</span><span class="o">=</span><span class="n">opinion_from_next</span><span class="o">.</span><span class="n">title</span><span class="p">,</span>
-            <span class="n">description_lines</span><span class="o">=</span><span class="n">opinion_from_next</span><span class="o">.</span><span class="n">description_lines</span><span class="p">,</span>
-            <span class="n">predictions_root</span><span class="o">=</span><span class="n">opinion_from_next</span><span class="o">.</span><span class="n">predictions_root</span><span class="p">,</span>
-            <span class="n">regenerate_plots</span><span class="o">=</span><span class="n">opinion_from_next</span><span class="o">.</span><span class="n">regenerate_plots</span><span class="p">,</span>
+            <span class="n">OpinionReportOptions</span><span class="p">(</span>
+                <span class="n">allow_incomplete</span><span class="o">=</span><span class="n">allow_incomplete</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="n">opinion_from_next</span><span class="o">.</span><span class="n">title</span><span class="p">,</span>
+                <span class="n">description_lines</span><span class="o">=</span><span class="n">opinion_from_next</span><span class="o">.</span><span class="n">description_lines</span><span class="p">,</span>
+                <span class="n">predictions_root</span><span class="o">=</span><span class="n">opinion_from_next</span><span class="o">.</span><span class="n">predictions_root</span><span class="p">,</span>
+                <span class="n">regenerate_plots</span><span class="o">=</span><span class="n">opinion_from_next</span><span class="o">.</span><span class="n">regenerate_plots</span><span class="p">,</span>
+            <span class="p">),</span>
         <span class="p">)</span>
     <span class="n">_write_feature_report</span><span class="p">(</span>
         <span class="n">reports_dir</span> <span class="o">/</span> <span class="s2">&quot;additional_features&quot;</span><span class="p">,</span>

@@ -665,6 +665,15 @@ def test_run_opinion_evaluations_reuses_cached_metrics(monkeypatch: pytest.Monke
     cached_payload = {study.key: {"mae_after": 0.33}}
     call_counter = {"count": 0}
 
+    prediction_path = (
+        context.opinion_out_dir
+        / "tfidf"
+        / study.key
+        / f"opinion_knn_{study.key}_validation.jsonl"
+    )
+    prediction_path.parent.mkdir(parents=True, exist_ok=True)
+    prediction_path.write_text("{}", encoding="utf-8")
+
     def fake_load_opinion(out_dir: Path, feature_space: str) -> dict:
         call_counter["count"] += 1
         assert out_dir == context.out_dir

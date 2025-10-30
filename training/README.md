@@ -6,7 +6,8 @@ described in the project README.
 ## Scripts
 
 - `training-grpo.sh` – launches the GRPO baseline with the ZeRO-3 accelerate
-  profile and optional discriminator disabled.
+  profile and optional discriminator disabled. Logs default to `logs/grpo/`
+  (override with `LOG_DIR`).
 - `training-grail.sh` – extends `training-grpo.sh` with the discriminator reward
   path used in the full GRAIL experiments.
 - `training-knn.sh` – SLURM array wrapper for the kNN slate baseline

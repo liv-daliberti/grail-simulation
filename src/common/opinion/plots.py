@@ -20,7 +20,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional, Sequence, Tuple
+from typing import Any, Callable, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -65,7 +65,7 @@ class OpinionHeatmapConfig:
 
 
 @dataclass(frozen=True)
-class HeatmapRenderParams:
+class HeatmapRenderParams:  # pylint: disable=too-many-instance-attributes
     """
     Aggregated rendering parameters forwarded to the plotting helper.
 
@@ -312,9 +312,81 @@ def plot_post_opinion_heatmap(
     )
 
 
+def make_change_heatmap_plotter(
+    *,
+    logger: Any,
+    log_prefix: str,
+    style: OpinionHeatmapStyle | None = None,
+) -> Callable[[Sequence[float], Sequence[float], Path], None]:
+    """
+    Build a callable that renders opinion-change heatmaps with shared settings.
+
+    :param logger: Logger instance used for informational messages.
+    :param log_prefix: Prefix prepended to log messages emitted during plotting.
+    :param style: Optional heatmap style overrides applied when plotting.
+    :returns: Callable that mirrors :func:`plot_opinion_change_heatmap`.
+    """
+
+    def _plot_change_heatmap(
+        *,
+        actual_changes: Sequence[float],
+        predicted_changes: Sequence[float],
+        output_path: Path,
+    ) -> None:
+        plot_opinion_change_heatmap(
+            actual_changes=actual_changes,
+            predicted_changes=predicted_changes,
+            output_path=output_path,
+            config=OpinionHeatmapConfig(
+                logger=logger,
+                log_prefix=log_prefix,
+                style=style,
+            ),
+        )
+
+    return _plot_change_heatmap
+
+
+def make_post_heatmap_plotter(
+    *,
+    logger: Any,
+    log_prefix: str,
+    style: OpinionHeatmapStyle | None = None,
+) -> Callable[[Sequence[float], Sequence[float], Path], None]:
+    """
+    Build a callable that renders post-study opinion heatmaps with shared settings.
+
+    :param logger: Logger instance used for informational messages.
+    :param log_prefix: Prefix prepended to log messages emitted during plotting.
+    :param style: Optional heatmap style overrides applied when plotting.
+    :returns: Callable that mirrors :func:`plot_post_opinion_heatmap`.
+    """
+
+    def _plot_post_heatmap(
+        *,
+        actual_after: Sequence[float],
+        predicted_after: Sequence[float],
+        output_path: Path,
+    ) -> None:
+        plot_post_opinion_heatmap(
+            actual_after=actual_after,
+            predicted_after=predicted_after,
+            output_path=output_path,
+            config=OpinionHeatmapConfig(
+                logger=logger,
+                log_prefix=log_prefix,
+                style=style,
+            ),
+        )
+
+    return _plot_post_heatmap
+
+
 __all__ = [
     "plot_opinion_change_heatmap",
     "plot_post_opinion_heatmap",
     "OpinionHeatmapConfig",
     "OpinionHeatmapStyle",
+    "make_change_heatmap_plotter",
+    "make_post_heatmap_plotter",
 ]

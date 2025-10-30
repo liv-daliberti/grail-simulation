@@ -25,10 +25,9 @@ from typing import Callable, List, Mapping, Optional, Sequence, Tuple
 
 from common.reports.utils import extract_curve_sections, extract_numeric_series
 from common.opinion.plots import (
-    OpinionHeatmapConfig,
     OpinionHeatmapStyle,
-    plot_opinion_change_heatmap,
-    plot_post_opinion_heatmap,
+    make_change_heatmap_plotter,
+    make_post_heatmap_plotter,
 )
 
 from .shared import LOGGER, _slugify_label, plt
@@ -479,47 +478,28 @@ def _plot_opinion_curve(  # pylint: disable=too-many-locals,too-many-return-stat
         return plot_path.as_posix()
 
 
-def _plot_opinion_change_heatmap(
-    *,
-    actual_changes: Sequence[float],
-    predicted_changes: Sequence[float],
-    output_path: Path,
-) -> None:
-    """Render a 2D histogram comparing predicted vs. actual opinion shifts."""
-    plot_opinion_change_heatmap(
-        actual_changes=actual_changes,
-        predicted_changes=predicted_changes,
-        output_path=output_path,
-        config=OpinionHeatmapConfig(
-            logger=LOGGER,
-            log_prefix="[XGB][OPINION]",
-        ),
-    )
+_plot_opinion_change_heatmap = make_change_heatmap_plotter(
+    logger=LOGGER,
+    log_prefix="[XGB][OPINION]",
+)
+_plot_opinion_change_heatmap.__doc__ = (
+    "Render a 2D histogram comparing predicted vs. actual opinion shifts."
+)
 
-
-def _plot_opinion_post_heatmap(
-    *,
-    actual_after: Sequence[float],
-    predicted_after: Sequence[float],
-    output_path: Path,
-) -> None:
-    """Render a 2D histogram comparing predicted vs. actual post-study indices."""
-    plot_post_opinion_heatmap(
-        actual_after=actual_after,
-        predicted_after=predicted_after,
-        output_path=output_path,
-        config=OpinionHeatmapConfig(
-            logger=LOGGER,
-            log_prefix="[XGB][OPINION]",
-            style=OpinionHeatmapStyle(
-                bins=40,
-                xlabel="Actual post-study opinion index",
-                ylabel="Predicted post-study opinion index",
-                title="Predicted vs. actual opinion index",
-                show_zero_guides=False,
-            ),
-        ),
-    )
+_plot_opinion_post_heatmap = make_post_heatmap_plotter(
+    logger=LOGGER,
+    log_prefix="[XGB][OPINION]",
+    style=OpinionHeatmapStyle(
+        bins=40,
+        xlabel="Actual post-study opinion index",
+        ylabel="Predicted post-study opinion index",
+        title="Predicted vs. actual opinion index",
+        show_zero_guides=False,
+    ),
+)
+_plot_opinion_post_heatmap.__doc__ = (
+    "Render a 2D histogram comparing predicted vs. actual post-study indices."
+)
 
 
 def _plot_opinion_error_histogram(

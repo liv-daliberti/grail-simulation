@@ -287,6 +287,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.opinion</span><span class="w"> </span><span class="kn">import</span> <span class="n">float_or_none</span>
 <span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">graphviz</span><span class="w"> </span><span class="kn">import</span> <span class="n">Digraph</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
@@ -344,6 +345,31 @@
 
 
 
+<div class="viewcode-block" id="OpinionFieldSpec">
+<a class="viewcode-back" href="../../api/visualization.html#visualization.recommendation_tree_viz.OpinionFieldSpec">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OpinionFieldSpec</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Specification describing opinion score columns used by a viewer cohort.&quot;&quot;&quot;</span>
+
+    <span class="n">before_keys</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+    <span class="n">after_keys</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="OpinionAnnotation">
+<a class="viewcode-back" href="../../api/visualization.html#visualization.recommendation_tree_viz.OpinionAnnotation">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OpinionAnnotation</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolved opinion values ready for annotation on a session graph.&quot;&quot;&quot;</span>
+
+    <span class="n">issue</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">before_value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+    <span class="n">after_value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
 <div class="viewcode-block" id="SafeDict">
 <a class="viewcode-back" href="../../api/visualization.html#visualization.recommendation_tree_viz.SafeDict">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SafeDict</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
@@ -394,6 +420,103 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="n">width</span> <span class="ow">or</span> <span class="n">width</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">text</span>
     <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">textwrap</span><span class="o">.</span><span class="n">wrap</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">width</span><span class="p">))</span>
+
+
+<span class="n">_OPINION_FIELD_MAP</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">OpinionFieldSpec</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;gun_control&quot;</span><span class="p">:</span> <span class="n">OpinionFieldSpec</span><span class="p">(</span>
+        <span class="n">before_keys</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;gun_index&quot;</span><span class="p">,</span> <span class="s2">&quot;gun_index_w1&quot;</span><span class="p">),</span>
+        <span class="n">after_keys</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;gun_index_2&quot;</span><span class="p">,</span> <span class="s2">&quot;gun_index_w2&quot;</span><span class="p">),</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Gun regulation support&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">&quot;minimum_wage&quot;</span><span class="p">:</span> <span class="n">OpinionFieldSpec</span><span class="p">(</span>
+        <span class="n">before_keys</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;mw_index_w1&quot;</span><span class="p">,),</span>
+        <span class="n">after_keys</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;mw_index_w2&quot;</span><span class="p">,),</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Minimum wage support&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_first_numeric</span><span class="p">(</span><span class="n">sources</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]],</span> <span class="n">keys</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the first numeric value located across ``keys`` and ``sources``.&quot;&quot;&quot;</span>
+
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">sources</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">source</span><span class="p">:</span>
+                <span class="n">numeric</span> <span class="o">=</span> <span class="n">float_or_none</span><span class="p">(</span><span class="n">source</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">numeric</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">numeric</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_format_decimal</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Format ``value`` with up to two decimal places, trimming trailing zeros.&quot;&quot;&quot;</span>
+
+    <span class="n">formatted</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;.&quot;</span> <span class="ow">in</span> <span class="n">formatted</span><span class="p">:</span>
+        <span class="n">formatted</span> <span class="o">=</span> <span class="n">formatted</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;0&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">formatted</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_opinion_label</span><span class="p">(</span>
+    <span class="n">base_label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">stage</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">delta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct a human-readable label for an opinion score stage.&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">base_label</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">_format_decimal</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">if</span> <span class="n">delta</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">abs</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mf">0.005</span><span class="p">:</span>
+        <span class="n">signed_delta</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;+</span><span class="si">{</span><span class="n">_format_decimal</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">delta</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">_format_decimal</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">signed_delta</span><span class="si">}</span><span class="s2">)&quot;</span>
+    <span class="k">return</span> <span class="n">label</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_extract_opinion_annotation</span><span class="p">(</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OpinionAnnotation</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve opinion indices for the viewer represented by ``rows``.&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">normalized_issue</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="n">issue_value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;issue&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">issue_value</span><span class="p">:</span>
+            <span class="n">normalized_issue</span> <span class="o">=</span> <span class="n">issue_value</span>
+            <span class="k">break</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">normalized_issue</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">spec</span> <span class="o">=</span> <span class="n">_OPINION_FIELD_MAP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">normalized_issue</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">before_value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">after_value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="n">sources</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="n">row</span><span class="p">]</span>
+        <span class="n">selected</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;selected_survey_row&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">selected</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+            <span class="n">sources</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">selected</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">before_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">before_value</span> <span class="o">=</span> <span class="n">_first_numeric</span><span class="p">(</span><span class="n">sources</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">before_keys</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">after_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">after_value</span> <span class="o">=</span> <span class="n">_first_numeric</span><span class="p">(</span><span class="n">sources</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">after_keys</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">before_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">after_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">break</span>
+    <span class="k">if</span> <span class="n">before_value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">after_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">OpinionAnnotation</span><span class="p">(</span>
+        <span class="n">issue</span><span class="o">=</span><span class="n">normalized_issue</span><span class="p">,</span>
+        <span class="n">before_value</span><span class="o">=</span><span class="n">before_value</span><span class="p">,</span>
+        <span class="n">after_value</span><span class="o">=</span><span class="n">after_value</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+    <span class="p">)</span>
 
 
 <div class="viewcode-block" id="parse_issue_counts">
@@ -1078,6 +1201,52 @@
         <span class="n">rows</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;display_step&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;step_index&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
     <span class="p">)</span>
 
+    <span class="n">opinion_annotation</span> <span class="o">=</span> <span class="n">_extract_opinion_annotation</span><span class="p">(</span><span class="n">ordered_rows</span><span class="p">)</span>
+    <span class="n">initial_opinion_node</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">final_opinion_node</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">initial_label</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">final_label</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">opinion_annotation</span><span class="p">:</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">opinion_annotation</span><span class="o">.</span><span class="n">before_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">opinion_annotation</span><span class="o">.</span><span class="n">after_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="n">delta</span> <span class="o">=</span> <span class="n">opinion_annotation</span><span class="o">.</span><span class="n">after_value</span> <span class="o">-</span> <span class="n">opinion_annotation</span><span class="o">.</span><span class="n">before_value</span>
+        <span class="n">initial_label</span> <span class="o">=</span> <span class="n">_opinion_label</span><span class="p">(</span>
+            <span class="n">opinion_annotation</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+            <span class="s2">&quot;Initial&quot;</span><span class="p">,</span>
+            <span class="n">opinion_annotation</span><span class="o">.</span><span class="n">before_value</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">final_label</span> <span class="o">=</span> <span class="n">_opinion_label</span><span class="p">(</span>
+            <span class="n">opinion_annotation</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+            <span class="s2">&quot;Final&quot;</span><span class="p">,</span>
+            <span class="n">opinion_annotation</span><span class="o">.</span><span class="n">after_value</span><span class="p">,</span>
+            <span class="n">delta</span><span class="o">=</span><span class="n">delta</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">initial_label</span><span class="p">:</span>
+            <span class="n">initial_opinion_node</span> <span class="o">=</span> <span class="s2">&quot;opinion_initial&quot;</span>
+            <span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="p">(</span>
+                <span class="n">initial_opinion_node</span><span class="p">,</span>
+                <span class="n">label</span><span class="o">=</span><span class="n">initial_label</span><span class="p">,</span>
+                <span class="n">shape</span><span class="o">=</span><span class="s2">&quot;box&quot;</span><span class="p">,</span>
+                <span class="n">style</span><span class="o">=</span><span class="s2">&quot;filled,bold&quot;</span><span class="p">,</span>
+                <span class="n">fillcolor</span><span class="o">=</span><span class="s2">&quot;#fbeaea&quot;</span><span class="p">,</span>
+                <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#bf616a&quot;</span><span class="p">,</span>
+                <span class="n">fontname</span><span class="o">=</span><span class="s2">&quot;Helvetica&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">final_label</span><span class="p">:</span>
+            <span class="n">final_opinion_node</span> <span class="o">=</span> <span class="s2">&quot;opinion_final&quot;</span>
+            <span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="p">(</span>
+                <span class="n">final_opinion_node</span><span class="p">,</span>
+                <span class="n">label</span><span class="o">=</span><span class="n">final_label</span><span class="p">,</span>
+                <span class="n">shape</span><span class="o">=</span><span class="s2">&quot;box&quot;</span><span class="p">,</span>
+                <span class="n">style</span><span class="o">=</span><span class="s2">&quot;filled,bold&quot;</span><span class="p">,</span>
+                <span class="n">fillcolor</span><span class="o">=</span><span class="s2">&quot;#fbeaea&quot;</span><span class="p">,</span>
+                <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#bf616a&quot;</span><span class="p">,</span>
+                <span class="n">fontname</span><span class="o">=</span><span class="s2">&quot;Helvetica&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
     <span class="n">current_nodes</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">chosen_nodes</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -1175,6 +1344,25 @@
                 <span class="n">style</span><span class="o">=</span><span class="s2">&quot;dashed&quot;</span><span class="p">,</span>
                 <span class="n">label</span><span class="o">=</span><span class="s2">&quot;selected&quot;</span><span class="p">,</span>
                 <span class="n">fontsize</span><span class="o">=</span><span class="s2">&quot;10&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">initial_opinion_node</span> <span class="ow">and</span> <span class="n">ordered_steps</span><span class="p">:</span>
+        <span class="n">first_current_node</span> <span class="o">=</span> <span class="n">current_nodes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ordered_steps</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">first_current_node</span><span class="p">:</span>
+            <span class="n">graph</span><span class="o">.</span><span class="n">edge</span><span class="p">(</span>
+                <span class="n">initial_opinion_node</span><span class="p">,</span>
+                <span class="n">first_current_node</span><span class="p">,</span>
+                <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#bf616a&quot;</span><span class="p">,</span>
+                <span class="n">penwidth</span><span class="o">=</span><span class="s2">&quot;2.5&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+    <span class="k">if</span> <span class="n">final_opinion_node</span> <span class="ow">and</span> <span class="n">ordered_steps</span><span class="p">:</span>
+        <span class="n">last_current_node</span> <span class="o">=</span> <span class="n">current_nodes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ordered_steps</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">last_current_node</span><span class="p">:</span>
+            <span class="n">graph</span><span class="o">.</span><span class="n">edge</span><span class="p">(</span>
+                <span class="n">last_current_node</span><span class="p">,</span>
+                <span class="n">final_opinion_node</span><span class="p">,</span>
+                <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#bf616a&quot;</span><span class="p">,</span>
+                <span class="n">penwidth</span><span class="o">=</span><span class="s2">&quot;2.5&quot;</span><span class="p">,</span>
             <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">graph</span></div>

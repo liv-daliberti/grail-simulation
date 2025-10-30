@@ -332,6 +332,25 @@
 
 
 
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_StudyPlotContext</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Context describing a feature-space/study combination for plot regeneration.</span>
+
+<span class="sd">    :ivar feature_dir: Output directory receiving generated artefacts.</span>
+<span class="sd">    :ivar feature_space: Feature-space identifier (e.g. ``tfidf``).</span>
+<span class="sd">    :ivar study_key: Study identifier.</span>
+<span class="sd">    :ivar predictions_root: Optional root directory for cached predictions.</span>
+<span class="sd">    :ivar asset_subdir: Subdirectory used when locating cached predictions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">feature_dir</span><span class="p">:</span> <span class="n">Path</span>
+    <span class="n">feature_space</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">study_key</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">predictions_root</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span>
+    <span class="n">asset_subdir</span><span class="p">:</span> <span class="nb">str</span>
+
+
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">_PredictionVectors</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Container for vectors used when regenerating opinion plots.&quot;&quot;&quot;</span>
@@ -457,11 +476,14 @@
         <span class="p">)</span>
         <span class="k">for</span> <span class="n">study_key</span><span class="p">,</span> <span class="n">payload</span> <span class="ow">in</span> <span class="n">per_feature</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">_refresh_study_plots</span><span class="p">(</span>
-                <span class="n">feature_dir</span><span class="o">=</span><span class="n">feature_dir</span><span class="p">,</span>
-                <span class="n">feature_space</span><span class="o">=</span><span class="n">feature_space</span><span class="p">,</span>
-                <span class="n">study_key</span><span class="o">=</span><span class="n">study_key</span><span class="p">,</span>
                 <span class="n">payload</span><span class="o">=</span><span class="n">payload</span><span class="p">,</span>
-                <span class="n">predictions_root</span><span class="o">=</span><span class="n">predictions_root</span><span class="p">,</span>
+                <span class="n">context</span><span class="o">=</span><span class="n">_StudyPlotContext</span><span class="p">(</span>
+                    <span class="n">feature_dir</span><span class="o">=</span><span class="n">feature_dir</span><span class="p">,</span>
+                    <span class="n">feature_space</span><span class="o">=</span><span class="n">feature_space</span><span class="p">,</span>
+                    <span class="n">study_key</span><span class="o">=</span><span class="n">study_key</span><span class="p">,</span>
+                    <span class="n">predictions_root</span><span class="o">=</span><span class="n">predictions_root</span><span class="p">,</span>
+                    <span class="n">asset_subdir</span><span class="o">=</span><span class="n">asset_subdir</span><span class="p">,</span>
+                <span class="p">),</span>
             <span class="p">)</span>
 
 
@@ -474,25 +496,47 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_refresh_study_plots</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">feature_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
-    <span class="n">feature_space</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">study_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">payload</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span>
-    <span class="n">predictions_root</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">_StudyPlotContext</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Rebuild opinion plots for a single feature-space/study pair.&quot;&quot;&quot;</span>
-    <span class="n">_plot_numeric_metrics</span><span class="p">(</span><span class="n">feature_dir</span><span class="p">,</span> <span class="n">study_key</span><span class="p">,</span> <span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;metrics_by_k&quot;</span><span class="p">))</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Rebuild opinion plots for a single feature-space/study pair.</span>
+
+<span class="sd">    :param payload: Metrics payload for the selected study.</span>
+<span class="sd">    :param context: Plotting context describing directories and feature metadata.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_plot_numeric_metrics</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">feature_dir</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">study_key</span><span class="p">,</span> <span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;metrics_by_k&quot;</span><span class="p">))</span>
     <span class="n">best_k</span> <span class="o">=</span> <span class="n">_extract_best_k</span><span class="p">(</span><span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;best_k&quot;</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">best_k</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">predictions_root</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">best_k</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">context</span><span class="o">.</span><span class="n">predictions_root</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span>
-    <span class="n">predictions_path</span> <span class="o">=</span> <span class="n">predictions_root</span> <span class="o">/</span> <span class="n">feature_space</span> <span class="o">/</span> <span class="n">study_key</span> <span class="o">/</span> <span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;opinion_knn_</span><span class="si">{</span><span class="n">study_key</span><span class="si">}</span><span class="s2">_validation.jsonl&quot;</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;opinion_knn_</span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">study_key</span><span class="si">}</span><span class="s2">_validation.jsonl&quot;</span>
+    <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">predictions_root</span>
+        <span class="o">/</span> <span class="n">context</span><span class="o">.</span><span class="n">asset_subdir</span>
+        <span class="o">/</span> <span class="n">context</span><span class="o">.</span><span class="n">feature_space</span>
+        <span class="o">/</span> <span class="n">context</span><span class="o">.</span><span class="n">study_key</span>
+        <span class="o">/</span> <span class="n">filename</span><span class="p">,</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">predictions_root</span> <span class="o">/</span> <span class="n">context</span><span class="o">.</span><span class="n">feature_space</span> <span class="o">/</span> <span class="n">context</span><span class="o">.</span><span class="n">study_key</span> <span class="o">/</span> <span class="n">filename</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="n">predictions_path</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">path</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">()),</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">predictions_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s2">&quot;[KNN][OPINION] Prediction archive missing for </span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2"> (checked: </span><span class="si">%s</span><span class="s2">).&quot;</span><span class="p">,</span>
+            <span class="n">context</span><span class="o">.</span><span class="n">feature_space</span><span class="p">,</span>
+            <span class="n">context</span><span class="o">.</span><span class="n">study_key</span><span class="p">,</span>
+            <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">return</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="n">_load_prediction_rows</span><span class="p">(</span>
+        <span class="n">predictions_path</span><span class="p">,</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">feature_space</span><span class="p">,</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">study_key</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">rows</span> <span class="o">=</span> <span class="n">_load_prediction_rows</span><span class="p">(</span><span class="n">predictions_path</span><span class="p">,</span> <span class="n">feature_space</span><span class="p">,</span> <span class="n">study_key</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">rows</span><span class="p">:</span>
         <span class="k">return</span>
     <span class="n">vectors</span> <span class="o">=</span> <span class="n">_build_prediction_vectors</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">best_k</span><span class="p">)</span>
-    <span class="n">_render_prediction_plots</span><span class="p">(</span><span class="n">feature_dir</span><span class="p">,</span> <span class="n">study_key</span><span class="p">,</span> <span class="n">vectors</span><span class="p">)</span>
+    <span class="n">_render_prediction_plots</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">feature_dir</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">study_key</span><span class="p">,</span> <span class="n">vectors</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_plot_numeric_metrics</span><span class="p">(</span>

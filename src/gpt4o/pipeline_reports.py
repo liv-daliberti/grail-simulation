@@ -25,8 +25,7 @@ from typing import Dict, List, Mapping, Sequence, Tuple
 
 from common.pipeline.io import write_markdown_lines
 from common.reports.utils import start_markdown_report
-
-from common.pipeline.gpt4o_models import PipelinePaths, SweepOutcome
+from common.pipeline.gpt4o_models import SweepOutcome
 from .opinion import OpinionEvaluationResult
 
 
@@ -36,6 +35,29 @@ class ReportContext:
 
     reports_dir: Path
     repo_root: Path
+
+
+def trigger_report_generation(
+    context: ReportContext,
+    outcomes: Sequence[SweepOutcome],
+    selected: SweepOutcome,
+    final_metrics: Mapping[str, object],
+    opinion_result: OpinionEvaluationResult | None,
+) -> None:
+    """
+    Convenience wrapper to invoke :func:`run_report_generation`.
+
+    Accepts positional arguments to simplify call sites that already gather the
+    required report inputs.
+    """
+
+    run_report_generation(
+        context=context,
+        outcomes=outcomes,
+        selected=selected,
+        final_metrics=final_metrics,
+        opinion_result=opinion_result,
+    )
 
 
 def run_report_generation(
@@ -191,7 +213,7 @@ def _build_sweep_table(
         "Selected",
     ]
     lines.append("| " + " | ".join(header_cells) + " |")
-    lines.append("| --- | ---: | ---: | ---: | ---: | ---: | --- |")
+    lines.append("| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |")
     for outcome in outcomes:
         mark = "✓" if outcome.config == selected.config else ""
         lines.append(
@@ -590,4 +612,9 @@ def _relative_path(base: Path, target: Path) -> Path:
         return target
 
 
-__all__ = ["ReportContext", "run_report_generation", "generate_reports"]
+__all__ = [
+    "ReportContext",
+    "trigger_report_generation",
+    "run_report_generation",
+    "generate_reports",
+]

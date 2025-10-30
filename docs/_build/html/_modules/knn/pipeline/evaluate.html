@@ -279,7 +279,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">List</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.pipeline.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">compose_cli_args</span><span class="p">,</span>
@@ -297,6 +298,23 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">ensure_dir</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;knn.pipeline.evaluate&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_opinion_prediction_paths</span><span class="p">(</span><span class="n">base_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">feature_space</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">study_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return candidate locations for cached opinion prediction archives.</span>
+
+<span class="sd">    Older runs stored predictions under ``&lt;out&gt;/&lt;feature&gt;/`` whereas newer</span>
+<span class="sd">    runs use ``&lt;out&gt;/opinion/&lt;feature&gt;/``. Report regeneration expects the</span>
+<span class="sd">    JSONL artefact to exist in either location, so we probe both when</span>
+<span class="sd">    deciding whether we can safely reuse cached metrics.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">filename</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;opinion_knn_</span><span class="si">{</span><span class="n">study_key</span><span class="si">}</span><span class="s2">_validation.jsonl&quot;</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">base_dir</span> <span class="o">/</span> <span class="s2">&quot;opinion&quot;</span> <span class="o">/</span> <span class="n">feature_space</span> <span class="o">/</span> <span class="n">study_key</span> <span class="o">/</span> <span class="n">filename</span><span class="p">,</span>
+        <span class="n">base_dir</span> <span class="o">/</span> <span class="n">feature_space</span> <span class="o">/</span> <span class="n">study_key</span> <span class="o">/</span> <span class="n">filename</span><span class="p">,</span>
+    <span class="p">]</span>
 
 <span class="c1"># pylint: disable=too-many-locals</span>
 <div class="viewcode-block" id="run_final_evaluations">
@@ -421,13 +439,22 @@
             <span class="n">selection</span> <span class="o">=</span> <span class="n">per_study</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">selection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">continue</span>
-            <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">reuse_existing</span> <span class="ow">and</span> <span class="n">study</span><span class="o">.</span><span class="n">key</span> <span class="ow">in</span> <span class="n">cached_metrics</span><span class="p">:</span>
+            <span class="n">prediction_paths</span> <span class="o">=</span> <span class="n">_opinion_prediction_paths</span><span class="p">(</span><span class="n">feature_out_dir</span><span class="p">,</span> <span class="n">feature_space</span><span class="p">,</span> <span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">predictions_cached</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">prediction_paths</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">reuse_existing</span> <span class="ow">and</span> <span class="n">study</span><span class="o">.</span><span class="n">key</span> <span class="ow">in</span> <span class="n">cached_metrics</span> <span class="ow">and</span> <span class="n">predictions_cached</span><span class="p">:</span>
                 <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                     <span class="s2">&quot;[OPINION][SKIP] feature=</span><span class="si">%s</span><span class="s2"> study=</span><span class="si">%s</span><span class="s2"> (metrics cached).&quot;</span><span class="p">,</span>
                     <span class="n">feature_space</span><span class="p">,</span>
                     <span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">reuse_existing</span> <span class="ow">and</span> <span class="n">study</span><span class="o">.</span><span class="n">key</span> <span class="ow">in</span> <span class="n">cached_metrics</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">predictions_cached</span><span class="p">:</span>
+                <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="s2">&quot;[OPINION][REFRESH] feature=</span><span class="si">%s</span><span class="s2"> study=</span><span class="si">%s</span><span class="s2"> cached metrics found but &quot;</span>
+                    <span class="s2">&quot;predictions missing; rerunning evaluation.&quot;</span><span class="p">,</span>
+                    <span class="n">feature_space</span><span class="p">,</span>
+                    <span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
+                <span class="p">)</span>
             <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[OPINION] study=</span><span class="si">%s</span><span class="s2"> issue=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">study</span><span class="o">.</span><span class="n">issue</span><span class="p">)</span>
             <span class="n">model_dir</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">if</span> <span class="n">feature_space</span> <span class="o">==</span> <span class="s2">&quot;word2vec&quot;</span><span class="p">:</span>
@@ -482,13 +509,22 @@
             <span class="n">selection</span> <span class="o">=</span> <span class="n">per_study</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">selection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">continue</span>
-            <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">reuse_existing</span> <span class="ow">and</span> <span class="n">study</span><span class="o">.</span><span class="n">key</span> <span class="ow">in</span> <span class="n">cached_metrics</span><span class="p">:</span>
+            <span class="n">prediction_paths</span> <span class="o">=</span> <span class="n">_opinion_prediction_paths</span><span class="p">(</span><span class="n">base_out_dir</span><span class="p">,</span> <span class="n">feature_space</span><span class="p">,</span> <span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">predictions_cached</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">prediction_paths</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">reuse_existing</span> <span class="ow">and</span> <span class="n">study</span><span class="o">.</span><span class="n">key</span> <span class="ow">in</span> <span class="n">cached_metrics</span> <span class="ow">and</span> <span class="n">predictions_cached</span><span class="p">:</span>
                 <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                     <span class="s2">&quot;[OPINION][FROM-NEXT][SKIP] feature=</span><span class="si">%s</span><span class="s2"> study=</span><span class="si">%s</span><span class="s2"> (metrics cached).&quot;</span><span class="p">,</span>
                     <span class="n">feature_space</span><span class="p">,</span>
                     <span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">reuse_existing</span> <span class="ow">and</span> <span class="n">study</span><span class="o">.</span><span class="n">key</span> <span class="ow">in</span> <span class="n">cached_metrics</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">predictions_cached</span><span class="p">:</span>
+                <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="s2">&quot;[OPINION][FROM-NEXT][REFRESH] feature=</span><span class="si">%s</span><span class="s2"> study=</span><span class="si">%s</span><span class="s2"> cached metrics &quot;</span>
+                    <span class="s2">&quot;found but predictions missing; rerunning evaluation.&quot;</span><span class="p">,</span>
+                    <span class="n">feature_space</span><span class="p">,</span>
+                    <span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
+                <span class="p">)</span>
             <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                 <span class="s2">&quot;[OPINION][FROM-NEXT] study=</span><span class="si">%s</span><span class="s2"> issue=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
                 <span class="n">study</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>

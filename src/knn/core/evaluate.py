@@ -29,17 +29,16 @@ from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 import numpy as np
-from numpy.random import default_rng
 
 from common.text.embeddings import SentenceTransformerConfig
 from common.visualization.matplotlib import plt
 from common.evaluation.utils import (
-    BootstrapSummaryConfig,
-    build_participant_bootstrap_summary,
+    BootstrapCounts,
     compose_issue_slug,
     group_key_for_example,
     prepare_dataset,
     safe_div,
+    summarise_grouped_accuracy_from_counts,
 )
 from common.prompts.docs import merge_default_extra_fields
 
@@ -327,29 +326,25 @@ def _bootstrap_uncertainty(
     if len(grouped) < 2:
         return None
 
-    keys = list(grouped.keys())
-    rng = default_rng(seed)
-    model_samples: List[float] = []
-    baseline_samples: List[float] = []
-    for _ in range(replicates):
-        sampled_rows: List[Mapping[str, Any]] = []
-        sampled_indices = rng.integers(0, len(keys), size=len(keys))
-        for key_idx in sampled_indices:
-            sampled_rows.extend(grouped[keys[key_idx]])
-        model_samples.append(_accuracy_for_rows(sampled_rows, best_k))
-        if baseline_index is not None:
-            baseline_samples.append(_baseline_accuracy_for_rows(sampled_rows, baseline_index))
+    def _model_metric(items: Sequence[Mapping[str, Any]]) -> float:
+        return _accuracy_for_rows(items, best_k)
 
-    summary_config = BootstrapSummaryConfig(
-        n_groups=len(grouped),
-        n_rows=len(eligible_rows),
-        n_bootstrap=replicates,
-        seed=seed,
-    )
-    return build_participant_bootstrap_summary(
-        model_samples=model_samples,
-        baseline_samples=baseline_samples or None,
-        summary_config=summary_config,
+    baseline_metric = None
+    if baseline_index is not None:
+        def _baseline_metric(items: Sequence[Mapping[str, Any]]) -> float:
+            return _baseline_accuracy_for_rows(items, baseline_index)
+
+        baseline_metric = _baseline_metric
+
+    return summarise_grouped_accuracy_from_counts(
+        grouped=grouped,
+        counts=BootstrapCounts(
+            n_rows=len(eligible_rows),
+            n_bootstrap=replicates,
+            seed=seed,
+        ),
+        model_metric=_model_metric,
+        baseline_metric=baseline_metric,
     )
 
 def parse_k_values(k_default: int, sweep: str) -> List[int]:

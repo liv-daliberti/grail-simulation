@@ -19,14 +19,10 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Dict, Sequence
+from typing import Dict
 
 from common.visualization.matplotlib import plt
-from common.opinion.plots import (
-    OpinionHeatmapConfig,
-    plot_opinion_change_heatmap,
-    plot_post_opinion_heatmap,
-)
+from common.opinion.plots import make_change_heatmap_plotter, make_post_heatmap_plotter
 
 LOGGER = logging.getLogger("knn.opinion")
 
@@ -72,58 +68,21 @@ def _plot_metric(
     plt.close()
 
 
-def _plot_change_heatmap(
-    *,
-    actual_changes: Sequence[float],
-    predicted_changes: Sequence[float],
-    output_path: Path,
-) -> None:
-    """
-    Render a 2D histogram comparing actual vs. predicted opinion shifts.
+_plot_change_heatmap = make_change_heatmap_plotter(
+    logger=LOGGER,
+    log_prefix="[OPINION]",
+)
+_plot_change_heatmap.__doc__ = (
+    "Render a 2D histogram comparing actual vs. predicted opinion shifts."
+)
 
-    :param actual_changes: Sequence of observed opinion deltas for participants.
-    :type actual_changes: Sequence[float]
-    :param predicted_changes: Predicted opinion deltas returned by the model.
-    :type predicted_changes: Sequence[float]
-    :param output_path: Filesystem path for the generated report or figure.
-    :type output_path: Path
-    """
-    plot_opinion_change_heatmap(
-        actual_changes=actual_changes,
-        predicted_changes=predicted_changes,
-        output_path=output_path,
-        config=OpinionHeatmapConfig(
-            logger=LOGGER,
-            log_prefix="[OPINION]",
-        ),
-    )
-
-
-def _plot_post_prediction_heatmap(
-    *,
-    actual_after: Sequence[float],
-    predicted_after: Sequence[float],
-    output_path: Path,
-) -> None:
-    """
-    Render a 2D histogram comparing actual vs. predicted post-study indices.
-
-    :param actual_after: Sequence of observed post-study opinion indices.
-    :type actual_after: Sequence[float]
-    :param predicted_after: Predicted post-study opinion indices returned by the model.
-    :type predicted_after: Sequence[float]
-    :param output_path: Filesystem path for the generated figure.
-    :type output_path: Path
-    """
-    plot_post_opinion_heatmap(
-        actual_after=actual_after,
-        predicted_after=predicted_after,
-        output_path=output_path,
-        config=OpinionHeatmapConfig(
-            logger=LOGGER,
-            log_prefix="[OPINION]",
-        ),
-    )
+_plot_post_prediction_heatmap = make_post_heatmap_plotter(
+    logger=LOGGER,
+    log_prefix="[OPINION]",
+)
+_plot_post_prediction_heatmap.__doc__ = (
+    "Render a 2D histogram comparing actual vs. predicted post-study indices."
+)
 
 
 __all__ = [

@@ -19,12 +19,13 @@ from __future__ import annotations
 
 from common.import_utils import install_package_aliases
 
-from . import executor, formatters, io, models, stage, types, utils
+from . import executor, formatters, io, models, prompts, stage, types, utils
 
 __all__ = [
     "executor",
     "formatters",
     "io",
+    "prompts",
     "models",
     "stage",
     "types",
@@ -35,6 +36,7 @@ _ALIAS_MODULES = {
     "pipeline_executor": ".executor",
     "pipeline_formatters": ".formatters",
     "pipeline_io": ".io",
+    "pipeline_prompts": ".prompts",
     "pipeline_models": ".models",
     "pipeline_stage": ".stage",
     "pipeline_types": ".types",

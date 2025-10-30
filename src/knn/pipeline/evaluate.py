@@ -189,7 +189,8 @@ def run_opinion_evaluations(
                 continue
             if context.reuse_existing and study.key in cached_metrics and not predictions_cached:
                 LOGGER.info(
-                    "[OPINION][REFRESH] feature=%s study=%s cached metrics found but predictions missing; rerunning evaluation.",
+                    "[OPINION][REFRESH] feature=%s study=%s cached metrics found but "
+                    "predictions missing; rerunning evaluation.",
                     feature_space,
                     study.key,
                 )
@@ -257,7 +258,8 @@ def run_opinion_from_next_evaluations(
                 continue
             if context.reuse_existing and study.key in cached_metrics and not predictions_cached:
                 LOGGER.info(
-                    "[OPINION][FROM-NEXT][REFRESH] feature=%s study=%s cached metrics found but predictions missing; rerunning evaluation.",
+                    "[OPINION][FROM-NEXT][REFRESH] feature=%s study=%s cached metrics "
+                    "found but predictions missing; rerunning evaluation.",
                     feature_space,
                     study.key,
                 )

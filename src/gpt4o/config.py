@@ -21,6 +21,8 @@ import os
 from pathlib import Path
 from typing import Final
 
+from common.pipeline.prompts import STRICT_NUMBERED_ANSWER_GUIDE
+
 # ---------------------------------------------------------------------------
 # Azure OpenAI defaults (can be overridden via environment variables)
 # ---------------------------------------------------------------------------
@@ -100,21 +102,7 @@ SYSTEM_PROMPT: str = (
     "    – Do NOT output the name, id, or any extra text—ONLY the number.\n"
     "    – Do NOT include punctuation, quotes,\n"
     "      or a period after the number.\n"
-    "\n"
-    "Examples of valid <answer>:\n"
-    "  <think>\n"
-    "  WHY YOU THINK THIS IS THE RIGHT CHOICE\n"
-    "  </think>\n"
-    "  <answer>\n"
-    "  3\n"
-    "  </answer>\n"
-    "\n"
-    "Examples of INVALID <answer> (never do these):\n"
-    "  <think></think><answer>3.</answer>                 ← trailing period\n"
-    "  <think></think><answer>\"3\"</answer>                ← quoted\n"
-    "  <think></think><answer>Option 3</answer>           ← extra words\n"
-    "  <think></think><answer>Parkland …</answer>         ← name instead of number\n"
-    "  You only have 100 tokens to think and 50 tokens to answer.\n"
+    f"{STRICT_NUMBERED_ANSWER_GUIDE}"
 )
 
 OPINION_SYSTEM_PROMPT: str = """You estimate how a viewer’s opinion index changes

@@ -268,6 +268,74 @@ available tree plotting interfaces and configuration knobs.</p>
 <p id="module-visualization">Visualization utilities for Grail Simulation reports.</p>
 <p id="module-visualization.recommendation_tree_viz">Visualization helpers for rendering Grail recommendation tree diagrams.</p>
 <dl class="py class">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.OpinionAnnotation">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">OpinionAnnotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">before_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree_viz.html#OpinionAnnotation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.OpinionAnnotation" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Resolved opinion values ready for annotation on a session graph.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>issue</strong> (<em>str</em>)</p></li>
+<li><p><strong>before_value</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>after_value</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>label</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.OpinionAnnotation.after_value">
+<span class="sig-name descname"><span class="pre">after_value</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.OpinionAnnotation.after_value" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.OpinionAnnotation.before_value">
+<span class="sig-name descname"><span class="pre">before_value</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.OpinionAnnotation.before_value" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.OpinionAnnotation.issue">
+<span class="sig-name descname"><span class="pre">issue</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.OpinionAnnotation.issue" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.OpinionAnnotation.label">
+<span class="sig-name descname"><span class="pre">label</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.OpinionAnnotation.label" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.OpinionFieldSpec">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">OpinionFieldSpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">before_keys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after_keys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree_viz.html#OpinionFieldSpec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.OpinionFieldSpec" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Specification describing opinion score columns used by a viewer cohort.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>before_keys</strong> (<em>Tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>)</p></li>
+<li><p><strong>after_keys</strong> (<em>Tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>)</p></li>
+<li><p><strong>label</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.OpinionFieldSpec.after_keys">
+<span class="sig-name descname"><span class="pre">after_keys</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.OpinionFieldSpec.after_keys" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.OpinionFieldSpec.before_keys">
+<span class="sig-name descname"><span class="pre">before_keys</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.OpinionFieldSpec.before_keys" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.OpinionFieldSpec.label">
+<span class="sig-name descname"><span class="pre">label</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.OpinionFieldSpec.label" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="visualization.recommendation_tree_viz.SafeDict">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">SafeDict</span></span><a class="reference internal" href="../_modules/visualization/recommendation_tree_viz.html#SafeDict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.SafeDict" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
@@ -678,6 +746,19 @@ setting <code class="xref py py-attr docutils literal notranslate"><span class="
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Visualization Utilities</a><ul>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.OpinionAnnotation"><code class="docutils literal notranslate"><span class="pre">OpinionAnnotation</span></code></a><ul>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.OpinionAnnotation.after_value"><code class="docutils literal notranslate"><span class="pre">OpinionAnnotation.after_value</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.OpinionAnnotation.before_value"><code class="docutils literal notranslate"><span class="pre">OpinionAnnotation.before_value</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.OpinionAnnotation.issue"><code class="docutils literal notranslate"><span class="pre">OpinionAnnotation.issue</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.OpinionAnnotation.label"><code class="docutils literal notranslate"><span class="pre">OpinionAnnotation.label</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.OpinionFieldSpec"><code class="docutils literal notranslate"><span class="pre">OpinionFieldSpec</span></code></a><ul>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.OpinionFieldSpec.after_keys"><code class="docutils literal notranslate"><span class="pre">OpinionFieldSpec.after_keys</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.OpinionFieldSpec.before_keys"><code class="docutils literal notranslate"><span class="pre">OpinionFieldSpec.before_keys</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.OpinionFieldSpec.label"><code class="docutils literal notranslate"><span class="pre">OpinionFieldSpec.label</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#visualization.recommendation_tree_viz.SafeDict"><code class="docutils literal notranslate"><span class="pre">SafeDict</span></code></a></li>
 <li><a class="reference internal" href="#visualization.recommendation_tree_viz.TreeData"><code class="docutils literal notranslate"><span class="pre">TreeData</span></code></a><ul>
 <li><a class="reference internal" href="#visualization.recommendation_tree_viz.TreeData.edges"><code class="docutils literal notranslate"><span class="pre">TreeData.edges</span></code></a></li>

@@ -360,6 +360,10 @@ def float_or_none(value: Any) -> Optional[float]:
     """
     if value is None:
         return None
+    if isinstance(value, str):
+        value = value.strip()
+        if not value:
+            return None
     try:
         number = float(value)
     except (TypeError, ValueError):

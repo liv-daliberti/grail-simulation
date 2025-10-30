@@ -31,13 +31,12 @@ from common.pipeline.gpt4o_models import (
     coerce_float,
     parse_config_label,
 )
-from .pipeline_reports import ReportContext, run_report_generation
+from .pipeline_reports import ReportContext, trigger_report_generation
 from .opinion import (
     OpinionArtifacts,
     OpinionEvaluationResult,
-    OpinionMetricBundle,
-    OpinionStudyResult,
     OpinionEvaluationRunner,
+    OpinionStudyResult,
 )
 from .utils import qa_log_path_for
 
@@ -227,15 +226,15 @@ def _load_opinion_result_from_disk(  # pylint: disable=too-many-locals
             predictions=predictions_path,
             qa_log=qa_log_path_for(study_dir),
         )
-        bundle = OpinionMetricBundle(metrics=metrics, baseline=baseline)
         studies[study_key] = OpinionStudyResult(
             study_key=study_key,
             study_label=study_label,
             issue=issue,
             participants=participants,
             eligible=eligible,
+            metrics=metrics,
+            baseline=baseline,
             artifacts=artifacts,
-            metric_bundle=bundle,
         )
 
     if not studies:
@@ -277,13 +276,7 @@ def run_reports_stage(paths: PipelinePaths, *, repo_root: Path) -> None:
     opinion_result = _load_opinion_result_from_disk(paths, selected.config.label())
 
     context = ReportContext(reports_dir=paths.reports_dir, repo_root=repo_root)
-    run_report_generation(
-        context=context,
-        outcomes=outcomes,
-        selected=selected,
-        final_metrics=final_metrics,
-        opinion_result=opinion_result,
-    )
+    trigger_report_generation(context, outcomes, selected, final_metrics, opinion_result)
     LOGGER.info("GPT-4o reports refreshed at %s.", paths.reports_dir)
 
 

@@ -47,6 +47,7 @@ from .opinion import (
     OpinionPromptSettings,
     OpinionStudyFiles,
     OpinionStudyResult,
+    OpinionStudySummary,
     run_opinion_evaluation,
 )
 from .reports import generate_reports
@@ -455,13 +456,16 @@ def _build_opinion_study(study_dir: Path) -> OpinionStudyResult | None:
         predictions=study_dir / "predictions.jsonl",
         qa_log=study_dir / "qa.log",
     )
-    return OpinionStudyResult(
-        study=spec,
+    summary = OpinionStudySummary(
         metrics=metrics,
         baseline=payload.get("baseline", {}),
-        files=files,
         participants=int(metrics.get("participants") or 0),
         eligible=int(metrics.get("eligible", 0)),
+    )
+    return OpinionStudyResult(
+        study=spec,
+        files=files,
+        summary=summary,
     )
 
 

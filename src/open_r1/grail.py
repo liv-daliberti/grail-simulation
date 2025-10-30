@@ -491,6 +491,174 @@ def _select_disc_device() -> torch.device:
     return torch.device("cpu")
 
 
+class LearnableRewardMixer(nn.Module):
+    """Combine base and discriminator rewards via trainable mixture weights."""
+
+    def __init__(
+        self,
+        base_reward_fns: Sequence[Any],
+        base_weights: Sequence[float],
+        discriminator_reward_fn: Callable[..., Sequence[float]],
+        initial_mix: Tuple[float, float],
+        *,
+        learning_rate: float = 5e-2,
+    ) -> None:
+        """
+        :param base_reward_fns: Reward callables that form the environment reward.
+        :param base_weights: Initial weights for ``base_reward_fns`` (pre-normalisation).
+        :param discriminator_reward_fn: Callable returning discriminator rewards.
+        :param initial_mix: Tuple of ``(alpha, beta)`` initial weights for environment and
+            discriminator rewards (pre-softmax).
+        :param learning_rate: Optimiser learning rate for the mixture weights.
+        """
+        super().__init__()
+        if not base_reward_fns:
+            raise ValueError("LearnableRewardMixer requires at least one base reward function")
+
+        self.base_reward_fns = tuple(base_reward_fns)
+        self.discriminator_reward_fn = discriminator_reward_fn
+
+        base_weights_tensor = torch.tensor(base_weights, dtype=torch.float32)
+        if base_weights_tensor.numel() == 0 or not torch.isfinite(base_weights_tensor).all():
+            base_weights_tensor = torch.ones(len(self.base_reward_fns), dtype=torch.float32)
+        if torch.allclose(base_weights_tensor, torch.zeros_like(base_weights_tensor)):
+            base_weights_tensor = torch.ones(len(self.base_reward_fns), dtype=torch.float32)
+        base_weights_tensor = base_weights_tensor / base_weights_tensor.sum()
+
+        self.register_buffer("_base_weights", base_weights_tensor, persistent=False)
+
+        alpha_init = float(max(initial_mix[0], 1e-6))
+        beta_init = float(max(initial_mix[1], 1e-6))
+        logits_init = torch.log(torch.tensor([alpha_init, beta_init], dtype=torch.float32))
+        self.logits = nn.Parameter(logits_init)
+        self._optim = optim.Adam([self.logits], lr=learning_rate)
+
+        # Expose a friendly name for logging
+        self.__name__ = "learnable_reward_mixer"
+
+    @staticmethod
+    def _should_train() -> bool:
+        """Return whether the mixer should update weights for the current invocation."""
+        return (
+            os.getenv("GAIL_TRAIN", "1") == "1"
+            and os.getenv("GAIL_EVAL_MODE", "0") != "1"
+        )
+
+    def _current_weights(self) -> torch.Tensor:
+        """Return the simplex-projected mixture weights."""
+        return torch.softmax(self.logits, dim=0)
+
+    def current_alpha_beta(self) -> Tuple[float, float]:
+        """Return the current alpha/beta weights as floats."""
+        weights = self._current_weights().detach().cpu().tolist()
+        alpha = float(weights[0]) if weights else 0.5
+        beta = float(weights[1]) if len(weights) > 1 else 0.5
+        return alpha, beta
+
+    def _base_reward_tensor(
+        self,
+        completions: Sequence[Any],
+        answer: Any,
+        params: Dict[str, Any],
+    ) -> torch.Tensor:
+        """Return weighted environment rewards as a tensor on the correct device."""
+
+        device = self.logits.device
+        size = len(completions)
+        if not self.base_reward_fns:
+            return torch.zeros(size, dtype=torch.float32, device=device)
+
+        tensors: List[torch.Tensor] = []
+        for reward_fn in self.base_reward_fns:
+            values = reward_fn(completions, answer, **params)
+            if values is None:
+                values = [0.0] * size
+            tensor = torch.as_tensor(values, dtype=torch.float32, device=device).view(-1)
+            if tensor.numel() == 0 and size:
+                tensor = torch.zeros(size, dtype=torch.float32, device=device)
+            elif tensor.numel() != size and size:
+                tensor = torch.zeros(size, dtype=torch.float32, device=device)
+            tensors.append(tensor)
+
+        stacked = torch.stack(tensors, dim=0)
+        weights = self._base_weights.to(device)
+        return torch.matmul(weights, stacked)
+
+    def _disc_reward_tensor(
+        self,
+        completions: Sequence[Any],
+        answer: Any,
+        params: Dict[str, Any],
+        expected_len: int,
+    ) -> torch.Tensor:
+        """Return discriminator rewards as a tensor with fallback zero fill."""
+
+        device = self.logits.device
+        rewards = self.discriminator_reward_fn(completions, answer, **params)
+        if rewards is None:
+            rewards = []
+        tensor = torch.as_tensor(rewards, dtype=torch.float32, device=device).view(-1)
+        if tensor.numel() == 0 and expected_len:
+            tensor = torch.zeros(expected_len, dtype=torch.float32, device=device)
+        elif tensor.numel() != expected_len and expected_len:
+            tensor = torch.zeros(expected_len, dtype=torch.float32, device=device)
+        return tensor
+
+    @staticmethod
+    def _log_state(
+        base_combined: torch.Tensor,
+        disc_tensor: torch.Tensor,
+        alpha: float,
+        beta: float,
+    ) -> None:
+        """Emit wandb-friendly logging for the current mixer state."""
+
+        logger_fn = globals().get("_wb_log")
+        if not callable(logger_fn):
+            return
+
+        payload = {
+            "reward/mixer/alpha": alpha,
+            "reward/mixer/beta": beta,
+        }
+
+        if base_combined.numel():
+            payload["reward/mixer/base_mean"] = float(base_combined.detach().mean().cpu().item())
+        else:
+            payload["reward/mixer/base_mean"] = 0.0
+
+        if disc_tensor.numel():
+            payload["reward/mixer/disc_mean"] = float(disc_tensor.detach().mean().cpu().item())
+        else:
+            payload["reward/mixer/disc_mean"] = 0.0
+
+        try:
+            logger_fn(payload)
+        except (TypeError, ValueError):
+            pass
+
+    def forward(self, completions, answer, **kwargs) -> List[float]:
+        """Return combined rewards with learnable mixture weights."""
+        params = dict(kwargs)
+        base_combined = self._base_reward_tensor(completions, answer, params)
+        expected_len = base_combined.shape[0] if base_combined.ndim else len(completions)
+        disc_tensor = self._disc_reward_tensor(completions, answer, params, expected_len)
+
+        weights = self._current_weights()
+        combined = weights[0] * base_combined + weights[1] * disc_tensor
+
+        if self._should_train() and combined.numel() > 0:
+            loss = -combined.mean()
+            self._optim.zero_grad(set_to_none=True)
+            loss.backward()
+            self._optim.step()
+
+        alpha, beta = self.current_alpha_beta()
+        self._log_state(base_combined, disc_tensor, alpha, beta)
+
+        return combined.detach().cpu().tolist()
+
+
 def make_gail_reward_fn(disc: Optional[OnlineDiscriminator], alpha: float = 1.0):
     """Wrap discriminator scores so they plug into the GRPO reward interface."""
     def _reward(completions, answer, **kwargs):
@@ -593,6 +761,60 @@ def _adjust_reward_weights(
         training_args.reward_weights = [w / total for w in weights_clean]
 
 
+def _apply_reward_mixer(
+    training_args: GRPOConfig,
+    reward_fns: List[Any],
+    use_gail: bool,
+) -> List[Any]:
+    """Return reward functions with optional learnable mixer applied."""
+
+    initial_weights = list(training_args.reward_weights or [])
+    if not use_gail or not reward_fns:
+        logger.info(
+            "[grpo] rewards=%s weights=%s",
+            [getattr(f, "__name__", f.__class__.__name__) for f in reward_fns],
+            initial_weights,
+        )
+        return reward_fns
+
+    base_reward_fns = tuple(reward_fns[:-1])
+    gail_reward_fn = reward_fns[-1]
+    if not base_reward_fns:
+        logger.warning(
+            "[grpo+gail] skipping learnable mixer because no base rewards are configured"
+        )
+        return reward_fns
+    base_names = [getattr(f, "__name__", f.__class__.__name__) for f in base_reward_fns]
+    gail_name = getattr(gail_reward_fn, "__name__", gail_reward_fn.__class__.__name__)
+    logger.info(
+        "[grpo+gail] raw rewards=%s + %s weights=%s",
+        base_names,
+        gail_name,
+        initial_weights,
+    )
+
+    base_weights = initial_weights[:-1] if len(initial_weights) >= len(reward_fns) else [1.0]
+    beta_init = initial_weights[-1] if initial_weights else 0.5
+    alpha_init = sum(base_weights) if base_weights else max(1.0 - beta_init, 1e-6)
+    mixer_lr = float(os.environ.get("GRAIL_WEIGHT_LR", "5e-2"))
+    mixer = LearnableRewardMixer(
+        base_reward_fns=base_reward_fns,
+        base_weights=base_weights,
+        discriminator_reward_fn=gail_reward_fn,
+        initial_mix=(alpha_init, beta_init),
+        learning_rate=mixer_lr,
+    )
+    alpha0, beta0 = mixer.current_alpha_beta()
+    training_args.reward_weights = [1.0]
+    logger.info(
+        "[grpo+gail] using learnable mixer (alpha=%.4f beta=%.4f lr=%.4f)",
+        alpha0,
+        beta0,
+        mixer_lr,
+    )
+    return [mixer]
+
+
 def _build_dataset_and_tokenizer(
     script_args: GRPOScriptArguments,
     training_args: GRPOConfig,
@@ -629,6 +851,7 @@ def main(
     reward_fns = _resolve_reward_functions(script_args, tokenizer)
     use_gail = _maybe_enable_gail(reward_fns)
     _adjust_reward_weights(training_args, reward_fns, use_gail)
+    reward_fns = _apply_reward_mixer(training_args, reward_fns, use_gail)
 
     logger.info(
         "[grpo+gail] rewards=%s weights=%s",

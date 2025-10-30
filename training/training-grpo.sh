@@ -6,6 +6,7 @@
 #SBATCH --mem=256G
 #SBATCH --time=12:00:00
 #SBATCH --output=logs/grpo/slurm_%j.out
+#SBATCH --account=mltheory
 
 set -euo pipefail
 
@@ -116,7 +117,13 @@ done
 # ────────────────────────────────────────────────────────────────
 # Hugging Face credentials
 # ────────────────────────────────────────────────────────────────
+if [ -n "${HUGGINGFACE_HUB_TOKEN:-}" ]; then
+  export HUGGINGFACE_HUB_TOKEN="$HUGGINGFACE_HUB_TOKEN"
+fi
 if [ -n "${HF_TOKEN:-}" ]; then
+  export HF_TOKEN="$HF_TOKEN"
+fi
+if [ -z "${HUGGINGFACE_HUB_TOKEN:-}" ] && [ -n "${HF_TOKEN:-}" ]; then
   export HUGGINGFACE_HUB_TOKEN="$HF_TOKEN"
 fi
 if [ -z "${HUGGINGFACE_HUB_TOKEN:-}" ]; then

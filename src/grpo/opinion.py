@@ -202,6 +202,16 @@ class OpinionEvaluationSettings:
 OpinionStudyFiles = OpinionArtifacts
 
 
+@dataclass(frozen=True)
+class OpinionStudySummary:
+    """Bundle capturing evaluation metrics and participant counts for a study."""
+
+    metrics: Mapping[str, object]
+    baseline: Mapping[str, object]
+    participants: int
+    eligible: int
+
+
 class OpinionStudyResult(_BaseOpinionStudyResult):
     """Per-study artefacts returned by the evaluation runner."""
 
@@ -209,20 +219,37 @@ class OpinionStudyResult(_BaseOpinionStudyResult):
         self,
         *,
         study: OpinionSpec,
-        metrics: Mapping[str, object],
-        baseline: Mapping[str, object],
         files: OpinionStudyFiles,
-        participants: int,
-        eligible: int,
+        summary: OpinionStudySummary | None = None,
+        **legacy_kwargs,
     ) -> None:
+        if summary is None:
+            try:
+                metrics = legacy_kwargs.pop("metrics")
+                baseline = legacy_kwargs.pop("baseline")
+                participants = legacy_kwargs.pop("participants")
+                eligible = legacy_kwargs.pop("eligible")
+            except KeyError as exc:  # pragma: no cover - defensive guard
+                raise TypeError(
+                    "OpinionStudyResult requires either 'summary' or the legacy "
+                    "metrics/baseline/participants/eligible arguments."
+                ) from exc
+            summary = OpinionStudySummary(
+                metrics=metrics,
+                baseline=baseline,
+                participants=int(participants),
+                eligible=int(eligible),
+            )
+        if legacy_kwargs:
+            raise TypeError(f"Unexpected arguments for OpinionStudyResult: {sorted(legacy_kwargs)}")
         super().__init__(
             study_key=study.key,
             study_label=study.label,
             issue=study.issue,
-            participants=participants,
-            eligible=eligible,
-            metrics=metrics,
-            baseline=baseline,
+            participants=summary.participants,
+            eligible=summary.eligible,
+            metrics=summary.metrics,
+            baseline=summary.baseline,
             artifacts=files,
             spec=study,
         )
@@ -484,13 +511,16 @@ def _evaluate_study(
         accumulator=accumulator,
     )
 
-    result = OpinionStudyResult(
-        study=spec,
+    summary = OpinionStudySummary(
         metrics=metrics,
         baseline=baseline,
-        files=files,
         participants=accumulator.participants,
         eligible=int(metrics.get("eligible", 0)),
+    )
+    result = OpinionStudyResult(
+        study=spec,
+        files=files,
+        summary=summary,
     )
     return result, accumulator
 

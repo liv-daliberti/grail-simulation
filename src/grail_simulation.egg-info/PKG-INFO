@@ -84,6 +84,7 @@ The interaction logs trace back to the public behavioral dataset introduced in [
 - **Action model (ReAct)** – reasons over the retrieved slate and emits the next action.
 - **Predictor / world model** – estimates outcomes and counterfactuals for the selected action.
 - **Sequential discriminator** – provides adversarial rewards that align generated trajectories with human data.
+- **Baseline pipelines** – shared CLI and orchestration utilities in `src/common` coordinate the k-NN and XGBoost baselines across plan → sweeps → finalize → reports stages.
 
 ## Repository Layout
 
@@ -111,13 +112,13 @@ The interaction logs trace back to the public behavioral dataset introduced in [
 ├── reports/                  # Markdown reports rendered from analyses
 ├── scripts/                  # Utility entrypoints (linting, testing, exports)
 ├── src/                      # Python packages for agents, models, and visualization
-│   ├── common/               # Shared utilities
-│   ├── gpt4o/                # GPT-4o slate-prediction baselines
-│   ├── knn/                  # Non-generative k-nearest-neighbor baseline
+│   ├── common/               # Shared CLI, prompt, pipeline, and reporting utilities
+│   ├── knn/                  # Reworked k-NN baseline (cli/, core/, pipeline/)
+│   ├── xgb/                  # Reworked XGBoost baseline (cli/, core/, pipeline/)
+│   ├── gpt4o/                # GPT-4o slate-prediction baseline + pipeline wrapper
 │   ├── open_r1/              # Supervised fine-tuning & RL trainers (see src/open_r1/README.md)
-│   ├── prompt_builder/       # Prompt templating helpers
-│   ├── visualization/        # Recommendation-tree renderers / plotting tools
-│   └── xgb/                  # Gradient-boosted baselines + evaluation
+│   ├── prompt_builder/       # Prompt templating helpers packaged for reuse
+│   └── visualization/        # Recommendation-tree renderers / plotting tools
 ├── tests/                    # Pytest suite covering data + model components
 └── training/                 # SLURM launchers and experiment configs
 ```
@@ -224,7 +225,7 @@ See [reports/visualized_recommendation_trees/README.md](reports/visualized_recom
 
 - `scripts/run-lint.sh` – `pylint` with the repository root on `PYTHONPATH`.
 - `scripts/run-tests.sh` – `pytest` for the unit test suite.
-- `reports/build-reports.sh` – regenerates the published KNN/XGB reports from existing artifacts (legacy `scripts/run-build-reports.sh` now forwards here). The pre-commit hook runs this entrypoint so report markdown stays current without retraining.
+- `reports/build-reports.sh` – regenerates the published KNN/XGB reports from existing artifacts by calling the shared pipeline harness (`python -m knn.pipeline --stage reports` and `python -m xgb.pipeline --stage reports`). The pre-commit hook runs this entrypoint so report markdown stays current without retraining.
 - `scripts/run-clean-data-suite.sh` – end-to-end dataset cleaning plus prompt/political-science replicas.
 - `scripts/update-reports.sh` – aggregates the clean-data suite, KNN/XGB rebuilds, prompt samples, and GPT-4o pipeline so every report is current.
 - Sphinx docs build (`sphinx-build -b html -n -W --keep-going docs docs/_build/html`) keeps the documentation green.
@@ -281,9 +282,9 @@ sbatch training/training-grpo.sh     # RL baseline (src/open_r1/grpo.py)
 
 Baselines:
 
-- GPT‑4o slate predictor: `python -m gpt4o.cli`
-- k-NN slate baseline: `training/training-knn.sh [pipeline args]` (auto plan → array submission → finalize)
-- XGBoost slate + opinion pipeline: `training/training-xgb.sh [pipeline args]` (auto plan → array submission → finalize)
+- GPT‑4o slate predictor: `python -m gpt4o.cli` for ad-hoc runs or `python -m gpt4o.pipeline` for sweeps + reporting.
+- k-NN slate baseline: `python -m knn.pipeline --stage {plan,sweeps,finalize,reports}` (single runs via `python -m knn.cli ...`); `training/training-knn.sh` wraps the same CLI for SLURM.
+- XGBoost slate + opinion pipeline: `python -m xgb.pipeline --stage {plan,sweeps,finalize,reports}` (single runs via `python -m xgb.cli ...`); `training/training-xgb.sh` wraps the same CLI for SLURM.
 
 ## Citation
 

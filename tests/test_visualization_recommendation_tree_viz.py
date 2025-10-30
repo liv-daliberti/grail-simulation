@@ -10,14 +10,17 @@ from typing import Dict, Mapping
 import pytest
 
 from src.visualization.recommendation_tree_viz import (
+    LabelRenderOptions,
     TreeData,
     TreeEdge,
     _extract_sequences_from_object,
+    _extract_opinion_annotation,
     aggregate_counts,
     build_graph,
     build_session_graph,
-    compute_depths,
     format_node_label,
+    _opinion_label,
+    compute_depths,
     load_metadata,
     load_trajectories,
     load_tree_csv,
@@ -40,6 +43,34 @@ def test_parse_issue_counts_rejects_invalid_input() -> None:
     """Invalid count specifications should raise an error."""
     with pytest.raises(ValueError):
         parse_issue_counts("no-count")
+
+
+def test_opinion_label_negative_delta() -> None:
+    """Opinion labels should preserve negative changes."""
+    label = _opinion_label("Minimum wage support", "Final", 3.0, delta=-1.25)
+    assert label == "Final Minimum wage support: 3 (-1.25)"
+
+
+def test_extract_opinion_annotation_handles_selected_rows() -> None:
+    """Opinion annotations should combine main rows with selected survey rows."""
+    rows = [
+        {
+            "issue": "minimum_wage",
+            "selected_survey_row": {
+                "mw_index_w1": 4,
+            },
+        },
+        {
+            "issue": "minimum_wage",
+            "selected_survey_row": {
+                "mw_index_w2": 5,
+            },
+        },
+    ]
+    annotation = _extract_opinion_annotation(rows)
+    assert annotation is not None
+    assert annotation.before_value == 4
+    assert annotation.after_value == 5
 
 
 def test_compute_depths_and_aggregate_counts() -> None:
@@ -102,9 +133,7 @@ def test_format_node_label_and_build_graph(
     label = format_node_label(
         "child",
         node_data=nodes["child"],
-        metadata=metadata,
-        template="{title}",
-        wrap_width=10,
+        options=LabelRenderOptions(metadata=metadata, template="{title}", wrap_width=10),
     )
     assert label.startswith("Child")
     # Rendering should succeed and place a file at the expected location.
@@ -155,6 +184,34 @@ def test_build_session_graph_handles_highlights() -> None:
     assert "step1_opt1" in source  # chosen option node exists
     assert "label=selected" in source  # selected edge annotated
     assert '#bf616a' in source  # highlight colour applied
+
+
+def test_build_session_graph_shows_negative_support_change() -> None:
+    """Session graphs should surface decreases in issue support."""
+    rows = [
+        {
+            "display_step": 1,
+            "current_video_id": "v1",
+            "current_video_title": "Video 1",
+            "slate_items_json": [],
+            "issue": "minimum_wage",
+            "selected_survey_row": {
+                "mw_index_w1": 5,
+                "mw_index_w2": 3,
+            },
+        },
+    ]
+    graph = build_session_graph(
+        rows,
+        label_template="{title}",
+        wrap_width=None,
+        rankdir="LR",
+        engine="dot",
+        highlight_path=(),
+    )
+    source = graph.source
+    assert "Initial Minimum wage support: 5" in source
+    assert "Final Minimum wage support: 3 (-2)" in source
 
 
 def test_load_trajectories_jsonl(tmp_path: Path) -> None:
@@ -352,10 +409,7 @@ def test_main_invokes_build_and_render(tmp_path: Path, monkeypatch: pytest.Monke
 
         return _FakeGraph()
 
-    monkeypatch.setattr(
-        "src.visualization.recommendation_tree_viz.build_graph",
-        _fake_build_graph,
-    )
+    monkeypatch.setattr("src.visualization.recommendation_tree.cli.render.build_graph", _fake_build_graph)
 
     call_log = {}
 
@@ -365,10 +419,7 @@ def test_main_invokes_build_and_render(tmp_path: Path, monkeypatch: pytest.Monke
         call_log["output_format"] = output_format
         return output_path
 
-    monkeypatch.setattr(
-        "src.visualization.recommendation_tree_viz.render_graph",
-        _fake_render_graph,
-    )
+    monkeypatch.setattr("src.visualization.recommendation_tree.cli.render.render_graph", _fake_render_graph)
 
     output_path = tmp_path / "rendered.svg"
 

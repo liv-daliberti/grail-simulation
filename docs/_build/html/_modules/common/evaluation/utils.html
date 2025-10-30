@@ -294,6 +294,15 @@
     <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span>
 
 
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BootstrapCounts</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Scalar bootstrap parameters reused across grouped summary helpers.&quot;&quot;&quot;</span>
+
+    <span class="n">n_rows</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_bootstrap</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span>
+
+
 <div class="viewcode-block" id="safe_div">
 <a class="viewcode-back" href="../../../api/xgb.html#common.safe_div">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">safe_div</span><span class="p">(</span><span class="n">numerator</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">denominator</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -562,9 +571,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">summarise_grouped_accuracy_from_counts</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">grouped</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">_GroupItem</span><span class="p">]],</span>
-    <span class="n">n_rows</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">n_bootstrap</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">counts</span><span class="p">:</span> <span class="n">BootstrapCounts</span><span class="p">,</span>
     <span class="n">model_metric</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">_GroupItem</span><span class="p">]],</span> <span class="nb">float</span><span class="p">],</span>
     <span class="n">baseline_metric</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">_GroupItem</span><span class="p">]],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
@@ -576,9 +583,9 @@
 
     <span class="n">summary_config</span> <span class="o">=</span> <span class="n">BootstrapSummaryConfig</span><span class="p">(</span>
         <span class="n">n_groups</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">grouped</span><span class="p">),</span>
-        <span class="n">n_rows</span><span class="o">=</span><span class="n">n_rows</span><span class="p">,</span>
-        <span class="n">n_bootstrap</span><span class="o">=</span><span class="n">n_bootstrap</span><span class="p">,</span>
-        <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span>
+        <span class="n">n_rows</span><span class="o">=</span><span class="n">counts</span><span class="o">.</span><span class="n">n_rows</span><span class="p">,</span>
+        <span class="n">n_bootstrap</span><span class="o">=</span><span class="n">counts</span><span class="o">.</span><span class="n">n_bootstrap</span><span class="p">,</span>
+        <span class="n">seed</span><span class="o">=</span><span class="n">counts</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">summarise_grouped_accuracy</span><span class="p">(</span>
         <span class="n">grouped</span><span class="o">=</span><span class="n">grouped</span><span class="p">,</span>
@@ -589,6 +596,7 @@
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;BootstrapCounts&quot;</span><span class="p">,</span>
     <span class="s2">&quot;BootstrapSummaryConfig&quot;</span><span class="p">,</span>
     <span class="s2">&quot;bootstrap_grouped_accuracy_summary&quot;</span><span class="p">,</span>
     <span class="s2">&quot;compose_issue_slug&quot;</span><span class="p">,</span>

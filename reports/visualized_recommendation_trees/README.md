@@ -12,27 +12,30 @@ python -m src.visualization.recommendation_tree_viz --session-id <session_id> --
 
 ### grail_session_gun_control_1
 ![Gun control session 1](figures/grail_session_gun_control_1.svg)
-- Start: `Do We Need Stricter Gun Control? – The People Speak`
-- Clicked path: moved into `How to Create a Gun-Free America in 5 Easy Steps`, then into a televised debate clip (`Piers Morgan Argues With Pro-Gun Campaigner About Orlando Shooting`)
-- Notable slate: recommendations mix argumentative commentary with satirical takes
+- Support shift: `0.25 -> 0.31 (+0.06)`
+- Start: `Do We Need Stricter Gun Control? - The People Speak`
+- Clicked path: `How to Create a Gun-Free America in 5 Easy Steps` -> `Piers Morgan Argues With Pro-Gun Campaigner About Orlando Shooting | Good Morning Britain`
+- Recommendation slate highlights: `Why America Will NEVER Have Real Gun Control`, `Gun Control and The Violence in Chicago`, `Gun Banners Say the Darndest Things`, `Democrats Need to Listen to Gun Owners`
 
 ### grail_session_gun_control_2
 ![Gun control session 2](figures/grail_session_gun_control_2.svg)
-- Start: `Common arguments for gun control, shot down`
-- Clicked path: dives into `Florida's New Gun Control Explained in 6 Minutes – The Legal Brief!`, then `“GUN CONFISCATION BECOMES A REALITY IN ILLINOIS!”`
-- Notable slate: subsequent options emphasize red-flag laws and national policy pushes (`20 States Looking To Pass Red Flag Laws`, `NJ Attempts Confiscation…`)
+- Support shift: `0.25 -> 0.31 (+0.06)`
+- Start: `Most Americans Want More Gun Control. Why Doesn't It Happen? | NYT`
+- Clicked path: `GUN CONTROL: WHY YOU CAN'T COMPARE AUSTRALIA AND THE U.S` -> `Trevor Reacts to the Orlando Shooting: The Daily Show` -> `Piers Morgan Argues With Pro-Gun Campaigner About Orlando Shooting | Good Morning Britain` -> `Florida School Shooting Survivor Says Arming Teachers is 'Absurd' | Good Morning Britain`
+- Recommendation slate highlights: `Democrats Need to Listen to Gun Owners`, `The Truth About Guns And Gun Control | Debunker | NBC News`, `Gun control and the statistics behind America's love affair with guns | The Economist`, `My AR-15 Story: Why I Needed My AR-15`
 
 ## Minimum Wage Sessions
 
 ### grail_session_minimum_wage_1
 ![Minimum wage session 1](figures/grail_session_minimum_wage_1.svg)
+- Support shift: `0.07 -> 0.09 (+0.02)`
 - Start: `Seattle's $15 Minimum Wage Experiment is Working`
-- Clicked path: transitions to the explainer `Price Floors: The Minimum Wage`, followed by `The 5 Biggest Myths Republicans Use to Avoid Raising the Minimum Wage`, and explores `Who Does a $15 Minimum Wage Help?`
-- Notable slate: juxtaposes pro–minimum wage narratives with counterarguments on inflation and business viability
+- Clicked path: `Price Floors: The Minimum Wage` -> `The 5 Biggest Myths Republicans Use to Avoid Raising the Minimum Wage | Opinions | NowThis` -> `Who Does a $15 Minimum Wage Help?` -> `If a Business Won't pay a Living Wage - it Shouldn't Exist`
+- Recommendation slate highlights: `If Walmart Paid Its Employees a Living Wage, How Much Would Prices Go Up?`, `Restaurants eliminating employees after minimum wage increase in 18 states`, `Republicans Block Minimum Wage Increase`, `Milton Friedman on Minimum Wage`
 
 ### grail_session_minimum_wage_2
 ![Minimum wage session 2](figures/grail_session_minimum_wage_2.svg)
-- Start: `Raise The Minimum Wage — Robert Reich & MoveOn.org`
-- Clicked path: pivots to opposing content (`Stossel: Minimum Wage Hurts Beginners`), then circles back through `What the US gets wrong about minimum wage`, culminating at the NowThis myth-busting feature before surfacing additional labor-market clips
-- Notable slate: highlights alternating exposure to pro- and anti-minimum wage messaging within a single viewing sequence
-
+- Support shift: `0.05 -> 0.20 (+0.15)`
+- Start: `Raise The Minimum Wage -- Robert Reich & MoveOn.org`
+- Clicked path: `Stossel: Minimum Wage Hurts Beginners` -> `What the US gets wrong about minimum wage` -> `The 5 Biggest Myths Republicans Use to Avoid Raising the Minimum Wage | Opinions | NowThis` -> `Fast Food CEO After Minimum Wage Increase: "I was stunned by the business"`
+- Recommendation slate highlights: `Caller: Minimum Wage Should be set by Supply & Demand`, `What They DONT TELL YOU About Minimum Wage... | Thomas Sowell`, `Walmart CEO: Federal minimum wage should be raised`, `SOMEONE GIVE HIM A RAISE: Ben Shapiro kills the minimum wage argument for good`

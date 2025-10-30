@@ -759,6 +759,174 @@
     <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">LearnableRewardMixer</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Combine base and discriminator rewards via trainable mixture weights.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">base_reward_fns</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+        <span class="n">base_weights</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">discriminator_reward_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span>
+        <span class="n">initial_mix</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5e-2</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param base_reward_fns: Reward callables that form the environment reward.</span>
+<span class="sd">        :param base_weights: Initial weights for ``base_reward_fns`` (pre-normalisation).</span>
+<span class="sd">        :param discriminator_reward_fn: Callable returning discriminator rewards.</span>
+<span class="sd">        :param initial_mix: Tuple of ``(alpha, beta)`` initial weights for environment and</span>
+<span class="sd">            discriminator rewards (pre-softmax).</span>
+<span class="sd">        :param learning_rate: Optimiser learning rate for the mixture weights.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">base_reward_fns</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;LearnableRewardMixer requires at least one base reward function&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_reward_fns</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">base_reward_fns</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">discriminator_reward_fn</span> <span class="o">=</span> <span class="n">discriminator_reward_fn</span>
+
+        <span class="n">base_weights_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">base_weights</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">base_weights_tensor</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">base_weights_tensor</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="n">base_weights_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_reward_fns</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">base_weights_tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">base_weights_tensor</span><span class="p">)):</span>
+            <span class="n">base_weights_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_reward_fns</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">base_weights_tensor</span> <span class="o">=</span> <span class="n">base_weights_tensor</span> <span class="o">/</span> <span class="n">base_weights_tensor</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">&quot;_base_weights&quot;</span><span class="p">,</span> <span class="n">base_weights_tensor</span><span class="p">,</span> <span class="n">persistent</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">alpha_init</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">initial_mix</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mf">1e-6</span><span class="p">))</span>
+        <span class="n">beta_init</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">initial_mix</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mf">1e-6</span><span class="p">))</span>
+        <span class="n">logits_init</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="n">alpha_init</span><span class="p">,</span> <span class="n">beta_init</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logits</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">logits_init</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_optim</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">logits</span><span class="p">],</span> <span class="n">lr</span><span class="o">=</span><span class="n">learning_rate</span><span class="p">)</span>
+
+        <span class="c1"># Expose a friendly name for logging</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">=</span> <span class="s2">&quot;learnable_reward_mixer&quot;</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_should_train</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return whether the mixer should update weights for the current invocation.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;GAIL_TRAIN&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;1&quot;</span>
+            <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;GAIL_EVAL_MODE&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">&quot;1&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_current_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the simplex-projected mixture weights.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">logits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">current_alpha_beta</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the current alpha/beta weights as floats.&quot;&quot;&quot;</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_weights</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">weights</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">weights</span> <span class="k">else</span> <span class="mf">0.5</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">weights</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mf">0.5</span>
+        <span class="k">return</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_base_reward_tensor</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">completions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+        <span class="n">answer</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return weighted environment rewards as a tensor on the correct device.&quot;&quot;&quot;</span>
+
+        <span class="n">device</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">logits</span><span class="o">.</span><span class="n">device</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">completions</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_reward_fns</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="n">tensors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">reward_fn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_reward_fns</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">reward_fn</span><span class="p">(</span><span class="n">completions</span><span class="p">,</span> <span class="n">answer</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">values</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">*</span> <span class="n">size</span>
+            <span class="n">tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">tensor</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">size</span><span class="p">:</span>
+                <span class="n">tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">tensor</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">!=</span> <span class="n">size</span> <span class="ow">and</span> <span class="n">size</span><span class="p">:</span>
+                <span class="n">tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">tensors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span>
+
+        <span class="n">stacked</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">tensors</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_weights</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">stacked</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_disc_reward_tensor</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">completions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+        <span class="n">answer</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+        <span class="n">expected_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return discriminator rewards as a tensor with fallback zero fill.&quot;&quot;&quot;</span>
+
+        <span class="n">device</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">logits</span><span class="o">.</span><span class="n">device</span>
+        <span class="n">rewards</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">discriminator_reward_fn</span><span class="p">(</span><span class="n">completions</span><span class="p">,</span> <span class="n">answer</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">rewards</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">rewards</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">rewards</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">tensor</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">expected_len</span><span class="p">:</span>
+            <span class="n">tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">expected_len</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">tensor</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">!=</span> <span class="n">expected_len</span> <span class="ow">and</span> <span class="n">expected_len</span><span class="p">:</span>
+            <span class="n">tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">expected_len</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tensor</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log_state</span><span class="p">(</span>
+        <span class="n">base_combined</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">disc_tensor</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Emit wandb-friendly logging for the current mixer state.&quot;&quot;&quot;</span>
+
+        <span class="n">logger_fn</span> <span class="o">=</span> <span class="nb">globals</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;_wb_log&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">logger_fn</span><span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;reward/mixer/alpha&quot;</span><span class="p">:</span> <span class="n">alpha</span><span class="p">,</span>
+            <span class="s2">&quot;reward/mixer/beta&quot;</span><span class="p">:</span> <span class="n">beta</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">base_combined</span><span class="o">.</span><span class="n">numel</span><span class="p">():</span>
+            <span class="n">payload</span><span class="p">[</span><span class="s2">&quot;reward/mixer/base_mean&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">base_combined</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">payload</span><span class="p">[</span><span class="s2">&quot;reward/mixer/base_mean&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="k">if</span> <span class="n">disc_tensor</span><span class="o">.</span><span class="n">numel</span><span class="p">():</span>
+            <span class="n">payload</span><span class="p">[</span><span class="s2">&quot;reward/mixer/disc_mean&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">disc_tensor</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">payload</span><span class="p">[</span><span class="s2">&quot;reward/mixer/disc_mean&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">logger_fn</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="k">pass</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">completions</span><span class="p">,</span> <span class="n">answer</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return combined rewards with learnable mixture weights.&quot;&quot;&quot;</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">base_combined</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_reward_tensor</span><span class="p">(</span><span class="n">completions</span><span class="p">,</span> <span class="n">answer</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+        <span class="n">expected_len</span> <span class="o">=</span> <span class="n">base_combined</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">base_combined</span><span class="o">.</span><span class="n">ndim</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">completions</span><span class="p">)</span>
+        <span class="n">disc_tensor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disc_reward_tensor</span><span class="p">(</span><span class="n">completions</span><span class="p">,</span> <span class="n">answer</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">expected_len</span><span class="p">)</span>
+
+        <span class="n">weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_weights</span><span class="p">()</span>
+        <span class="n">combined</span> <span class="o">=</span> <span class="n">weights</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">base_combined</span> <span class="o">+</span> <span class="n">weights</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">disc_tensor</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_should_train</span><span class="p">()</span> <span class="ow">and</span> <span class="n">combined</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">combined</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_optim</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">(</span><span class="n">set_to_none</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_optim</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+
+        <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_alpha_beta</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log_state</span><span class="p">(</span><span class="n">base_combined</span><span class="p">,</span> <span class="n">disc_tensor</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">combined</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+
 <div class="viewcode-block" id="make_gail_reward_fn">
 <a class="viewcode-back" href="../../api/open_r1.html#open_r1.grail.make_gail_reward_fn">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">make_gail_reward_fn</span><span class="p">(</span><span class="n">disc</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OnlineDiscriminator</span><span class="p">],</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">):</span>
@@ -864,6 +1032,60 @@
         <span class="n">training_args</span><span class="o">.</span><span class="n">reward_weights</span> <span class="o">=</span> <span class="p">[</span><span class="n">w</span> <span class="o">/</span> <span class="n">total</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">weights_clean</span><span class="p">]</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_apply_reward_mixer</span><span class="p">(</span>
+    <span class="n">training_args</span><span class="p">:</span> <span class="n">GRPOConfig</span><span class="p">,</span>
+    <span class="n">reward_fns</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+    <span class="n">use_gail</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return reward functions with optional learnable mixer applied.&quot;&quot;&quot;</span>
+
+    <span class="n">initial_weights</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">training_args</span><span class="o">.</span><span class="n">reward_weights</span> <span class="ow">or</span> <span class="p">[])</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">use_gail</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">reward_fns</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;[grpo] rewards=</span><span class="si">%s</span><span class="s2"> weights=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">[</span><span class="nb">getattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">&quot;__name__&quot;</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">reward_fns</span><span class="p">],</span>
+            <span class="n">initial_weights</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">reward_fns</span>
+
+    <span class="n">base_reward_fns</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">reward_fns</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">gail_reward_fn</span> <span class="o">=</span> <span class="n">reward_fns</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">base_reward_fns</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;[grpo+gail] skipping learnable mixer because no base rewards are configured&quot;</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">reward_fns</span>
+    <span class="n">base_names</span> <span class="o">=</span> <span class="p">[</span><span class="nb">getattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">&quot;__name__&quot;</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">base_reward_fns</span><span class="p">]</span>
+    <span class="n">gail_name</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">gail_reward_fn</span><span class="p">,</span> <span class="s2">&quot;__name__&quot;</span><span class="p">,</span> <span class="n">gail_reward_fn</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;[grpo+gail] raw rewards=</span><span class="si">%s</span><span class="s2"> + </span><span class="si">%s</span><span class="s2"> weights=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">base_names</span><span class="p">,</span>
+        <span class="n">gail_name</span><span class="p">,</span>
+        <span class="n">initial_weights</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">base_weights</span> <span class="o">=</span> <span class="n">initial_weights</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">initial_weights</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">reward_fns</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span>
+    <span class="n">beta_init</span> <span class="o">=</span> <span class="n">initial_weights</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">initial_weights</span> <span class="k">else</span> <span class="mf">0.5</span>
+    <span class="n">alpha_init</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">base_weights</span><span class="p">)</span> <span class="k">if</span> <span class="n">base_weights</span> <span class="k">else</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">beta_init</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+    <span class="n">mixer_lr</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;GRAIL_WEIGHT_LR&quot;</span><span class="p">,</span> <span class="s2">&quot;5e-2&quot;</span><span class="p">))</span>
+    <span class="n">mixer</span> <span class="o">=</span> <span class="n">LearnableRewardMixer</span><span class="p">(</span>
+        <span class="n">base_reward_fns</span><span class="o">=</span><span class="n">base_reward_fns</span><span class="p">,</span>
+        <span class="n">base_weights</span><span class="o">=</span><span class="n">base_weights</span><span class="p">,</span>
+        <span class="n">discriminator_reward_fn</span><span class="o">=</span><span class="n">gail_reward_fn</span><span class="p">,</span>
+        <span class="n">initial_mix</span><span class="o">=</span><span class="p">(</span><span class="n">alpha_init</span><span class="p">,</span> <span class="n">beta_init</span><span class="p">),</span>
+        <span class="n">learning_rate</span><span class="o">=</span><span class="n">mixer_lr</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">alpha0</span><span class="p">,</span> <span class="n">beta0</span> <span class="o">=</span> <span class="n">mixer</span><span class="o">.</span><span class="n">current_alpha_beta</span><span class="p">()</span>
+    <span class="n">training_args</span><span class="o">.</span><span class="n">reward_weights</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;[grpo+gail] using learnable mixer (alpha=</span><span class="si">%.4f</span><span class="s2"> beta=</span><span class="si">%.4f</span><span class="s2"> lr=</span><span class="si">%.4f</span><span class="s2">)&quot;</span><span class="p">,</span>
+        <span class="n">alpha0</span><span class="p">,</span>
+        <span class="n">beta0</span><span class="p">,</span>
+        <span class="n">mixer_lr</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">mixer</span><span class="p">]</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_dataset_and_tokenizer</span><span class="p">(</span>
     <span class="n">script_args</span><span class="p">:</span> <span class="n">GRPOScriptArguments</span><span class="p">,</span>
     <span class="n">training_args</span><span class="p">:</span> <span class="n">GRPOConfig</span><span class="p">,</span>
@@ -902,6 +1124,7 @@
     <span class="n">reward_fns</span> <span class="o">=</span> <span class="n">_resolve_reward_functions</span><span class="p">(</span><span class="n">script_args</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">)</span>
     <span class="n">use_gail</span> <span class="o">=</span> <span class="n">_maybe_enable_gail</span><span class="p">(</span><span class="n">reward_fns</span><span class="p">)</span>
     <span class="n">_adjust_reward_weights</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="n">reward_fns</span><span class="p">,</span> <span class="n">use_gail</span><span class="p">)</span>
+    <span class="n">reward_fns</span> <span class="o">=</span> <span class="n">_apply_reward_mixer</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="n">reward_fns</span><span class="p">,</span> <span class="n">use_gail</span><span class="p">)</span>
 
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
         <span class="s2">&quot;[grpo+gail] rewards=</span><span class="si">%s</span><span class="s2"> weights=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>

@@ -10,7 +10,12 @@ from grpo.next_video import (
     FilterSelection,
     NextVideoEvaluationResult,
 )
-from grpo.opinion import OpinionEvaluationResult, OpinionStudyFiles, OpinionStudyResult
+from grpo.opinion import (
+    OpinionEvaluationResult,
+    OpinionStudyFiles,
+    OpinionStudyResult,
+    OpinionStudySummary,
+)
 from grpo.reports import generate_reports
 from common.opinion import DEFAULT_SPECS
 
@@ -97,13 +102,16 @@ def _build_opinion_result(tmp_path: Path) -> OpinionEvaluationResult:
         predictions=predictions_path,
         qa_log=qa_log_path,
     )
-    study_result = OpinionStudyResult(
-        study=DEFAULT_SPECS[0],
-        participants=metrics["participants"],
-        eligible=metrics["eligible"],
+    summary = OpinionStudySummary(
         metrics=metrics,
         baseline=baseline,
+        participants=metrics["participants"],
+        eligible=metrics["eligible"],
+    )
+    study_result = OpinionStudyResult(
+        study=DEFAULT_SPECS[0],
         files=files,
+        summary=summary,
     )
     return OpinionEvaluationResult(studies=[study_result], combined_metrics=combined)
 

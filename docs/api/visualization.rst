@@ -14,3 +14,23 @@ available tree plotting interfaces and configuration knobs.
    :members:
    :undoc-members:
    :show-inheritance:
+
+.. automodule:: visualization.recommendation_tree.models
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: visualization.recommendation_tree.io
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: visualization.recommendation_tree.render
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: visualization.recommendation_tree.cli
+   :members:
+   :undoc-members:
+   :show-inheritance:

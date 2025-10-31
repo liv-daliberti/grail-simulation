@@ -19,11 +19,9 @@ from __future__ import annotations
 
 import json
 import logging
-import sys
 from dataclasses import replace
 from pathlib import Path
-from types import ModuleType
-from typing import Dict, List, Mapping, Optional, Sequence, Tuple, TYPE_CHECKING
+from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple, cast
 
 from common.opinion.sweep_types import AccuracySummary, MetricsArtifact
 from common.pipeline.executor import execute_indexed_tasks
@@ -43,16 +41,7 @@ from ..context import (
     StudySpec,
     SweepConfig,
 )
-from .common import LOGGER
-
-if TYPE_CHECKING:  # pragma: no cover
-    from . import __init__ as sweeps_api
-
-
-def _api() -> ModuleType:
-    """Return the public sweeps package for dynamic attribute lookups."""
-
-    return sys.modules[__package__]
+from .common import LOGGER, get_sweeps_attr
 
 
 def _opinion_sweep_outcome_from_metrics(
@@ -182,6 +171,104 @@ def _build_opinion_vectorizer_config(
     return OpinionVectorizerConfig(**vectorizer_args)
 
 
+def _build_opinion_request_args(
+    *,
+    context: OpinionSweepRunContext,
+    config: SweepConfig,
+    vectorizer: OpinionVectorizerConfig,
+    run_root: Path,
+) -> Dict[str, object]:
+    """
+    Compose keyword arguments for :class:`~open_r1.core.opinion.OpinionEvalRequest`.
+
+    :param run_root: Root directory for sweep artefacts.
+    :type run_root: Path
+    :param context: Shared opinion sweep execution context.
+    :type context: OpinionSweepRunContext
+    :param config: Sweep configuration that produced the task.
+    :type config: SweepConfig
+    :param vectorizer: Vectoriser configuration derived from the sweep config.
+    :type vectorizer: OpinionVectorizerConfig
+    :returns: Dictionary forwarded to :func:`run_opinion_eval`.
+    :rtype: Dict[str, object]
+    """
+
+    dataset = str(context.dataset) if context.dataset else None
+    cache_dir = str(context.cache_dir) if context.cache_dir else None
+
+    return {
+        "dataset": dataset,
+        "cache_dir": cache_dir,
+        "out_dir": run_root,
+        "train_config": OpinionTrainConfig(
+            max_participants=context.max_participants,
+            seed=context.seed,
+            max_features=context.max_features,
+            booster=config.booster_params(context.tree_method),
+        ),
+        "vectorizer": vectorizer,
+        "overwrite": True,
+    }
+
+
+def _build_opinion_task(
+    *,
+    config: SweepConfig,
+    study: StudySpec,
+    context: OpinionSweepRunContext,
+    task_index: int,
+) -> OpinionSweepTask:
+    """
+    Create a fully-populated :class:`OpinionSweepTask` for a single study/config pair.
+
+    :param config: Sweep configuration describing the model variant to run.
+    :type config: SweepConfig
+    :param study: Study metadata describing participants and labelling.
+    :type study: StudySpec
+    :param context: Shared opinion sweep execution context.
+    :type context: OpinionSweepRunContext
+    :param task_index: Deterministic order index for the task.
+    :type task_index: int
+    :returns: Opinion sweep task ready for execution.
+    :rtype: OpinionSweepTask
+    """
+
+    vectorizer_builder = cast(
+        Callable[..., OpinionVectorizerConfig],
+        get_sweeps_attr("_build_opinion_vectorizer_config"),
+    )
+    extra_fields = tuple(context.extra_fields)
+    run_root = context.sweep_dir / study.issue_slug / study.study_slug / config.label()
+    vectorizer = vectorizer_builder(
+        config=config,
+        context=context,
+        run_root=run_root,
+        study=study,
+        extra_fields=extra_fields,
+    )
+    feature_space = vectorizer.feature_space
+    metrics_path = (
+        run_root
+        / feature_space
+        / study.key
+        / f"opinion_xgb_{study.key}_validation_metrics.json"
+    )
+    request_args = _build_opinion_request_args(
+        context=context,
+        config=config,
+        vectorizer=vectorizer,
+        run_root=run_root,
+    )
+    return OpinionSweepTask(
+        index=task_index,
+        study=study,
+        config=config,
+        feature_space=feature_space,
+        metrics_path=metrics_path,
+        request_args=request_args,
+    )
+
+
 def _iter_opinion_sweep_tasks(
     *,
     studies: Sequence[StudySpec],
@@ -190,50 +277,16 @@ def _iter_opinion_sweep_tasks(
 ) -> Sequence[OpinionSweepTask]:
     """Yield opinion sweep tasks in a deterministic order."""
 
-    dataset = str(context.dataset) if context.dataset else None
-    cache_dir = str(context.cache_dir) if context.cache_dir else None
-    extra_fields = tuple(context.extra_fields)
     tasks: List[OpinionSweepTask] = []
     task_index = 0
-    api = _api()
     for config in configs:
         for study in studies:
-            run_root = context.sweep_dir / study.issue_slug / study.study_slug / config.label()
-            vectorizer = api._build_opinion_vectorizer_config(
-                config=config,
-                context=context,
-                run_root=run_root,
-                study=study,
-                extra_fields=extra_fields,
-            )
-            feature_space = vectorizer.feature_space
-            metrics_path = (
-                run_root
-                / feature_space
-                / study.key
-                / f"opinion_xgb_{study.key}_validation_metrics.json"
-            )
-            request_args: Dict[str, object] = {
-                "dataset": dataset,
-                "cache_dir": cache_dir,
-                "out_dir": run_root,
-                "train_config": OpinionTrainConfig(
-                    max_participants=context.max_participants,
-                    seed=context.seed,
-                    max_features=context.max_features,
-                    booster=config.booster_params(context.tree_method),
-                ),
-                "vectorizer": vectorizer,
-                "overwrite": True,
-            }
             tasks.append(
-                OpinionSweepTask(
-                    index=task_index,
-                    study=study,
+                _build_opinion_task(
                     config=config,
-                    feature_space=feature_space,
-                    metrics_path=metrics_path,
-                    request_args=request_args,
+                    study=study,
+                    context=context,
+                    task_index=task_index,
                 )
             )
             task_index += 1
@@ -251,7 +304,14 @@ def _prepare_opinion_sweep_tasks(
 
     pending: List[OpinionSweepTask] = []
     cached: List[OpinionSweepOutcome] = []
-    api = _api()
+    load_metrics = cast(
+        Callable[[Path], Mapping[str, object]],
+        get_sweeps_attr("_load_metrics"),
+    )
+    outcome_factory = cast(
+        Callable[[OpinionSweepTask, Mapping[str, object], Path], OpinionSweepOutcome],
+        get_sweeps_attr("_opinion_sweep_outcome_from_metrics"),
+    )
     for task in _iter_opinion_sweep_tasks(
         studies=studies,
         configs=configs,
@@ -266,10 +326,8 @@ def _prepare_opinion_sweep_tasks(
                 task.feature_space,
                 task.config.label(),
             )
-            metrics = api._load_metrics(metrics_path)
-            cached.append(
-                api._opinion_sweep_outcome_from_metrics(task, metrics, metrics_path)
-            )
+            metrics = load_metrics(metrics_path)
+            cached.append(outcome_factory(task, metrics, metrics_path))
             continue
         pending.append(task)
     return pending, cached
@@ -293,7 +351,14 @@ def _merge_opinion_sweep_outcomes(
 def _execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
     """Execute a single opinion sweep task and return the resulting metrics."""
 
-    api = _api()
+    load_metrics_with_log = cast(
+        Callable[..., Dict[str, object] | None],
+        get_sweeps_attr("_load_metrics_with_log"),
+    )
+    outcome_factory = cast(
+        Callable[[OpinionSweepTask, Mapping[str, object], Path], OpinionSweepOutcome],
+        get_sweeps_attr("_opinion_sweep_outcome_from_metrics"),
+    )
     args = dict(task.request_args)
     out_dir = Path(args["out_dir"])
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -311,7 +376,7 @@ def _execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
 
     # Opinion evaluations may be skipped (e.g., no train/eval rows).
     # Tolerate missing metrics by logging and returning a placeholder outcome.
-    metrics = api._load_metrics_with_log(
+    metrics = load_metrics_with_log(
         task.metrics_path,
         task.study,
         log_level=logging.WARNING,
@@ -331,7 +396,6 @@ def _execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
             "baseline": {},
             "skipped": True,
         }
-        # Persist a small breadcrumb so reuse/caching can detect the skip later.
         task.metrics_path.parent.mkdir(parents=True, exist_ok=True)
         try:
             with open(task.metrics_path, "w", encoding="utf-8") as handle:
@@ -341,7 +405,7 @@ def _execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
                 "[OPINION][SWEEP][MISS] Unable to write placeholder metrics at %s",
                 task.metrics_path,
             )
-    return api._opinion_sweep_outcome_from_metrics(task, metrics, task.metrics_path)
+    return outcome_factory(task, metrics, task.metrics_path)
 
 
 def _execute_opinion_sweep_tasks(
@@ -381,7 +445,10 @@ def _load_opinion_metrics_from_disk(
     """
 
     results: Dict[str, Dict[str, object]] = {}
-    api = _api()
+    load_metrics = cast(
+        Callable[[Path], Mapping[str, object]],
+        get_sweeps_attr("_load_metrics"),
+    )
     filename_template = "opinion_xgb_{study}_validation_metrics.json"
     for spec in studies:
         filename = filename_template.format(study=spec.key)
@@ -400,7 +467,7 @@ def _load_opinion_metrics_from_disk(
                 break
         if metrics_path is None:
             continue
-        metrics = dict(api._load_metrics(metrics_path))
+        metrics = dict(load_metrics(metrics_path))
         results[spec.key] = metrics
     return results
 
@@ -422,7 +489,10 @@ def _load_opinion_from_next_metrics_from_disk(
     """
 
     results: Dict[str, Dict[str, object]] = {}
-    api = _api()
+    load_metrics = cast(
+        Callable[[Path], Mapping[str, object]],
+        get_sweeps_attr("_load_metrics"),
+    )
     feature_spaces = ("tfidf", "word2vec", "sentence_transformer")
     base_dirs = [opinion_dir / "from_next" / space for space in feature_spaces]
     base_dirs.append(opinion_dir / "from_next")
@@ -438,7 +508,7 @@ def _load_opinion_from_next_metrics_from_disk(
         if metrics_path is None:
             continue
         try:
-            metrics = dict(api._load_metrics(metrics_path))
+            metrics = dict(load_metrics(metrics_path))
         except FileNotFoundError:
             LOGGER.debug(
                 "[OPINION-NEXT][MISS] study=%s expected metrics at %s but none found.",

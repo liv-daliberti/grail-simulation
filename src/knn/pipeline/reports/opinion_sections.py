@@ -151,7 +151,8 @@ def _opinion_feature_sections(
                 continue
             lines.append(_format_opinion_row(study, data))
         lines.append(
-            f"*Assets:* [MAE / R² curves and heatmaps](../{feature_space}/{asset_subdir}/)"
+            f"*Assets:* see figures in ``../{feature_space}/{asset_subdir}/`` "
+            "(MAE / R² curves and heatmaps)"
         )
         lines.append("")
     return lines

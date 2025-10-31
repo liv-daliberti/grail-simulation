@@ -706,7 +706,7 @@ def _cross_study_feature_lines(
     if not summaries:
         return []
     lines: List[str] = [_feature_space_heading(feature_space), ""]
-    lines.extend(portfolio.to_lines("#### Weighted Summary"))
+    lines.extend(portfolio.to_lines("### Weighted Summary"))
     lines.extend(_opinion_unweighted_lines(summaries))
     lines.append("")
     return lines

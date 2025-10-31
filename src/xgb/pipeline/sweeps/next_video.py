@@ -17,13 +17,12 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from pathlib import Path
 from typing import Callable, Dict, List, Mapping, Sequence, Tuple, cast
 
 from common.pipeline.executor import execute_indexed_tasks
-from common.pipeline.utils import make_placeholder_metrics, merge_indexed_outcomes
+from common.pipeline.utils import make_placeholder_metrics
 
 from ..context import (
     StudySelection,
@@ -33,7 +32,12 @@ from ..context import (
     SweepRunContext,
     SweepTask,
 )
-from .common import LOGGER, get_sweeps_attr
+from .common import (
+    LOGGER,
+    ensure_metrics_with_placeholder,
+    get_sweeps_attr,
+    merge_sweep_outcomes,
+)
 
 
 def _sweep_outcome_from_metrics(
@@ -118,7 +122,14 @@ def _prepare_sweep_tasks(
 
     pending: List[SweepTask] = []
     cached: List[SweepOutcome] = []
-    api = _api()
+    load_metrics = cast(
+        Callable[[Path], Mapping[str, object]],
+        get_sweeps_attr("_load_metrics"),
+    )
+    outcome_factory = cast(
+        Callable[[SweepTask, Mapping[str, object], Path], SweepOutcome],
+        get_sweeps_attr("_sweep_outcome_from_metrics"),
+    )
     for task in _iter_sweep_tasks(studies=studies, configs=configs, context=context):
         metrics_path = task.metrics_path
         if reuse_existing and metrics_path.exists():
@@ -128,8 +139,8 @@ def _prepare_sweep_tasks(
                 task.study.key,
                 task.config.label(),
             )
-            cached_metrics = api._load_metrics(metrics_path)
-            cached.append(api._sweep_outcome_from_metrics(task, cached_metrics, metrics_path))
+            cached_metrics = load_metrics(metrics_path)
+            cached.append(outcome_factory(task, cached_metrics, metrics_path))
             continue
         pending.append(task)
     return pending, cached
@@ -140,22 +151,13 @@ def _merge_sweep_outcomes(
     executed: Sequence[SweepOutcome],
 ) -> List[SweepOutcome]:
     """
-    Combine cached and freshly executed sweep outcomes preserving order.
-
-    :param cached: Previously cached sweep outcomes.
-    :type cached: Sequence[SweepOutcome]
-    :param executed: Outcomes produced by the current execution.
-    :type executed: Sequence[SweepOutcome]
-    :returns: Ordered list of merged outcomes.
-    :rtype: List[SweepOutcome]
+    Combine cached and freshly executed sweep outcomes preserving order indices.
     """
 
-    return merge_indexed_outcomes(
+    return merge_sweep_outcomes(
         cached,
         executed,
-        logger=LOGGER,
-        message="Duplicate sweep outcome for index=%d; replacing cached result.",
-        args_factory=lambda _existing, incoming: (incoming.order_index,),
+        duplicate_message="Duplicate sweep outcome for index=%d; replacing cached result.",
     )
 
 
@@ -223,8 +225,6 @@ def _execute_sweep_task(task: SweepTask) -> SweepOutcome:
     :rtype: SweepOutcome
     """
 
-    api = _api()
-
     run_root = task.run_root
     run_root.mkdir(parents=True, exist_ok=True)
 
@@ -279,35 +279,36 @@ def _execute_sweep_task(task: SweepTask) -> SweepOutcome:
         task.study.key,
         task.config.label(),
     )
-    api._run_xgb_cli(cli_args)
+    run_xgb_cli = cast(
+        Callable[[Sequence[str]], None],
+        get_sweeps_attr("_run_xgb_cli"),
+    )
+    run_xgb_cli(cli_args)
 
     # Handle runs that were skipped by the evaluator (e.g., no train/eval rows)
     # by logging and producing a placeholder outcome instead of raising.
-    metrics = api._load_metrics_with_log(
-        task.metrics_path,
-        task.study,
-        log_level=logging.WARNING,
-        message=(
-            "[SWEEP][MISS] issue=%s study=%s missing metrics at %s; "
-            "recording placeholder outcome."
-        ),
+    load_metrics_with_log = cast(
+        Callable[..., Dict[str, object] | None],
+        get_sweeps_attr("_load_metrics_with_log"),
     )
-    if metrics is None:
-        metrics = make_placeholder_metrics(
+    metrics = ensure_metrics_with_placeholder(
+        lambda: load_metrics_with_log(
+            task.metrics_path,
+            task.study,
+            log_level=logging.WARNING,
+            message=(
+                "[SWEEP][MISS] issue=%s study=%s missing metrics at %s; "
+                "recording placeholder outcome."
+            ),
+        ),
+        placeholder_factory=lambda: make_placeholder_metrics(
             task.study.evaluation_slug,
             [task.study.key],
             extra_fields=[],
-        )
-        # Persist a small breadcrumb so reuse/caching can detect the skip later.
-        task.metrics_path.parent.mkdir(parents=True, exist_ok=True)
-        try:
-            with open(task.metrics_path, "w", encoding="utf-8") as handle:
-                json.dump(metrics, handle, indent=2)
-        except OSError:  # pragma: no cover - best-effort breadcrumb
-            LOGGER.debug(
-                "[SWEEP][MISS] Unable to write placeholder metrics at %s",
-                task.metrics_path,
-            )
+        ),
+        metrics_path=task.metrics_path,
+        debug_message="[SWEEP][MISS] Unable to write placeholder metrics at %s",
+    )
     return SweepOutcome(
         order_index=task.index,
         study=task.study,
@@ -337,13 +338,20 @@ def _load_final_metrics_from_disk(
     """
 
     metrics_by_study: Dict[str, Mapping[str, object]] = {}
-    api = _api()
+    load_metrics = cast(
+        Callable[[Path], Mapping[str, object]],
+        get_sweeps_attr("_load_metrics"),
+    )
+    inject_metadata = cast(
+        Callable[[Dict[str, object], StudySpec], None],
+        get_sweeps_attr("_inject_study_metadata"),
+    )
     for spec in studies:
         metrics_path = next_video_dir / spec.evaluation_slug / "metrics.json"
         if not metrics_path.exists():
             continue
-        metrics = dict(api._load_metrics(metrics_path))
-        api._inject_study_metadata(metrics, spec)
+        metrics = dict(load_metrics(metrics_path))
+        inject_metadata(metrics, spec)
         metrics_by_study[spec.key] = metrics
     return metrics_by_study
 
@@ -365,7 +373,14 @@ def _load_loso_metrics_from_disk(
     """
 
     metrics_by_study: Dict[str, Mapping[str, object]] = {}
-    api = _api()
+    load_metrics_with_log = cast(
+        Callable[..., Dict[str, object] | None],
+        get_sweeps_attr("_load_metrics_with_log"),
+    )
+    inject_metadata = cast(
+        Callable[[Dict[str, object], StudySpec], None],
+        get_sweeps_attr("_inject_study_metadata"),
+    )
     loso_root = next_video_dir / "loso"
     if not loso_root.exists():
         return metrics_by_study
@@ -373,7 +388,7 @@ def _load_loso_metrics_from_disk(
         metrics_path = loso_root / spec.evaluation_slug / "metrics.json"
         if not metrics_path.exists():
             continue
-        metrics = api._load_metrics_with_log(
+        metrics = load_metrics_with_log(
             metrics_path,
             spec,
             log_level=logging.DEBUG,
@@ -381,7 +396,7 @@ def _load_loso_metrics_from_disk(
         )
         if metrics is None:
             continue
-        api._inject_study_metadata(metrics, spec)
+        inject_metadata(metrics, spec)
         metrics_by_study[spec.key] = metrics
     return metrics_by_study
 

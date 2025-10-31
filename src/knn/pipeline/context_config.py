@@ -245,3 +245,49 @@ class SweepConfig:
             if self.sentence_transformer_normalize is not None:
                 parts.append("norm" if self.sentence_transformer_normalize else "nonorm")
         return "_".join(parts)
+
+    def cli_args(self, *, word2vec_model_dir: object | None = None) -> list[str]:
+        """Serialise the configuration into CLI flags for knn.cli.main.
+
+        :param word2vec_model_dir: Optional directory for Word2Vec caches, forwarded
+            when the feature space is ``word2vec``.
+        :returns: Argument vector encoding this configuration.
+        """
+        args: list[str] = [
+            "--feature-space",
+            self.feature_space,
+            "--knn-metric",
+            self.metric,
+            "--knn-text-fields",
+            ",".join(self.text_fields),
+        ]
+        if self.feature_space == "word2vec":
+            if self.word2vec_size is not None:
+                args.extend(["--word2vec-size", str(int(self.word2vec_size))])
+            if self.word2vec_window is not None:
+                args.extend(["--word2vec-window", str(int(self.word2vec_window))])
+            if self.word2vec_min_count is not None:
+                args.extend(["--word2vec-min-count", str(int(self.word2vec_min_count))])
+            if self.word2vec_epochs is not None:
+                args.extend(["--word2vec-epochs", str(int(self.word2vec_epochs))])
+            if self.word2vec_workers is not None:
+                args.extend(["--word2vec-workers", str(int(self.word2vec_workers))])
+            if word2vec_model_dir is not None:
+                args.extend(["--word2vec-model-dir", str(word2vec_model_dir)])
+        elif self.feature_space == "sentence_transformer":
+            if self.sentence_transformer_model is not None:
+                args.extend(["--sentence-transformer-model", self.sentence_transformer_model])
+            if self.sentence_transformer_device:
+                args.extend(["--sentence-transformer-device", self.sentence_transformer_device])
+            if self.sentence_transformer_batch_size is not None:
+                args.extend([
+                    "--sentence-transformer-batch-size",
+                    str(int(self.sentence_transformer_batch_size)),
+                ])
+            if self.sentence_transformer_normalize is not None:
+                args.append(
+                    "--sentence-transformer-normalize"
+                    if self.sentence_transformer_normalize
+                    else "--sentence-transformer-no-normalize"
+                )
+        return args

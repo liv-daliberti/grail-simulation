@@ -74,23 +74,82 @@ class ReportBundle:
     Aggregated artefacts required to render Markdown reports for the pipeline run.
 
     :param selections: Winning selections for slate and opinion tasks.
-    :type selections: _ReportSelections
+    :type selections: ~knn.pipeline.context.ReportSelections
     :param outcomes: Chronological lists of executed/cached sweep outcomes.
-    :type outcomes: _ReportOutcomes
+    :type outcomes: ~knn.pipeline.context.ReportOutcomes
     :param metrics: Final and LOSO metrics grouped by feature and study.
-    :type metrics: _ReportMetrics
+    :type metrics: ~knn.pipeline.context.ReportMetrics
     :param presentation: Report presentation options and auxiliary paths.
-    :type presentation: _ReportPresentation
+    :type presentation: ~knn.pipeline.context.ReportPresentation
     """
 
     def __init__(
         self,
         *,
-        selections: _ReportSelections,
-        outcomes: _ReportOutcomes,
-        metrics: _ReportMetrics,
-        presentation: _ReportPresentation,
+        selections: _ReportSelections | None = None,
+        outcomes: _ReportOutcomes | None = None,
+        metrics: _ReportMetrics | None = None,
+        presentation: _ReportPresentation | None = None,
+        # Backwards-compatible flat kwargs used across tests/call-sites
+        sweep_outcomes: Sequence["SweepOutcome"] | None = None,
+        opinion_sweep_outcomes: Sequence["OpinionSweepOutcome"] | None = None,
+        selections_mapping: Mapping[str, Mapping[str, "StudySelection"]] | None = None,
+        selections_map: Mapping[str, Mapping[str, "StudySelection"]] | None = None,
+        opinion_selections: Mapping[str, Mapping[str, "OpinionStudySelection"]] | None = None,
+        metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]] | None = None,
+        opinion_metrics: Mapping[str, Mapping[str, Mapping[str, object]]] | None = None,
+        opinion_from_next_metrics: Mapping[str, Mapping[str, Mapping[str, object]]] | None = None,
+        loso_metrics: Mapping[str, Mapping[str, Mapping[str, object]]] | None = None,
+        feature_spaces: Tuple[str, ...] | None = None,
+        sentence_model: str | None = None,
+        k_sweep: str | None = None,
+        studies: Sequence["StudySpec"] | None = None,
+        allow_incomplete: bool | None = None,
+        include_next_video: bool | None = None,
+        include_opinion: bool | None = None,
+        include_opinion_from_next: bool | None = None,
+        opinion_predictions_root: Path | None = None,
+        opinion_from_next_predictions_root: Path | None = None,
     ) -> None:
+        # Build grouped structures when not provided from flat kwargs
+        if selections is None:
+            selections = _ReportSelections(
+                selections=selections_mapping or selections_map or {},  # type: ignore[arg-type]
+                opinion_selections=opinion_selections or {},
+            )
+        if outcomes is None:
+            outcomes = _ReportOutcomes(
+                sweep_outcomes=tuple(sweep_outcomes or ()),
+                opinion_sweep_outcomes=tuple(opinion_sweep_outcomes or ()),
+            )
+        if metrics is None:
+            metrics = _ReportMetrics(
+                metrics_by_feature=metrics_by_feature or {},
+                opinion_metrics=opinion_metrics or {},
+                opinion_from_next_metrics=opinion_from_next_metrics or {},
+                loso_metrics=loso_metrics,
+            )
+        if presentation is None:
+            flags = _PresentationFlags(
+                allow_incomplete=bool(allow_incomplete) if allow_incomplete is not None else False,
+                include_next_video=bool(include_next_video) if include_next_video is not None else True,
+                include_opinion=bool(include_opinion) if include_opinion is not None else True,
+                include_opinion_from_next=(
+                    bool(include_opinion_from_next) if include_opinion_from_next is not None else False
+                ),
+            )
+            predictions = _PredictionRoots(
+                opinion_predictions_root=opinion_predictions_root,
+                opinion_from_next_predictions_root=opinion_from_next_predictions_root,
+            )
+            presentation = _ReportPresentation(
+                feature_spaces=tuple(feature_spaces or ("tfidf", "word2vec", "sentence_transformer")),
+                sentence_model=sentence_model,
+                k_sweep=k_sweep or "",
+                studies=tuple(studies or ()),
+                flags=flags,
+                predictions=predictions,
+            )
         self._selections = selections
         self._outcomes = outcomes
         self._metrics = metrics

@@ -58,26 +58,45 @@ class MetricSummary:
     random_baseline: Optional[float]
     accuracy_all_rows: Optional[float]
 
-    def __init__(
-        self,
-        *,
-        accuracy: Optional[float] = None,
-        accuracy_ci: Optional[Tuple[float, float]] = None,
-        baseline: Optional[float] = None,
-        baseline_ci: Optional[Tuple[float, float]] = None,
-        random_baseline: Optional[float] = None,
-        best_k: Optional[int] = None,
-        n_total: Optional[int] = None,
-        n_eligible: Optional[int] = None,
-        accuracy_all_rows: Optional[float] = None,
-    ) -> None:
-        # group accuracy/baseline stats and counts to reduce attributes
-        object.__setattr__(self, "_acc", _AccuracyStats(value=accuracy, ci95=accuracy_ci))
-        object.__setattr__(self, "_baseline", _AccuracyStats(value=baseline, ci95=baseline_ci))
-        object.__setattr__(self, "random_baseline", random_baseline)
-        object.__setattr__(self, "best_k", best_k)
-        object.__setattr__(self, "_counts", _Counts(total=n_total, eligible=n_eligible))
-        object.__setattr__(self, "accuracy_all_rows", accuracy_all_rows)
+    def __init__(self, *, inputs: Mapping[str, object]) -> None:
+        """
+        Construct a metric summary from a typed mapping.
+
+        Expected keys in ``inputs`` (all optional):
+        ``accuracy`` (float), ``accuracy_ci`` (tuple[float, float]),
+        ``baseline`` (float), ``baseline_ci`` (tuple[float, float]),
+        ``random_baseline`` (float), ``best_k`` (int),
+        ``n_total`` (int), ``n_eligible`` (int), ``accuracy_all_rows`` (float).
+        """
+        acc_val = inputs.get("accuracy")  # type: ignore[assignment]
+        acc_ci = inputs.get("accuracy_ci")  # type: ignore[assignment]
+        base_val = inputs.get("baseline")  # type: ignore[assignment]
+        base_ci = inputs.get("baseline_ci")  # type: ignore[assignment]
+        object.__setattr__(
+            self, "_acc", _AccuracyStats(value=acc_val if isinstance(acc_val, (int, float)) else acc_val, ci95=acc_ci if isinstance(acc_ci, tuple) else acc_ci)  # type: ignore[arg-type]
+        )
+        object.__setattr__(
+            self, "_baseline", _AccuracyStats(value=base_val if isinstance(base_val, (int, float)) else base_val, ci95=base_ci if isinstance(base_ci, tuple) else base_ci)  # type: ignore[arg-type]
+        )
+        object.__setattr__(
+            self,
+            "random_baseline",
+            inputs.get("random_baseline"),  # type: ignore[assignment]
+        )
+        object.__setattr__(self, "best_k", inputs.get("best_k"))  # type: ignore[assignment]
+        object.__setattr__(
+            self,
+            "_counts",
+            _Counts(
+                total=inputs.get("n_total"),  # type: ignore[arg-type]
+                eligible=inputs.get("n_eligible"),  # type: ignore[arg-type]
+            ),
+        )
+        object.__setattr__(
+            self,
+            "accuracy_all_rows",
+            inputs.get("accuracy_all_rows"),  # type: ignore[assignment]
+        )
 
     # Backwards-compatible accessors
     @property
@@ -129,45 +148,10 @@ class MetricSummary:
         return self._counts.eligible
 
 
-@dataclass(frozen=True)
-class _PrimaryRegression:
-    """Primary regression metrics for opinion models."""
-
-    mae: Optional[float] = None
-    rmse: Optional[float] = None
-    r2_score: Optional[float] = None
-
-
-@dataclass(frozen=True)
-class _ChangeStats:
-    """Opinion-change signal metrics, including baseline reference."""
-
-    mae_change: Optional[float] = None
-    rmse_change: Optional[float] = None
-    baseline_rmse_change: Optional[float] = None
-
-
-@dataclass(frozen=True)
-class _BaselineStats:
-    """Baseline opinion regression metrics and deltas."""
-
-    baseline_mae: Optional[float] = None
-    mae_delta: Optional[float] = None
-
-
-@dataclass(frozen=True)
-class _OpinionRegression:
-    """Grouped opinion-regression metrics, reducing attribute count."""
-
-    primary: _PrimaryRegression = field(default_factory=_PrimaryRegression)
-    change: _ChangeStats = field(default_factory=_ChangeStats)
-    baseline: _BaselineStats = field(default_factory=_BaselineStats)
-    best_k: Optional[int] = None
-
-
 class OpinionSummary(OpinionCalibrationMetrics):
     """
     Normalised view of opinion-regression metrics.
+
 
     :param mae: Mean absolute error for the selected configuration.
     :type mae: Optional[float]
@@ -195,7 +179,8 @@ class OpinionSummary(OpinionCalibrationMetrics):
     :type calibration_ece: Optional[float]
     :param kl_divergence_change: KL divergence between predicted and actual change distributions.
     :type kl_divergence_change: Optional[float]
-    :param calibration_bins: Optional tuple of bin summaries backing :attr:`~common.opinion.OpinionCalibrationMetrics.calibration_ece`.
+    :param calibration_bins: Optional tuple of bin summaries backing
+        :attr:`~common.opinion.OpinionCalibrationMetrics.calibration_ece`.
     :type calibration_bins: Optional[Tuple[Mapping[str, float], ...]]
     :param best_k: Neighbourhood size delivering the final metrics.
     :type best_k: Optional[int]
@@ -212,7 +197,7 @@ class OpinionSummary(OpinionCalibrationMetrics):
     """
 
     # Hints for static analyzers; members are assigned in __init__.
-    _regression: _OpinionRegression
+    _regression: "OpinionSummary.Regression"
     _accuracy: Optional[float]
     _calibration_bins: Optional[Tuple[Mapping[str, float], ...]]
 
@@ -220,75 +205,73 @@ class OpinionSummary(OpinionCalibrationMetrics):
     class Inputs:
         """Grouped construction inputs reducing local variables in __init__."""
 
-        # base calibration fields
-        baseline_accuracy: Optional[float] = None
-        accuracy_delta: Optional[float] = None
-        calibration_slope: Optional[float] = None
-        baseline_calibration_slope: Optional[float] = None
-        calibration_intercept: Optional[float] = None
-        baseline_calibration_intercept: Optional[float] = None
-        calibration_ece: Optional[float] = None
-        baseline_calibration_ece: Optional[float] = None
-        kl_divergence_change: Optional[float] = None
-        baseline_kl_divergence_change: Optional[float] = None
-        participants: Optional[int] = None
-        eligible: Optional[int] = None
-        dataset: Optional[str] = None
-        split: Optional[str] = None
-        # opinion regression fields
-        mae: Optional[float] = None
-        rmse: Optional[float] = None
-        r2_score: Optional[float] = None
-        mae_change: Optional[float] = None
-        rmse_change: Optional[float] = None
-        baseline_mae: Optional[float] = None
-        baseline_rmse_change: Optional[float] = None
-        mae_delta: Optional[float] = None
-        best_k: Optional[int] = None
-        # extras
+        calibration: OpinionCalibrationMetrics = field(
+            default_factory=OpinionCalibrationMetrics
+        )
+        regression: "OpinionSummary.Regression" = field(
+            default_factory=lambda: OpinionSummary.Regression()
+        )
         accuracy: Optional[float] = None
         calibration_bins: Optional[Tuple[Mapping[str, float], ...]] = None
 
+    @dataclass(frozen=True)
+    class PrimaryRegression:
+        """Primary regression metrics for opinion models."""
+
+        mae: Optional[float] = None
+        rmse: Optional[float] = None
+        r2_score: Optional[float] = None
+
+    @dataclass(frozen=True)
+    class ChangeStats:
+        """Opinion-change signal metrics, including baseline reference."""
+
+        mae_change: Optional[float] = None
+        rmse_change: Optional[float] = None
+        baseline_rmse_change: Optional[float] = None
+
+    @dataclass(frozen=True)
+    class BaselineStats:
+        """Baseline opinion regression metrics and deltas."""
+
+        baseline_mae: Optional[float] = None
+        mae_delta: Optional[float] = None
+
+    @dataclass(frozen=True)
+    class Regression:
+        """Grouped opinion-regression metrics, reducing attribute count."""
+
+        primary: "OpinionSummary.PrimaryRegression" = field(
+            default_factory=lambda: OpinionSummary.PrimaryRegression()
+        )
+        change: "OpinionSummary.ChangeStats" = field(
+            default_factory=lambda: OpinionSummary.ChangeStats()
+        )
+        baseline: "OpinionSummary.BaselineStats" = field(
+            default_factory=lambda: OpinionSummary.BaselineStats()
+        )
+        best_k: Optional[int] = None
+
     def __init__(self, *, inputs: "OpinionSummary.Inputs") -> None:
-        # initialise base dataclass
+        # initialise base dataclass using grouped calibration inputs
         super().__init__(
-            baseline_accuracy=inputs.baseline_accuracy,
-            accuracy_delta=inputs.accuracy_delta,
-            calibration_slope=inputs.calibration_slope,
-            baseline_calibration_slope=inputs.baseline_calibration_slope,
-            calibration_intercept=inputs.calibration_intercept,
-            baseline_calibration_intercept=inputs.baseline_calibration_intercept,
-            calibration_ece=inputs.calibration_ece,
-            baseline_calibration_ece=inputs.baseline_calibration_ece,
-            kl_divergence_change=inputs.kl_divergence_change,
-            baseline_kl_divergence_change=inputs.baseline_kl_divergence_change,
-            participants=inputs.participants,
-            eligible=inputs.eligible,
-            dataset=inputs.dataset,
-            split=inputs.split,
+            baseline_accuracy=inputs.calibration.baseline_accuracy,
+            accuracy_delta=inputs.calibration.accuracy_delta,
+            calibration_slope=inputs.calibration.calibration_slope,
+            baseline_calibration_slope=inputs.calibration.baseline_calibration_slope,
+            calibration_intercept=inputs.calibration.calibration_intercept,
+            baseline_calibration_intercept=inputs.calibration.baseline_calibration_intercept,
+            calibration_ece=inputs.calibration.calibration_ece,
+            baseline_calibration_ece=inputs.calibration.baseline_calibration_ece,
+            kl_divergence_change=inputs.calibration.kl_divergence_change,
+            baseline_kl_divergence_change=inputs.calibration.baseline_kl_divergence_change,
+            participants=inputs.calibration.participants,
+            eligible=inputs.calibration.eligible,
+            dataset=inputs.calibration.dataset,
+            split=inputs.calibration.split,
         )
-        # group opinion-specific fields
-        object.__setattr__(
-            self,
-            "_regression",
-            _OpinionRegression(
-                primary=_PrimaryRegression(
-                    mae=inputs.mae,
-                    rmse=inputs.rmse,
-                    r2_score=inputs.r2_score,
-                ),
-                change=_ChangeStats(
-                    mae_change=inputs.mae_change,
-                    rmse_change=inputs.rmse_change,
-                    baseline_rmse_change=inputs.baseline_rmse_change,
-                ),
-                baseline=_BaselineStats(
-                    baseline_mae=inputs.baseline_mae,
-                    mae_delta=inputs.mae_delta,
-                ),
-                best_k=inputs.best_k,
-            ),
-        )
+        # set opinion-specific fields
+        object.__setattr__(self, "_regression", inputs.regression)
         object.__setattr__(self, "_accuracy", inputs.accuracy)
         object.__setattr__(self, "_calibration_bins", inputs.calibration_bins)
 

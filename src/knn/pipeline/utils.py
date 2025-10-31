@@ -40,6 +40,7 @@ from typing import (
 from common.pipeline.formatters import safe_float, safe_int
 
 from .context import MetricSummary, OpinionSummary, StudySpec, OpinionSummaryInputs
+from common.opinion import OpinionCalibrationMetrics
 
 TaskT = TypeVar("TaskT")
 OutcomeT = TypeVar("OutcomeT")
@@ -321,15 +322,17 @@ def extract_metric_summary(data: Mapping[str, object]) -> MetricSummary:
     random_baseline = safe_float(data.get("random_baseline_expected_accuracy"))
 
     return MetricSummary(
-        accuracy=accuracy,
-        accuracy_ci=accuracy_ci,
-        baseline=baseline,
-        baseline_ci=baseline_ci,
-        random_baseline=random_baseline,
-        best_k=best_k,
-        n_total=n_total,
-        n_eligible=n_eligible,
-        accuracy_all_rows=accuracy_all_rows,
+        inputs={
+            "accuracy": accuracy,
+            "accuracy_ci": accuracy_ci,
+            "baseline": baseline,
+            "baseline_ci": baseline_ci,
+            "random_baseline": random_baseline,
+            "best_k": best_k,
+            "n_total": n_total,
+            "n_eligible": n_eligible,
+            "accuracy_all_rows": accuracy_all_rows,
+        }
     )
 
 def extract_opinion_summary(data: Mapping[str, object]) -> OpinionSummary:
@@ -401,16 +404,7 @@ def extract_opinion_summary(data: Mapping[str, object]) -> OpinionSummary:
         else None
     )
 
-    inputs = OpinionSummaryInputs(
-        mae=mae_value,
-        rmse=metric(best_metrics, "rmse_after"),
-        r2_score=metric(best_metrics, "r2_after"),
-        mae_change=metric(best_metrics, "mae_change"),
-        rmse_change=metric(best_metrics, "rmse_change"),
-        baseline_mae=baseline_mae_value,
-        baseline_rmse_change=metric(baseline_metrics, "rmse_change_zero"),
-        mae_delta=mae_delta,
-        accuracy=accuracy,
+    calibration = OpinionCalibrationMetrics(
         baseline_accuracy=baseline_accuracy,
         accuracy_delta=difference(accuracy, baseline_accuracy),
         calibration_slope=metric(best_metrics, "calibration_slope"),
@@ -429,11 +423,34 @@ def extract_opinion_summary(data: Mapping[str, object]) -> OpinionSummary:
         baseline_kl_divergence_change=metric(
             baseline_metrics, "kl_divergence_change_zero"
         ),
-        best_k=safe_int(data.get("best_k")),
         participants=participants,
         eligible=eligible,
         dataset=str(data.get("dataset")) if data.get("dataset") else None,
         split=str(data.get("split")) if data.get("split") else None,
+    )
+
+    regression = OpinionSummary.Regression(
+        primary=OpinionSummary.PrimaryRegression(
+            mae=mae_value,
+            rmse=metric(best_metrics, "rmse_after"),
+            r2_score=metric(best_metrics, "r2_after"),
+        ),
+        change=OpinionSummary.ChangeStats(
+            mae_change=metric(best_metrics, "mae_change"),
+            rmse_change=metric(best_metrics, "rmse_change"),
+            baseline_rmse_change=metric(baseline_metrics, "rmse_change_zero"),
+        ),
+        baseline=OpinionSummary.BaselineStats(
+            baseline_mae=baseline_mae_value,
+            mae_delta=mae_delta,
+        ),
+        best_k=safe_int(data.get("best_k")),
+    )
+
+    inputs = OpinionSummaryInputs(
+        calibration=calibration,
+        regression=regression,
+        accuracy=accuracy,
     )
     return OpinionSummary(inputs=inputs)
 

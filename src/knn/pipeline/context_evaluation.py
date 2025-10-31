@@ -117,10 +117,10 @@ class EvaluationContext:
         *,
         base_cli: Sequence[str],
         extra_cli: Sequence[str],
-        next_video_out_dir: Path,
-        opinion_out_dir: Path,
-        next_video_word2vec_dir: Path,
-        opinion_word2vec_dir: Path,
+        next_video_out_dir: Path | None = None,
+        opinion_out_dir: Path | None = None,
+        next_video_word2vec_dir: Path | None = None,
+        opinion_word2vec_dir: Path | None = None,
         reuse_existing: bool,
         **overrides: Mapping[str, object],
     ) -> "EvaluationContext":
@@ -150,20 +150,35 @@ class EvaluationContext:
             formatted = ", ".join(sorted(unexpected))
             raise TypeError(f"EvaluationContext received unexpected keyword(s): {formatted}")
 
+        # Support both legacy flat args passed directly and explicit overrides
         outputs = EvaluationOutputs.from_keywords(
-            out_dir=overrides.get("out_dir"),
-            next_video_out_dir=overrides.get(
-                "next_video_out_dir", next_video_out_dir
+            out_dir=(overrides.get("out_dir") if overrides.get("out_dir") is not None else None),
+            next_video_out_dir=(
+                overrides.get("next_video_out_dir")  # type: ignore[arg-type]
+                if overrides.get("next_video_out_dir") is not None
+                else next_video_out_dir
             ),
-            opinion_out_dir=overrides.get("opinion_out_dir", opinion_out_dir),
+            opinion_out_dir=(
+                overrides.get("opinion_out_dir")  # type: ignore[arg-type]
+                if overrides.get("opinion_out_dir") is not None
+                else opinion_out_dir
+            ),
         )
         word2vec_paths = EvaluationWord2VecPaths.from_keywords(
-            word2vec_model_dir=overrides.get("word2vec_model_dir"),
-            next_video_word2vec_dir=overrides.get(
-                "next_video_word2vec_dir", next_video_word2vec_dir
+            word2vec_model_dir=(
+                overrides.get("word2vec_model_dir")  # type: ignore[arg-type]
+                if overrides.get("word2vec_model_dir") is not None
+                else None
             ),
-            opinion_word2vec_dir=overrides.get(
-                "opinion_word2vec_dir", opinion_word2vec_dir
+            next_video_word2vec_dir=(
+                overrides.get("next_video_word2vec_dir")  # type: ignore[arg-type]
+                if overrides.get("next_video_word2vec_dir") is not None
+                else next_video_word2vec_dir
+            ),
+            opinion_word2vec_dir=(
+                overrides.get("opinion_word2vec_dir")  # type: ignore[arg-type]
+                if overrides.get("opinion_word2vec_dir") is not None
+                else opinion_word2vec_dir
             ),
             fallback_parent=outputs.next_video,
         )

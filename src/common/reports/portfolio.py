@@ -122,47 +122,66 @@ def _read_xgb_next_video(repo_root: Path) -> dict[StudyLabel, float]:
 
 
 def _read_grouped_json_next_video(repo_root: Path, family: str) -> dict[StudyLabel, float]:
-    """Return per-study accuracy from RLHF/GPT-4o JSON metrics."""
-    root = repo_root / "models" / family / "next_video"
+    """Return per-study accuracy from JSON metrics for next-video.
+
+    Supports both flat layouts (e.g. ``models/gpt-4o/next_video/<label>/metrics.json``)
+    and nested RLHF layouts (e.g. ``models/<family>/<scenario>/checkpoint-50/next_video/**/metrics.json``).
+    Aggregates across multiple runs so studies split by issue are combined.
+    """
+    model_root = repo_root / "models" / family
     label_map = _label_by_key()
     values: dict[StudyLabel, float] = {}
-    if not root.exists():
+    if not model_root.exists():
         return values
-    # Prefer direct next_video runs over sweeps
+
     candidates: list[Path] = []
-    for sub in sorted(root.glob("*/metrics.json")):
-        if "/sweeps/" in sub.as_posix():
-            continue
-        candidates.append(sub)
+    # First preference: flat next_video tree at the family root
+    flat_root = model_root / "next_video"
+    if flat_root.exists():
+        for sub in sorted(flat_root.glob("*/metrics.json")):
+            if "/sweeps/" in sub.as_posix():
+                continue
+            candidates.append(sub)
+        if not candidates:
+            candidates.extend(sorted(flat_root.rglob("metrics.json")))
+
+    # Fallback: recursively search under the family root for any next_video metrics
     if not candidates:
-        # fall back to any metrics under next_video
-        candidates = sorted(root.rglob("metrics.json"))
+        for path in sorted(model_root.rglob("metrics.json")):
+            posix = path.as_posix()
+            if "/next_video/" not in posix:
+                continue
+            if "/sweeps/" in posix:
+                continue
+            candidates.append(path)
+
     if not candidates:
         return values
-    metrics = _load_json(candidates[0])
-    group = (
-        metrics.get("group_metrics", {})
-        if isinstance(metrics, Mapping)
-        else {}
-    )
-    by_study = (
-        group.get("by_participant_study", {})
-        if isinstance(group, Mapping)
-        else {}
-    )
-    if not isinstance(by_study, Mapping):
-        return values
-    for key, payload in by_study.items():
-        if not isinstance(payload, Mapping):
+
+    # Process non-checkpoint candidates first, then checkpoint-50 variants so they override
+    def _is_checkpoint_50(p: Path) -> bool:
+        parts = p.as_posix().split("/")
+        return "checkpoint-50" in parts
+
+    ordered: list[Path] = sorted(candidates, key=lambda p: (0 if not _is_checkpoint_50(p) else 1, p.as_posix()))
+
+    for metrics_path in ordered:
+        payload = _load_json(metrics_path)
+        group = payload.get("group_metrics", {}) if isinstance(payload, Mapping) else {}
+        by_study = group.get("by_participant_study", {}) if isinstance(group, Mapping) else {}
+        if not isinstance(by_study, Mapping):
             continue
-        label = label_map.get(str(key))
-        if not label:
-            continue
-        try:
-            acc = float(payload.get("accuracy"))
-        except (TypeError, ValueError):
-            continue
-        values[label] = acc
+        for key, study_payload in by_study.items():
+            if not isinstance(study_payload, Mapping):
+                continue
+            label = label_map.get(str(key))
+            if not label:
+                continue
+            try:
+                acc = float(study_payload.get("accuracy"))
+            except (TypeError, ValueError):
+                continue
+            values[label] = acc
     return values
 
 
@@ -264,7 +283,7 @@ def _read_rlhf_opinion(repo_root: Path, family: str) -> tuple[dict[StudyLabel, f
     mae: dict[StudyLabel, float] = {}
     if not root.exists():
         return acc, mae
-    # search for the first run label that contains study subdirs
+    # search for any run label that contains study subdirs; aggregate across runs
     run_dirs = sorted([p for p in root.iterdir() if p.is_dir()])
     for run in run_dirs:
         study_dirs = sorted([p for p in run.iterdir() if p.is_dir()])
@@ -294,9 +313,6 @@ def _read_rlhf_opinion(repo_root: Path, family: str) -> tuple[dict[StudyLabel, f
                 acc[label] = direction
             if mae_val is not None:
                 mae[label] = mae_val
-        # Only consider the first populated run label
-        if acc or mae:
-            break
     return acc, mae
 
 

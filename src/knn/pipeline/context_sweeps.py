@@ -48,9 +48,50 @@ class SweepOutcome:
     def __init__(
         self,
         *,
-        base: BasePipelineSweepOutcome[SweepConfig],
-        knn: _KnnSweepStats,
+        base: BasePipelineSweepOutcome[SweepConfig] | None = None,
+        knn: _KnnSweepStats | None = None,
+        # Legacy flat kwargs for backwards compatibility (used in tests)
+        order_index: int | None = None,
+        study: StudySpec | None = None,
+        config: "SweepConfig" | None = None,
+        metrics_path: Path | None = None,
+        metrics: Mapping[str, object] | None = None,
+        feature_space: str | None = None,
+        accuracy: float | None = None,
+        best_k: int | None = None,
+        eligible: int | None = None,
     ) -> None:
+        """Construct a KNN sweep outcome.
+
+        Accepts either a composed ``base`` + ``knn`` pair, or a legacy flat set
+        of keyword arguments (``order_index``, ``study``, ``config``,
+        ``metrics_path``, ``metrics``, ``feature_space``, ``accuracy``,
+        ``best_k``, ``eligible``).
+        """
+        if base is None or knn is None:
+            # Build from legacy flat kwargs
+            assert order_index is not None
+            assert study is not None
+            assert config is not None
+            assert metrics_path is not None
+            assert metrics is not None
+            assert feature_space is not None
+            assert accuracy is not None
+            assert best_k is not None
+            assert eligible is not None
+            base = BasePipelineSweepOutcome[SweepConfig](
+                order_index=order_index,
+                study=study,
+                config=config,
+                metrics_path=metrics_path,
+                metrics=metrics,
+            )
+            knn = _KnnSweepStats(
+                feature_space=feature_space,
+                accuracy=accuracy,
+                best_k=best_k,
+                eligible=eligible,
+            )
         self._base = base
         self._knn = knn
 
@@ -165,9 +206,57 @@ class OpinionSweepOutcome:
     def __init__(
         self,
         *,
-        base: BaseOpinionSweepOutcome[SweepConfig],
-        knn: _KnnOpinionExtras,
+        base: BaseOpinionSweepOutcome[SweepConfig] | None = None,
+        knn: _KnnOpinionExtras | None = None,
+        # Legacy flat kwargs for backwards compatibility
+        order_index: int | None = None,
+        study: StudySpec | None = None,
+        config: "SweepConfig" | None = None,
+        mae: float | None = None,
+        rmse: float | None = None,
+        artifact: object | None = None,
+        accuracy_summary: object | None = None,
+        feature_space: str | None = None,
+        r2_score: float | None = None,
+        baseline_mae: float | None = None,
+        mae_delta: float | None = None,
+        best_k: int | None = None,
+        participants: int | None = None,
     ) -> None:
+        """Construct an opinion sweep outcome.
+
+        Accepts composed ``base`` + ``knn`` or legacy flat kwargs used by tests.
+        """
+        if base is None or knn is None:
+            # Build the composed objects from flat kwargs
+            assert order_index is not None
+            assert study is not None
+            assert config is not None
+            assert mae is not None
+            assert rmse is not None
+            assert artifact is not None
+            assert accuracy_summary is not None
+            assert feature_space is not None
+            assert r2_score is not None
+            assert best_k is not None
+            assert participants is not None
+            base = BaseOpinionSweepOutcome[SweepConfig](
+                order_index=order_index,
+                study=study,
+                config=config,
+                mae=mae,
+                rmse=rmse,
+                artifact=artifact,  # type: ignore[arg-type]
+                accuracy_summary=accuracy_summary,  # type: ignore[arg-type]
+            )
+            knn = _KnnOpinionExtras(
+                feature_space=feature_space,
+                r2_score=r2_score,
+                baseline_mae=baseline_mae,
+                mae_delta=mae_delta,
+                best_k=best_k,
+                participants=participants,
+            )
         self._base = base
         self._knn = knn
 

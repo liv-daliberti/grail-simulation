@@ -328,6 +328,18 @@ _nitpick_targets = {
         "xgb.pipeline.context._OpinionCalibration",
         "xgb.pipeline.context._OpinionDeltas",
         "xgb.pipeline.context._OpinionMeta",
+        # KNN pipeline private internals referenced from public docs
+        "knn.pipeline.context_pipeline._PipelinePaths",
+        "knn.pipeline.context_pipeline._ModelDefaults",
+        "knn.pipeline.context_pipeline._Workflow",
+        "knn.pipeline.context_reports._PredictionRoots",
+        "knn.pipeline.context_reports._PresentationFlags",
+        "knn.pipeline.context_reports._ReportMetrics",
+        "knn.pipeline.context_reports._ReportOutcomes",
+        "knn.pipeline.context_reports._ReportPresentation",
+        "knn.pipeline.context_reports._ReportSelections",
+        "knn.pipeline.context_sweeps._KnnSweepStats",
+        "knn.pipeline.context_sweeps._KnnOpinionExtras",
     ],
     "py:func": [
         "load_participant_allowlists",
@@ -370,6 +382,22 @@ _nitpick_targets = {
         "ConfigT",
         "TaskT",
         "OutcomeT",
+    ],
+    # Attribute cross-references emitted by autodoc for grouped configs
+    "py:attr": [
+        # XGBoostBoosterParams grouped attributes
+        "sampling.colsample_bytree",
+        "sampling.subsample",
+        "regularization.reg_alpha",
+        "regularization.reg_lambda",
+        "core.learning_rate",
+        "core.max_depth",
+        "core.n_estimators",
+        "core.tree_method",
+        # XGBoostTrainConfig vectorizer bundle attributes
+        "vectorizers.sentence_transformer",
+        "vectorizers.tfidf",
+        "vectorizers.word2vec",
     ],
 }
 

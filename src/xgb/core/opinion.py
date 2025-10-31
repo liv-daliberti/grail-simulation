@@ -152,6 +152,26 @@ class OpinionEvalRequest:
         return self.vectorizer.sentence_transformer
 
 
+@dataclass(frozen=True)
+class StudyOutputsParams:
+    """Container for serialising study outputs with fewer function arguments.
+
+    Bundles metadata, inputs, predictions, and metrics for a single study.
+    """
+
+    study_dir: Path
+    spec: OpinionSpec
+    dataset_source: str
+    feature_space: str
+    eval_examples: Sequence[OpinionExample]
+    train_examples: Sequence[OpinionExample]
+    predictions_after: np.ndarray
+    metrics: Mapping[str, Any]
+    baseline: Mapping[str, Any]
+    curve_metrics: Optional[Mapping[str, Any]]
+    train_config: OpinionTrainConfig
+
+
 def _vectorizer_available() -> None:
     """
     Validate that optional dependencies required for opinion regression are installed.
@@ -531,13 +551,16 @@ def _append_before_feature(
     eval_before_col = eval_before.reshape(-1, 1)
     try:
         if SP is not None and hasattr(train_features, "shape"):
-            if hasattr(SP, "issparse") and SP.issparse(train_features):  # type: ignore[attr-defined]
+            # Use getattr to avoid mypy attr-defined noise and keep the line short
+            issparse = getattr(SP, "issparse", None)
+            if issparse is not None and issparse(train_features):
                 train_features = SP.hstack(  # type: ignore[attr-defined]
                     [train_features, SP.csr_matrix(train_before_col)]
                 )
             else:
                 train_features = np.hstack([np.asarray(train_features), train_before_col])
-            if hasattr(SP, "issparse") and SP.issparse(eval_features):  # type: ignore[attr-defined]
+            issparse = getattr(SP, "issparse", None)
+            if issparse is not None and issparse(eval_features):
                 eval_features = SP.hstack(  # type: ignore[attr-defined]
                     [eval_features, SP.csr_matrix(eval_before_col)]
                 )
@@ -561,70 +584,61 @@ def _prepare_study_dir(study_dir: Path, *, overwrite: bool) -> None:
     study_dir.mkdir(parents=True, exist_ok=True)
 
 
-def _write_study_outputs(
-    *,
-    study_dir: Path,
-    spec: OpinionSpec,
-    dataset_source: str,
-    feature_space: str,
-    eval_examples: Sequence[OpinionExample],
-    train_examples: Sequence[OpinionExample],
-    predictions_after: np.ndarray,
-    metrics: Mapping[str, Any],
-    baseline: Mapping[str, Any],
-    curve_metrics: Optional[Mapping[str, Any]],
-    train_config: OpinionTrainConfig,
-) -> Dict[str, Any]:
+def _write_study_outputs(*, params: StudyOutputsParams) -> Dict[str, Any]:
     """Serialise metrics and predictions for a single study and return the payload."""
 
     payload: Dict[str, Any] = {
         "model": "xgb_opinion",
-        "feature_space": feature_space,
-        "dataset": dataset_source,
-        "study": spec.key,
-        "issue": spec.issue,
-        "label": spec.label,
+        "feature_space": params.feature_space,
+        "dataset": params.dataset_source,
+        "study": params.spec.key,
+        "issue": params.spec.issue,
+        "label": params.spec.label,
         "split": "validation",
-        "n_participants": len(eval_examples),
-        "train_participants": len(train_examples),
-        "metrics": dict(metrics),
-        "baseline": dict(baseline),
+        "n_participants": len(params.eval_examples),
+        "train_participants": len(params.train_examples),
+        "metrics": dict(params.metrics),
+        "baseline": dict(params.baseline),
         "config": {
-            "max_participants": train_config.max_participants,
-            "max_features": train_config.max_features,
-            "learning_rate": train_config.booster.learning_rate,
-            "max_depth": train_config.booster.max_depth,
-            "n_estimators": train_config.booster.n_estimators,
-            "subsample": train_config.booster.subsample,
-            "colsample_bytree": train_config.booster.colsample_bytree,
-            "reg_lambda": train_config.booster.reg_lambda,
-            "reg_alpha": train_config.booster.reg_alpha,
-            "tree_method": train_config.booster.tree_method,
-            "predict_change": train_config.predict_change,
-            "include_before_feature": train_config.include_before_feature,
+            "max_participants": params.train_config.max_participants,
+            "max_features": params.train_config.max_features,
+            "learning_rate": params.train_config.booster.learning_rate,
+            "max_depth": params.train_config.booster.max_depth,
+            "n_estimators": params.train_config.booster.n_estimators,
+            "subsample": params.train_config.booster.subsample,
+            "colsample_bytree": params.train_config.booster.colsample_bytree,
+            "reg_lambda": params.train_config.booster.reg_lambda,
+            "reg_alpha": params.train_config.booster.reg_alpha,
+            "tree_method": params.train_config.booster.tree_method,
+            "predict_change": params.train_config.predict_change,
+            "include_before_feature": params.train_config.include_before_feature,
         },
     }
-    if curve_metrics:
-        payload["curve_metrics"] = dict(curve_metrics)
-    eligible = metrics.get("eligible") if isinstance(metrics, Mapping) else None
+    if params.curve_metrics:
+        payload["curve_metrics"] = dict(params.curve_metrics)
+    eligible = (
+        params.metrics.get("eligible") if isinstance(params.metrics, Mapping) else None
+    )
     if eligible is not None:
         payload["eligible"] = int(eligible)
 
-    metrics_path = study_dir / f"opinion_xgb_{spec.key}_validation_metrics.json"
+    metrics_path = params.study_dir / f"opinion_xgb_{params.spec.key}_validation_metrics.json"
     with open(metrics_path, "w", encoding="utf-8") as handle:
         json.dump(payload, handle, indent=2)
 
-    predictions_path = study_dir / f"opinion_xgb_{spec.key}_validation_predictions.jsonl"
+    predictions_path = (
+        params.study_dir / f"opinion_xgb_{params.spec.key}_validation_predictions.jsonl"
+    )
     with open(predictions_path, "w", encoding="utf-8") as handle:
-        for idx, example in enumerate(eval_examples):
-            pred_after = float(predictions_after[idx])
+        for idx, example in enumerate(params.eval_examples):
+            pred_after = float(params.predictions_after[idx])
             pred_change = float(pred_after - example.before)
             handle.write(
                 json.dumps(
                     {
                         "participant_id": example.participant_id,
-                        "study": spec.key,
-                        "issue": spec.issue,
+                        "study": params.spec.key,
+                        "issue": params.spec.issue,
                         "before": example.before,
                         "after": example.after,
                         "prediction": pred_after,
@@ -766,17 +780,19 @@ def _evaluate_spec(  # pylint: disable=too-many-locals,too-many-statements
 
     curve_metrics = _curve_metrics_from_history(eval_history)
     return _write_study_outputs(
-        study_dir=study_dir,
-        spec=spec,
-        dataset_source=dataset_source,
-        feature_space=feature_space,
-        eval_examples=eval_examples,
-        train_examples=train_examples,
-        predictions_after=predictions_after,
-        metrics=metrics,
-        baseline=baseline,
-        curve_metrics=curve_metrics,
-        train_config=request.train_config,
+        params=StudyOutputsParams(
+            study_dir=study_dir,
+            spec=spec,
+            dataset_source=dataset_source,
+            feature_space=feature_space,
+            eval_examples=eval_examples,
+            train_examples=train_examples,
+            predictions_after=predictions_after,
+            metrics=metrics,
+            baseline=baseline,
+            curve_metrics=curve_metrics,
+            train_config=request.train_config,
+        )
     )
 
 

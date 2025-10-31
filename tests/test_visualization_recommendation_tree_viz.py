@@ -10,7 +10,9 @@ from typing import Dict, Mapping
 import pytest
 
 from src.visualization.recommendation_tree_viz import (
+    GraphCounts,
     GraphRenderOptions,
+    GraphStyle,
     LabelRenderOptions,
     SessionGraphOptions,
     TreeData,
@@ -117,12 +119,9 @@ def test_format_node_label_and_build_graph(
         label_template="{title}",
         wrap_width=None,
         highlight_path=("root", "child"),
-        node_counts=node_counts,
-        edge_counts=edge_counts,
+        counts=GraphCounts(node=node_counts, edge=edge_counts),
         max_depth=None,
-        rankdir="LR",
-        engine="dot",
-        show_rank_labels=True,
+        style=GraphStyle(rankdir="LR", engine="dot", show_rank_labels=True),
     )
     graph = build_graph(tree, options)
 

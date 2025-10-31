@@ -272,8 +272,55 @@ available tree plotting interfaces and configuration knobs.</p>
 <p id="module-visualization">Visualization utilities for Grail Simulation reports.</p>
 <p id="module-visualization.recommendation_tree_viz">Facade module exposing recommendation tree visualisation helpers.</p>
 <dl class="py class">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphCounts">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">GraphCounts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edge=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#GraphCounts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphCounts" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Container for per-node and per-edge traversal counts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>edge</strong> (<em>Mapping</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>, </em><em>int</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphCounts.node">
+<span class="sig-name descname"><span class="pre">node</span></span><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphCounts.node" title="Link to this definition">¶</a></dt>
+<dd><p>Mapping of node identifiers to visit counts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Mapping[str, int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphCounts.edge">
+<span class="sig-name descname"><span class="pre">edge</span></span><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphCounts.edge" title="Link to this definition">¶</a></dt>
+<dd><p>Mapping of <code class="docutils literal notranslate"><span class="pre">(parent,</span> <span class="pre">child)</span></code> identifiers to traversal counts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Mapping[Tuple[str, str], int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">edge</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id0" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id1">
+<span class="sig-name descname"><span class="pre">node</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id1" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">GraphRenderOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metadata=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_template='{originTitle}'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrap_width=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">highlight_path=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_counts=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edge_counts=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_depth=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rankdir='LR'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine='dot'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_rank_labels=True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#GraphRenderOptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">GraphRenderOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metadata=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_template='{originTitle}'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrap_width=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">highlight_path=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">counts=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_depth=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#GraphRenderOptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Configuration parameters for rendering tree-level graphs.</p>
 <dl class="field-list simple">
@@ -283,9 +330,134 @@ available tree plotting interfaces and configuration knobs.</p>
 <li><p><strong>label_template</strong> (<em>str</em>)</p></li>
 <li><p><strong>wrap_width</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>highlight_path</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
-<li><p><strong>node_counts</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>int</em><em>]</em>)</p></li>
-<li><p><strong>edge_counts</strong> (<em>Mapping</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>, </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>counts</strong> (<a class="reference internal" href="#visualization.recommendation_tree.render.GraphCounts" title="visualization.recommendation_tree.render.GraphCounts"><em>visualization.recommendation_tree.render.GraphCounts</em></a>)</p></li>
 <li><p><strong>max_depth</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>style</strong> (<a class="reference internal" href="#visualization.recommendation_tree.render.GraphStyle" title="visualization.recommendation_tree.render.GraphStyle"><em>visualization.recommendation_tree.render.GraphStyle</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.metadata">
+<span class="sig-name descname"><span class="pre">metadata</span></span><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.metadata" title="Link to this definition">¶</a></dt>
+<dd><p>External node metadata keyed by node id.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Mapping[str, Mapping[str, object]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.label_template">
+<span class="sig-name descname"><span class="pre">label_template</span></span><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.label_template" title="Link to this definition">¶</a></dt>
+<dd><p>Template used to render node labels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.wrap_width">
+<span class="sig-name descname"><span class="pre">wrap_width</span></span><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.wrap_width" title="Link to this definition">¶</a></dt>
+<dd><p>Optional wrapping width for node labels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.highlight_path">
+<span class="sig-name descname"><span class="pre">highlight_path</span></span><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.highlight_path" title="Link to this definition">¶</a></dt>
+<dd><p>Ordered identifiers describing the highlight path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Sequence[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.counts">
+<span class="sig-name descname"><span class="pre">counts</span></span><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.counts" title="Link to this definition">¶</a></dt>
+<dd><p>Per-node and per-edge traversal counts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#visualization.recommendation_tree.render.GraphCounts" title="visualization.recommendation_tree.render.GraphCounts">visualization.recommendation_tree.render.GraphCounts</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.max_depth">
+<span class="sig-name descname"><span class="pre">max_depth</span></span><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.max_depth" title="Link to this definition">¶</a></dt>
+<dd><p>Optional maximum depth for tree rendering.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.style">
+<span class="sig-name descname"><span class="pre">style</span></span><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.style" title="Link to this definition">¶</a></dt>
+<dd><p>Graphviz styling options shared across the graph.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#visualization.recommendation_tree.render.GraphStyle" title="visualization.recommendation_tree.render.GraphStyle">visualization.recommendation_tree.render.GraphStyle</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id2">
+<span class="sig-name descname"><span class="pre">counts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#visualization.recommendation_tree.render.GraphCounts" title="visualization.recommendation_tree.render.GraphCounts"><span class="pre">visualization.recommendation_tree.render.GraphCounts</span></a></em><a class="headerlink" href="#id2" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id3">
+<span class="sig-name descname"><span class="pre">highlight_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id3" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id4">
+<span class="sig-name descname"><span class="pre">label_template</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'{originTitle}'</span></em><a class="headerlink" href="#id4" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id5">
+<span class="sig-name descname"><span class="pre">max_depth</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#id5" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id6">
+<span class="sig-name descname"><span class="pre">metadata</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">object</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id6" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id7">
+<span class="sig-name descname"><span class="pre">style</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#visualization.recommendation_tree.render.GraphStyle" title="visualization.recommendation_tree.render.GraphStyle"><span class="pre">visualization.recommendation_tree.render.GraphStyle</span></a></em><a class="headerlink" href="#id7" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id8">
+<span class="sig-name descname"><span class="pre">wrap_width</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#id8" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphStyle">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">GraphStyle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rankdir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LR'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'dot'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_rank_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#GraphStyle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphStyle" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Graphviz style attributes shared across tree renders.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
 <li><p><strong>rankdir</strong> (<em>str</em>)</p></li>
 <li><p><strong>engine</strong> (<em>str</em>)</p></li>
 <li><p><strong>show_rank_labels</strong> (<em>bool</em>)</p></li>
@@ -293,53 +465,51 @@ available tree plotting interfaces and configuration knobs.</p>
 </dd>
 </dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.edge_counts">
-<span class="sig-name descname"><span class="pre">edge_counts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.edge_counts" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphStyle.rankdir">
+<span class="sig-name descname"><span class="pre">rankdir</span></span><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphStyle.rankdir" title="Link to this definition">¶</a></dt>
+<dd><p>Graph orientation (<code class="docutils literal notranslate"><span class="pre">LR</span></code>, <code class="docutils literal notranslate"><span class="pre">TB</span></code>, etc.).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphStyle.engine">
+<span class="sig-name descname"><span class="pre">engine</span></span><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphStyle.engine" title="Link to this definition">¶</a></dt>
+<dd><p>Graphviz layout engine name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphStyle.show_rank_labels">
+<span class="sig-name descname"><span class="pre">show_rank_labels</span></span><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphStyle.show_rank_labels" title="Link to this definition">¶</a></dt>
+<dd><p>Whether to attach rank labels to edges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id9">
+<span class="sig-name descname"><span class="pre">engine</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'dot'</span></em><a class="headerlink" href="#id9" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.engine">
-<span class="sig-name descname"><span class="pre">engine</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'dot'</span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.engine" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="id10">
+<span class="sig-name descname"><span class="pre">rankdir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'LR'</span></em><a class="headerlink" href="#id10" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.highlight_path">
-<span class="sig-name descname"><span class="pre">highlight_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.highlight_path" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.label_template">
-<span class="sig-name descname"><span class="pre">label_template</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'{originTitle}'</span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.label_template" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.max_depth">
-<span class="sig-name descname"><span class="pre">max_depth</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.max_depth" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.metadata">
-<span class="sig-name descname"><span class="pre">metadata</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">object</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.metadata" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.node_counts">
-<span class="sig-name descname"><span class="pre">node_counts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.node_counts" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.rankdir">
-<span class="sig-name descname"><span class="pre">rankdir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'LR'</span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.rankdir" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.show_rank_labels">
-<span class="sig-name descname"><span class="pre">show_rank_labels</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.show_rank_labels" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.wrap_width">
-<span class="sig-name descname"><span class="pre">wrap_width</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.wrap_width" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="id11">
+<span class="sig-name descname"><span class="pre">show_rank_labels</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#id11" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -473,28 +643,83 @@ available tree plotting interfaces and configuration knobs.</p>
 </dd>
 </dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.SessionGraphOptions.engine">
-<span class="sig-name descname"><span class="pre">engine</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'dot'</span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.SessionGraphOptions.engine" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.SessionGraphOptions.highlight_path">
-<span class="sig-name descname"><span class="pre">highlight_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.SessionGraphOptions.highlight_path" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
 <dt class="sig sig-object py" id="visualization.recommendation_tree_viz.SessionGraphOptions.label_template">
-<span class="sig-name descname"><span class="pre">label_template</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'{originTitle}'</span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.SessionGraphOptions.label_template" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.SessionGraphOptions.rankdir">
-<span class="sig-name descname"><span class="pre">rankdir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'LR'</span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.SessionGraphOptions.rankdir" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<span class="sig-name descname"><span class="pre">label_template</span></span><a class="headerlink" href="#visualization.recommendation_tree_viz.SessionGraphOptions.label_template" title="Link to this definition">¶</a></dt>
+<dd><p>Template string applied to node labels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="visualization.recommendation_tree_viz.SessionGraphOptions.wrap_width">
-<span class="sig-name descname"><span class="pre">wrap_width</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.SessionGraphOptions.wrap_width" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">wrap_width</span></span><a class="headerlink" href="#visualization.recommendation_tree_viz.SessionGraphOptions.wrap_width" title="Link to this definition">¶</a></dt>
+<dd><p>Optional wrapping width for node labels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.SessionGraphOptions.rankdir">
+<span class="sig-name descname"><span class="pre">rankdir</span></span><a class="headerlink" href="#visualization.recommendation_tree_viz.SessionGraphOptions.rankdir" title="Link to this definition">¶</a></dt>
+<dd><p>Graph orientation (<code class="docutils literal notranslate"><span class="pre">LR</span></code>, <code class="docutils literal notranslate"><span class="pre">TB</span></code>, etc.).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.SessionGraphOptions.engine">
+<span class="sig-name descname"><span class="pre">engine</span></span><a class="headerlink" href="#visualization.recommendation_tree_viz.SessionGraphOptions.engine" title="Link to this definition">¶</a></dt>
+<dd><p>Graphviz layout engine name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.SessionGraphOptions.highlight_path">
+<span class="sig-name descname"><span class="pre">highlight_path</span></span><a class="headerlink" href="#visualization.recommendation_tree_viz.SessionGraphOptions.highlight_path" title="Link to this definition">¶</a></dt>
+<dd><p>Identifiers describing the highlight path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Sequence[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id12">
+<span class="sig-name descname"><span class="pre">engine</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'dot'</span></em><a class="headerlink" href="#id12" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id13">
+<span class="sig-name descname"><span class="pre">highlight_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id13" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id14">
+<span class="sig-name descname"><span class="pre">label_template</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'{originTitle}'</span></em><a class="headerlink" href="#id14" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id15">
+<span class="sig-name descname"><span class="pre">rankdir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'LR'</span></em><a class="headerlink" href="#id15" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id16">
+<span class="sig-name descname"><span class="pre">wrap_width</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#id16" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -567,10 +792,13 @@ available tree plotting interfaces and configuration knobs.</p>
 <dd><p>Aggregate node and edge visitation counts from viewer trajectories.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>sequences</strong> (<em>Iterable</em><em>[</em><em>Sequence</em><em>[</em><em>str</em><em>]</em><em>]</em>)</p>
+<dd class="field-odd"><p><strong>sequences</strong> (<em>Iterable</em><em>[</em><em>Sequence</em><em>[</em><em>str</em><em>]</em><em>]</em>) – Iterable of viewer identifier sequences.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tuple</em>[collections.Counter, collections.Counter]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple <code class="docutils literal notranslate"><span class="pre">(node_counts,</span> <span class="pre">edge_counts)</span></code> with visit tallies.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tuple</em>[collections.Counter, collections.Counter]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -582,12 +810,15 @@ available tree plotting interfaces and configuration knobs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>tree</strong> (<a class="reference internal" href="#visualization.recommendation_tree.models.TreeData" title="visualization.recommendation_tree.models.TreeData"><em>visualization.recommendation_tree.models.TreeData</em></a>)</p></li>
-<li><p><strong>options</strong> (<a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions" title="visualization.recommendation_tree.render.GraphRenderOptions"><em>visualization.recommendation_tree.render.GraphRenderOptions</em></a>)</p></li>
+<li><p><strong>tree</strong> (<a class="reference internal" href="#visualization.recommendation_tree.models.TreeData" title="visualization.recommendation_tree.models.TreeData"><em>visualization.recommendation_tree.models.TreeData</em></a>) – Structured tree data assembled from CSV exports.</p></li>
+<li><p><strong>options</strong> (<a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions" title="visualization.recommendation_tree.render.GraphRenderOptions"><em>visualization.recommendation_tree.render.GraphRenderOptions</em></a>) – Rendering configuration controlling style and filtering.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>graphviz.Digraph</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A Graphviz graph ready to be rendered to disk.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>graphviz.Digraph</p>
 </dd>
 </dl>
 </dd></dl>
@@ -599,12 +830,15 @@ available tree plotting interfaces and configuration knobs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>rows</strong> (<em>Sequence</em><em>[</em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em><em>]</em>)</p></li>
-<li><p><strong>options</strong> (<a class="reference internal" href="#visualization.recommendation_tree.render.SessionGraphOptions" title="visualization.recommendation_tree.render.SessionGraphOptions"><em>visualization.recommendation_tree.render.SessionGraphOptions</em></a>)</p></li>
+<li><p><strong>rows</strong> (<em>Sequence</em><em>[</em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em><em>]</em>) – Ordered dataset rows describing the viewer session.</p></li>
+<li><p><strong>options</strong> (<a class="reference internal" href="#visualization.recommendation_tree.render.SessionGraphOptions" title="visualization.recommendation_tree.render.SessionGraphOptions"><em>visualization.recommendation_tree.render.SessionGraphOptions</em></a>) – Rendering configuration controlling styling choices.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>graphviz.Digraph</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A Graphviz graph representing the session timeline.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>graphviz.Digraph</p>
 </dd>
 </dl>
 </dd></dl>
@@ -616,12 +850,16 @@ available tree plotting interfaces and configuration knobs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>split</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>issue</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>dataset</strong> – HuggingFace dataset or mapping of splits to datasets.</p></li>
+<li><p><strong>split</strong> (<em>str</em><em> | </em><em>None</em>) – Optional split name to filter.</p></li>
+<li><p><strong>issue</strong> (<em>str</em><em> | </em><em>None</em>) – Optional issue identifier to filter.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>List</em>[<em>Dict</em>[str, object]]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of dataset rows matching the filters.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>List</em>[<em>Dict</em>[str, object]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -629,13 +867,16 @@ available tree plotting interfaces and configuration knobs.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="visualization.recommendation_tree_viz.compute_depths">
 <span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">compute_depths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tree</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#compute_depths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.compute_depths" title="Link to this definition">¶</a></dt>
-<dd><p>Compute the depth (distance from the root) for every node in <code class="docutils literal notranslate"><span class="pre">tree</span></code>.</p>
+<dd><p>Compute the depth (distance from the root) for every node in a tree.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>tree</strong> (<a class="reference internal" href="#visualization.recommendation_tree.models.TreeData" title="visualization.recommendation_tree.models.TreeData"><em>visualization.recommendation_tree.models.TreeData</em></a>)</p>
+<dd class="field-odd"><p><strong>tree</strong> (<a class="reference internal" href="#visualization.recommendation_tree.models.TreeData" title="visualization.recommendation_tree.models.TreeData"><em>visualization.recommendation_tree.models.TreeData</em></a>) – Parsed recommendation tree data structure.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, int]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Mapping of node identifiers to their distance from the root.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Dict</em>[str, int]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -647,11 +888,18 @@ available tree plotting interfaces and configuration knobs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>session_id</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>split</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>issue</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>max_steps</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>dataset</strong> – HuggingFace dataset or mapping of splits to datasets.</p></li>
+<li><p><strong>session_id</strong> (<em>str</em><em> | </em><em>None</em>) – Optional specific session identifier to select.</p></li>
+<li><p><strong>split</strong> (<em>str</em><em> | </em><em>None</em>) – Optional dataset split name.</p></li>
+<li><p><strong>issue</strong> (<em>str</em><em> | </em><em>None</em>) – Optional issue filter.</p></li>
+<li><p><strong>max_steps</strong> (<em>int</em><em> | </em><em>None</em>) – Optional maximum number of steps to return.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple of resolved session identifier and the matching rows.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If no rows or matching session can be found.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tuple</em>[str, <em>List</em>[<em>Dict</em>[str, object]]]</p>
@@ -683,10 +931,13 @@ available tree plotting interfaces and configuration knobs.</p>
 <dd><p>Group dataset rows by session identifier and sort within each session.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>rows</strong> (<em>Sequence</em><em>[</em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em><em>]</em>)</p>
+<dd class="field-odd"><p><strong>rows</strong> (<em>Sequence</em><em>[</em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em><em>]</em>) – Sequence of dataset rows.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>List</em>[<em>Mapping</em>[str, object]]]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Mapping from session identifier to sorted row list.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Dict</em>[str, <em>List</em>[<em>Mapping</em>[str, object]]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -697,7 +948,16 @@ available tree plotting interfaces and configuration knobs.</p>
 <dd><p>Load a HuggingFace dataset exported by <code class="docutils literal notranslate"><span class="pre">clean_data.py</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>path</strong> (<em>pathlib.Path</em>)</p>
+<dd class="field-odd"><p><strong>path</strong> (<em>pathlib.Path</em>) – Path to the dataset directory or file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>HuggingFace dataset object.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ImportError</strong> – If the <code class="docutils literal notranslate"><span class="pre">datasets</span></code> package is not available.</p></li>
+<li><p><strong>ValueError</strong> – If the file extension is unsupported.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -709,9 +969,15 @@ available tree plotting interfaces and configuration knobs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>metadata_path</strong> (<em>pathlib.Path</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>id_column</strong> (<em>str</em>)</p></li>
+<li><p><strong>metadata_path</strong> (<em>pathlib.Path</em><em> | </em><em>None</em>) – Optional path to JSON/CSV metadata.</p></li>
+<li><p><strong>id_column</strong> (<em>str</em>) – Identifier column used to index rows.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Mapping of identifier to metadata rows.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If the identifier column is missing in tabular inputs.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Dict</em>[str, <em>Mapping</em>[str, object]]</p>
@@ -726,12 +992,15 @@ available tree plotting interfaces and configuration knobs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>path</strong> (<em>pathlib.Path</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>delimiter</strong> (<em>str</em>)</p></li>
+<li><p><strong>path</strong> (<em>pathlib.Path</em><em> | </em><em>None</em>) – Optional path to a trajectories file.</p></li>
+<li><p><strong>delimiter</strong> (<em>str</em>) – Delimiter used for plain-text trajectory files.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>List</em>[<em>List</em>[str]]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of normalised identifier sequences.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>List</em>[<em>List</em>[str]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -743,13 +1012,16 @@ available tree plotting interfaces and configuration knobs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>csv_path</strong> (<em>pathlib.Path</em>)</p></li>
-<li><p><strong>id_column</strong> (<em>str</em>)</p></li>
-<li><p><strong>child_prefixes</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>csv_path</strong> (<em>pathlib.Path</em>) – Path to the CSV file describing the tree.</p></li>
+<li><p><strong>id_column</strong> (<em>str</em>) – Column holding the node identifier.</p></li>
+<li><p><strong>child_prefixes</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Column prefixes pointing to recommendation children.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#visualization.recommendation_tree.models.TreeData" title="visualization.recommendation_tree.models.TreeData">visualization.recommendation_tree.models.TreeData</a></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Parsed <a class="reference internal" href="#visualization.recommendation_tree_viz.TreeData" title="visualization.recommendation_tree_viz.TreeData"><code class="xref py py-class docutils literal notranslate"><span class="pre">TreeData</span></code></a> ready for rendering.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#visualization.recommendation_tree.models.TreeData" title="visualization.recommendation_tree.models.TreeData">visualization.recommendation_tree.models.TreeData</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -760,7 +1032,7 @@ available tree plotting interfaces and configuration knobs.</p>
 <dd><p>Entry point for the recommendation tree visualiser.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>argv</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>argv</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Optional CLI argument list; defaults to <code class="docutils literal notranslate"><span class="pre">sys.argv</span></code>.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -774,10 +1046,13 @@ available tree plotting interfaces and configuration knobs.</p>
 <dd><p>Parse CLI arguments for the recommendation visualiser.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>argv</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>argv</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Optional CLI argument list; defaults to <code class="docutils literal notranslate"><span class="pre">sys.argv</span></code> when <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>argparse.Namespace</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Parsed argument namespace ready for execution.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>argparse.Namespace</p>
 </dd>
 </dl>
 </dd></dl>
@@ -788,7 +1063,13 @@ available tree plotting interfaces and configuration knobs.</p>
 <dd><p>Parse comma-separated <code class="docutils literal notranslate"><span class="pre">issue=count</span></code> specifications into a mapping.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>spec</strong> (<em>str</em>)</p>
+<dd class="field-odd"><p><strong>spec</strong> (<em>str</em>) – Raw specification string (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;issue_a=2,issue_b=1&quot;</span></code>).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Mapping of issue names to target counts.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If any chunk is missing an issue, count, or is invalid.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Dict</em>[str, int]</p>
@@ -803,13 +1084,16 @@ available tree plotting interfaces and configuration knobs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>graph</strong> (<em>graphviz.Digraph</em>)</p></li>
-<li><p><strong>output_path</strong> (<em>pathlib.Path</em>)</p></li>
-<li><p><strong>output_format</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>graph</strong> (<em>graphviz.Digraph</em>) – Graphviz graph to render.</p></li>
+<li><p><strong>output_path</strong> (<em>pathlib.Path</em>) – Destination path (suffix controls format when unspecified).</p></li>
+<li><p><strong>output_format</strong> (<em>str</em><em> | </em><em>None</em>) – Explicit Graphviz format override.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>pathlib.Path</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Path to the final rendered artefact.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pathlib.Path</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1015,12 +1299,16 @@ available tree plotting interfaces and configuration knobs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>split</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>issue</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>dataset</strong> – HuggingFace dataset or mapping of splits to datasets.</p></li>
+<li><p><strong>split</strong> (<em>str</em><em> | </em><em>None</em>) – Optional split name to filter.</p></li>
+<li><p><strong>issue</strong> (<em>str</em><em> | </em><em>None</em>) – Optional issue identifier to filter.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>List</em>[<em>Dict</em>[str, object]]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of dataset rows matching the filters.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>List</em>[<em>Dict</em>[str, object]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1032,11 +1320,18 @@ available tree plotting interfaces and configuration knobs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>session_id</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>split</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>issue</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>max_steps</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>dataset</strong> – HuggingFace dataset or mapping of splits to datasets.</p></li>
+<li><p><strong>session_id</strong> (<em>str</em><em> | </em><em>None</em>) – Optional specific session identifier to select.</p></li>
+<li><p><strong>split</strong> (<em>str</em><em> | </em><em>None</em>) – Optional dataset split name.</p></li>
+<li><p><strong>issue</strong> (<em>str</em><em> | </em><em>None</em>) – Optional issue filter.</p></li>
+<li><p><strong>max_steps</strong> (<em>int</em><em> | </em><em>None</em>) – Optional maximum number of steps to return.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple of resolved session identifier and the matching rows.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If no rows or matching session can be found.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tuple</em>[str, <em>List</em>[<em>Dict</em>[str, object]]]</p>
@@ -1050,10 +1345,13 @@ available tree plotting interfaces and configuration knobs.</p>
 <dd><p>Group dataset rows by session identifier and sort within each session.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>rows</strong> (<em>Sequence</em><em>[</em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em><em>]</em>)</p>
+<dd class="field-odd"><p><strong>rows</strong> (<em>Sequence</em><em>[</em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em><em>]</em>) – Sequence of dataset rows.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>List</em>[<em>Mapping</em>[str, object]]]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Mapping from session identifier to sorted row list.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Dict</em>[str, <em>List</em>[<em>Mapping</em>[str, object]]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1064,7 +1362,16 @@ available tree plotting interfaces and configuration knobs.</p>
 <dd><p>Load a HuggingFace dataset exported by <code class="docutils literal notranslate"><span class="pre">clean_data.py</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>path</strong> (<em>pathlib.Path</em>)</p>
+<dd class="field-odd"><p><strong>path</strong> (<em>pathlib.Path</em>) – Path to the dataset directory or file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>HuggingFace dataset object.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ImportError</strong> – If the <code class="docutils literal notranslate"><span class="pre">datasets</span></code> package is not available.</p></li>
+<li><p><strong>ValueError</strong> – If the file extension is unsupported.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -1076,9 +1383,15 @@ available tree plotting interfaces and configuration knobs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>metadata_path</strong> (<em>pathlib.Path</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>id_column</strong> (<em>str</em>)</p></li>
+<li><p><strong>metadata_path</strong> (<em>pathlib.Path</em><em> | </em><em>None</em>) – Optional path to JSON/CSV metadata.</p></li>
+<li><p><strong>id_column</strong> (<em>str</em>) – Identifier column used to index rows.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Mapping of identifier to metadata rows.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If the identifier column is missing in tabular inputs.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Dict</em>[str, <em>Mapping</em>[str, object]]</p>
@@ -1093,12 +1406,15 @@ available tree plotting interfaces and configuration knobs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>path</strong> (<em>pathlib.Path</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>delimiter</strong> (<em>str</em>)</p></li>
+<li><p><strong>path</strong> (<em>pathlib.Path</em><em> | </em><em>None</em>) – Optional path to a trajectories file.</p></li>
+<li><p><strong>delimiter</strong> (<em>str</em>) – Delimiter used for plain-text trajectory files.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>List</em>[<em>List</em>[str]]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of normalised identifier sequences.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>List</em>[<em>List</em>[str]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1110,13 +1426,16 @@ available tree plotting interfaces and configuration knobs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>csv_path</strong> (<em>pathlib.Path</em>)</p></li>
-<li><p><strong>id_column</strong> (<em>str</em>)</p></li>
-<li><p><strong>child_prefixes</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>csv_path</strong> (<em>pathlib.Path</em>) – Path to the CSV file describing the tree.</p></li>
+<li><p><strong>id_column</strong> (<em>str</em>) – Column holding the node identifier.</p></li>
+<li><p><strong>child_prefixes</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Column prefixes pointing to recommendation children.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#visualization.recommendation_tree.models.TreeData" title="visualization.recommendation_tree.models.TreeData">visualization.recommendation_tree.models.TreeData</a></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Parsed <code class="xref py py-class docutils literal notranslate"><span class="pre">TreeData</span></code> ready for rendering.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#visualization.recommendation_tree.models.TreeData" title="visualization.recommendation_tree.models.TreeData">visualization.recommendation_tree.models.TreeData</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1127,7 +1446,13 @@ available tree plotting interfaces and configuration knobs.</p>
 <dd><p>Parse comma-separated <code class="docutils literal notranslate"><span class="pre">issue=count</span></code> specifications into a mapping.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>spec</strong> (<em>str</em>)</p>
+<dd class="field-odd"><p><strong>spec</strong> (<em>str</em>) – Raw specification string (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;issue_a=2,issue_b=1&quot;</span></code>).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Mapping of issue names to target counts.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If any chunk is missing an issue, count, or is invalid.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Dict</em>[str, int]</p>
@@ -1137,8 +1462,55 @@ available tree plotting interfaces and configuration knobs.</p>
 
 <p id="module-visualization.recommendation_tree.render">Rendering helpers for recommendation tree visualisations.</p>
 <dl class="py class">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphCounts">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.render.</span></span><span class="sig-name descname"><span class="pre">GraphCounts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edge=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#GraphCounts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.render.GraphCounts" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Container for per-node and per-edge traversal counts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>edge</strong> (<em>Mapping</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>, </em><em>int</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphCounts.node">
+<span class="sig-name descname"><span class="pre">node</span></span><a class="headerlink" href="#visualization.recommendation_tree.render.GraphCounts.node" title="Link to this definition">¶</a></dt>
+<dd><p>Mapping of node identifiers to visit counts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Mapping[str, int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphCounts.edge">
+<span class="sig-name descname"><span class="pre">edge</span></span><a class="headerlink" href="#visualization.recommendation_tree.render.GraphCounts.edge" title="Link to this definition">¶</a></dt>
+<dd><p>Mapping of <code class="docutils literal notranslate"><span class="pre">(parent,</span> <span class="pre">child)</span></code> identifiers to traversal counts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Mapping[Tuple[str, str], int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id17">
+<span class="sig-name descname"><span class="pre">edge</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id17" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id18">
+<span class="sig-name descname"><span class="pre">node</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id18" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.render.</span></span><span class="sig-name descname"><span class="pre">GraphRenderOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metadata=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_template='{originTitle}'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrap_width=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">highlight_path=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_counts=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edge_counts=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_depth=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rankdir='LR'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine='dot'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_rank_labels=True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#GraphRenderOptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.render.</span></span><span class="sig-name descname"><span class="pre">GraphRenderOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metadata=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_template='{originTitle}'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrap_width=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">highlight_path=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">counts=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_depth=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#GraphRenderOptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Configuration parameters for rendering tree-level graphs.</p>
 <dl class="field-list simple">
@@ -1148,9 +1520,134 @@ available tree plotting interfaces and configuration knobs.</p>
 <li><p><strong>label_template</strong> (<em>str</em>)</p></li>
 <li><p><strong>wrap_width</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>highlight_path</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
-<li><p><strong>node_counts</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>int</em><em>]</em>)</p></li>
-<li><p><strong>edge_counts</strong> (<em>Mapping</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>, </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>counts</strong> (<a class="reference internal" href="#visualization.recommendation_tree.render.GraphCounts" title="visualization.recommendation_tree.render.GraphCounts"><em>visualization.recommendation_tree.render.GraphCounts</em></a>)</p></li>
 <li><p><strong>max_depth</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>style</strong> (<a class="reference internal" href="#visualization.recommendation_tree.render.GraphStyle" title="visualization.recommendation_tree.render.GraphStyle"><em>visualization.recommendation_tree.render.GraphStyle</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.metadata">
+<span class="sig-name descname"><span class="pre">metadata</span></span><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.metadata" title="Link to this definition">¶</a></dt>
+<dd><p>External node metadata keyed by node id.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Mapping[str, Mapping[str, object]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.label_template">
+<span class="sig-name descname"><span class="pre">label_template</span></span><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.label_template" title="Link to this definition">¶</a></dt>
+<dd><p>Template used to render node labels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.wrap_width">
+<span class="sig-name descname"><span class="pre">wrap_width</span></span><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.wrap_width" title="Link to this definition">¶</a></dt>
+<dd><p>Optional wrapping width for node labels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.highlight_path">
+<span class="sig-name descname"><span class="pre">highlight_path</span></span><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.highlight_path" title="Link to this definition">¶</a></dt>
+<dd><p>Ordered identifiers describing the highlight path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Sequence[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.counts">
+<span class="sig-name descname"><span class="pre">counts</span></span><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.counts" title="Link to this definition">¶</a></dt>
+<dd><p>Per-node and per-edge traversal counts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#visualization.recommendation_tree.render.GraphCounts" title="visualization.recommendation_tree.render.GraphCounts">visualization.recommendation_tree.render.GraphCounts</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.max_depth">
+<span class="sig-name descname"><span class="pre">max_depth</span></span><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.max_depth" title="Link to this definition">¶</a></dt>
+<dd><p>Optional maximum depth for tree rendering.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.style">
+<span class="sig-name descname"><span class="pre">style</span></span><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.style" title="Link to this definition">¶</a></dt>
+<dd><p>Graphviz styling options shared across the graph.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#visualization.recommendation_tree.render.GraphStyle" title="visualization.recommendation_tree.render.GraphStyle">visualization.recommendation_tree.render.GraphStyle</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id19">
+<span class="sig-name descname"><span class="pre">counts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#visualization.recommendation_tree.render.GraphCounts" title="visualization.recommendation_tree.render.GraphCounts"><span class="pre">visualization.recommendation_tree.render.GraphCounts</span></a></em><a class="headerlink" href="#id19" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id20">
+<span class="sig-name descname"><span class="pre">highlight_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id20" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id21">
+<span class="sig-name descname"><span class="pre">label_template</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'{originTitle}'</span></em><a class="headerlink" href="#id21" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id22">
+<span class="sig-name descname"><span class="pre">max_depth</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#id22" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id23">
+<span class="sig-name descname"><span class="pre">metadata</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">object</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id23" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id24">
+<span class="sig-name descname"><span class="pre">style</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#visualization.recommendation_tree.render.GraphStyle" title="visualization.recommendation_tree.render.GraphStyle"><span class="pre">visualization.recommendation_tree.render.GraphStyle</span></a></em><a class="headerlink" href="#id24" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id25">
+<span class="sig-name descname"><span class="pre">wrap_width</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#id25" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphStyle">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.render.</span></span><span class="sig-name descname"><span class="pre">GraphStyle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rankdir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LR'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'dot'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_rank_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#GraphStyle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.render.GraphStyle" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Graphviz style attributes shared across tree renders.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
 <li><p><strong>rankdir</strong> (<em>str</em>)</p></li>
 <li><p><strong>engine</strong> (<em>str</em>)</p></li>
 <li><p><strong>show_rank_labels</strong> (<em>bool</em>)</p></li>
@@ -1158,53 +1655,51 @@ available tree plotting interfaces and configuration knobs.</p>
 </dd>
 </dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.edge_counts">
-<span class="sig-name descname"><span class="pre">edge_counts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.edge_counts" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphStyle.rankdir">
+<span class="sig-name descname"><span class="pre">rankdir</span></span><a class="headerlink" href="#visualization.recommendation_tree.render.GraphStyle.rankdir" title="Link to this definition">¶</a></dt>
+<dd><p>Graph orientation (<code class="docutils literal notranslate"><span class="pre">LR</span></code>, <code class="docutils literal notranslate"><span class="pre">TB</span></code>, etc.).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphStyle.engine">
+<span class="sig-name descname"><span class="pre">engine</span></span><a class="headerlink" href="#visualization.recommendation_tree.render.GraphStyle.engine" title="Link to this definition">¶</a></dt>
+<dd><p>Graphviz layout engine name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphStyle.show_rank_labels">
+<span class="sig-name descname"><span class="pre">show_rank_labels</span></span><a class="headerlink" href="#visualization.recommendation_tree.render.GraphStyle.show_rank_labels" title="Link to this definition">¶</a></dt>
+<dd><p>Whether to attach rank labels to edges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id26">
+<span class="sig-name descname"><span class="pre">engine</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'dot'</span></em><a class="headerlink" href="#id26" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.engine">
-<span class="sig-name descname"><span class="pre">engine</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'dot'</span></em><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.engine" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="id27">
+<span class="sig-name descname"><span class="pre">rankdir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'LR'</span></em><a class="headerlink" href="#id27" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.highlight_path">
-<span class="sig-name descname"><span class="pre">highlight_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.highlight_path" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.label_template">
-<span class="sig-name descname"><span class="pre">label_template</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'{originTitle}'</span></em><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.label_template" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.max_depth">
-<span class="sig-name descname"><span class="pre">max_depth</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.max_depth" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.metadata">
-<span class="sig-name descname"><span class="pre">metadata</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">object</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.metadata" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.node_counts">
-<span class="sig-name descname"><span class="pre">node_counts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.node_counts" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.rankdir">
-<span class="sig-name descname"><span class="pre">rankdir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'LR'</span></em><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.rankdir" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.show_rank_labels">
-<span class="sig-name descname"><span class="pre">show_rank_labels</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.show_rank_labels" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.wrap_width">
-<span class="sig-name descname"><span class="pre">wrap_width</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.wrap_width" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="id28">
+<span class="sig-name descname"><span class="pre">show_rank_labels</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#id28" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -1226,28 +1721,83 @@ available tree plotting interfaces and configuration knobs.</p>
 </dd>
 </dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="visualization.recommendation_tree.render.SessionGraphOptions.engine">
-<span class="sig-name descname"><span class="pre">engine</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'dot'</span></em><a class="headerlink" href="#visualization.recommendation_tree.render.SessionGraphOptions.engine" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="visualization.recommendation_tree.render.SessionGraphOptions.highlight_path">
-<span class="sig-name descname"><span class="pre">highlight_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#visualization.recommendation_tree.render.SessionGraphOptions.highlight_path" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
 <dt class="sig sig-object py" id="visualization.recommendation_tree.render.SessionGraphOptions.label_template">
-<span class="sig-name descname"><span class="pre">label_template</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'{originTitle}'</span></em><a class="headerlink" href="#visualization.recommendation_tree.render.SessionGraphOptions.label_template" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="visualization.recommendation_tree.render.SessionGraphOptions.rankdir">
-<span class="sig-name descname"><span class="pre">rankdir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'LR'</span></em><a class="headerlink" href="#visualization.recommendation_tree.render.SessionGraphOptions.rankdir" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<span class="sig-name descname"><span class="pre">label_template</span></span><a class="headerlink" href="#visualization.recommendation_tree.render.SessionGraphOptions.label_template" title="Link to this definition">¶</a></dt>
+<dd><p>Template string applied to node labels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="visualization.recommendation_tree.render.SessionGraphOptions.wrap_width">
-<span class="sig-name descname"><span class="pre">wrap_width</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#visualization.recommendation_tree.render.SessionGraphOptions.wrap_width" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">wrap_width</span></span><a class="headerlink" href="#visualization.recommendation_tree.render.SessionGraphOptions.wrap_width" title="Link to this definition">¶</a></dt>
+<dd><p>Optional wrapping width for node labels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.SessionGraphOptions.rankdir">
+<span class="sig-name descname"><span class="pre">rankdir</span></span><a class="headerlink" href="#visualization.recommendation_tree.render.SessionGraphOptions.rankdir" title="Link to this definition">¶</a></dt>
+<dd><p>Graph orientation (<code class="docutils literal notranslate"><span class="pre">LR</span></code>, <code class="docutils literal notranslate"><span class="pre">TB</span></code>, etc.).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.SessionGraphOptions.engine">
+<span class="sig-name descname"><span class="pre">engine</span></span><a class="headerlink" href="#visualization.recommendation_tree.render.SessionGraphOptions.engine" title="Link to this definition">¶</a></dt>
+<dd><p>Graphviz layout engine name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.SessionGraphOptions.highlight_path">
+<span class="sig-name descname"><span class="pre">highlight_path</span></span><a class="headerlink" href="#visualization.recommendation_tree.render.SessionGraphOptions.highlight_path" title="Link to this definition">¶</a></dt>
+<dd><p>Identifiers describing the highlight path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Sequence[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id29">
+<span class="sig-name descname"><span class="pre">engine</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'dot'</span></em><a class="headerlink" href="#id29" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id30">
+<span class="sig-name descname"><span class="pre">highlight_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id30" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id31">
+<span class="sig-name descname"><span class="pre">label_template</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'{originTitle}'</span></em><a class="headerlink" href="#id31" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id32">
+<span class="sig-name descname"><span class="pre">rankdir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'LR'</span></em><a class="headerlink" href="#id32" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id33">
+<span class="sig-name descname"><span class="pre">wrap_width</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#id33" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -1258,10 +1808,13 @@ available tree plotting interfaces and configuration knobs.</p>
 <dd><p>Aggregate node and edge visitation counts from viewer trajectories.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>sequences</strong> (<em>Iterable</em><em>[</em><em>Sequence</em><em>[</em><em>str</em><em>]</em><em>]</em>)</p>
+<dd class="field-odd"><p><strong>sequences</strong> (<em>Iterable</em><em>[</em><em>Sequence</em><em>[</em><em>str</em><em>]</em><em>]</em>) – Iterable of viewer identifier sequences.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tuple</em>[collections.Counter, collections.Counter]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple <code class="docutils literal notranslate"><span class="pre">(node_counts,</span> <span class="pre">edge_counts)</span></code> with visit tallies.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tuple</em>[collections.Counter, collections.Counter]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1273,12 +1826,15 @@ available tree plotting interfaces and configuration knobs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>tree</strong> (<a class="reference internal" href="#visualization.recommendation_tree.models.TreeData" title="visualization.recommendation_tree.models.TreeData"><em>visualization.recommendation_tree.models.TreeData</em></a>)</p></li>
-<li><p><strong>options</strong> (<a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions" title="visualization.recommendation_tree.render.GraphRenderOptions"><em>visualization.recommendation_tree.render.GraphRenderOptions</em></a>)</p></li>
+<li><p><strong>tree</strong> (<a class="reference internal" href="#visualization.recommendation_tree.models.TreeData" title="visualization.recommendation_tree.models.TreeData"><em>visualization.recommendation_tree.models.TreeData</em></a>) – Structured tree data assembled from CSV exports.</p></li>
+<li><p><strong>options</strong> (<a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions" title="visualization.recommendation_tree.render.GraphRenderOptions"><em>visualization.recommendation_tree.render.GraphRenderOptions</em></a>) – Rendering configuration controlling style and filtering.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>graphviz.Digraph</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A Graphviz graph ready to be rendered to disk.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>graphviz.Digraph</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1290,12 +1846,15 @@ available tree plotting interfaces and configuration knobs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>rows</strong> (<em>Sequence</em><em>[</em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em><em>]</em>)</p></li>
-<li><p><strong>options</strong> (<a class="reference internal" href="#visualization.recommendation_tree.render.SessionGraphOptions" title="visualization.recommendation_tree.render.SessionGraphOptions"><em>visualization.recommendation_tree.render.SessionGraphOptions</em></a>)</p></li>
+<li><p><strong>rows</strong> (<em>Sequence</em><em>[</em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em><em>]</em>) – Ordered dataset rows describing the viewer session.</p></li>
+<li><p><strong>options</strong> (<a class="reference internal" href="#visualization.recommendation_tree.render.SessionGraphOptions" title="visualization.recommendation_tree.render.SessionGraphOptions"><em>visualization.recommendation_tree.render.SessionGraphOptions</em></a>) – Rendering configuration controlling styling choices.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>graphviz.Digraph</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A Graphviz graph representing the session timeline.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>graphviz.Digraph</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1303,13 +1862,16 @@ available tree plotting interfaces and configuration knobs.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="visualization.recommendation_tree.render.compute_depths">
 <span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.render.</span></span><span class="sig-name descname"><span class="pre">compute_depths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tree</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#compute_depths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.render.compute_depths" title="Link to this definition">¶</a></dt>
-<dd><p>Compute the depth (distance from the root) for every node in <code class="docutils literal notranslate"><span class="pre">tree</span></code>.</p>
+<dd><p>Compute the depth (distance from the root) for every node in a tree.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>tree</strong> (<a class="reference internal" href="#visualization.recommendation_tree.models.TreeData" title="visualization.recommendation_tree.models.TreeData"><em>visualization.recommendation_tree.models.TreeData</em></a>)</p>
+<dd class="field-odd"><p><strong>tree</strong> (<a class="reference internal" href="#visualization.recommendation_tree.models.TreeData" title="visualization.recommendation_tree.models.TreeData"><em>visualization.recommendation_tree.models.TreeData</em></a>) – Parsed recommendation tree data structure.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, int]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Mapping of node identifiers to their distance from the root.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Dict</em>[str, int]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1321,13 +1883,16 @@ available tree plotting interfaces and configuration knobs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>graph</strong> (<em>graphviz.Digraph</em>)</p></li>
-<li><p><strong>output_path</strong> (<em>pathlib.Path</em>)</p></li>
-<li><p><strong>output_format</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>graph</strong> (<em>graphviz.Digraph</em>) – Graphviz graph to render.</p></li>
+<li><p><strong>output_path</strong> (<em>pathlib.Path</em>) – Destination path (suffix controls format when unspecified).</p></li>
+<li><p><strong>output_format</strong> (<em>str</em><em> | </em><em>None</em>) – Explicit Graphviz format override.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>pathlib.Path</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Path to the final rendered artefact.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pathlib.Path</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1339,7 +1904,7 @@ available tree plotting interfaces and configuration knobs.</p>
 <dd><p>Entry point for the recommendation tree visualiser.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>argv</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>argv</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Optional CLI argument list; defaults to <code class="docutils literal notranslate"><span class="pre">sys.argv</span></code>.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -1353,10 +1918,13 @@ available tree plotting interfaces and configuration knobs.</p>
 <dd><p>Parse CLI arguments for the recommendation visualiser.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>argv</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>argv</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Optional CLI argument list; defaults to <code class="docutils literal notranslate"><span class="pre">sys.argv</span></code> when <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>argparse.Namespace</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Parsed argument namespace ready for execution.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>argparse.Namespace</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1419,17 +1987,37 @@ available tree plotting interfaces and configuration knobs.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Visualization Utilities</a><ul>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphCounts"><code class="docutils literal notranslate"><span class="pre">GraphCounts</span></code></a><ul>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphCounts.node"><code class="docutils literal notranslate"><span class="pre">GraphCounts.node</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphCounts.edge"><code class="docutils literal notranslate"><span class="pre">GraphCounts.edge</span></code></a></li>
+<li><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">GraphCounts.edge</span></code></a></li>
+<li><a class="reference internal" href="#id1"><code class="docutils literal notranslate"><span class="pre">GraphCounts.node</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions</span></code></a><ul>
-<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions.edge_counts"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.edge_counts</span></code></a></li>
-<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions.engine"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.engine</span></code></a></li>
-<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions.highlight_path"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.highlight_path</span></code></a></li>
-<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions.label_template"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.label_template</span></code></a></li>
-<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions.max_depth"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.max_depth</span></code></a></li>
 <li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions.metadata"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.metadata</span></code></a></li>
-<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions.node_counts"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.node_counts</span></code></a></li>
-<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions.rankdir"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.rankdir</span></code></a></li>
-<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions.show_rank_labels"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.show_rank_labels</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions.label_template"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.label_template</span></code></a></li>
 <li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions.wrap_width"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.wrap_width</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions.highlight_path"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.highlight_path</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions.counts"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.counts</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions.max_depth"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.max_depth</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions.style"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.style</span></code></a></li>
+<li><a class="reference internal" href="#id2"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.counts</span></code></a></li>
+<li><a class="reference internal" href="#id3"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.highlight_path</span></code></a></li>
+<li><a class="reference internal" href="#id4"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.label_template</span></code></a></li>
+<li><a class="reference internal" href="#id5"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.max_depth</span></code></a></li>
+<li><a class="reference internal" href="#id6"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.metadata</span></code></a></li>
+<li><a class="reference internal" href="#id7"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.style</span></code></a></li>
+<li><a class="reference internal" href="#id8"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.wrap_width</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphStyle"><code class="docutils literal notranslate"><span class="pre">GraphStyle</span></code></a><ul>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphStyle.rankdir"><code class="docutils literal notranslate"><span class="pre">GraphStyle.rankdir</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphStyle.engine"><code class="docutils literal notranslate"><span class="pre">GraphStyle.engine</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphStyle.show_rank_labels"><code class="docutils literal notranslate"><span class="pre">GraphStyle.show_rank_labels</span></code></a></li>
+<li><a class="reference internal" href="#id9"><code class="docutils literal notranslate"><span class="pre">GraphStyle.engine</span></code></a></li>
+<li><a class="reference internal" href="#id10"><code class="docutils literal notranslate"><span class="pre">GraphStyle.rankdir</span></code></a></li>
+<li><a class="reference internal" href="#id11"><code class="docutils literal notranslate"><span class="pre">GraphStyle.show_rank_labels</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#visualization.recommendation_tree_viz.LabelRenderOptions"><code class="docutils literal notranslate"><span class="pre">LabelRenderOptions</span></code></a><ul>
@@ -1454,11 +2042,16 @@ available tree plotting interfaces and configuration knobs.</p>
 </li>
 <li><a class="reference internal" href="#visualization.recommendation_tree_viz.SafeDict"><code class="docutils literal notranslate"><span class="pre">SafeDict</span></code></a></li>
 <li><a class="reference internal" href="#visualization.recommendation_tree_viz.SessionGraphOptions"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions</span></code></a><ul>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.SessionGraphOptions.label_template"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.label_template</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.SessionGraphOptions.wrap_width"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.wrap_width</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.SessionGraphOptions.rankdir"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.rankdir</span></code></a></li>
 <li><a class="reference internal" href="#visualization.recommendation_tree_viz.SessionGraphOptions.engine"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.engine</span></code></a></li>
 <li><a class="reference internal" href="#visualization.recommendation_tree_viz.SessionGraphOptions.highlight_path"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.highlight_path</span></code></a></li>
-<li><a class="reference internal" href="#visualization.recommendation_tree_viz.SessionGraphOptions.label_template"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.label_template</span></code></a></li>
-<li><a class="reference internal" href="#visualization.recommendation_tree_viz.SessionGraphOptions.rankdir"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.rankdir</span></code></a></li>
-<li><a class="reference internal" href="#visualization.recommendation_tree_viz.SessionGraphOptions.wrap_width"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.wrap_width</span></code></a></li>
+<li><a class="reference internal" href="#id12"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.engine</span></code></a></li>
+<li><a class="reference internal" href="#id13"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.highlight_path</span></code></a></li>
+<li><a class="reference internal" href="#id14"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.label_template</span></code></a></li>
+<li><a class="reference internal" href="#id15"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.rankdir</span></code></a></li>
+<li><a class="reference internal" href="#id16"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.wrap_width</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#visualization.recommendation_tree_viz.TreeData"><code class="docutils literal notranslate"><span class="pre">TreeData</span></code></a><ul>
@@ -1531,25 +2124,50 @@ available tree plotting interfaces and configuration knobs.</p>
 <li><a class="reference internal" href="#visualization.recommendation_tree.io.load_trajectories"><code class="docutils literal notranslate"><span class="pre">load_trajectories()</span></code></a></li>
 <li><a class="reference internal" href="#visualization.recommendation_tree.io.load_tree_csv"><code class="docutils literal notranslate"><span class="pre">load_tree_csv()</span></code></a></li>
 <li><a class="reference internal" href="#visualization.recommendation_tree.io.parse_issue_counts"><code class="docutils literal notranslate"><span class="pre">parse_issue_counts()</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphCounts"><code class="docutils literal notranslate"><span class="pre">GraphCounts</span></code></a><ul>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphCounts.node"><code class="docutils literal notranslate"><span class="pre">GraphCounts.node</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphCounts.edge"><code class="docutils literal notranslate"><span class="pre">GraphCounts.edge</span></code></a></li>
+<li><a class="reference internal" href="#id17"><code class="docutils literal notranslate"><span class="pre">GraphCounts.edge</span></code></a></li>
+<li><a class="reference internal" href="#id18"><code class="docutils literal notranslate"><span class="pre">GraphCounts.node</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions</span></code></a><ul>
-<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions.edge_counts"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.edge_counts</span></code></a></li>
-<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions.engine"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.engine</span></code></a></li>
-<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions.highlight_path"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.highlight_path</span></code></a></li>
-<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions.label_template"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.label_template</span></code></a></li>
-<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions.max_depth"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.max_depth</span></code></a></li>
 <li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions.metadata"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.metadata</span></code></a></li>
-<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions.node_counts"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.node_counts</span></code></a></li>
-<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions.rankdir"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.rankdir</span></code></a></li>
-<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions.show_rank_labels"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.show_rank_labels</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions.label_template"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.label_template</span></code></a></li>
 <li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions.wrap_width"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.wrap_width</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions.highlight_path"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.highlight_path</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions.counts"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.counts</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions.max_depth"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.max_depth</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions.style"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.style</span></code></a></li>
+<li><a class="reference internal" href="#id19"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.counts</span></code></a></li>
+<li><a class="reference internal" href="#id20"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.highlight_path</span></code></a></li>
+<li><a class="reference internal" href="#id21"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.label_template</span></code></a></li>
+<li><a class="reference internal" href="#id22"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.max_depth</span></code></a></li>
+<li><a class="reference internal" href="#id23"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.metadata</span></code></a></li>
+<li><a class="reference internal" href="#id24"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.style</span></code></a></li>
+<li><a class="reference internal" href="#id25"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.wrap_width</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphStyle"><code class="docutils literal notranslate"><span class="pre">GraphStyle</span></code></a><ul>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphStyle.rankdir"><code class="docutils literal notranslate"><span class="pre">GraphStyle.rankdir</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphStyle.engine"><code class="docutils literal notranslate"><span class="pre">GraphStyle.engine</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphStyle.show_rank_labels"><code class="docutils literal notranslate"><span class="pre">GraphStyle.show_rank_labels</span></code></a></li>
+<li><a class="reference internal" href="#id26"><code class="docutils literal notranslate"><span class="pre">GraphStyle.engine</span></code></a></li>
+<li><a class="reference internal" href="#id27"><code class="docutils literal notranslate"><span class="pre">GraphStyle.rankdir</span></code></a></li>
+<li><a class="reference internal" href="#id28"><code class="docutils literal notranslate"><span class="pre">GraphStyle.show_rank_labels</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#visualization.recommendation_tree.render.SessionGraphOptions"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions</span></code></a><ul>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.SessionGraphOptions.label_template"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.label_template</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.SessionGraphOptions.wrap_width"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.wrap_width</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.SessionGraphOptions.rankdir"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.rankdir</span></code></a></li>
 <li><a class="reference internal" href="#visualization.recommendation_tree.render.SessionGraphOptions.engine"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.engine</span></code></a></li>
 <li><a class="reference internal" href="#visualization.recommendation_tree.render.SessionGraphOptions.highlight_path"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.highlight_path</span></code></a></li>
-<li><a class="reference internal" href="#visualization.recommendation_tree.render.SessionGraphOptions.label_template"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.label_template</span></code></a></li>
-<li><a class="reference internal" href="#visualization.recommendation_tree.render.SessionGraphOptions.rankdir"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.rankdir</span></code></a></li>
-<li><a class="reference internal" href="#visualization.recommendation_tree.render.SessionGraphOptions.wrap_width"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.wrap_width</span></code></a></li>
+<li><a class="reference internal" href="#id29"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.engine</span></code></a></li>
+<li><a class="reference internal" href="#id30"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.highlight_path</span></code></a></li>
+<li><a class="reference internal" href="#id31"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.label_template</span></code></a></li>
+<li><a class="reference internal" href="#id32"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.rankdir</span></code></a></li>
+<li><a class="reference internal" href="#id33"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.wrap_width</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#visualization.recommendation_tree.render.aggregate_counts"><code class="docutils literal notranslate"><span class="pre">aggregate_counts()</span></code></a></li>

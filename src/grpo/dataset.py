@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Iterator, Mapping, Sequence
@@ -25,6 +26,7 @@ import common.data.hf_datasets as _hf_datasets
 from common.open_r1.example_utils import row_to_training_example
 
 DOWNLOAD_CONFIG_CLS, LOAD_DATASET, LOAD_FROM_DISK = _hf_datasets.get_dataset_loaders()
+LOGGER = logging.getLogger("grpo.dataset")
 
 
 @dataclass(frozen=True)
@@ -88,6 +90,7 @@ def _load_dataset_from_path(path: Path):
     _hf_datasets.require_dataset_support(needs_local=True)
     if LOAD_FROM_DISK is None:  # pragma: no cover - defensive
         raise RuntimeError("datasets.load_from_disk is unavailable.")
+    LOGGER.info("[DATASET] loading local dataset from %s", path)
     return LOAD_FROM_DISK(str(path))
 
 
@@ -109,6 +112,12 @@ def _load_dataset_from_hub(
     if LOAD_DATASET is None or DOWNLOAD_CONFIG_CLS is None:  # pragma: no cover - defensive
         raise RuntimeError("datasets.load_dataset is unavailable.")
     download_config = DOWNLOAD_CONFIG_CLS(resume_download=True, max_retries=2)  # type: ignore[misc]
+    LOGGER.info(
+        "[DATASET] fetching hub dataset id=%s revision=%s cache_dir=%s",
+        dataset_id,
+        revision or "default",
+        cache_dir or "<default>",
+    )
     return LOAD_DATASET(  # type: ignore[misc]
         dataset_id,
         cache_dir=cache_dir,
@@ -135,20 +144,33 @@ def load_dataset_split(
     dataset_path = Path(dataset_name)
     if dataset_path.exists():
         dataset = _load_dataset_from_path(dataset_path)
+        source_repr = f"disk:{dataset_path}"
     else:
         dataset = _load_dataset_from_hub(dataset_name, cache_dir=cache_dir)
+        source_repr = f"hub:{dataset_name}"
 
     if hasattr(dataset, "keys"):
         for candidate in (split, "validation", "eval", "test"):
             if candidate in dataset:  # type: ignore[operator]
                 current_split = dataset[candidate]  # type: ignore[index]
-                return list(current_split)
+                rows = list(current_split)
+                LOGGER.info(
+                    "[DATASET] using split=%s from %s (rows=%d)",
+                    candidate,
+                    source_repr,
+                    len(rows),
+                )
+                return rows
         raise RuntimeError(
             f"Unable to locate evaluation split '{split}' in dataset '{dataset_name}'."
         )
     if hasattr(dataset, "split"):
-        return list(dataset)  # type: ignore[arg-type]
-    return list(dataset)
+        rows = list(dataset)  # type: ignore[arg-type]
+        LOGGER.info("[DATASET] using iterable dataset from %s (rows=%d)", source_repr, len(rows))
+        return rows
+    rows = list(dataset)
+    LOGGER.info("[DATASET] materialised dataset from %s (rows=%d)", source_repr, len(rows))
+    return rows
 
 
 def prepare_examples(

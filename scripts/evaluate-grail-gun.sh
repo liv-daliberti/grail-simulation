@@ -4,19 +4,43 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
-#SBATCH --time=04:00:00
+#SBATCH --time=00:59:00
 #SBATCH --output=logs/grail_eval/gun/slurm_%j.out
-#SBATCH --export=ALL,LOG_DIR=/n/fs/similarity/grail-simulation/logs/grail_eval/gun
 
 set -euo pipefail
+trap 'rc=$?; echo "[evaluate-grail-gun] failure (exit ${rc}) at line ${LINENO}" >&2' ERR
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+# ────────────────────────────────────────────────────────────────
+# Resolve repository root
+# ────────────────────────────────────────────────────────────────
+if [[ -z "${ROOT_DIR:-}" ]]; then
+  if [[ -n "${SLURM_SUBMIT_DIR:-}" ]]; then
+    ROOT_DIR="$SLURM_SUBMIT_DIR"
+  else
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+  fi
+fi
+export ROOT_DIR
 
-LOG_DIR=${LOG_DIR_OVERRIDE:-"$ROOT_DIR/logs/grail_eval/gun"}
+# ────────────────────────────────────────────────────────────────
+# Cache roots
+# ────────────────────────────────────────────────────────────────
+export HF_HOME=${HF_HOME:-"$ROOT_DIR/.hf_cache"}
+export HF_HUB_CACHE=${HF_HUB_CACHE:-"$ROOT_DIR/.cache/huggingface/transformers"}
+export HF_DATASETS_CACHE=${HF_DATASETS_CACHE:-"$ROOT_DIR/.cache/huggingface/datasets"}
+export XDG_CACHE_HOME=${XDG_CACHE_HOME:-"$ROOT_DIR/.cache"}
+export TMPDIR=${TMPDIR:-"$ROOT_DIR/.tmp"}
+export PIP_CACHE_DIR=${PIP_CACHE_DIR:-"$ROOT_DIR/.cache/pip"}
+export PIP_BUILD_DIR=${PIP_BUILD_DIR:-"$ROOT_DIR/.cache/pip/build"}
+export PYTHONPYCACHEPREFIX=${PYTHONPYCACHEPREFIX:-"$ROOT_DIR/.cache/pyc"}
+export TORCHINDUCTOR_CACHE_DIR=${TORCHINDUCTOR_CACHE_DIR:-"$ROOT_DIR/.torchinductor"}
+export TRITON_CACHE_DIR=${TRITON_CACHE_DIR:-"$ROOT_DIR/.triton"}
+
+LOG_DIR=${LOG_DIR_OVERRIDE:-${LOG_DIR:-"$ROOT_DIR/logs/grail_eval/gun"}}
 export LOG_DIR
-RUN_LABEL=${RUN_LABEL:-grail-gun-checkpoint-10}
-MODEL_PATH=${MODEL_PATH:-"$ROOT_DIR/models/grail/gun/checkpoint-10"}
+RUN_LABEL=${RUN_LABEL:-grail-gun-checkpoint-50}
+MODEL_PATH=${MODEL_PATH:-"$ROOT_DIR/models/grail/gun/checkpoint-50"}
 DATASET=${DATASET:-"$ROOT_DIR/data/cleaned_grail/gun_control"}
 SPLIT=${SPLIT:-validation}
 OUT_DIR=${OUT_DIR:-"$ROOT_DIR/models/grail"}
@@ -24,6 +48,11 @@ STAGE=${STAGE:-evaluate}
 LOG_LEVEL=${LOG_LEVEL:-INFO}
 
 mkdir -p "$LOG_DIR"
+
+export PYTHONUNBUFFERED=${PYTHONUNBUFFERED:-1}
+export PYTHONFAULTHANDLER=${PYTHONFAULTHANDLER:-1}
+
+echo "[evaluate-grail-gun] $(date --iso-8601=seconds) • starting evaluation; logs -> $LOG_DIR" >&2
 
 if command -v module >/dev/null 2>&1; then
   module load cudatoolkit/12.4 || true
@@ -61,7 +90,8 @@ EXTRA_ARGS=()
 [[ "${NO_NEXT_VIDEO:-0}" != "0" ]] && EXTRA_ARGS+=(--no-next-video)
 [[ "${NO_OPINION:-0}" != "0" ]] && EXTRA_ARGS+=(--no-opinion)
 
-srun --ntasks=1 --gres=gpu:1 --cpus-per-task=8 python -m grail.pipeline \
+echo "[evaluate-grail-gun] $(date --iso-8601=seconds) • launching python -m grail.pipeline" >&2
+srun --ntasks=1 --gres=gpu:1 --cpus-per-task=8 python -u -m grail.pipeline \
   --model "$MODEL_PATH" \
   --dataset "$DATASET" \
   --split "$SPLIT" \

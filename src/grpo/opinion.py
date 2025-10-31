@@ -631,11 +631,21 @@ def run_opinion_evaluation(
     :rtype: OpinionEvaluationResult
     """
 
+    LOGGER.info(
+        "[OPINION] loading dataset name=%s split=%s include_studies=%s max_participants=%s overwrite=%s",
+        settings.dataset.name,
+        settings.dataset.split,
+        ",".join(settings.include_studies or ()) or "<all>",
+        settings.controls.max_participants or "<no-cap>",
+        settings.controls.overwrite,
+    )
+
     dataset_rows = load_dataset_split(
         settings.dataset.name,
         split=settings.dataset.split,
         cache_dir=settings.dataset.cache_dir,
     )
+    LOGGER.info("[OPINION] loaded %d rows for opinion evaluation", len(dataset_rows))
     combined = _CombinedVectors()
     results: List[OpinionStudyResult] = []
     study_context = OpinionStudyContext(
@@ -645,13 +655,19 @@ def run_opinion_evaluation(
     )
 
     for spec in _resolve_studies(settings.include_studies):
+        examples = _resolve_study_examples(
+            dataset_rows,
+            spec=spec,
+            max_participants=settings.controls.max_participants,
+        )
+        LOGGER.info(
+            "[OPINION] evaluating study=%s participants=%d",
+            spec.key,
+            len(examples),
+        )
         study_result, accumulator = _evaluate_study(
             spec=spec,
-            examples=_resolve_study_examples(
-                dataset_rows,
-                spec=spec,
-                max_participants=settings.controls.max_participants,
-            ),
+            examples=examples,
             study_context=study_context,
             files=_prepare_study_files(out_dir, spec),
         )

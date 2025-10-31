@@ -71,7 +71,7 @@ export PIP_USER=false
 # Cache roots
 # ────────────────────────────────────────────────────────────────
 export HF_HOME=${HF_HOME:-"$ROOT_DIR/.hf_cache"}
-export TRANSFORMERS_CACHE=${TRANSFORMERS_CACHE:-"$ROOT_DIR/.cache/huggingface/transformers"}
+export HF_HUB_CACHE=${HF_HUB_CACHE:-"$ROOT_DIR/.cache/huggingface/transformers"}
 export HF_DATASETS_CACHE=${HF_DATASETS_CACHE:-"$ROOT_DIR/.cache/huggingface/datasets"}
 export XDG_CACHE_HOME=${XDG_CACHE_HOME:-"$ROOT_DIR/.cache"}
 export TMPDIR=${TMPDIR:-"$ROOT_DIR/.tmp"}
@@ -81,7 +81,7 @@ export PYTHONPYCACHEPREFIX=${PYTHONPYCACHEPREFIX:-"$ROOT_DIR/.cache/pyc"}
 export TORCHINDUCTOR_CACHE_DIR=${TORCHINDUCTOR_CACHE_DIR:-"$ROOT_DIR/.torchinductor"}
 export TRITON_CACHE_DIR=${TRITON_CACHE_DIR:-"$ROOT_DIR/.triton"}
 
-for dir in "$HF_HOME" "$TRANSFORMERS_CACHE" "$HF_DATASETS_CACHE" "$XDG_CACHE_HOME" \
+for dir in "$HF_HOME" "$HF_HUB_CACHE" "$HF_DATASETS_CACHE" "$XDG_CACHE_HOME" \
            "$TMPDIR" "$TORCHINDUCTOR_CACHE_DIR" "$TRITON_CACHE_DIR" "$LOG_DIR" \
            "$PIP_CACHE_DIR" "$PIP_BUILD_DIR" "$PYTHONPYCACHEPREFIX" "$CONDA_CACHE_DIR"; do
   mkdir -p "$dir"

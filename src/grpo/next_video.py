@@ -419,12 +419,21 @@ def run_next_video_evaluation(
     :returns: Next-video evaluation artefacts produced during execution.
     :rtype: NextVideoEvaluationResult
     """
+    LOGGER.info(
+        "[NEXT] loading dataset name=%s split=%s issues=%s studies=%s overwrite=%s",
+        settings.dataset.name,
+        settings.dataset.split,
+        ",".join(settings.filters.issues) or "<any>",
+        ",".join(settings.filters.studies) or "<any>",
+        settings.overwrite,
+    )
 
     rows = load_dataset_split(
         settings.dataset.name,
         split=settings.dataset.split,
         cache_dir=settings.dataset.cache_dir,
     )
+    LOGGER.info("[NEXT] loaded %d raw rows for evaluation", len(rows))
     examples_iter = prepare_examples(
         rows,
         system_prompt=settings.prompts.system_prompt,
@@ -433,6 +442,10 @@ def run_next_video_evaluation(
     )
     run_dir = out_dir / config_label
     _ensure_output_dir(run_dir, settings.overwrite)
+    example_cap = settings.limits.example_cap()
+    if example_cap is not None:
+        LOGGER.info("[NEXT] limiting evaluation to %d examples", example_cap)
+    LOGGER.info("[NEXT] writing artefacts to %s", run_dir)
 
     state = _evaluate_examples(
         examples_iter,

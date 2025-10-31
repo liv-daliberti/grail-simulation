@@ -289,27 +289,34 @@
 
 
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BatchRenderSettings</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Rendering preferences shared across batch session exports.&quot;&quot;&quot;</span>
+
+    <span class="n">session_options</span><span class="p">:</span> <span class="n">render</span><span class="o">.</span><span class="n">SessionGraphOptions</span>
+    <span class="n">output_format</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">batch_prefix</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">max_steps</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">BatchContext</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for batch session rendering.&quot;&quot;&quot;</span>
 
     <span class="n">dataset</span><span class="p">:</span> <span class="nb">object</span>
     <span class="n">issue_targets</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
     <span class="n">output_dir</span><span class="p">:</span> <span class="n">Path</span>
-    <span class="n">output_format</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">label_template</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">wrap_width</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
-    <span class="n">rankdir</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">engine</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">highlight_path</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="n">split</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-    <span class="n">max_steps</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
-    <span class="n">batch_prefix</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">settings</span><span class="p">:</span> <span class="n">BatchRenderSettings</span>
 
 
 <div class="viewcode-block" id="parse_args">
 <a class="viewcode-back" href="../../../api/visualization.html#visualization.recommendation_tree_viz.parse_args">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse CLI arguments for the recommendation visualiser.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse CLI arguments for the recommendation visualiser.</span>
+
+<span class="sd">    :param argv: Optional CLI argument list; defaults to ``sys.argv`` when ``None``.</span>
+<span class="sd">    :returns: Parsed argument namespace ready for execution.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="vm">__doc__</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--tree&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to a tree CSV file.&quot;</span><span class="p">)</span>
@@ -455,7 +462,10 @@
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../../api/visualization.html#visualization.recommendation_tree_viz.main">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Entry point for the recommendation tree visualiser.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Entry point for the recommendation tree visualiser.</span>
+
+<span class="sd">    :param argv: Optional CLI argument list; defaults to ``sys.argv``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">args</span> <span class="o">=</span> <span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
     <span class="n">highlight_path</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">_parse_highlight_argument</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">highlight</span><span class="p">))</span>
@@ -472,7 +482,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_highlight_argument</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalise the comma-separated highlight argument into identifiers.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalise the comma-separated highlight argument into identifiers.</span>
+
+<span class="sd">    :param raw: Raw comma-separated string supplied via ``--highlight``.</span>
+<span class="sd">    :returns: List of cleaned identifiers.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">raw</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
@@ -484,7 +498,13 @@
     <span class="n">dataset</span><span class="p">,</span>
     <span class="n">highlight_path</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct the graph for either cleaned datasets or CSV inputs.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct the graph for either cleaned datasets or CSV inputs.</span>
+
+<span class="sd">    :param args: Parsed CLI arguments.</span>
+<span class="sd">    :param dataset: Loaded cleaned dataset when ``--cleaned-data`` is used.</span>
+<span class="sd">    :param highlight_path: Sequence of identifiers to highlight.</span>
+<span class="sd">    :returns: Graphviz graph ready to render.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">dataset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -498,7 +518,13 @@
     <span class="n">dataset</span><span class="p">,</span>
     <span class="n">highlight_path</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a session graph for a single viewer trajectory.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a session graph for a single viewer trajectory.</span>
+
+<span class="sd">    :param args: Parsed CLI arguments.</span>
+<span class="sd">    :param dataset: Loaded cleaned dataset object.</span>
+<span class="sd">    :param highlight_path: Sequence of identifiers to highlight.</span>
+<span class="sd">    :returns: Graphviz graph representing a session.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_</span><span class="p">,</span> <span class="n">session_rows</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">extract_session_rows</span><span class="p">(</span>
         <span class="n">dataset</span><span class="p">,</span>
@@ -520,7 +546,12 @@
     <span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">,</span>
     <span class="n">highlight_path</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a tree graph directly from CSV exports.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a tree graph directly from CSV exports.</span>
+
+<span class="sd">    :param args: Parsed CLI arguments.</span>
+<span class="sd">    :param highlight_path: Sequence of identifiers to highlight.</span>
+<span class="sd">    :returns: Graphviz graph representing the tree export.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">child_prefixes</span> <span class="o">=</span> <span class="n">_parse_child_prefixes</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">child_prefixes</span><span class="p">)</span>
     <span class="n">tree</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">load_tree_csv</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">tree</span><span class="p">,</span> <span class="n">id_column</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">id_column</span><span class="p">,</span> <span class="n">child_prefixes</span><span class="o">=</span><span class="n">child_prefixes</span><span class="p">)</span>
@@ -535,12 +566,13 @@
         <span class="n">label_template</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">label_template</span><span class="p">,</span>
         <span class="n">wrap_width</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">wrap_width</span><span class="p">,</span>
         <span class="n">highlight_path</span><span class="o">=</span><span class="n">highlight_path</span><span class="p">,</span>
-        <span class="n">node_counts</span><span class="o">=</span><span class="n">node_counts</span><span class="p">,</span>
-        <span class="n">edge_counts</span><span class="o">=</span><span class="n">edge_counts</span><span class="p">,</span>
+        <span class="n">counts</span><span class="o">=</span><span class="n">render</span><span class="o">.</span><span class="n">GraphCounts</span><span class="p">(</span><span class="n">node</span><span class="o">=</span><span class="n">node_counts</span><span class="p">,</span> <span class="n">edge</span><span class="o">=</span><span class="n">edge_counts</span><span class="p">),</span>
         <span class="n">max_depth</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">max_depth</span><span class="p">,</span>
-        <span class="n">rankdir</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">rankdir</span><span class="p">,</span>
-        <span class="n">engine</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">engine</span><span class="p">,</span>
-        <span class="n">show_rank_labels</span><span class="o">=</span><span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">hide_rank_labels</span><span class="p">,</span>
+        <span class="n">style</span><span class="o">=</span><span class="n">render</span><span class="o">.</span><span class="n">GraphStyle</span><span class="p">(</span>
+            <span class="n">rankdir</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">rankdir</span><span class="p">,</span>
+            <span class="n">engine</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">engine</span><span class="p">,</span>
+            <span class="n">show_rank_labels</span><span class="o">=</span><span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">hide_rank_labels</span><span class="p">,</span>
+        <span class="p">),</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">render</span><span class="o">.</span><span class="n">build_graph</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
 
@@ -551,7 +583,14 @@
     <span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">,</span>
     <span class="n">highlight_path</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a session graph from pre-selected rows.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a session graph from pre-selected rows.</span>
+
+<span class="sd">    :param rows: Dataset rows for the target session.</span>
+<span class="sd">    :param label_template: Template string used for node labels.</span>
+<span class="sd">    :param args: Parsed CLI arguments to reuse other options.</span>
+<span class="sd">    :param highlight_path: Sequence of identifiers to highlight.</span>
+<span class="sd">    :returns: Graphviz graph representing the session.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">options</span> <span class="o">=</span> <span class="n">render</span><span class="o">.</span><span class="n">SessionGraphOptions</span><span class="p">(</span>
         <span class="n">label_template</span><span class="o">=</span><span class="n">label_template</span><span class="p">,</span>
@@ -564,7 +603,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_session_label_template</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the appropriate label template for session renders.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the appropriate label template for session renders.</span>
+
+<span class="sd">    :param args: Parsed CLI arguments.</span>
+<span class="sd">    :returns: Template string to use when rendering session nodes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">label_template</span> <span class="o">==</span> <span class="n">DEFAULT_LABEL_TEMPLATE</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">SESSION_DEFAULT_LABEL_TEMPLATE</span>
@@ -572,14 +615,22 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_child_prefixes</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Split and normalise child prefix specifications.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Split and normalise child prefix specifications.</span>
+
+<span class="sd">    :param raw: Comma-separated list provided via ``--child-prefixes``.</span>
+<span class="sd">    :returns: Tuple of cleaned prefixes, defaulting to ``(\&quot;rec\&quot;,)`` if empty.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">prefixes</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">prefix</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">prefix</span> <span class="ow">in</span> <span class="n">raw</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">prefix</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
     <span class="k">return</span> <span class="n">prefixes</span> <span class="ow">or</span> <span class="p">(</span><span class="s2">&quot;rec&quot;</span><span class="p">,)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_output_format</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Determine the user-requested output format.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Determine the user-requested output format.</span>
+
+<span class="sd">    :param args: Parsed CLI arguments.</span>
+<span class="sd">    :returns: Normalised Graphviz format name or an empty string.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">format</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">args</span><span class="o">.</span><span class="n">format</span>
@@ -593,7 +644,12 @@
     <span class="n">dataset</span><span class="p">,</span>
     <span class="n">highlight_path</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render multiple sessions organised by issue into an output directory.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render multiple sessions organised by issue into an output directory.</span>
+
+<span class="sd">    :param args: Parsed CLI arguments.</span>
+<span class="sd">    :param dataset: Loaded cleaned dataset object.</span>
+<span class="sd">    :param highlight_path: Sequence of identifiers to highlight.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">context</span> <span class="o">=</span> <span class="n">_prepare_batch_context</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">highlight_path</span><span class="p">)</span>
     <span class="n">emitted</span> <span class="o">=</span> <span class="mi">0</span>
@@ -610,14 +666,22 @@
     <span class="n">dataset</span><span class="p">,</span>
     <span class="n">highlight_path</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BatchContext</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate batch arguments and assemble a rendering context.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate batch arguments and assemble a rendering context.</span>
+
+<span class="sd">    :param args: Parsed CLI arguments.</span>
+<span class="sd">    :param dataset: Loaded cleaned dataset object.</span>
+<span class="sd">    :param highlight_path: Sequence of identifiers to highlight.</span>
+<span class="sd">    :returns: Batch rendering configuration.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">tree</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="s2">&quot;--batch-output-dir currently supports --cleaned-data only.&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">dataset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="s2">&quot;--batch-output-dir requires --cleaned-data.&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">issue</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="s2">&quot;--batch-output-dir is incompatible with --issue. Use --batch-issues instead.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span>
+            <span class="s2">&quot;--batch-output-dir is incompatible with --issue. Use --batch-issues instead.&quot;</span>
+        <span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">issue_targets</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">parse_issue_counts</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">batch_issues</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
@@ -626,24 +690,36 @@
         <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="s2">&quot;No issue counts provided for batch rendering.&quot;</span><span class="p">)</span>
     <span class="n">output_dir</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">batch_output_dir</span>
     <span class="n">output_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">BatchContext</span><span class="p">(</span>
-        <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
-        <span class="n">issue_targets</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">issue_targets</span><span class="p">),</span>
-        <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>
-        <span class="n">output_format</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">format</span> <span class="ow">or</span> <span class="s2">&quot;svg&quot;</span><span class="p">,</span>
+    <span class="n">session_options</span> <span class="o">=</span> <span class="n">render</span><span class="o">.</span><span class="n">SessionGraphOptions</span><span class="p">(</span>
         <span class="n">label_template</span><span class="o">=</span><span class="n">_session_label_template</span><span class="p">(</span><span class="n">args</span><span class="p">),</span>
         <span class="n">wrap_width</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">wrap_width</span><span class="p">,</span>
         <span class="n">rankdir</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">rankdir</span><span class="p">,</span>
         <span class="n">engine</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">engine</span><span class="p">,</span>
         <span class="n">highlight_path</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">highlight_path</span><span class="p">),</span>
-        <span class="n">split</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">split</span><span class="p">,</span>
-        <span class="n">max_steps</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">max_steps</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">settings</span> <span class="o">=</span> <span class="n">BatchRenderSettings</span><span class="p">(</span>
+        <span class="n">session_options</span><span class="o">=</span><span class="n">session_options</span><span class="p">,</span>
+        <span class="n">output_format</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">format</span> <span class="ow">or</span> <span class="s2">&quot;svg&quot;</span><span class="p">,</span>
         <span class="n">batch_prefix</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">batch_prefix</span><span class="p">,</span>
+        <span class="n">max_steps</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">max_steps</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">BatchContext</span><span class="p">(</span>
+        <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
+        <span class="n">issue_targets</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">issue_targets</span><span class="p">),</span>
+        <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>
+        <span class="n">split</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">split</span><span class="p">,</span>
+        <span class="n">settings</span><span class="o">=</span><span class="n">settings</span><span class="p">,</span>
     <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_render_issue_sessions</span><span class="p">(</span><span class="n">issue</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">BatchContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render one issue&#39;s worth of sessions, returning the emitted graph count.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render one issue&#39;s worth of sessions, returning the emitted graph count.</span>
+
+<span class="sd">    :param issue: Dataset issue identifier (e.g. ``minimum_wage``).</span>
+<span class="sd">    :param count: Number of sessions to render for the issue.</span>
+<span class="sd">    :param context: Batch rendering configuration.</span>
+<span class="sd">    :returns: Number of emitted graphs for the issue.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">count</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="mi">0</span>
@@ -656,21 +732,12 @@
     <span class="n">emitted</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">session_id</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">sessions</span><span class="p">)[:</span><span class="n">count</span><span class="p">],</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
         <span class="n">session_rows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">sessions</span><span class="p">[</span><span class="n">session_id</span><span class="p">])</span>
-        <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">max_steps</span> <span class="ow">and</span> <span class="n">context</span><span class="o">.</span><span class="n">max_steps</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">session_rows</span> <span class="o">=</span> <span class="n">session_rows</span><span class="p">[:</span> <span class="n">context</span><span class="o">.</span><span class="n">max_steps</span><span class="p">]</span>
-        <span class="n">graph</span> <span class="o">=</span> <span class="n">render</span><span class="o">.</span><span class="n">build_session_graph</span><span class="p">(</span>
-            <span class="n">session_rows</span><span class="p">,</span>
-            <span class="n">render</span><span class="o">.</span><span class="n">SessionGraphOptions</span><span class="p">(</span>
-                <span class="n">label_template</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">label_template</span><span class="p">,</span>
-                <span class="n">wrap_width</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">wrap_width</span><span class="p">,</span>
-                <span class="n">rankdir</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">rankdir</span><span class="p">,</span>
-                <span class="n">engine</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">engine</span><span class="p">,</span>
-                <span class="n">highlight_path</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">highlight_path</span><span class="p">,</span>
-            <span class="p">),</span>
-        <span class="p">)</span>
-        <span class="n">filename</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">batch_prefix</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">issue</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">output_format</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">max_steps</span> <span class="ow">and</span> <span class="n">context</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">max_steps</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">session_rows</span> <span class="o">=</span> <span class="n">session_rows</span><span class="p">[:</span> <span class="n">context</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">max_steps</span><span class="p">]</span>
+        <span class="n">graph</span> <span class="o">=</span> <span class="n">render</span><span class="o">.</span><span class="n">build_session_graph</span><span class="p">(</span><span class="n">session_rows</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">session_options</span><span class="p">)</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">batch_prefix</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">issue</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">output_format</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="n">output_path</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">output_dir</span> <span class="o">/</span> <span class="n">filename</span>
-        <span class="n">render</span><span class="o">.</span><span class="n">render_graph</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">output_path</span><span class="p">,</span> <span class="n">output_format</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">output_format</span><span class="p">)</span>
+        <span class="n">render</span><span class="o">.</span><span class="n">render_graph</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">output_path</span><span class="p">,</span> <span class="n">output_format</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">output_format</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrote </span><span class="si">{</span><span class="n">output_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
         <span class="n">emitted</span> <span class="o">+=</span> <span class="mi">1</span>
     <span class="k">return</span> <span class="n">emitted</span>

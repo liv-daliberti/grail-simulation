@@ -17,15 +17,19 @@
 
 from __future__ import annotations
 
+import logging
 import sys
 from typing import Sequence
 
 from grpo.config import repo_root as _repo_root
-from grpo.pipeline import main as _grpo_main
+from grpo.pipeline import configure_logging as _configure_logging, main as _grpo_main
 
 from .reports import DEFAULT_REGENERATE_HINT
 
 __all__ = ["main"]
+
+
+LOGGER = logging.getLogger("grail.pipeline")
 
 
 def _flag_present(argv: Sequence[str], flag: str) -> bool:
@@ -35,22 +39,51 @@ def _flag_present(argv: Sequence[str], flag: str) -> bool:
     return any(token == flag or token.startswith(flag_eq) for token in argv)
 
 
+def _extract_log_level(argv: Sequence[str]) -> str:
+    """Return the requested log level or the default when omitted."""
+
+    for index, token in enumerate(argv):
+        if token.startswith("--log-level="):
+            return token.split("=", 1)[1]
+        if token == "--log-level" and index + 1 < len(argv):
+            return argv[index + 1]
+    return "INFO"
+
+
 def main(argv: Sequence[str] | None = None) -> None:
     """Entrypoint mirroring :mod:`grpo.pipeline` with GRAIL defaults."""
 
     user_args = list(argv) if argv is not None else sys.argv[1:]
     extra_args: list[str] = []
+    defaults_log: list[str] = []
+    log_level = _extract_log_level(user_args)
 
     repo_root = _repo_root()
     default_out_dir = str(repo_root / "models" / "grail")
 
     if not _flag_present(user_args, "--out-dir"):
         extra_args.extend(["--out-dir", default_out_dir])
+        defaults_log.append(f"--out-dir {default_out_dir}")
     if not _flag_present(user_args, "--reports-subdir"):
         extra_args.extend(["--reports-subdir", "grail"])
+        defaults_log.append("--reports-subdir grail")
     if not _flag_present(user_args, "--baseline-label"):
         extra_args.extend(["--baseline-label", "GRAIL"])
+        defaults_log.append("--baseline-label GRAIL")
     if not _flag_present(user_args, "--regenerate-hint"):
         extra_args.extend(["--regenerate-hint", DEFAULT_REGENERATE_HINT])
+        defaults_log.append("--regenerate-hint <default>")
+
+    _configure_logging(log_level)
+
+    LOGGER.info(
+        "Launching GRAIL pipeline wrapper (log level %s).", str(log_level).upper()
+    )
+    if defaults_log:
+        LOGGER.info("Applying default CLI args: %s", ", ".join(defaults_log))
+    else:
+        LOGGER.info("All CLI overrides supplied; no defaults applied.")
+    LOGGER.debug("Forwarding arguments: %s", extra_args + user_args)
+    LOGGER.info("Delegating execution to grpo.pipeline...")
 
     _grpo_main(extra_args + user_args)

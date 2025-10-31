@@ -15,17 +15,23 @@
 
 """CLI entry point powering the GPT-4o baseline executable."""
 
-# pylint: disable=invalid-name,wrong-import-position
-
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
-if __package__ in {None, ""}:
-    ROOT = Path(__file__).resolve().parents[2]
-    if str(ROOT) not in sys.path:
-        sys.path.insert(0, str(ROOT))
+
+def _ensure_repo_on_path() -> None:
+    """Inject the repository root into ``sys.path`` when executed as a script."""
+
+    if __package__ not in {None, ""}:
+        return
+    repo_root = Path(__file__).resolve().parents[2]
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+
+
+_ensure_repo_on_path()
 
 from gpt4o.cli import main
 

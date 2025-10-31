@@ -55,24 +55,67 @@ def _require_graphviz() -> "Digraph":  # type: ignore[override]
 
 
 @dataclass(frozen=True)
-class GraphRenderOptions:
-    """Configuration parameters for rendering tree-level graphs."""
+class GraphCounts:
+    """Container for per-node and per-edge traversal counts.
 
-    metadata: Mapping[str, Mapping[str, object]] = field(default_factory=dict)
-    label_template: str = "{originTitle}"
-    wrap_width: Optional[int] = None
-    highlight_path: Sequence[str] = field(default_factory=tuple)
-    node_counts: Mapping[str, int] = field(default_factory=Counter)
-    edge_counts: Mapping[Tuple[str, str], int] = field(default_factory=Counter)
-    max_depth: Optional[int] = None
+    Attributes:
+        node: Mapping of node identifiers to visit counts.
+        edge: Mapping of ``(parent, child)`` identifiers to traversal counts.
+    """
+
+    node: Mapping[str, int] = field(default_factory=Counter)
+    edge: Mapping[Tuple[str, str], int] = field(default_factory=Counter)
+
+
+@dataclass(frozen=True)
+class GraphStyle:
+    """Graphviz style attributes shared across tree renders.
+
+    Attributes:
+        rankdir: Graph orientation (``LR``, ``TB``, etc.).
+        engine: Graphviz layout engine name.
+        show_rank_labels: Whether to attach rank labels to edges.
+    """
+
     rankdir: str = "LR"
     engine: str = "dot"
     show_rank_labels: bool = True
 
 
 @dataclass(frozen=True)
+class GraphRenderOptions:
+    """Configuration parameters for rendering tree-level graphs.
+
+    Attributes:
+        metadata: External node metadata keyed by node id.
+        label_template: Template used to render node labels.
+        wrap_width: Optional wrapping width for node labels.
+        highlight_path: Ordered identifiers describing the highlight path.
+        counts: Per-node and per-edge traversal counts.
+        max_depth: Optional maximum depth for tree rendering.
+        style: Graphviz styling options shared across the graph.
+    """
+
+    metadata: Mapping[str, Mapping[str, object]] = field(default_factory=dict)
+    label_template: str = "{originTitle}"
+    wrap_width: Optional[int] = None
+    highlight_path: Sequence[str] = field(default_factory=tuple)
+    counts: GraphCounts = field(default_factory=GraphCounts)
+    max_depth: Optional[int] = None
+    style: GraphStyle = field(default_factory=GraphStyle)
+
+
+@dataclass(frozen=True)
 class SessionGraphOptions:
-    """Configuration parameters for rendering viewer session graphs."""
+    """Configuration parameters for rendering viewer session graphs.
+
+    Attributes:
+        label_template: Template string applied to node labels.
+        wrap_width: Optional wrapping width for node labels.
+        rankdir: Graph orientation (``LR``, ``TB``, etc.).
+        engine: Graphviz layout engine name.
+        highlight_path: Identifiers describing the highlight path.
+    """
 
     label_template: str = "{originTitle}"
     wrap_width: Optional[int] = None
@@ -83,15 +126,25 @@ class SessionGraphOptions:
 
 @dataclass
 class OpinionNodes:
-    """Container describing the optional opinion annotation nodes."""
+    """Container describing the optional opinion annotation nodes.
 
+    Attributes:
+        initial_node: Node name used for the initial opinion annotation.
+        final_node: Node name used for the final opinion annotation.
+    """
     initial_node: Optional[str] = None
     final_node: Optional[str] = None
 
 
 @dataclass
 class SessionGraphState:
-    """Mutable state accumulated while wiring the per-step session graph."""
+    """Mutable state accumulated while wiring the per-step session graph.
+
+    Attributes:
+        current_nodes: Mapping from step index to current-node identifiers.
+        chosen_nodes: Mapping from step index to chosen option node identifiers.
+        chosen_option_details: Mapping from step index to chosen option metadata.
+    """
 
     current_nodes: Dict[int, str] = field(default_factory=dict)
     chosen_nodes: Dict[int, str] = field(default_factory=dict)
@@ -103,6 +156,72 @@ class SessionGraphState:
         """Return the step indices observed across the session in order."""
 
         return sorted(self.current_nodes.keys())
+
+
+@dataclass(frozen=True)
+class NodeRenderContext:
+    """Details required to render tree-level nodes.
+
+    Attributes:
+        label_options: Formatting options for node labels.
+        highlight_nodes: Nodes that should be emphasised.
+        allowed_nodes: Optional set restricting nodes to render.
+        counts: Visit counts used to annotate nodes.
+    """
+
+    label_options: LabelRenderOptions
+    highlight_nodes: set[str]
+    allowed_nodes: Optional[set[str]]
+    counts: Mapping[str, int]
+
+
+@dataclass(frozen=True)
+class EdgeRenderContext:
+    """Details required to render tree-level edges.
+
+    Attributes:
+        highlight_edges: Edges that should be emphasised.
+        counts: Traversal counts used to annotate edges.
+        show_rank_labels: Whether to include rank labels.
+        max_depth: Optional pruning depth.
+        depths: Depth mapping for nodes in the tree.
+    """
+
+    highlight_edges: set[Tuple[str, str]]
+    counts: Mapping[Tuple[str, str], int]
+    show_rank_labels: bool
+    max_depth: Optional[int]
+    depths: Mapping[str, int]
+
+
+@dataclass(frozen=True)
+class SessionRenderConfig:
+    """Shared configuration for session graph rendering helpers.
+
+    Attributes:
+        label_options: Formatting options for node labels.
+        highlight_set: Identifiers to highlight within the session graph.
+    """
+
+    label_options: LabelRenderOptions
+    highlight_set: set[str]
+
+
+@dataclass(frozen=True)
+class StepRenderContext:
+    """Bundle of per-step details passed to option rendering helpers.
+
+    Attributes:
+        step: Session step index.
+        current_id: Identifier of the currently watched video.
+        current_node_key: Graphviz node key representing the current video.
+        config: Shared rendering configuration.
+    """
+
+    step: int
+    current_id: str
+    current_node_key: str
+    config: SessionRenderConfig
 
 
 def compute_depths(tree: TreeData) -> Dict[str, int]:
@@ -174,43 +293,40 @@ def build_graph(tree: TreeData, options: GraphRenderOptions) -> Digraph:
     depths = compute_depths(tree)
     highlight_nodes, highlight_edges = _highlight_sets(options.highlight_path)
     allowed_nodes = _determine_allowed_nodes(depths, options.max_depth)
-    graph = _create_tree_graph(options.engine, options.rankdir)
+    graph = _create_tree_graph(options.style)
     label_options = LabelRenderOptions(
         metadata=options.metadata,
         template=options.label_template,
         wrap_width=options.wrap_width,
     )
-    _add_tree_nodes(
-        graph,
-        tree,
-        label_options,
-        highlight_nodes,
-        allowed_nodes,
-        options.node_counts,
+    node_context = NodeRenderContext(
+        label_options=label_options,
+        highlight_nodes=set(highlight_nodes),
+        allowed_nodes=allowed_nodes,
+        counts=options.counts.node,
     )
-    _add_tree_edges(
-        graph,
-        tree,
-        depths,
-        highlight_edges,
-        options.edge_counts,
-        options.show_rank_labels,
-        options.max_depth,
+    _add_tree_nodes(graph, tree, node_context)
+    edge_context = EdgeRenderContext(
+        highlight_edges=set(highlight_edges),
+        counts=options.counts.edge,
+        show_rank_labels=options.style.show_rank_labels,
+        max_depth=options.max_depth,
+        depths=depths,
     )
+    _add_tree_edges(graph, tree, edge_context)
     return graph
 
 
-def _create_tree_graph(engine: str, rankdir: str) -> Digraph:
+def _create_tree_graph(style: GraphStyle) -> Digraph:
     """Initialise a Graphviz graph with default styling for tree renders.
 
-    :param engine: Graphviz layout engine name (``dot``, ``neato``, etc.).
-    :param rankdir: Graph orientation (``LR``, ``TB`` and friends).
+    :param style: Graph styling options, including layout engine and orientation.
     :returns: A configured :class:`graphviz.Digraph` instance.
     """
 
     graph_cls = _require_graphviz()
-    graph = graph_cls(engine=engine)
-    graph.attr(rankdir=rankdir)
+    graph = graph_cls(engine=style.engine)
+    graph.attr(rankdir=style.rankdir)
     graph.attr(
         "node",
         shape="box",
@@ -259,77 +375,55 @@ def _determine_allowed_nodes(
     return {node for node, depth in depths.items() if depth <= max_depth}
 
 
-def _add_tree_nodes(
-    graph: Digraph,
-    tree: TreeData,
-    label_options: LabelRenderOptions,
-    highlight_nodes: set[str],
-    allowed_nodes: Optional[set[str]],
-    node_counts: Mapping[str, int],
-) -> None:
+def _add_tree_nodes(graph: Digraph, tree: TreeData, context: NodeRenderContext) -> None:
     """Add nodes and their attributes to the rendered tree graph.
 
     :param graph: Graphviz graph being constructed.
     :param tree: Tree data describing nodes and edges.
-    :param label_options: Formatting options for node labels.
-    :param highlight_nodes: Nodes that should be emphasised.
-    :param allowed_nodes: Optional set restricting nodes to render.
-    :param node_counts: Visit counts to surface alongside nodes.
+    :param context: Rendering context describing styling and filters.
     """
 
     for node_id, node_data in tree.nodes.items():
-        if allowed_nodes is not None and node_id not in allowed_nodes:
+        if context.allowed_nodes is not None and node_id not in context.allowed_nodes:
             continue
-        label = format_node_label(node_id, node_data=node_data, options=label_options)
+        label = format_node_label(node_id, node_data=node_data, options=context.label_options)
         node_attrs = {}
-        if node_id in highlight_nodes:
+        if node_id in context.highlight_nodes:
             node_attrs.update(
                 {"fillcolor": "#81a1c1", "color": "#2e3440", "style": "rounded,filled,bold"}
             )
-        count = node_counts.get(node_id)
+        count = context.counts.get(node_id)
         if count:
             node_attrs["xlabel"] = str(count)
             node_attrs["labelloc"] = "c"
         graph.node(node_id, label=label, **node_attrs)
 
 
-def _add_tree_edges(
-    graph: Digraph,
-    tree: TreeData,
-    depths: Mapping[str, int],
-    highlight_edges: set[Tuple[str, str]],
-    edge_counts: Mapping[Tuple[str, str], int],
-    show_rank_labels: bool,
-    max_depth: Optional[int],
-) -> None:
+def _add_tree_edges(graph: Digraph, tree: TreeData, context: EdgeRenderContext) -> None:
     """Add edges and associated styling to the rendered tree graph.
 
     :param graph: Graphviz graph being constructed.
     :param tree: Tree data describing parent-child relationships.
-    :param depths: Node depth mapping used when pruning by ``max_depth``.
-    :param highlight_edges: Edges that should be emphasised.
-    :param edge_counts: Viewer counts for each traversed edge.
-    :param show_rank_labels: Whether to include rank labels on edges.
-    :param max_depth: Optional depth cut-off for pruning.
+    :param context: Rendering context describing styling and filters.
     """
 
     for edge in tree.edges:
-        if max_depth is not None:
-            parent_depth = depths.get(edge.parent)
-            child_depth = depths.get(edge.child)
+        if context.max_depth is not None:
+            parent_depth = context.depths.get(edge.parent)
+            child_depth = context.depths.get(edge.child)
             if parent_depth is None or child_depth is None:
                 continue
-            if parent_depth > max_depth - 1 or child_depth > max_depth:
+            if parent_depth > context.max_depth - 1 or child_depth > context.max_depth:
                 continue
         edge_attrs = {}
         labels: List[str] = []
-        if show_rank_labels and edge.rank is not None:
+        if context.show_rank_labels and edge.rank is not None:
             labels.append(f"Rec {edge.rank}")
-        count = edge_counts.get((edge.parent, edge.child), 0)
+        count = context.counts.get((edge.parent, edge.child), 0)
         if count:
             labels.append(f"{count} viewers")
             edge_attrs.setdefault("penwidth", _edge_penwidth(count))
-        if (edge.parent, edge.child) in highlight_edges:
+        if (edge.parent, edge.child) in context.highlight_edges:
             edge_attrs["color"] = "#bf616a"
             edge_attrs["penwidth"] = "3"
         if labels:
@@ -347,7 +441,10 @@ def _edge_penwidth(count: int) -> str:
     return str(1.5 + min(4, math.log2(count + 1)))
 
 
-def build_session_graph(rows: Sequence[Mapping[str, object]], options: SessionGraphOptions) -> Digraph:
+def build_session_graph(
+    rows: Sequence[Mapping[str, object]],
+    options: SessionGraphOptions,
+) -> Digraph:
     """Visualise a single viewer session as a Graphviz graph.
 
     :param rows: Ordered dataset rows describing the viewer session.
@@ -360,9 +457,13 @@ def build_session_graph(rows: Sequence[Mapping[str, object]], options: SessionGr
     label_options = _session_label_options(options)
     ordered_rows = _order_session_rows(rows)
     opinion_nodes = _add_opinion_annotations(graph, ordered_rows)
-    state = _add_session_steps(graph, ordered_rows, label_options, highlight_nodes)
+    config = SessionRenderConfig(
+        label_options=label_options,
+        highlight_set=set(highlight_nodes),
+    )
+    state = _add_session_steps(graph, ordered_rows, config)
     _link_session_steps(graph, state)
-    _attach_opinion_edges(graph, opinion_nodes, state, label_options, highlight_nodes)
+    _attach_opinion_edges(graph, opinion_nodes, state, config)
     return graph
 
 
@@ -466,35 +567,33 @@ def _add_opinion_annotations(
 def _add_session_steps(
     graph: Digraph,
     rows: Sequence[Mapping[str, object]],
-    label_options: LabelRenderOptions,
-    highlight_set: set[str],
+    config: SessionRenderConfig,
 ) -> SessionGraphState:
     """Render session steps and recommendation options for each row.
 
     :param graph: Graphviz graph being constructed.
     :param rows: Ordered session rows.
-    :param label_options: Label configuration for nodes.
-    :param highlight_set: Identifiers to highlight within the graph.
+    :param config: Rendering configuration shared across helpers.
     :returns: Mutable state capturing created nodes and selections.
     """
 
     state = SessionGraphState()
     for row in rows:
-        step = int(row.get("display_step") or row.get("step_index") or (len(state.current_nodes) + 1))
-        current_id = str(row.get("current_video_id") or row.get("current_video_raw_id") or "")
+        raw_step = row.get("display_step") or row.get("step_index")
+        step = int(raw_step) if raw_step is not None else len(state.current_nodes) + 1
+        raw_current_id = row.get("current_video_id") or row.get("current_video_raw_id") or ""
+        current_id = str(raw_current_id)
         if not current_id:
             continue
-        current_node_key = _add_current_node(graph, step, current_id, row, label_options, highlight_set)
+        current_node_key = _add_current_node(graph, step, current_id, row, config)
         state.current_nodes[step] = current_node_key
-        chosen_node, chosen_details = _add_option_nodes(
-            graph,
-            row,
-            step,
-            current_id,
-            current_node_key,
-            label_options,
-            highlight_set,
+        step_context = StepRenderContext(
+            step=step,
+            current_id=current_id,
+            current_node_key=current_node_key,
+            config=config,
         )
+        chosen_node, chosen_details = _add_option_nodes(graph, row, step_context)
         if chosen_node:
             state.chosen_nodes[step] = chosen_node
         if chosen_details:
@@ -507,8 +606,7 @@ def _add_current_node(
     step: int,
     current_id: str,
     row: Mapping[str, object],
-    label_options: LabelRenderOptions,
-    highlight_set: set[str],
+    config: SessionRenderConfig,
 ) -> str:
     """Add the node representing the current video at a given step.
 
@@ -516,8 +614,7 @@ def _add_current_node(
     :param step: Session step index.
     :param current_id: Identifier of the currently watched video.
     :param row: Dataset row describing the step.
-    :param label_options: Label configuration for nodes.
-    :param highlight_set: Identifiers that should be highlighted.
+    :param config: Rendering configuration shared across helpers.
     :returns: Graphviz node key for the current video.
     """
 
@@ -533,9 +630,13 @@ def _add_current_node(
         "step_index": row.get("step_index"),
         "display_step": row.get("display_step"),
     }
-    current_label = format_node_label(current_id, node_data=node_data, options=label_options)
+    current_label = format_node_label(
+        current_id,
+        node_data=node_data,
+        options=config.label_options,
+    )
     node_attrs = {"shape": "ellipse", "style": "filled", "fillcolor": "#eef3ff"}
-    if current_id in highlight_set:
+    if current_id in config.highlight_set:
         node_attrs.update({"color": "#bf616a", "penwidth": "2"})
     node_key = f"step{step}_current"
     graph.node(node_key, label=current_label, **node_attrs)
@@ -545,24 +646,17 @@ def _add_current_node(
 def _add_option_nodes(
     graph: Digraph,
     row: Mapping[str, object],
-    step: int,
-    current_id: str,
-    current_node_key: str,
-    label_options: LabelRenderOptions,
-    highlight_set: set[str],
+    context: StepRenderContext,
 ) -> Tuple[Optional[str], Optional[Tuple[str, Mapping[str, object]]]]:
     """Render recommendation options for a session step.
 
     :param graph: Graphviz graph being constructed.
     :param row: Dataset row describing recommendation options.
-    :param step: Session step index.
-    :param current_id: Identifier of the current video.
-    :param current_node_key: Graphviz node representing the current video.
-    :param label_options: Label configuration for option nodes.
-    :param highlight_set: Identifiers to highlight within the graph.
+    :param context: Bundle of per-step rendering details.
     :returns: Tuple of the chosen option node key and its details (if any).
     """
 
+    highlight_set = context.config.highlight_set
     chosen_id = str(row.get("next_video_id") or row.get("next_video_raw_id") or "")
     options = row.get("slate_items_json") or []
     if isinstance(options, str):
@@ -579,8 +673,8 @@ def _add_option_nodes(
         option_id = str(item.get("id") or item.get("raw_id") or "")
         if not option_id:
             continue
-        option_node_key = f"step{step}_opt{rank}"
-        option_data = {
+        option_node_key = f"step{context.step}_opt{rank}"
+        option_payload = {
             "id": option_id,
             "originTitle": item.get("title") or "",
             "title": item.get("title") or "",
@@ -588,17 +682,33 @@ def _add_option_nodes(
             "channel": item.get("channel_title") or "",
             "rank": rank,
         }
-        option_label = format_node_label(option_id, node_data=option_data, options=label_options)
         option_attrs = {"shape": "box", "style": "rounded,filled", "fillcolor": "#ffffff"}
         if option_id == chosen_id:
             option_attrs.update({"fillcolor": "#d7f5d0", "penwidth": "2", "color": "#2d9c4a"})
             chosen_option_node = option_node_key
-            chosen_option_details = (option_id, dict(option_data))
+            chosen_option_details = (option_id, dict(option_payload))
         elif option_id in highlight_set:
             option_attrs.update({"color": "#bf616a", "penwidth": "2"})
-        graph.node(option_node_key, label=option_label, **option_attrs)
-        edge_attrs = _option_edge_attributes(rank, option_id, chosen_id, current_id, highlight_set)
-        graph.edge(current_node_key, option_node_key, **edge_attrs)
+        graph.node(
+            option_node_key,
+            label=format_node_label(
+                option_id,
+                node_data=option_payload,
+                options=context.config.label_options,
+            ),
+            **option_attrs,
+        )
+        graph.edge(
+            context.current_node_key,
+            option_node_key,
+            **_option_edge_attributes(
+                rank,
+                option_id,
+                chosen_id,
+                context.current_id,
+                highlight_set,
+            ),
+        )
     return chosen_option_node, chosen_option_details
 
 
@@ -655,16 +765,14 @@ def _attach_opinion_edges(
     graph: Digraph,
     opinion_nodes: OpinionNodes,
     state: SessionGraphState,
-    label_options: LabelRenderOptions,
-    highlight_set: set[str],
+    config: SessionRenderConfig,
 ) -> None:
     """Connect opinion annotation nodes to the session timeline.
 
     :param graph: Graphviz graph being constructed.
     :param opinion_nodes: Created opinion annotation node identifiers.
     :param state: Mutable state describing session node layout.
-    :param label_options: Label configuration for nodes.
-    :param highlight_set: Identifiers to highlight within the graph.
+    :param config: Rendering configuration shared across helpers.
     """
 
     ordered_steps = state.ordered_steps()
@@ -688,8 +796,7 @@ def _attach_opinion_edges(
             ordered_steps[-1],
             chosen_node,
             chosen_detail,
-            label_options,
-            highlight_set,
+            config,
         )
     if opinion_nodes.final_node and terminal_source:
         graph.edge(
@@ -705,8 +812,7 @@ def _add_terminal_selected_node(
     step: int,
     chosen_node: str,
     chosen_detail: Tuple[str, Mapping[str, object]],
-    label_options: LabelRenderOptions,
-    highlight_set: set[str],
+    config: SessionRenderConfig,
 ) -> str:
     """Add a terminal node for the final selected recommendation.
 
@@ -714,16 +820,19 @@ def _add_terminal_selected_node(
     :param step: Session step index associated with the final choice.
     :param chosen_node: Graphviz node key for the chosen option.
     :param chosen_detail: Pair of option identifier and metadata mapping.
-    :param label_options: Label configuration for the node.
-    :param highlight_set: Identifiers to highlight within the graph.
+    :param config: Rendering configuration shared across helpers.
     :returns: Graphviz node key representing the terminal selection.
     """
 
     option_id, option_data = chosen_detail
     final_current_node = f"step{step}_selected"
-    final_current_label = format_node_label(option_id, node_data=option_data, options=label_options)
+    final_current_label = format_node_label(
+        option_id,
+        node_data=option_data,
+        options=config.label_options,
+    )
     final_attrs = {"shape": "ellipse", "style": "filled", "fillcolor": "#eef3ff"}
-    if option_id in highlight_set:
+    if option_id in config.highlight_set:
         final_attrs.update({"color": "#bf616a", "penwidth": "2"})
     graph.node(final_current_node, label=final_current_label, **final_attrs)
     graph.edge(
@@ -763,7 +872,9 @@ def render_graph(graph: Digraph, output_path: Path, *, output_format: Optional[s
 
 
 PUBLIC_API: Tuple[str, ...] = (
+    "GraphCounts",
     "GraphRenderOptions",
+    "GraphStyle",
     "SessionGraphOptions",
     "_require_graphviz",
     "aggregate_counts",

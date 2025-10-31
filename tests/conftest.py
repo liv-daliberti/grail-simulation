@@ -30,7 +30,7 @@ _TRITON_CACHE = ROOT / ".triton"
 _ENV_PATHS: dict[str, Path] = {
     "XDG_CACHE_HOME": _CACHE_ROOT,
     "HF_HOME": _HF_CACHE,
-    "TRANSFORMERS_CACHE": _CACHE_ROOT / "huggingface" / "transformers",
+    "HF_HUB_CACHE": _CACHE_ROOT / "huggingface" / "transformers",
     "HF_DATASETS_CACHE": _CACHE_ROOT / "huggingface" / "datasets",
     "TMPDIR": _TMP_ROOT,
     "PIP_CACHE_DIR": _CACHE_ROOT / "pip",

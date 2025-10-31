@@ -18,13 +18,26 @@
 from __future__ import annotations
 
 import argparse
+import faulthandler
 import json
 import logging
+import time
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping, Sequence
 
 from common.opinion import DEFAULT_SPECS
+
+try:
+    # Evaluation pulls in Pydantic models that attach ``repr``/``frozen`` metadata
+    # via ``Field(...)``. Pydantic 2.x warns about those attributes even though
+    # the originating libraries expect them to be ignored. Filter to keep logs clean.
+    from pydantic.warnings import UnsupportedFieldAttributeWarning
+except ImportError:  # pragma: no cover - Pydantic may not be available in minimal envs
+    UnsupportedFieldAttributeWarning = None  # type: ignore[assignment]
+else:
+    warnings.filterwarnings("ignore", category=UnsupportedFieldAttributeWarning)
 from common.rlhf.reports import ReportOptions
 
 from . import DEFAULT_DATASET_PATH, DEFAULT_EVAL_SPLIT
@@ -59,6 +72,33 @@ DEFAULT_REGENERATE_HINT = (
     "Regenerate via `python -m grpo.pipeline --stage full` after producing "
     "updated evaluation artifacts under `models/grpo/`."
 )
+
+
+def configure_logging(log_level: str | int) -> None:
+    """Configure structured logging and enable faulthandler early.
+
+    :param log_level: Logging verbosity requested via CLI (string name or level).
+    :returns: ``None``. The root logger is configured in-place.
+    """
+
+    if isinstance(log_level, str):
+        numeric_level = getattr(logging, log_level.upper(), logging.INFO)
+    else:
+        numeric_level = int(log_level)
+
+    logging.basicConfig(
+        level=numeric_level,
+        format="%(asctime)s %(levelname)s %(name)s:%(lineno)d | %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        force=True,
+    )
+    try:  # pragma: no cover - faulthandler may already be active
+        faulthandler.enable()
+    except RuntimeError:
+        LOGGER.debug("faulthandler already enabled")
+    LOGGER.debug(
+        "Logging configured at level %s", logging.getLevelName(numeric_level)
+    )
 
 
 @dataclass(frozen=True)
@@ -531,6 +571,13 @@ def _run_evaluations(
     :returns: Dataclass containing evaluation results and cached metrics.
     :rtype: PipelineResults
     """
+    LOGGER.info(
+        "Beginning evaluation run label=%s stage=%s next_video=%s opinion=%s",
+        context.label,
+        selection.stage,
+        selection.run_next_video,
+        selection.run_opinion,
+    )
     results = PipelineResults()
     generation = GenerationSettings(
         max_new_tokens=args.max_new_tokens,
@@ -538,14 +585,41 @@ def _run_evaluations(
         top_p=args.top_p,
     )
 
-    tokenizer, model = load_tokenizer_and_model(
+    load_start = time.perf_counter()
+    LOGGER.info(
+        "Loading tokenizer/model from %s (revision=%s, dtype=%s)",
         args.model,
-        revision=args.revision,
-        dtype=args.dtype,
-        trust_remote_code=True,
+        args.revision or "default",
+        args.dtype,
+    )
+    try:
+        tokenizer, model = load_tokenizer_and_model(
+            args.model,
+            revision=args.revision,
+            dtype=args.dtype,
+            trust_remote_code=True,
+        )
+    except Exception:  # pragma: no cover - surfaced for debugging
+        LOGGER.exception("Model load failed for %s", args.model)
+        raise
+    load_elapsed = time.perf_counter() - load_start
+    model_device = getattr(getattr(model, "device", None), "type", None) or getattr(
+        model, "device", "unknown"
+    )
+    model_dtype = getattr(getattr(model, "dtype", None), "name", None) or getattr(
+        model, "dtype", "unknown"
+    )
+    LOGGER.info(
+        "Model ready in %.2fs • tokenizer=%s model=%s device=%s dtype=%s",
+        load_elapsed,
+        type(tokenizer).__name__,
+        type(model).__name__,
+        model_device,
+        model_dtype,
     )
 
     if selection.run_next_video:
+        stage_start = time.perf_counter()
         LOGGER.info("Running next-video evaluation for %s.", context.label)
         context.next_video_root.mkdir(parents=True, exist_ok=True)
         next_settings = NextVideoEvaluationSettings(
@@ -575,8 +649,13 @@ def _run_evaluations(
             config_label=context.label,
             out_dir=context.next_video_root,
         )
+        LOGGER.info(
+            "Next-video evaluation finished in %.2fs",
+            time.perf_counter() - stage_start,
+        )
 
     if selection.run_opinion:
+        stage_start = time.perf_counter()
         LOGGER.info("Running opinion evaluation.")
         opinion_settings = OpinionEvaluationSettings(
             dataset=OpinionDatasetSpec(
@@ -607,6 +686,10 @@ def _run_evaluations(
             ),
             settings=opinion_settings,
             out_dir=opinion_dir,
+        )
+        LOGGER.info(
+            "Opinion evaluation finished in %.2fs",
+            time.perf_counter() - stage_start,
         )
 
     return results
@@ -657,11 +740,29 @@ def main(argv: Sequence[str] | None = None) -> None:
     :returns: ``None``. Side effects include evaluation runs and report generation.
     """
     args = _parse_args(list(argv) if argv is not None else None)
-    logging.basicConfig(level=getattr(logging, args.log_level.upper(), logging.INFO))
+    run_start = time.perf_counter()
+    configure_logging(args.log_level)
 
     selection = _resolve_stage_selection(args)
     context = _build_context(args)
     prompts = _load_prompts(args)
+    LOGGER.info(
+        "Stage selection: stage=%s run_evaluations=%s next_video=%s opinion=%s run_reports=%s",
+        selection.stage,
+        selection.run_evaluations,
+        selection.run_next_video,
+        selection.run_opinion,
+        selection.run_reports,
+    )
+    LOGGER.info(
+        "Pipeline context: repo_root=%s out_dir=%s label=%s model=%s dataset=%s split=%s",
+        context.repo_root,
+        context.out_dir,
+        context.label,
+        args.model or "<unset>",
+        args.dataset,
+        args.split,
+    )
 
     if selection.run_evaluations and not args.model:
         raise SystemExit("--model must be provided when running the evaluate stage.")
@@ -672,6 +773,8 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     if selection.run_reports:
         _generate_reports_if_needed(selection, context, results, args)
+
+    LOGGER.info("Pipeline finished in %.2fs", time.perf_counter() - run_start)
 
 
 if __name__ == "__main__":  # pragma: no cover

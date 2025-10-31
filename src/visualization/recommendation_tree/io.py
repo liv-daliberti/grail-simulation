@@ -25,6 +25,12 @@ from typing import Dict, List, Mapping, Optional, Sequence, Tuple
 
 import pandas as pd
 
+try:  # pragma: no cover - optional dependency
+    from datasets import load_dataset, load_from_disk  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    load_dataset = None  # type: ignore
+    load_from_disk = None  # type: ignore
+
 from .models import TreeData, TreeEdge, _natural_sort_key
 
 
@@ -276,7 +282,11 @@ def _read_tabular_metadata(path: Path, id_column: str) -> Dict[str, Mapping[str,
 
 
 def _extract_sequences_from_object(obj: object) -> List[List[str]]:
-    """Extract sequences of identifiers from a heterogeneous object."""
+    """Extract sequences of identifiers from a heterogeneous object.
+
+    :param obj: Parsed JSON entry or primitive containing trajectory data.
+    :returns: List of sequences extracted from the object.
+    """
 
     if isinstance(obj, list):
         return [
@@ -301,51 +311,86 @@ def load_trajectories(
     *,
     delimiter: str = ",",
 ) -> List[List[str]]:
-    """Load viewer trajectories from text, CSV, or JSON representations."""
+    """Load viewer trajectories from text, CSV, or JSON representations.
 
-    # pylint: disable=too-many-branches,too-many-locals
+    :param path: Optional path to a trajectories file.
+    :param delimiter: Delimiter used for plain-text trajectory files.
+    :returns: List of normalised identifier sequences.
+    """
+
     if path is None:
         return []
     suffix = path.suffix.lower()
-    sequences: List[List[str]] = []
     if suffix in {".json", ".jsonl"}:
-        with path.open("r", encoding="utf-8") as handle:
-            if suffix == ".jsonl":
-                for line in handle:
-                    line = line.strip()
-                    if not line:
-                        continue
-                    obj = json.loads(line)
-                    sequences.extend(_extract_sequences_from_object(obj))
-            else:
-                data = json.load(handle)
-                if isinstance(data, list):
-                    for obj in data:
-                        sequences.extend(_extract_sequences_from_object(obj))
-                elif isinstance(data, Mapping):
-                    sequences.extend(_extract_sequences_from_object(data))
+        sequences = _load_json_trajectories(path)
     else:
-        with path.open("r", encoding="utf-8") as handle:
-            if suffix in {".csv", ".tsv", ".txt"}:
-                dialect = csv.excel
-                if suffix == ".tsv":
-                    dialect = csv.excel_tab
-                reader = csv.reader(handle, dialect=dialect)
-                for row in reader:
-                    tokens = [token.strip() for token in row if token.strip()]
-                    if tokens:
-                        sequences.append(tokens)
-            else:
-                for line in handle:
-                    line = line.strip()
-                    if line:
-                        parts = [
-                            segment.strip()
-                            for segment in line.split(delimiter)
-                            if segment.strip()
-                        ]
-                        if parts:
-                            sequences.append(parts)
+        sequences = _load_text_trajectories(path, suffix, delimiter)
+    return _normalise_trajectories(sequences)
+
+
+def _load_json_trajectories(path: Path) -> List[List[str]]:
+    """Load trajectory sequences from JSON or JSONL files.
+
+    :param path: Path to the JSON/JSONL trajectories file.
+    :returns: Raw sequences extracted from the file.
+    """
+
+    suffix = path.suffix.lower()
+    sequences: List[List[str]] = []
+    with path.open("r", encoding="utf-8") as handle:
+        if suffix == ".jsonl":
+            for line in handle:
+                line = line.strip()
+                if not line:
+                    continue
+                obj = json.loads(line)
+                sequences.extend(_extract_sequences_from_object(obj))
+        else:
+            data = json.load(handle)
+            if isinstance(data, list):
+                for obj in data:
+                    sequences.extend(_extract_sequences_from_object(obj))
+            elif isinstance(data, Mapping):
+                sequences.extend(_extract_sequences_from_object(data))
+    return sequences
+
+
+def _load_text_trajectories(path: Path, suffix: str, delimiter: str) -> List[List[str]]:
+    """Load trajectory sequences from CSV, TSV, or plain-text files.
+
+    :param path: Path to the text-based trajectories file.
+    :param suffix: Lowercased file suffix used to determine parsing mode.
+    :param delimiter: Delimiter when parsing generic text files.
+    :returns: Raw sequences extracted from the file.
+    """
+
+    sequences: List[List[str]] = []
+    with path.open("r", encoding="utf-8") as handle:
+        if suffix in {".csv", ".tsv", ".txt"}:
+            dialect = csv.excel_tab if suffix == ".tsv" else csv.excel
+            reader = csv.reader(handle, dialect=dialect)
+            for row in reader:
+                tokens = [token.strip() for token in row if token.strip()]
+                if tokens:
+                    sequences.append(tokens)
+        else:
+            for line in handle:
+                line = line.strip()
+                if not line:
+                    continue
+                parts = [segment.strip() for segment in line.split(delimiter) if segment.strip()]
+                if parts:
+                    sequences.append(parts)
+    return sequences
+
+
+def _normalise_trajectories(sequences: Sequence[Sequence[object]]) -> List[List[str]]:
+    """Normalise sequences by dropping blanks and consecutive duplicates.
+
+    :param sequences: Raw sequences produced by loader helpers.
+    :returns: Cleaned sequences ready for aggregation.
+    """
+
     normalized: List[List[str]] = []
     for seq in sequences:
         current: List[str] = []
@@ -362,16 +407,19 @@ def load_trajectories(
 
 
 def load_cleaned_dataset(path: Path):
-    """Load a HuggingFace dataset exported by ``clean_data.py``."""
+    """Load a HuggingFace dataset exported by ``clean_data.py``.
 
-    # pylint: disable=import-outside-toplevel
-    try:  # pragma: no cover - optional dependency
-        from datasets import load_dataset, load_from_disk  # type: ignore
-    except ImportError as exc:  # pragma: no cover - optional dependency
+    :param path: Path to the dataset directory or file.
+    :returns: HuggingFace dataset object.
+    :raises ImportError: If the ``datasets`` package is not available.
+    :raises ValueError: If the file extension is unsupported.
+    """
+
+    if load_dataset is None or load_from_disk is None:
         raise ImportError(
             "Loading recommendation tree datasets requires the 'datasets' package. "
             "Install it with `pip install datasets`."
-        ) from exc
+        )
     if path.is_dir():
         return load_from_disk(str(path))
     suffix = path.suffix.lower()
@@ -390,7 +438,13 @@ def collect_rows(
     split: Optional[str] = None,
     issue: Optional[str] = None,
 ) -> List[Dict[str, object]]:
-    """Collect dataset rows, optionally filtering by split name and issue."""
+    """Collect dataset rows, optionally filtering by split name and issue.
+
+    :param dataset: HuggingFace dataset or mapping of splits to datasets.
+    :param split: Optional split name to filter.
+    :param issue: Optional issue identifier to filter.
+    :returns: List of dataset rows matching the filters.
+    """
 
     rows: List[Dict[str, object]] = []
     dataset_items = None
@@ -415,7 +469,11 @@ def collect_rows(
 def group_rows_by_session(
     rows: Sequence[Mapping[str, object]]
 ) -> Dict[str, List[Mapping[str, object]]]:
-    """Group dataset rows by session identifier and sort within each session."""
+    """Group dataset rows by session identifier and sort within each session.
+
+    :param rows: Sequence of dataset rows.
+    :returns: Mapping from session identifier to sorted row list.
+    """
 
     sessions: Dict[str, List[Mapping[str, object]]] = {}
     for row in rows:
@@ -438,7 +496,16 @@ def extract_session_rows(
     issue: Optional[str],
     max_steps: Optional[int],
 ) -> Tuple[str, List[Dict[str, object]]]:
-    """Extract the rows that correspond to a target viewer session."""
+    """Extract the rows that correspond to a target viewer session.
+
+    :param dataset: HuggingFace dataset or mapping of splits to datasets.
+    :param session_id: Optional specific session identifier to select.
+    :param split: Optional dataset split name.
+    :param issue: Optional issue filter.
+    :param max_steps: Optional maximum number of steps to return.
+    :returns: Tuple of resolved session identifier and the matching rows.
+    :raises ValueError: If no rows or matching session can be found.
+    """
 
     rows = collect_rows(dataset, split=split, issue=issue)
     if not rows:

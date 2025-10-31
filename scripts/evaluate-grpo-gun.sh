@@ -9,11 +9,22 @@
 #SBATCH --export=ALL,LOG_DIR=/n/fs/similarity/grail-simulation/logs/grpo_eval/gun
 
 set -euo pipefail
+trap 'rc=$?; echo "[evaluate-grpo-gun] failure (exit ${rc}) at line ${LINENO}" >&2' ERR
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+# ────────────────────────────────────────────────────────────────
+# Resolve repository root
+# ────────────────────────────────────────────────────────────────
+if [[ -z "${ROOT_DIR:-}" ]]; then
+  if [[ -n "${SLURM_SUBMIT_DIR:-}" ]]; then
+    ROOT_DIR="$SLURM_SUBMIT_DIR"
+  else
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+  fi
+fi
+export ROOT_DIR
 
-LOG_DIR=${LOG_DIR_OVERRIDE:-"$ROOT_DIR/logs/grpo_eval/gun"}
+LOG_DIR=${LOG_DIR_OVERRIDE:-${LOG_DIR:-"$ROOT_DIR/logs/grpo_eval/gun"}}
 export LOG_DIR
 RUN_LABEL=${RUN_LABEL:-grpo-gun-checkpoint-120}
 MODEL_PATH=${MODEL_PATH:-"$ROOT_DIR/models/grpo/gun/checkpoint-120"}
@@ -25,6 +36,11 @@ LOG_LEVEL=${LOG_LEVEL:-INFO}
 ISSUES=${ISSUES:-gun_control}
 
 mkdir -p "$LOG_DIR"
+
+export PYTHONUNBUFFERED=${PYTHONUNBUFFERED:-1}
+export PYTHONFAULTHANDLER=${PYTHONFAULTHANDLER:-1}
+
+echo "[evaluate-grpo-gun] $(date --iso-8601=seconds) • starting evaluation; logs -> $LOG_DIR" >&2
 
 if command -v module >/dev/null 2>&1; then
   module load cudatoolkit/12.4 || true
@@ -66,7 +82,8 @@ if [[ -n "${ISSUES}" ]]; then
   EXTRA_ARGS+=(--issues "$ISSUES")
 fi
 
-srun --ntasks=1 --gres=gpu:1 --cpus-per-task=8 python -m grpo.pipeline \
+echo "[evaluate-grpo-gun] $(date --iso-8601=seconds) • launching python -m grpo.pipeline" >&2
+srun --ntasks=1 --gres=gpu:1 --cpus-per-task=8 python -u -m grpo.pipeline \
   --model "$MODEL_PATH" \
   --dataset "$DATASET" \
   --split "$SPLIT" \

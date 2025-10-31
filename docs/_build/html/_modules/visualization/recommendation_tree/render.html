@@ -300,7 +300,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_require_graphviz</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s2">&quot;Digraph&quot;</span><span class="p">:</span>  <span class="c1"># type: ignore[override]</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the graphviz ``Digraph`` class when the dependency is available.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the graphviz ``Digraph`` class when the dependency is available.</span>
+
+<span class="sd">    :raises ImportError: If the ``graphviz`` package is not installed.</span>
+<span class="sd">    :returns: The :class:`graphviz.Digraph` class for constructing graphs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">Digraph</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency guard</span>
         <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
@@ -310,22 +314,63 @@
     <span class="k">return</span> <span class="n">Digraph</span>
 
 
+<div class="viewcode-block" id="GraphCounts">
+<a class="viewcode-back" href="../../../api/visualization.html#visualization.recommendation_tree_viz.GraphCounts">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GraphCounts</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container for per-node and per-edge traversal counts.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        node: Mapping of node identifiers to visit counts.</span>
+<span class="sd">        edge: Mapping of ``(parent, child)`` identifiers to traversal counts.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">node</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">Counter</span><span class="p">)</span>
+    <span class="n">edge</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">Counter</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="GraphStyle">
+<a class="viewcode-back" href="../../../api/visualization.html#visualization.recommendation_tree_viz.GraphStyle">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GraphStyle</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Graphviz style attributes shared across tree renders.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        rankdir: Graph orientation (``LR``, ``TB``, etc.).</span>
+<span class="sd">        engine: Graphviz layout engine name.</span>
+<span class="sd">        show_rank_labels: Whether to attach rank labels to edges.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">rankdir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;LR&quot;</span>
+    <span class="n">engine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;dot&quot;</span>
+    <span class="n">show_rank_labels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+
 <div class="viewcode-block" id="GraphRenderOptions">
 <a class="viewcode-back" href="../../../api/visualization.html#visualization.recommendation_tree_viz.GraphRenderOptions">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">GraphRenderOptions</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration parameters for rendering tree-level graphs.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration parameters for rendering tree-level graphs.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        metadata: External node metadata keyed by node id.</span>
+<span class="sd">        label_template: Template used to render node labels.</span>
+<span class="sd">        wrap_width: Optional wrapping width for node labels.</span>
+<span class="sd">        highlight_path: Ordered identifiers describing the highlight path.</span>
+<span class="sd">        counts: Per-node and per-edge traversal counts.</span>
+<span class="sd">        max_depth: Optional maximum depth for tree rendering.</span>
+<span class="sd">        style: Graphviz styling options shared across the graph.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">metadata</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">label_template</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{originTitle}</span><span class="s2">&quot;</span>
     <span class="n">wrap_width</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">highlight_path</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">tuple</span><span class="p">)</span>
-    <span class="n">node_counts</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">Counter</span><span class="p">)</span>
-    <span class="n">edge_counts</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">Counter</span><span class="p">)</span>
+    <span class="n">counts</span><span class="p">:</span> <span class="n">GraphCounts</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">GraphCounts</span><span class="p">)</span>
     <span class="n">max_depth</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">rankdir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;LR&quot;</span>
-    <span class="n">engine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;dot&quot;</span>
-    <span class="n">show_rank_labels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></div>
+    <span class="n">style</span><span class="p">:</span> <span class="n">GraphStyle</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">GraphStyle</span><span class="p">)</span></div>
 
 
 
@@ -333,7 +378,15 @@
 <a class="viewcode-back" href="../../../api/visualization.html#visualization.recommendation_tree_viz.SessionGraphOptions">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SessionGraphOptions</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration parameters for rendering viewer session graphs.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration parameters for rendering viewer session graphs.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        label_template: Template string applied to node labels.</span>
+<span class="sd">        wrap_width: Optional wrapping width for node labels.</span>
+<span class="sd">        rankdir: Graph orientation (``LR``, ``TB``, etc.).</span>
+<span class="sd">        engine: Graphviz layout engine name.</span>
+<span class="sd">        highlight_path: Identifiers describing the highlight path.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">label_template</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{originTitle}</span><span class="s2">&quot;</span>
     <span class="n">wrap_width</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -345,15 +398,25 @@
 
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">OpinionNodes</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container describing the optional opinion annotation nodes.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container describing the optional opinion annotation nodes.</span>
 
+<span class="sd">    Attributes:</span>
+<span class="sd">        initial_node: Node name used for the initial opinion annotation.</span>
+<span class="sd">        final_node: Node name used for the final opinion annotation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">initial_node</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">final_node</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
 
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SessionGraphState</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mutable state accumulated while wiring the per-step session graph.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mutable state accumulated while wiring the per-step session graph.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        current_nodes: Mapping from step index to current-node identifiers.</span>
+<span class="sd">        chosen_nodes: Mapping from step index to chosen option node identifiers.</span>
+<span class="sd">        chosen_option_details: Mapping from step index to chosen option metadata.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">current_nodes</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">chosen_nodes</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
@@ -367,10 +430,80 @@
         <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_nodes</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
 
 
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NodeRenderContext</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Details required to render tree-level nodes.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        label_options: Formatting options for node labels.</span>
+<span class="sd">        highlight_nodes: Nodes that should be emphasised.</span>
+<span class="sd">        allowed_nodes: Optional set restricting nodes to render.</span>
+<span class="sd">        counts: Visit counts used to annotate nodes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">label_options</span><span class="p">:</span> <span class="n">LabelRenderOptions</span>
+    <span class="n">highlight_nodes</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">allowed_nodes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
+    <span class="n">counts</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EdgeRenderContext</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Details required to render tree-level edges.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        highlight_edges: Edges that should be emphasised.</span>
+<span class="sd">        counts: Traversal counts used to annotate edges.</span>
+<span class="sd">        show_rank_labels: Whether to include rank labels.</span>
+<span class="sd">        max_depth: Optional pruning depth.</span>
+<span class="sd">        depths: Depth mapping for nodes in the tree.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">highlight_edges</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span>
+    <span class="n">counts</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">int</span><span class="p">]</span>
+    <span class="n">show_rank_labels</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">max_depth</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">depths</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SessionRenderConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Shared configuration for session graph rendering helpers.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        label_options: Formatting options for node labels.</span>
+<span class="sd">        highlight_set: Identifiers to highlight within the session graph.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">label_options</span><span class="p">:</span> <span class="n">LabelRenderOptions</span>
+    <span class="n">highlight_set</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">StepRenderContext</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bundle of per-step details passed to option rendering helpers.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        step: Session step index.</span>
+<span class="sd">        current_id: Identifier of the currently watched video.</span>
+<span class="sd">        current_node_key: Graphviz node key representing the current video.</span>
+<span class="sd">        config: Shared rendering configuration.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">step</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">current_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">current_node_key</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">SessionRenderConfig</span>
+
+
 <div class="viewcode-block" id="compute_depths">
 <a class="viewcode-back" href="../../../api/visualization.html#visualization.recommendation_tree_viz.compute_depths">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">compute_depths</span><span class="p">(</span><span class="n">tree</span><span class="p">:</span> <span class="n">TreeData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the depth (distance from the root) for every node in ``tree``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the depth (distance from the root) for every node in a tree.</span>
+
+<span class="sd">    :param tree: Parsed recommendation tree data structure.</span>
+<span class="sd">    :returns: Mapping of node identifiers to their distance from the root.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">adjacency</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">tree</span><span class="o">.</span><span class="n">edges</span><span class="p">:</span>
@@ -390,7 +523,11 @@
 <div class="viewcode-block" id="aggregate_counts">
 <a class="viewcode-back" href="../../../api/visualization.html#visualization.recommendation_tree_viz.aggregate_counts">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">aggregate_counts</span><span class="p">(</span><span class="n">sequences</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Counter</span><span class="p">,</span> <span class="n">Counter</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregate node and edge visitation counts from viewer trajectories.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregate node and edge visitation counts from viewer trajectories.</span>
+
+<span class="sd">    :param sequences: Iterable of viewer identifier sequences.</span>
+<span class="sd">    :returns: Tuple ``(node_counts, edge_counts)`` with visit tallies.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">node_counts</span><span class="p">:</span> <span class="n">Counter</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
     <span class="n">edge_counts</span><span class="p">:</span> <span class="n">Counter</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
@@ -406,7 +543,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_find_watch_details</span><span class="p">(</span><span class="n">row</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span> <span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Find the watch metadata for a given video inside a session row.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return watch metadata extracted from a session row for a video.</span>
+
+<span class="sd">    :param row: Session entry produced by the cleaned dataset.</span>
+<span class="sd">    :param video_id: Identifier of the video being inspected.</span>
+<span class="sd">    :returns: Mapping with watch details when available, otherwise an empty dict.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">entries</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;watched_detailed_json&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
@@ -421,44 +563,51 @@
 <div class="viewcode-block" id="build_graph">
 <a class="viewcode-back" href="../../../api/visualization.html#visualization.recommendation_tree_viz.build_graph">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_graph</span><span class="p">(</span><span class="n">tree</span><span class="p">:</span> <span class="n">TreeData</span><span class="p">,</span> <span class="n">options</span><span class="p">:</span> <span class="n">GraphRenderOptions</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Digraph</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a recommendation tree as a Graphviz graph.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a recommendation tree as a Graphviz graph.</span>
+
+<span class="sd">    :param tree: Structured tree data assembled from CSV exports.</span>
+<span class="sd">    :param options: Rendering configuration controlling style and filtering.</span>
+<span class="sd">    :returns: A Graphviz graph ready to be rendered to disk.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">depths</span> <span class="o">=</span> <span class="n">compute_depths</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
     <span class="n">highlight_nodes</span><span class="p">,</span> <span class="n">highlight_edges</span> <span class="o">=</span> <span class="n">_highlight_sets</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">highlight_path</span><span class="p">)</span>
     <span class="n">allowed_nodes</span> <span class="o">=</span> <span class="n">_determine_allowed_nodes</span><span class="p">(</span><span class="n">depths</span><span class="p">,</span> <span class="n">options</span><span class="o">.</span><span class="n">max_depth</span><span class="p">)</span>
-    <span class="n">graph</span> <span class="o">=</span> <span class="n">_create_tree_graph</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">engine</span><span class="p">,</span> <span class="n">options</span><span class="o">.</span><span class="n">rankdir</span><span class="p">)</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">_create_tree_graph</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">)</span>
     <span class="n">label_options</span> <span class="o">=</span> <span class="n">LabelRenderOptions</span><span class="p">(</span>
         <span class="n">metadata</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span>
         <span class="n">template</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">label_template</span><span class="p">,</span>
         <span class="n">wrap_width</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">wrap_width</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">_add_tree_nodes</span><span class="p">(</span>
-        <span class="n">graph</span><span class="p">,</span>
-        <span class="n">tree</span><span class="p">,</span>
-        <span class="n">label_options</span><span class="p">,</span>
-        <span class="n">highlight_nodes</span><span class="p">,</span>
-        <span class="n">allowed_nodes</span><span class="p">,</span>
-        <span class="n">options</span><span class="o">.</span><span class="n">node_counts</span><span class="p">,</span>
+    <span class="n">node_context</span> <span class="o">=</span> <span class="n">NodeRenderContext</span><span class="p">(</span>
+        <span class="n">label_options</span><span class="o">=</span><span class="n">label_options</span><span class="p">,</span>
+        <span class="n">highlight_nodes</span><span class="o">=</span><span class="nb">set</span><span class="p">(</span><span class="n">highlight_nodes</span><span class="p">),</span>
+        <span class="n">allowed_nodes</span><span class="o">=</span><span class="n">allowed_nodes</span><span class="p">,</span>
+        <span class="n">counts</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">node</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">_add_tree_edges</span><span class="p">(</span>
-        <span class="n">graph</span><span class="p">,</span>
-        <span class="n">tree</span><span class="p">,</span>
-        <span class="n">depths</span><span class="p">,</span>
-        <span class="n">highlight_edges</span><span class="p">,</span>
-        <span class="n">options</span><span class="o">.</span><span class="n">edge_counts</span><span class="p">,</span>
-        <span class="n">options</span><span class="o">.</span><span class="n">show_rank_labels</span><span class="p">,</span>
-        <span class="n">options</span><span class="o">.</span><span class="n">max_depth</span><span class="p">,</span>
+    <span class="n">_add_tree_nodes</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">tree</span><span class="p">,</span> <span class="n">node_context</span><span class="p">)</span>
+    <span class="n">edge_context</span> <span class="o">=</span> <span class="n">EdgeRenderContext</span><span class="p">(</span>
+        <span class="n">highlight_edges</span><span class="o">=</span><span class="nb">set</span><span class="p">(</span><span class="n">highlight_edges</span><span class="p">),</span>
+        <span class="n">counts</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">edge</span><span class="p">,</span>
+        <span class="n">show_rank_labels</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">show_rank_labels</span><span class="p">,</span>
+        <span class="n">max_depth</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">max_depth</span><span class="p">,</span>
+        <span class="n">depths</span><span class="o">=</span><span class="n">depths</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">_add_tree_edges</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">tree</span><span class="p">,</span> <span class="n">edge_context</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">graph</span></div>
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_create_tree_graph</span><span class="p">(</span><span class="n">engine</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rankdir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Digraph</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialise a Graphviz graph with default styling for tree renders.&quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_create_tree_graph</span><span class="p">(</span><span class="n">style</span><span class="p">:</span> <span class="n">GraphStyle</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Digraph</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialise a Graphviz graph with default styling for tree renders.</span>
+
+<span class="sd">    :param style: Graph styling options, including layout engine and orientation.</span>
+<span class="sd">    :returns: A configured :class:`graphviz.Digraph` instance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">graph_cls</span> <span class="o">=</span> <span class="n">_require_graphviz</span><span class="p">()</span>
-    <span class="n">graph</span> <span class="o">=</span> <span class="n">graph_cls</span><span class="p">(</span><span class="n">engine</span><span class="o">=</span><span class="n">engine</span><span class="p">)</span>
-    <span class="n">graph</span><span class="o">.</span><span class="n">attr</span><span class="p">(</span><span class="n">rankdir</span><span class="o">=</span><span class="n">rankdir</span><span class="p">)</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">graph_cls</span><span class="p">(</span><span class="n">engine</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">engine</span><span class="p">)</span>
+    <span class="n">graph</span><span class="o">.</span><span class="n">attr</span><span class="p">(</span><span class="n">rankdir</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">rankdir</span><span class="p">)</span>
     <span class="n">graph</span><span class="o">.</span><span class="n">attr</span><span class="p">(</span>
         <span class="s2">&quot;node&quot;</span><span class="p">,</span>
         <span class="n">shape</span><span class="o">=</span><span class="s2">&quot;box&quot;</span><span class="p">,</span>
@@ -479,7 +628,11 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_highlight_sets</span><span class="p">(</span>
     <span class="n">highlight_path</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">set</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return node and edge sets corresponding to the viewer highlight path.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute node and edge highlight sets from a viewer path.</span>
+
+<span class="sd">    :param highlight_path: Sequence describing a preferred viewer journey.</span>
+<span class="sd">    :returns: Pair ``(highlight_nodes, highlight_edges)`` for styling.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">cleaned</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">token</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">highlight_path</span> <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">token</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
     <span class="n">highlight_nodes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">cleaned</span><span class="p">)</span>
@@ -491,67 +644,67 @@
     <span class="n">depths</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
     <span class="n">max_depth</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the nodes that are allowed under a ``max_depth`` limit.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the nodes that are allowed under a ``max_depth`` limit.</span>
+
+<span class="sd">    :param depths: Mapping from node identifier to depth.</span>
+<span class="sd">    :param max_depth: Optional maximum depth; ``None`` keeps every node.</span>
+<span class="sd">    :returns: Set of permitted node identifiers or ``None`` when unbounded.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">max_depth</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="k">return</span> <span class="p">{</span><span class="n">node</span> <span class="k">for</span> <span class="n">node</span><span class="p">,</span> <span class="n">depth</span> <span class="ow">in</span> <span class="n">depths</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">depth</span> <span class="o">&lt;=</span> <span class="n">max_depth</span><span class="p">}</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_add_tree_nodes</span><span class="p">(</span>
-    <span class="n">graph</span><span class="p">:</span> <span class="n">Digraph</span><span class="p">,</span>
-    <span class="n">tree</span><span class="p">:</span> <span class="n">TreeData</span><span class="p">,</span>
-    <span class="n">label_options</span><span class="p">:</span> <span class="n">LabelRenderOptions</span><span class="p">,</span>
-    <span class="n">highlight_nodes</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-    <span class="n">allowed_nodes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
-    <span class="n">node_counts</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add nodes and their attributes to the rendered tree graph.&quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_add_tree_nodes</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="n">Digraph</span><span class="p">,</span> <span class="n">tree</span><span class="p">:</span> <span class="n">TreeData</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">NodeRenderContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add nodes and their attributes to the rendered tree graph.</span>
+
+<span class="sd">    :param graph: Graphviz graph being constructed.</span>
+<span class="sd">    :param tree: Tree data describing nodes and edges.</span>
+<span class="sd">    :param context: Rendering context describing styling and filters.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">for</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">node_data</span> <span class="ow">in</span> <span class="n">tree</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="k">if</span> <span class="n">allowed_nodes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">node_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">allowed_nodes</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">allowed_nodes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">node_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">context</span><span class="o">.</span><span class="n">allowed_nodes</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">label</span> <span class="o">=</span> <span class="n">format_node_label</span><span class="p">(</span><span class="n">node_id</span><span class="p">,</span> <span class="n">node_data</span><span class="o">=</span><span class="n">node_data</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">label_options</span><span class="p">)</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="n">format_node_label</span><span class="p">(</span><span class="n">node_id</span><span class="p">,</span> <span class="n">node_data</span><span class="o">=</span><span class="n">node_data</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">label_options</span><span class="p">)</span>
         <span class="n">node_attrs</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">if</span> <span class="n">node_id</span> <span class="ow">in</span> <span class="n">highlight_nodes</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">node_id</span> <span class="ow">in</span> <span class="n">context</span><span class="o">.</span><span class="n">highlight_nodes</span><span class="p">:</span>
             <span class="n">node_attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
                 <span class="p">{</span><span class="s2">&quot;fillcolor&quot;</span><span class="p">:</span> <span class="s2">&quot;#81a1c1&quot;</span><span class="p">,</span> <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="s2">&quot;#2e3440&quot;</span><span class="p">,</span> <span class="s2">&quot;style&quot;</span><span class="p">:</span> <span class="s2">&quot;rounded,filled,bold&quot;</span><span class="p">}</span>
             <span class="p">)</span>
-        <span class="n">count</span> <span class="o">=</span> <span class="n">node_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">node_id</span><span class="p">)</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">node_id</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">count</span><span class="p">:</span>
             <span class="n">node_attrs</span><span class="p">[</span><span class="s2">&quot;xlabel&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">count</span><span class="p">)</span>
             <span class="n">node_attrs</span><span class="p">[</span><span class="s2">&quot;labelloc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;c&quot;</span>
         <span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="n">node_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="o">**</span><span class="n">node_attrs</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_add_tree_edges</span><span class="p">(</span>
-    <span class="n">graph</span><span class="p">:</span> <span class="n">Digraph</span><span class="p">,</span>
-    <span class="n">tree</span><span class="p">:</span> <span class="n">TreeData</span><span class="p">,</span>
-    <span class="n">depths</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
-    <span class="n">highlight_edges</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
-    <span class="n">edge_counts</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">int</span><span class="p">],</span>
-    <span class="n">show_rank_labels</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
-    <span class="n">max_depth</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add edges and associated styling to the rendered tree graph.&quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_add_tree_edges</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="n">Digraph</span><span class="p">,</span> <span class="n">tree</span><span class="p">:</span> <span class="n">TreeData</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">EdgeRenderContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add edges and associated styling to the rendered tree graph.</span>
+
+<span class="sd">    :param graph: Graphviz graph being constructed.</span>
+<span class="sd">    :param tree: Tree data describing parent-child relationships.</span>
+<span class="sd">    :param context: Rendering context describing styling and filters.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">tree</span><span class="o">.</span><span class="n">edges</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">max_depth</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">parent_depth</span> <span class="o">=</span> <span class="n">depths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">edge</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span>
-            <span class="n">child_depth</span> <span class="o">=</span> <span class="n">depths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">edge</span><span class="o">.</span><span class="n">child</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">max_depth</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parent_depth</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">depths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">edge</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span>
+            <span class="n">child_depth</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">depths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">edge</span><span class="o">.</span><span class="n">child</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">parent_depth</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">child_depth</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">continue</span>
-            <span class="k">if</span> <span class="n">parent_depth</span> <span class="o">&gt;</span> <span class="n">max_depth</span> <span class="o">-</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">child_depth</span> <span class="o">&gt;</span> <span class="n">max_depth</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">parent_depth</span> <span class="o">&gt;</span> <span class="n">context</span><span class="o">.</span><span class="n">max_depth</span> <span class="o">-</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">child_depth</span> <span class="o">&gt;</span> <span class="n">context</span><span class="o">.</span><span class="n">max_depth</span><span class="p">:</span>
                 <span class="k">continue</span>
         <span class="n">edge_attrs</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">labels</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">if</span> <span class="n">show_rank_labels</span> <span class="ow">and</span> <span class="n">edge</span><span class="o">.</span><span class="n">rank</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">show_rank_labels</span> <span class="ow">and</span> <span class="n">edge</span><span class="o">.</span><span class="n">rank</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Rec </span><span class="si">{</span><span class="n">edge</span><span class="o">.</span><span class="n">rank</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">count</span> <span class="o">=</span> <span class="n">edge_counts</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">edge</span><span class="o">.</span><span class="n">parent</span><span class="p">,</span> <span class="n">edge</span><span class="o">.</span><span class="n">child</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">edge</span><span class="o">.</span><span class="n">parent</span><span class="p">,</span> <span class="n">edge</span><span class="o">.</span><span class="n">child</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">count</span><span class="p">:</span>
             <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2"> viewers&quot;</span><span class="p">)</span>
             <span class="n">edge_attrs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;penwidth&quot;</span><span class="p">,</span> <span class="n">_edge_penwidth</span><span class="p">(</span><span class="n">count</span><span class="p">))</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">edge</span><span class="o">.</span><span class="n">parent</span><span class="p">,</span> <span class="n">edge</span><span class="o">.</span><span class="n">child</span><span class="p">)</span> <span class="ow">in</span> <span class="n">highlight_edges</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">edge</span><span class="o">.</span><span class="n">parent</span><span class="p">,</span> <span class="n">edge</span><span class="o">.</span><span class="n">child</span><span class="p">)</span> <span class="ow">in</span> <span class="n">context</span><span class="o">.</span><span class="n">highlight_edges</span><span class="p">:</span>
             <span class="n">edge_attrs</span><span class="p">[</span><span class="s2">&quot;color&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;#bf616a&quot;</span>
             <span class="n">edge_attrs</span><span class="p">[</span><span class="s2">&quot;penwidth&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;3&quot;</span>
         <span class="k">if</span> <span class="n">labels</span><span class="p">:</span>
@@ -560,30 +713,51 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_edge_penwidth</span><span class="p">(</span><span class="n">count</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a Graphviz penwidth that scales with viewer counts.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a Graphviz penwidth that scales with viewer counts.</span>
+
+<span class="sd">    :param count: Number of viewers traversing the edge.</span>
+<span class="sd">    :returns: String penwidth value suitable for Graphviz attributes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="mf">1.5</span> <span class="o">+</span> <span class="nb">min</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">count</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)))</span>
 
 
 <div class="viewcode-block" id="build_session_graph">
 <a class="viewcode-back" href="../../../api/visualization.html#visualization.recommendation_tree_viz.build_session_graph">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">build_session_graph</span><span class="p">(</span><span class="n">rows</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]],</span> <span class="n">options</span><span class="p">:</span> <span class="n">SessionGraphOptions</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Digraph</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Visualise a single viewer session as a Graphviz graph.&quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_session_graph</span><span class="p">(</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]],</span>
+    <span class="n">options</span><span class="p">:</span> <span class="n">SessionGraphOptions</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Digraph</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Visualise a single viewer session as a Graphviz graph.</span>
+
+<span class="sd">    :param rows: Ordered dataset rows describing the viewer session.</span>
+<span class="sd">    :param options: Rendering configuration controlling styling choices.</span>
+<span class="sd">    :returns: A Graphviz graph representing the session timeline.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">graph</span> <span class="o">=</span> <span class="n">_create_session_graph</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">engine</span><span class="p">,</span> <span class="n">options</span><span class="o">.</span><span class="n">rankdir</span><span class="p">)</span>
     <span class="n">highlight_nodes</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_highlight_sets</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">highlight_path</span><span class="p">)</span>
     <span class="n">label_options</span> <span class="o">=</span> <span class="n">_session_label_options</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
     <span class="n">ordered_rows</span> <span class="o">=</span> <span class="n">_order_session_rows</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
     <span class="n">opinion_nodes</span> <span class="o">=</span> <span class="n">_add_opinion_annotations</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">ordered_rows</span><span class="p">)</span>
-    <span class="n">state</span> <span class="o">=</span> <span class="n">_add_session_steps</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">ordered_rows</span><span class="p">,</span> <span class="n">label_options</span><span class="p">,</span> <span class="n">highlight_nodes</span><span class="p">)</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">SessionRenderConfig</span><span class="p">(</span>
+        <span class="n">label_options</span><span class="o">=</span><span class="n">label_options</span><span class="p">,</span>
+        <span class="n">highlight_set</span><span class="o">=</span><span class="nb">set</span><span class="p">(</span><span class="n">highlight_nodes</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">_add_session_steps</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">ordered_rows</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
     <span class="n">_link_session_steps</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
-    <span class="n">_attach_opinion_edges</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">opinion_nodes</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">label_options</span><span class="p">,</span> <span class="n">highlight_nodes</span><span class="p">)</span>
+    <span class="n">_attach_opinion_edges</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">opinion_nodes</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">graph</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_create_session_graph</span><span class="p">(</span><span class="n">engine</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rankdir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Digraph</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialise a Graphviz graph for session-level visualisations.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialise a Graphviz graph for session-level visualisations.</span>
+
+<span class="sd">    :param engine: Graphviz layout engine name.</span>
+<span class="sd">    :param rankdir: Graph orientation (``LR``, ``TB`` and friends).</span>
+<span class="sd">    :returns: Configured :class:`graphviz.Digraph` instance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">graph_cls</span> <span class="o">=</span> <span class="n">_require_graphviz</span><span class="p">()</span>
     <span class="n">graph</span> <span class="o">=</span> <span class="n">graph_cls</span><span class="p">(</span><span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Viewer session&quot;</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="n">engine</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;png&quot;</span><span class="p">)</span>
@@ -592,7 +766,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_session_label_options</span><span class="p">(</span><span class="n">options</span><span class="p">:</span> <span class="n">SessionGraphOptions</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LabelRenderOptions</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build label rendering options for session visualisations.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build label rendering options for session visualisations.</span>
+
+<span class="sd">    :param options: Session rendering configuration.</span>
+<span class="sd">    :returns: Label rendering options tailored for session graphs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">LabelRenderOptions</span><span class="p">(</span>
         <span class="n">metadata</span><span class="o">=</span><span class="p">{},</span>
@@ -603,7 +781,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_order_session_rows</span><span class="p">(</span><span class="n">rows</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return session rows sorted by display and step indices.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return session rows sorted by display and step indices.</span>
+
+<span class="sd">    :param rows: Raw sequence of session entries.</span>
+<span class="sd">    :returns: List sorted by ``display_step`` (or ``step_index`` fallback).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;display_step&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;step_index&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">))</span>
 
@@ -612,7 +794,12 @@
     <span class="n">graph</span><span class="p">:</span> <span class="n">Digraph</span><span class="p">,</span>
     <span class="n">rows</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OpinionNodes</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render optional opinion change annotations for the session.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render optional opinion change annotations for the session.</span>
+
+<span class="sd">    :param graph: Graphviz graph being constructed.</span>
+<span class="sd">    :param rows: Ordered session records used to detect opinion shifts.</span>
+<span class="sd">    :returns: ``OpinionNodes`` describing created annotation nodes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">opinion_annotation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OpinionAnnotation</span><span class="p">]</span> <span class="o">=</span> <span class="n">_extract_opinion_annotation</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
     <span class="n">nodes</span> <span class="o">=</span> <span class="n">OpinionNodes</span><span class="p">()</span>
@@ -664,28 +851,33 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_add_session_steps</span><span class="p">(</span>
     <span class="n">graph</span><span class="p">:</span> <span class="n">Digraph</span><span class="p">,</span>
     <span class="n">rows</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]],</span>
-    <span class="n">label_options</span><span class="p">:</span> <span class="n">LabelRenderOptions</span><span class="p">,</span>
-    <span class="n">highlight_set</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">SessionRenderConfig</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SessionGraphState</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render session steps and recommendation options for each row.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render session steps and recommendation options for each row.</span>
+
+<span class="sd">    :param graph: Graphviz graph being constructed.</span>
+<span class="sd">    :param rows: Ordered session rows.</span>
+<span class="sd">    :param config: Rendering configuration shared across helpers.</span>
+<span class="sd">    :returns: Mutable state capturing created nodes and selections.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">state</span> <span class="o">=</span> <span class="n">SessionGraphState</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
-        <span class="n">step</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;display_step&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;step_index&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">current_nodes</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
-        <span class="n">current_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;current_video_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;current_video_raw_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">raw_step</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;display_step&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;step_index&quot;</span><span class="p">)</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">raw_step</span><span class="p">)</span> <span class="k">if</span> <span class="n">raw_step</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">current_nodes</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">raw_current_id</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;current_video_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;current_video_raw_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">current_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">raw_current_id</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">current_id</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">current_node_key</span> <span class="o">=</span> <span class="n">_add_current_node</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="n">current_id</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">label_options</span><span class="p">,</span> <span class="n">highlight_set</span><span class="p">)</span>
+        <span class="n">current_node_key</span> <span class="o">=</span> <span class="n">_add_current_node</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="n">current_id</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
         <span class="n">state</span><span class="o">.</span><span class="n">current_nodes</span><span class="p">[</span><span class="n">step</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_node_key</span>
-        <span class="n">chosen_node</span><span class="p">,</span> <span class="n">chosen_details</span> <span class="o">=</span> <span class="n">_add_option_nodes</span><span class="p">(</span>
-            <span class="n">graph</span><span class="p">,</span>
-            <span class="n">row</span><span class="p">,</span>
-            <span class="n">step</span><span class="p">,</span>
-            <span class="n">current_id</span><span class="p">,</span>
-            <span class="n">current_node_key</span><span class="p">,</span>
-            <span class="n">label_options</span><span class="p">,</span>
-            <span class="n">highlight_set</span><span class="p">,</span>
+        <span class="n">step_context</span> <span class="o">=</span> <span class="n">StepRenderContext</span><span class="p">(</span>
+            <span class="n">step</span><span class="o">=</span><span class="n">step</span><span class="p">,</span>
+            <span class="n">current_id</span><span class="o">=</span><span class="n">current_id</span><span class="p">,</span>
+            <span class="n">current_node_key</span><span class="o">=</span><span class="n">current_node_key</span><span class="p">,</span>
+            <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="n">chosen_node</span><span class="p">,</span> <span class="n">chosen_details</span> <span class="o">=</span> <span class="n">_add_option_nodes</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">step_context</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">chosen_node</span><span class="p">:</span>
             <span class="n">state</span><span class="o">.</span><span class="n">chosen_nodes</span><span class="p">[</span><span class="n">step</span><span class="p">]</span> <span class="o">=</span> <span class="n">chosen_node</span>
         <span class="k">if</span> <span class="n">chosen_details</span><span class="p">:</span>
@@ -698,10 +890,17 @@
     <span class="n">step</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">current_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">row</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span>
-    <span class="n">label_options</span><span class="p">:</span> <span class="n">LabelRenderOptions</span><span class="p">,</span>
-    <span class="n">highlight_set</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">SessionRenderConfig</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add the node representing the current video at a given step.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add the node representing the current video at a given step.</span>
+
+<span class="sd">    :param graph: Graphviz graph being constructed.</span>
+<span class="sd">    :param step: Session step index.</span>
+<span class="sd">    :param current_id: Identifier of the currently watched video.</span>
+<span class="sd">    :param row: Dataset row describing the step.</span>
+<span class="sd">    :param config: Rendering configuration shared across helpers.</span>
+<span class="sd">    :returns: Graphviz node key for the current video.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">watch_info</span> <span class="o">=</span> <span class="n">_find_watch_details</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">current_id</span><span class="p">)</span>
     <span class="n">node_data</span> <span class="o">=</span> <span class="p">{</span>
@@ -715,9 +914,13 @@
         <span class="s2">&quot;step_index&quot;</span><span class="p">:</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;step_index&quot;</span><span class="p">),</span>
         <span class="s2">&quot;display_step&quot;</span><span class="p">:</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;display_step&quot;</span><span class="p">),</span>
     <span class="p">}</span>
-    <span class="n">current_label</span> <span class="o">=</span> <span class="n">format_node_label</span><span class="p">(</span><span class="n">current_id</span><span class="p">,</span> <span class="n">node_data</span><span class="o">=</span><span class="n">node_data</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">label_options</span><span class="p">)</span>
+    <span class="n">current_label</span> <span class="o">=</span> <span class="n">format_node_label</span><span class="p">(</span>
+        <span class="n">current_id</span><span class="p">,</span>
+        <span class="n">node_data</span><span class="o">=</span><span class="n">node_data</span><span class="p">,</span>
+        <span class="n">options</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">label_options</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">node_attrs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;shape&quot;</span><span class="p">:</span> <span class="s2">&quot;ellipse&quot;</span><span class="p">,</span> <span class="s2">&quot;style&quot;</span><span class="p">:</span> <span class="s2">&quot;filled&quot;</span><span class="p">,</span> <span class="s2">&quot;fillcolor&quot;</span><span class="p">:</span> <span class="s2">&quot;#eef3ff&quot;</span><span class="p">}</span>
-    <span class="k">if</span> <span class="n">current_id</span> <span class="ow">in</span> <span class="n">highlight_set</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">current_id</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">highlight_set</span><span class="p">:</span>
         <span class="n">node_attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="s2">&quot;#bf616a&quot;</span><span class="p">,</span> <span class="s2">&quot;penwidth&quot;</span><span class="p">:</span> <span class="s2">&quot;2&quot;</span><span class="p">})</span>
     <span class="n">node_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;step</span><span class="si">{</span><span class="n">step</span><span class="si">}</span><span class="s2">_current&quot;</span>
     <span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="n">node_key</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">current_label</span><span class="p">,</span> <span class="o">**</span><span class="n">node_attrs</span><span class="p">)</span>
@@ -727,14 +930,17 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_add_option_nodes</span><span class="p">(</span>
     <span class="n">graph</span><span class="p">:</span> <span class="n">Digraph</span><span class="p">,</span>
     <span class="n">row</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span>
-    <span class="n">step</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">current_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">current_node_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">label_options</span><span class="p">:</span> <span class="n">LabelRenderOptions</span><span class="p">,</span>
-    <span class="n">highlight_set</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">StepRenderContext</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render recommendation options for a session step.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render recommendation options for a session step.</span>
 
+<span class="sd">    :param graph: Graphviz graph being constructed.</span>
+<span class="sd">    :param row: Dataset row describing recommendation options.</span>
+<span class="sd">    :param context: Bundle of per-step rendering details.</span>
+<span class="sd">    :returns: Tuple of the chosen option node key and its details (if any).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">highlight_set</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">highlight_set</span>
     <span class="n">chosen_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;next_video_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;next_video_raw_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
     <span class="n">options</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;slate_items_json&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
@@ -751,8 +957,8 @@
         <span class="n">option_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;raw_id&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">option_id</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">option_node_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;step</span><span class="si">{</span><span class="n">step</span><span class="si">}</span><span class="s2">_opt</span><span class="si">{</span><span class="n">rank</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="n">option_data</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">option_node_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;step</span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">step</span><span class="si">}</span><span class="s2">_opt</span><span class="si">{</span><span class="n">rank</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">option_payload</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">option_id</span><span class="p">,</span>
             <span class="s2">&quot;originTitle&quot;</span><span class="p">:</span> <span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
             <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
@@ -760,17 +966,33 @@
             <span class="s2">&quot;channel&quot;</span><span class="p">:</span> <span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;channel_title&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
             <span class="s2">&quot;rank&quot;</span><span class="p">:</span> <span class="n">rank</span><span class="p">,</span>
         <span class="p">}</span>
-        <span class="n">option_label</span> <span class="o">=</span> <span class="n">format_node_label</span><span class="p">(</span><span class="n">option_id</span><span class="p">,</span> <span class="n">node_data</span><span class="o">=</span><span class="n">option_data</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">label_options</span><span class="p">)</span>
         <span class="n">option_attrs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;shape&quot;</span><span class="p">:</span> <span class="s2">&quot;box&quot;</span><span class="p">,</span> <span class="s2">&quot;style&quot;</span><span class="p">:</span> <span class="s2">&quot;rounded,filled&quot;</span><span class="p">,</span> <span class="s2">&quot;fillcolor&quot;</span><span class="p">:</span> <span class="s2">&quot;#ffffff&quot;</span><span class="p">}</span>
         <span class="k">if</span> <span class="n">option_id</span> <span class="o">==</span> <span class="n">chosen_id</span><span class="p">:</span>
             <span class="n">option_attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;fillcolor&quot;</span><span class="p">:</span> <span class="s2">&quot;#d7f5d0&quot;</span><span class="p">,</span> <span class="s2">&quot;penwidth&quot;</span><span class="p">:</span> <span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="s2">&quot;#2d9c4a&quot;</span><span class="p">})</span>
             <span class="n">chosen_option_node</span> <span class="o">=</span> <span class="n">option_node_key</span>
-            <span class="n">chosen_option_details</span> <span class="o">=</span> <span class="p">(</span><span class="n">option_id</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="n">option_data</span><span class="p">))</span>
+            <span class="n">chosen_option_details</span> <span class="o">=</span> <span class="p">(</span><span class="n">option_id</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="n">option_payload</span><span class="p">))</span>
         <span class="k">elif</span> <span class="n">option_id</span> <span class="ow">in</span> <span class="n">highlight_set</span><span class="p">:</span>
             <span class="n">option_attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="s2">&quot;#bf616a&quot;</span><span class="p">,</span> <span class="s2">&quot;penwidth&quot;</span><span class="p">:</span> <span class="s2">&quot;2&quot;</span><span class="p">})</span>
-        <span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="n">option_node_key</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">option_label</span><span class="p">,</span> <span class="o">**</span><span class="n">option_attrs</span><span class="p">)</span>
-        <span class="n">edge_attrs</span> <span class="o">=</span> <span class="n">_option_edge_attributes</span><span class="p">(</span><span class="n">rank</span><span class="p">,</span> <span class="n">option_id</span><span class="p">,</span> <span class="n">chosen_id</span><span class="p">,</span> <span class="n">current_id</span><span class="p">,</span> <span class="n">highlight_set</span><span class="p">)</span>
-        <span class="n">graph</span><span class="o">.</span><span class="n">edge</span><span class="p">(</span><span class="n">current_node_key</span><span class="p">,</span> <span class="n">option_node_key</span><span class="p">,</span> <span class="o">**</span><span class="n">edge_attrs</span><span class="p">)</span>
+        <span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="p">(</span>
+            <span class="n">option_node_key</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="n">format_node_label</span><span class="p">(</span>
+                <span class="n">option_id</span><span class="p">,</span>
+                <span class="n">node_data</span><span class="o">=</span><span class="n">option_payload</span><span class="p">,</span>
+                <span class="n">options</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">label_options</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="o">**</span><span class="n">option_attrs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">graph</span><span class="o">.</span><span class="n">edge</span><span class="p">(</span>
+            <span class="n">context</span><span class="o">.</span><span class="n">current_node_key</span><span class="p">,</span>
+            <span class="n">option_node_key</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">_option_edge_attributes</span><span class="p">(</span>
+                <span class="n">rank</span><span class="p">,</span>
+                <span class="n">option_id</span><span class="p">,</span>
+                <span class="n">chosen_id</span><span class="p">,</span>
+                <span class="n">context</span><span class="o">.</span><span class="n">current_id</span><span class="p">,</span>
+                <span class="n">highlight_set</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
     <span class="k">return</span> <span class="n">chosen_option_node</span><span class="p">,</span> <span class="n">chosen_option_details</span>
 
 
@@ -781,7 +1003,15 @@
     <span class="n">current_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">highlight_set</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return edge styling attributes for recommendation options.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return edge styling attributes for recommendation options.</span>
+
+<span class="sd">    :param rank: Rank of the recommendation within the slate.</span>
+<span class="sd">    :param option_id: Candidate video identifier.</span>
+<span class="sd">    :param chosen_id: Selected video identifier.</span>
+<span class="sd">    :param current_id: Currently watched video identifier.</span>
+<span class="sd">    :param highlight_set: Identifiers to highlight within the graph.</span>
+<span class="sd">    :returns: Mapping of Graphviz edge attributes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">edge_attrs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">rank</span><span class="p">),</span> <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="s2">&quot;#888888&quot;</span><span class="p">,</span> <span class="s2">&quot;fontsize&quot;</span><span class="p">:</span> <span class="s2">&quot;10&quot;</span><span class="p">}</span>
     <span class="k">if</span> <span class="n">option_id</span> <span class="o">==</span> <span class="n">chosen_id</span><span class="p">:</span>
@@ -792,7 +1022,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_link_session_steps</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="n">Digraph</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">SessionGraphState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Connect successive session steps via the selected recommendation path.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Connect successive session steps via the selected recommendation path.</span>
+
+<span class="sd">    :param graph: Graphviz graph being constructed.</span>
+<span class="sd">    :param state: Mutable state describing current/selected nodes per step.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">ordered_steps</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">ordered_steps</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ordered_steps</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
@@ -815,10 +1049,15 @@
     <span class="n">graph</span><span class="p">:</span> <span class="n">Digraph</span><span class="p">,</span>
     <span class="n">opinion_nodes</span><span class="p">:</span> <span class="n">OpinionNodes</span><span class="p">,</span>
     <span class="n">state</span><span class="p">:</span> <span class="n">SessionGraphState</span><span class="p">,</span>
-    <span class="n">label_options</span><span class="p">:</span> <span class="n">LabelRenderOptions</span><span class="p">,</span>
-    <span class="n">highlight_set</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">SessionRenderConfig</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Connect opinion annotation nodes to the session timeline.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Connect opinion annotation nodes to the session timeline.</span>
+
+<span class="sd">    :param graph: Graphviz graph being constructed.</span>
+<span class="sd">    :param opinion_nodes: Created opinion annotation node identifiers.</span>
+<span class="sd">    :param state: Mutable state describing session node layout.</span>
+<span class="sd">    :param config: Rendering configuration shared across helpers.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">ordered_steps</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">ordered_steps</span><span class="p">()</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">ordered_steps</span><span class="p">:</span>
@@ -841,8 +1080,7 @@
             <span class="n">ordered_steps</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
             <span class="n">chosen_node</span><span class="p">,</span>
             <span class="n">chosen_detail</span><span class="p">,</span>
-            <span class="n">label_options</span><span class="p">,</span>
-            <span class="n">highlight_set</span><span class="p">,</span>
+            <span class="n">config</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">if</span> <span class="n">opinion_nodes</span><span class="o">.</span><span class="n">final_node</span> <span class="ow">and</span> <span class="n">terminal_source</span><span class="p">:</span>
         <span class="n">graph</span><span class="o">.</span><span class="n">edge</span><span class="p">(</span>
@@ -858,16 +1096,27 @@
     <span class="n">step</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">chosen_node</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">chosen_detail</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]],</span>
-    <span class="n">label_options</span><span class="p">:</span> <span class="n">LabelRenderOptions</span><span class="p">,</span>
-    <span class="n">highlight_set</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">SessionRenderConfig</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a terminal node for the final selected recommendation.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a terminal node for the final selected recommendation.</span>
+
+<span class="sd">    :param graph: Graphviz graph being constructed.</span>
+<span class="sd">    :param step: Session step index associated with the final choice.</span>
+<span class="sd">    :param chosen_node: Graphviz node key for the chosen option.</span>
+<span class="sd">    :param chosen_detail: Pair of option identifier and metadata mapping.</span>
+<span class="sd">    :param config: Rendering configuration shared across helpers.</span>
+<span class="sd">    :returns: Graphviz node key representing the terminal selection.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">option_id</span><span class="p">,</span> <span class="n">option_data</span> <span class="o">=</span> <span class="n">chosen_detail</span>
     <span class="n">final_current_node</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;step</span><span class="si">{</span><span class="n">step</span><span class="si">}</span><span class="s2">_selected&quot;</span>
-    <span class="n">final_current_label</span> <span class="o">=</span> <span class="n">format_node_label</span><span class="p">(</span><span class="n">option_id</span><span class="p">,</span> <span class="n">node_data</span><span class="o">=</span><span class="n">option_data</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">label_options</span><span class="p">)</span>
+    <span class="n">final_current_label</span> <span class="o">=</span> <span class="n">format_node_label</span><span class="p">(</span>
+        <span class="n">option_id</span><span class="p">,</span>
+        <span class="n">node_data</span><span class="o">=</span><span class="n">option_data</span><span class="p">,</span>
+        <span class="n">options</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">label_options</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">final_attrs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;shape&quot;</span><span class="p">:</span> <span class="s2">&quot;ellipse&quot;</span><span class="p">,</span> <span class="s2">&quot;style&quot;</span><span class="p">:</span> <span class="s2">&quot;filled&quot;</span><span class="p">,</span> <span class="s2">&quot;fillcolor&quot;</span><span class="p">:</span> <span class="s2">&quot;#eef3ff&quot;</span><span class="p">}</span>
-    <span class="k">if</span> <span class="n">option_id</span> <span class="ow">in</span> <span class="n">highlight_set</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">option_id</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">highlight_set</span><span class="p">:</span>
         <span class="n">final_attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="s2">&quot;#bf616a&quot;</span><span class="p">,</span> <span class="s2">&quot;penwidth&quot;</span><span class="p">:</span> <span class="s2">&quot;2&quot;</span><span class="p">})</span>
     <span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="n">final_current_node</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">final_current_label</span><span class="p">,</span> <span class="o">**</span><span class="n">final_attrs</span><span class="p">)</span>
     <span class="n">graph</span><span class="o">.</span><span class="n">edge</span><span class="p">(</span>
@@ -885,7 +1134,13 @@
 <div class="viewcode-block" id="render_graph">
 <a class="viewcode-back" href="../../../api/visualization.html#visualization.recommendation_tree_viz.render_graph">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">render_graph</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="n">Digraph</span><span class="p">,</span> <span class="n">output_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">output_format</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a Graphviz graph to disk, normalising the output path.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a Graphviz graph to disk, normalising the output path.</span>
+
+<span class="sd">    :param graph: Graphviz graph to render.</span>
+<span class="sd">    :param output_path: Destination path (suffix controls format when unspecified).</span>
+<span class="sd">    :param output_format: Explicit Graphviz format override.</span>
+<span class="sd">    :returns: Path to the final rendered artefact.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">format_to_use</span> <span class="o">=</span> <span class="n">output_format</span> <span class="ow">or</span> <span class="n">output_path</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">format_to_use</span><span class="p">:</span>
@@ -904,7 +1159,9 @@
 
 
 <span class="n">PUBLIC_API</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;GraphCounts&quot;</span><span class="p">,</span>
     <span class="s2">&quot;GraphRenderOptions&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;GraphStyle&quot;</span><span class="p">,</span>
     <span class="s2">&quot;SessionGraphOptions&quot;</span><span class="p">,</span>
     <span class="s2">&quot;_require_graphviz&quot;</span><span class="p">,</span>
     <span class="s2">&quot;aggregate_counts&quot;</span><span class="p">,</span>

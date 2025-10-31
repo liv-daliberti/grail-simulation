@@ -13,9 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# pylint: disable=too-many-branches,too-many-locals,too-many-statements
-# pylint: disable=broad-exception-caught,duplicate-code
-
 """Evaluation routines for the GPT-4o slate-ranking baseline.
 
 Fetches the configured dataset, issues batched GPT-4o requests, parses the
@@ -203,6 +200,177 @@ class EvaluationState:
         self.streaming = streaming
 
 
+@dataclass(frozen=True)
+class RecordMetrics:
+    """Normalised metrics extracted from a conversation record."""
+
+    messages: list[dict[str, object]]
+    gold_index: int
+    option_count: int
+    position_index: int
+
+    @classmethod
+    def from_record(cls, record: dict[str, object]) -> "RecordMetrics":
+        """Create metrics from a conversation record."""
+
+        messages = list(record.get("prompt", []))
+        return cls(
+            messages=messages,
+            gold_index=int(record.get("gold_index", -1)),
+            option_count=int(record.get("n_options", 0)),
+            position_index=int(record.get("position_index", -1)),
+        )
+
+    def option_bucket(self) -> str:
+        """Return the option-count bucket used for metrics."""
+
+        return slate_eval.bucket_from_options(self.option_count)
+
+    def position_bucket(self) -> str:
+        """Return the position bucket based on the example metadata."""
+
+        return slate_eval.bucket_from_position(self.position_index)
+
+    def is_eligible(self) -> bool:
+        """Return ``True`` when the example has a valid gold index."""
+
+        return self.gold_index > 0 and self.option_count > 0
+
+
+@dataclass(frozen=True)
+class ModelAnalysis:
+    """Derived model response artefacts used for metric computation."""
+
+    raw_output: str
+    parsed_index: int | None
+    is_formatted: bool
+    eligible: bool
+    is_correct: bool
+    position_bucket: str
+    option_bucket: str
+
+    @classmethod
+    def from_output(cls, raw_output: str, metrics: RecordMetrics) -> "ModelAnalysis":
+        """Analyse model output relative to the record metrics."""
+
+        parsed_index = _parse_index_from_output(raw_output)
+        is_formatted = bool(_utils.ANS_TAG.search(raw_output))
+        eligible = metrics.is_eligible()
+        is_correct = eligible and parsed_index == metrics.gold_index
+        return cls(
+            raw_output=raw_output,
+            parsed_index=parsed_index,
+            is_formatted=is_formatted,
+            eligible=eligible,
+            is_correct=is_correct,
+            position_bucket=metrics.position_bucket(),
+            option_bucket=metrics.option_bucket(),
+        )
+
+    def observation(self, labels: ExampleLabels, metrics: RecordMetrics) -> slate_eval.Observation:
+        """Return the observation payload required by the accumulator."""
+
+        return slate_eval.Observation(
+            issue_label=labels.issue_label,
+            study_label=labels.study_label,
+            position_bucket=self.position_bucket,
+            option_bucket=self.option_bucket,
+            option_count=metrics.option_count,
+            gold_index=metrics.gold_index,
+            parsed_index=self.parsed_index,
+            is_formatted=self.is_formatted,
+            eligible=self.eligible,
+            is_correct=self.is_correct,
+        )
+
+    def payload(self, labels: ExampleLabels, metrics: RecordMetrics) -> dict[str, object]:
+        """Serialise the per-example payload written to the predictions log."""
+
+        return {
+            "messages": metrics.messages,
+            "gpt_output": self.raw_output,
+            "parsed_index": self.parsed_index,
+            "gold_index": metrics.gold_index,
+            "n_options": metrics.option_count,
+            "correct": bool(self.is_correct),
+            "eligible": bool(self.eligible),
+            "issue": labels.issue_label,
+            "participant_study": labels.study_label,
+            "position_index": metrics.position_index,
+            "position_bucket": self.position_bucket,
+        }
+
+
+@dataclass(frozen=True)
+class EvaluationOutcome:
+    """Bundle containing an observation and serialised payload."""
+
+    observation: slate_eval.Observation
+    payload: dict[str, object]
+
+
+def _extract_system_prompt(messages: list[dict[str, object]]) -> str:
+    """Return the first system message from ``messages``."""
+
+    for message in messages:
+        if (
+            isinstance(message, dict)
+            and message.get("role") == "system"
+            and message.get("content")
+        ):
+            return str(message["content"]).strip()
+    return ""
+
+
+def _extract_user_question(messages: list[dict[str, object]]) -> str:
+    """Return the most recent user message from ``messages``."""
+
+    for message in reversed(messages):
+        if isinstance(message, dict) and message.get("role") == "user":
+            return str(message.get("content", "")).strip()
+    return ""
+
+
+def _serialise_prediction(payload: dict[str, object]) -> str:
+    """Return the JSON serialisation for ``payload``."""
+
+    return json.dumps(payload, ensure_ascii=False)
+
+
+def _write_qa_entry(
+    handle,
+    index: int,
+    payload: dict[str, object],
+) -> None:
+    """Write a QA entry to ``handle`` using the provided payload."""
+
+    messages = payload.get("messages", [])
+    system_prompt = _extract_system_prompt(messages if isinstance(messages, list) else [])
+    question = _extract_user_question(messages if isinstance(messages, list) else [])
+    answer = str(payload.get("gpt_output", "")).strip()
+    parsed_index = payload.get("parsed_index")
+    gold_index = payload.get("gold_index")
+    eligible = bool(payload.get("eligible"))
+    correct = bool(payload.get("correct"))
+    result_status = "correct" if eligible and correct else "wrong" if eligible else "ineligible"
+    pred_display = str(parsed_index) if parsed_index is not None else "None"
+    gold_display = str(gold_index) if gold_index is not None else "None"
+
+    handle.write(f"### Example {index}\n")
+    handle.write(
+        f"Issue: {payload.get('issue')} | Study: {payload.get('participant_study')}\n"
+    )
+    handle.write("SYSTEM:\n")
+    handle.write(f"{system_prompt}\n")
+    handle.write("QUESTION:\n")
+    handle.write(f"{question}\n")
+    handle.write("ANSWER:\n")
+    handle.write(f"{answer}\n")
+    handle.write(
+        f"RESULT: {result_status} (pred={pred_display}, gold={gold_display})\n\n"
+    )
+
+
 class EvaluationRunner:
     """Stateful helper that orchestrates GPT-4o evaluation."""
 
@@ -257,41 +425,50 @@ class EvaluationRunner:
         :raises RuntimeError: When neither local nor remote datasets can be loaded.
         """
         dataset_path = pathlib.Path(self.dataset_name)
-        dataset = None
-
-        if dataset_path.exists():
-            _hf_datasets.require_dataset_support(needs_local=True)
-            assert LOAD_FROM_DISK is not None  # narrow Optional for type checkers
-            logging.info("Detected local dataset at %s", dataset_path)
-            dataset = LOAD_FROM_DISK(str(dataset_path))  # type: ignore[arg-type]
-        else:
-            _hf_datasets.require_dataset_support()
-            assert LOAD_DATASET is not None and DOWNLOAD_CONFIG_CLS is not None
-            download_config = DOWNLOAD_CONFIG_CLS(
-                resume_download=True,
-                max_retries=2,
-            )  # type: ignore[misc]
-            try:
-                dataset = LOAD_DATASET(
-                    self.dataset_name,
-                    cache_dir=self.args.cache_dir,
-                    download_config=download_config,
-                )
-            except Exception as exc:
-                message = str(exc)
-                if "Not enough disk space" in message or "Insufficient space" in message:
-                    logging.warning(
-                        "Low disk space detected; falling back to streaming mode."
-                    )
-                    self.state.set_streaming(True)
-                else:
-                    raise
-
-        assert LOAD_DATASET is not None
+        dataset = (
+            self._load_local_dataset(dataset_path)
+            if dataset_path.exists()
+            else self._download_remote_dataset()
+        )
 
         if self.state.streaming:
             return self._load_streaming_split()
         return self._load_materialised_split(dataset)
+
+    def _load_local_dataset(self, dataset_path: pathlib.Path) -> object | None:
+        """Load a dataset previously materialised to ``dataset_path``."""
+
+        _hf_datasets.require_dataset_support(needs_local=True)
+        if LOAD_FROM_DISK is None:  # pragma: no cover - guarded by require call
+            return None
+        logging.info("Detected local dataset at %s", dataset_path)
+        return LOAD_FROM_DISK(str(dataset_path))  # type: ignore[arg-type]
+
+    def _download_remote_dataset(self) -> object | None:
+        """Download the dataset from Hugging Face, falling back to streaming."""
+
+        _hf_datasets.require_dataset_support()
+        if LOAD_DATASET is None or DOWNLOAD_CONFIG_CLS is None:  # pragma: no cover
+            return None
+        download_config = DOWNLOAD_CONFIG_CLS(
+            resume_download=True,
+            max_retries=2,
+        )  # type: ignore[misc]
+        try:
+            return LOAD_DATASET(
+                self.dataset_name,
+                cache_dir=self.args.cache_dir,
+                download_config=download_config,
+            )
+        except (OSError, ValueError, RuntimeError, ConnectionError) as exc:
+            message = str(exc)
+            if "Not enough disk space" in message or "Insufficient space" in message:
+                logging.warning(
+                    "Low disk space detected; falling back to streaming mode."
+                )
+                self.state.set_streaming(True)
+                return None
+            raise
 
     def _load_streaming_split(self) -> t.Iterable[dict[str, object]]:
         """Stream the evaluation split directly from Hugging Face datasets.
@@ -307,7 +484,7 @@ class EvaluationRunner:
                 split=eval_split,
                 streaming=True,
             )
-        except Exception as exc:  # pragma: no cover - fallback path
+        except (OSError, ValueError, RuntimeError, ConnectionError) as exc:  # pragma: no cover
             for fallback in ("validation", "eval", "test"):
                 try:
                     data_iter = LOAD_DATASET(  # type: ignore[misc]
@@ -317,7 +494,7 @@ class EvaluationRunner:
                     )
                     eval_split = fallback
                     break
-                except Exception:
+                except (OSError, ValueError, RuntimeError, ConnectionError):
                     continue
             else:
                 raise RuntimeError(
@@ -345,7 +522,7 @@ class EvaluationRunner:
         if hasattr(dataset, "keys"):
             try:
                 available_splits = list(dataset.keys())  # type: ignore[assignment]
-            except Exception:  # pragma: no cover - defensive, matches prior behaviour
+            except (TypeError, AttributeError):  # pragma: no cover - defensive fallback
                 available_splits = []
 
         if available_splits:
@@ -422,7 +599,7 @@ class EvaluationRunner:
                 retry=policy,
                 logger=LOGGER,
             )
-        except Exception as exc:  # pragma: no cover - best effort logging
+        except (RuntimeError, ConnectionError, ValueError) as exc:  # pragma: no cover
             LOGGER.error(
                 "GPT-4o call failed after %d attempts; returning error stub: %s",
                 policy.attempts,
@@ -432,7 +609,7 @@ class EvaluationRunner:
 
     def _evaluate_example(
         self, example: dict[str, object]
-    ) -> t.Tuple[slate_eval.Observation, dict[str, object]] | None:
+    ) -> EvaluationOutcome | None:
         """Evaluate a single example and return observation metrics plus payloads.
 
         :param example: Dataset row containing slate information.
@@ -444,48 +621,15 @@ class EvaluationRunner:
             return None
 
         record = _conversation.make_conversation_record(example)
-        messages = record["prompt"]
-        gold_index = int(record.get("gold_index", -1))
-        option_count = int(record.get("n_options", 0))
-        position_index = int(record.get("position_index", -1))
-
-        raw_output = self._invoke_model(messages)
-        is_formatted = bool(_utils.ANS_TAG.search(raw_output))
-        parsed_index = _parse_index_from_output(raw_output)
-        pos_bucket = slate_eval.bucket_from_position(position_index)
-        option_bucket = slate_eval.bucket_from_options(option_count)
-        eligible = gold_index > 0 and option_count > 0
-        is_correct = (
-            eligible and (parsed_index is not None) and (parsed_index == gold_index)
+        metrics = RecordMetrics.from_record(record)
+        analysis = ModelAnalysis.from_output(
+            self._invoke_model(metrics.messages),
+            metrics,
         )
-
-        observation_fields = {
-            "issue_label": labels.issue_label,
-            "study_label": labels.study_label,
-            "position_bucket": pos_bucket,
-            "option_bucket": option_bucket,
-            "option_count": option_count,
-            "gold_index": gold_index,
-            "parsed_index": parsed_index,
-            "is_formatted": is_formatted,
-            "eligible": eligible,
-            "is_correct": is_correct,
-        }
-        observation = slate_eval.Observation(**observation_fields)
-        payload = {
-            "messages": messages,
-            "gpt_output": raw_output,
-            "parsed_index": parsed_index,
-            "gold_index": gold_index,
-            "n_options": option_count,
-            "correct": bool(is_correct),
-            "eligible": bool(eligible),
-            "issue": labels.issue_label,
-            "participant_study": labels.study_label,
-            "position_index": position_index,
-            "position_bucket": pos_bucket,
-        }
-        return observation, payload
+        return EvaluationOutcome(
+            observation=analysis.observation(labels, metrics),
+            payload=analysis.payload(labels, metrics),
+        )
 
     def _maybe_log_progress(
         self,
@@ -512,6 +656,16 @@ class EvaluationRunner:
             accumulator.format_rate(),
             elapsed,
         )
+
+    def _iter_outcomes(
+        self, data_iter: t.Iterable[dict[str, object]]
+    ) -> t.Iterator[EvaluationOutcome]:
+        """Yield evaluation outcomes for each example in ``data_iter``."""
+
+        for example in data_iter:
+            outcome = self._evaluate_example(example)
+            if outcome is not None:
+                yield outcome
 
     def metrics_request(self) -> slate_eval.SlateMetricsRequest:
         """Construct the payload used when serialising evaluation metrics.
@@ -558,60 +712,16 @@ class EvaluationRunner:
         data_iter = self._load_dataset_iter()
         accumulator = slate_eval.EvaluationAccumulator()
         start_time = time.time()
-        seen_rows = 0
 
         with open(self.output.predictions, "w", encoding="utf-8") as writer, open(
             self.output.qa_log, "w", encoding="utf-8"
         ) as qa_log:
-            for example in data_iter:
-                result = self._evaluate_example(example)
-                if result is None:
-                    continue
-                observation, payload = result
-                seen_rows += 1
-                accumulator.observe(observation)
-                writer.write(json.dumps(payload, ensure_ascii=False) + "\n")
-
-                question = ""
-                for message in reversed(payload.get("messages", [])):
-                    if isinstance(message, dict) and message.get("role") == "user":
-                        question = str(message.get("content", "")).strip()
-                        break
-                answer = str(payload.get("gpt_output", "")).strip()
-                issue_label = payload.get("issue")
-                study_label = payload.get("participant_study")
-                qa_log.write(f"### Example {seen_rows}\n")
-                qa_log.write(f"Issue: {issue_label} | Study: {study_label}\n")
-                system_prompt = ""
-                for message in payload.get("messages", []):
-                    if (
-                        isinstance(message, dict)
-                        and message.get("role") == "system"
-                        and message.get("content")
-                    ):
-                        system_prompt = str(message["content"]).strip()
-                        break
-                qa_log.write("SYSTEM:\n")
-                qa_log.write(f"{system_prompt}\n")
-                qa_log.write("QUESTION:\n")
-                qa_log.write(f"{question}\n")
-                qa_log.write("ANSWER:\n")
-                qa_log.write(f"{answer}\n")
-                parsed_index = payload.get("parsed_index")
-                gold_index = payload.get("gold_index")
-                eligible = bool(payload.get("eligible"))
-                correct = bool(payload.get("correct"))
-                result_status = "ineligible"
-                if eligible:
-                    result_status = "correct" if correct else "wrong"
-                pred_display = str(parsed_index) if parsed_index is not None else "None"
-                gold_display = str(gold_index) if gold_index is not None else "None"
-                qa_log.write(
-                    f"RESULT: {result_status} (pred={pred_display}, gold={gold_display})\n\n"
-                )
+            for index, outcome in enumerate(self._iter_outcomes(data_iter), start=1):
+                accumulator.observe(outcome.observation)
+                writer.write(_serialise_prediction(outcome.payload) + "\n")
+                _write_qa_entry(qa_log, index, outcome.payload)
                 qa_log.flush()
-
-                self._maybe_log_progress(seen_rows, start_time, accumulator)
+                self._maybe_log_progress(index, start_time, accumulator)
 
         metrics = accumulator.metrics_payload(self.metrics_request())
         with open(self.output.metrics, "w", encoding="utf-8") as handle:

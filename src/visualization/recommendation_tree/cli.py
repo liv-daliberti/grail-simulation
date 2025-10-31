@@ -29,21 +29,24 @@ from .models import DEFAULT_LABEL_TEMPLATE, SESSION_DEFAULT_LABEL_TEMPLATE
 
 
 @dataclass(frozen=True)
+class BatchRenderSettings:
+    """Rendering preferences shared across batch session exports."""
+
+    session_options: render.SessionGraphOptions
+    output_format: str
+    batch_prefix: str
+    max_steps: Optional[int]
+
+
+@dataclass(frozen=True)
 class BatchContext:
     """Configuration for batch session rendering."""
 
     dataset: object
     issue_targets: Mapping[str, int]
     output_dir: Path
-    output_format: str
-    label_template: str
-    wrap_width: Optional[int]
-    rankdir: str
-    engine: str
-    highlight_path: Sequence[str]
     split: Optional[str]
-    max_steps: Optional[int]
-    batch_prefix: str
+    settings: BatchRenderSettings
 
 
 def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
@@ -297,12 +300,13 @@ def _tree_graph_from_files(
         label_template=args.label_template,
         wrap_width=args.wrap_width,
         highlight_path=highlight_path,
-        node_counts=node_counts,
-        edge_counts=edge_counts,
+        counts=render.GraphCounts(node=node_counts, edge=edge_counts),
         max_depth=args.max_depth,
-        rankdir=args.rankdir,
-        engine=args.engine,
-        show_rank_labels=not args.hide_rank_labels,
+        style=render.GraphStyle(
+            rankdir=args.rankdir,
+            engine=args.engine,
+            show_rank_labels=not args.hide_rank_labels,
+        ),
     )
     return render.build_graph(tree, options)
 
@@ -409,7 +413,9 @@ def _prepare_batch_context(
     if dataset is None:
         raise SystemExit("--batch-output-dir requires --cleaned-data.")
     if args.issue:
-        raise SystemExit("--batch-output-dir is incompatible with --issue. Use --batch-issues instead.")
+        raise SystemExit(
+            "--batch-output-dir is incompatible with --issue. Use --batch-issues instead."
+        )
     try:
         issue_targets = io.parse_issue_counts(args.batch_issues)
     except ValueError as exc:
@@ -418,19 +424,25 @@ def _prepare_batch_context(
         raise SystemExit("No issue counts provided for batch rendering.")
     output_dir = args.batch_output_dir
     output_dir.mkdir(parents=True, exist_ok=True)
-    return BatchContext(
-        dataset=dataset,
-        issue_targets=dict(issue_targets),
-        output_dir=output_dir,
-        output_format=args.format or "svg",
+    session_options = render.SessionGraphOptions(
         label_template=_session_label_template(args),
         wrap_width=args.wrap_width,
         rankdir=args.rankdir,
         engine=args.engine,
         highlight_path=tuple(highlight_path),
-        split=args.split,
-        max_steps=args.max_steps,
+    )
+    settings = BatchRenderSettings(
+        session_options=session_options,
+        output_format=args.format or "svg",
         batch_prefix=args.batch_prefix,
+        max_steps=args.max_steps,
+    )
+    return BatchContext(
+        dataset=dataset,
+        issue_targets=dict(issue_targets),
+        output_dir=output_dir,
+        split=args.split,
+        settings=settings,
     )
 
 
@@ -454,21 +466,12 @@ def _render_issue_sessions(issue: str, count: int, context: BatchContext) -> int
     emitted = 0
     for idx, session_id in enumerate(sorted(sessions)[:count], start=1):
         session_rows = list(sessions[session_id])
-        if context.max_steps and context.max_steps > 0:
-            session_rows = session_rows[: context.max_steps]
-        graph = render.build_session_graph(
-            session_rows,
-            render.SessionGraphOptions(
-                label_template=context.label_template,
-                wrap_width=context.wrap_width,
-                rankdir=context.rankdir,
-                engine=context.engine,
-                highlight_path=context.highlight_path,
-            ),
-        )
-        filename = f"{context.batch_prefix}_{issue}_{idx}.{context.output_format}"
+        if context.settings.max_steps and context.settings.max_steps > 0:
+            session_rows = session_rows[: context.settings.max_steps]
+        graph = render.build_session_graph(session_rows, context.settings.session_options)
+        filename = f"{context.settings.batch_prefix}_{issue}_{idx}.{context.settings.output_format}"
         output_path = context.output_dir / filename
-        render.render_graph(graph, output_path, output_format=context.output_format)
+        render.render_graph(graph, output_path, output_format=context.settings.output_format)
         print(f"Wrote {output_path}", file=sys.stderr)
         emitted += 1
     return emitted

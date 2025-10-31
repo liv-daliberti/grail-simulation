@@ -281,8 +281,8 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">common.cli.args</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_comma_separated_argument</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">common.cli.options</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_overwrite_argument</span><span class="p">,</span> <span class="n">add_eval_arguments</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.cli.args</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_comma_separated_argument</span>  <span class="c1"># pylint: disable=import-error</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.cli.options</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_eval_arguments</span>  <span class="c1"># pylint: disable=import-error</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">..core.evaluate</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_eval</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..core.opinion</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_opinion_eval</span>

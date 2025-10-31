@@ -283,6 +283,8 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 
 
+<div class="viewcode-block" id="OpinionSpec">
+<a class="viewcode-back" href="../../../api/knn.html#common.OpinionSpec">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">OpinionSpec</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration describing one opinion-study index.&quot;&quot;&quot;</span>
@@ -292,6 +294,8 @@
     <span class="n">before_column</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">after_column</span><span class="p">:</span> <span class="nb">str</span>
 
+<div class="viewcode-block" id="OpinionSpec.build_example_kwargs">
+<a class="viewcode-back" href="../../../api/knn.html#common.OpinionSpec.build_example_kwargs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">build_example_kwargs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
@@ -317,7 +321,9 @@
             <span class="n">document</span><span class="o">=</span><span class="n">document</span><span class="p">,</span>
             <span class="n">before</span><span class="o">=</span><span class="n">before</span><span class="p">,</span>
             <span class="n">after</span><span class="o">=</span><span class="n">after</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
+</div>
+
 
 
 <span class="nd">@dataclass</span>

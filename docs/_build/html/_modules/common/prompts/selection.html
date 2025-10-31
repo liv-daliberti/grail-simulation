@@ -286,7 +286,7 @@
 
 
 <div class="viewcode-block" id="CandidateMetadata">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.features.CandidateMetadata">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.features.CandidateMetadata">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">CandidateMetadata</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Lightweight view of slate candidate attributes used for token augmentation.&quot;&quot;&quot;</span>
@@ -411,7 +411,7 @@
 
 
 <div class="viewcode-block" id="candidate_feature_tokens">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.features.candidate_feature_tokens">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.features.candidate_feature_tokens">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">candidate_feature_tokens</span><span class="p">(</span>
     <span class="n">candidate</span><span class="p">:</span> <span class="n">CandidateMetadata</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -756,7 +756,7 @@
 
 
 <div class="viewcode-block" id="title_for">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.features.title_for">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.features.title_for">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">title_for</span><span class="p">(</span><span class="n">_video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Placeholder bound via :func:`bind_prompt_selection_exports`.</span>
@@ -770,7 +770,7 @@
 
 
 <div class="viewcode-block" id="viewer_profile_sentence">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.features.viewer_profile_sentence">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.features.viewer_profile_sentence">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">viewer_profile_sentence</span><span class="p">(</span><span class="n">_example</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Placeholder bound via :func:`bind_prompt_selection_exports`.</span>
@@ -784,7 +784,7 @@
 
 
 <div class="viewcode-block" id="prompt_from_builder">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.features.prompt_from_builder">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.features.prompt_from_builder">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">prompt_from_builder</span><span class="p">(</span><span class="n">_example</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Placeholder bound via :func:`bind_prompt_selection_exports`.</span>
@@ -798,7 +798,7 @@
 
 
 <div class="viewcode-block" id="extract_now_watching">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.features.extract_now_watching">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.features.extract_now_watching">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">extract_now_watching</span><span class="p">(</span>
     <span class="n">_example</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
@@ -814,7 +814,7 @@
 
 
 <div class="viewcode-block" id="extract_slate_items">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.features.extract_slate_items">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.features.extract_slate_items">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">extract_slate_items</span><span class="p">(</span><span class="n">_example</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Placeholder bound via :func:`bind_prompt_selection_exports`.</span>
@@ -828,7 +828,7 @@
 
 
 <div class="viewcode-block" id="collect_candidate_metadata">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.features.collect_candidate_metadata">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.features.collect_candidate_metadata">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">collect_candidate_metadata</span><span class="p">(</span><span class="n">_example</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">CandidateMetadata</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Placeholder bound via :func:`bind_prompt_selection_exports`.</span>
@@ -842,7 +842,7 @@
 
 
 <div class="viewcode-block" id="selection_feature_tokens">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.features.selection_feature_tokens">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.features.selection_feature_tokens">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">selection_feature_tokens</span><span class="p">(</span>
     <span class="n">_example</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span>
     <span class="n">_candidates</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">CandidateMetadata</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -860,7 +860,7 @@
 
 
 <div class="viewcode-block" id="assemble_document">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.features.assemble_document">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.features.assemble_document">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">assemble_document</span><span class="p">(</span>
     <span class="n">_example</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span>
     <span class="n">_extra_fields</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -878,7 +878,7 @@
 
 
 <div class="viewcode-block" id="prepare_training_documents">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.features.prepare_training_documents">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.features.prepare_training_documents">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">prepare_training_documents</span><span class="p">(</span>
     <span class="n">_train_ds</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span>
     <span class="n">_max_train</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -900,7 +900,7 @@
 
 
 <div class="viewcode-block" id="prepare_prompt_documents">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.features.prepare_prompt_documents">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.features.prepare_prompt_documents">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">prepare_prompt_documents</span><span class="p">(</span>
     <span class="n">_train_ds</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span>
     <span class="n">_max_train</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>

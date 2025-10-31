@@ -2228,7 +2228,7 @@ results exchanged between the sweep, evaluation, and reporting stages.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>study</strong> (<em>StudySpec</em>) – Study metadata that produced the selected outcome.</p></li>
+<li><p><strong>study</strong> (<a class="reference internal" href="knn.html#knn.pipeline.context.StudySpec" title="common.pipeline.models.StudySpec"><em>StudySpec</em></a>) – Study metadata that produced the selected outcome.</p></li>
 <li><p><strong>outcome</strong> (<em>OutcomeT</em>) – Opinion outcome chosen for downstream processing.</p></li>
 </ul>
 </dd>
@@ -2254,7 +2254,7 @@ results exchanged between the sweep, evaluation, and reporting stages.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="xgb.pipeline_context.OpinionStudySelection.study">
-<span class="sig-name descname"><span class="pre">study</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">common.pipeline.models.StudySpec</span></em><a class="headerlink" href="#xgb.pipeline_context.OpinionStudySelection.study" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">study</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="knn.html#knn.pipeline.context.StudySpec" title="common.pipeline.models.StudySpec"><span class="pre">common.pipeline.models.StudySpec</span></a></em><a class="headerlink" href="#xgb.pipeline_context.OpinionStudySelection.study" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -2384,7 +2384,7 @@ the XGBoost-specific <a class="reference internal" href="#xgb.pipeline_context.O
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>r_squared</strong> (<em>float</em>) – Coefficient of determination achieved by the configuration.</p></li>
 <li><p><strong>order_index</strong> (<em>int</em>)</p></li>
-<li><p><strong>study</strong> (<em>common.pipeline.models.StudySpec</em>)</p></li>
+<li><p><strong>study</strong> (<a class="reference internal" href="knn.html#knn.pipeline.context.StudySpec" title="common.pipeline.models.StudySpec"><em>common.pipeline.models.StudySpec</em></a>)</p></li>
 <li><p><strong>config</strong> (<em>common.opinion.sweep_types.ConfigT</em>)</p></li>
 <li><p><strong>mae</strong> (<em>float</em>)</p></li>
 <li><p><strong>rmse</strong> (<em>float</em>)</p></li>
@@ -2503,7 +2503,7 @@ keyword arguments required by the XGBoost implementation.</p>
 <li><p><strong>request_args</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em>) – Keyword arguments passed to <code class="xref py py-func docutils literal notranslate"><span class="pre">run_opinion_eval()</span></code>.</p></li>
 <li><p><strong>feature_space</strong> (<em>str</em>) – Feature space evaluated by the sweep task.</p></li>
 <li><p><strong>index</strong> (<em>int</em>)</p></li>
-<li><p><strong>study</strong> (<em>common.pipeline.models.StudySpec</em>)</p></li>
+<li><p><strong>study</strong> (<a class="reference internal" href="knn.html#knn.pipeline.context.StudySpec" title="common.pipeline.models.StudySpec"><em>common.pipeline.models.StudySpec</em></a>)</p></li>
 <li><p><strong>config</strong> (<em>common.opinion.sweep_types.ConfigT</em>)</p></li>
 <li><p><strong>metrics_path</strong> (<em>pathlib.Path</em>)</p></li>
 </ul>
@@ -2674,7 +2674,7 @@ XGBoost-specific evaluation statistics.</p>
 <li><p><strong>coverage</strong> (<em>float</em>) – Validation coverage achieved by the configuration.</p></li>
 <li><p><strong>evaluated</strong> (<em>int</em>) – Number of evaluation rows.</p></li>
 <li><p><strong>order_index</strong> (<em>int</em>)</p></li>
-<li><p><strong>study</strong> (<em>common.pipeline.models.StudySpec</em>)</p></li>
+<li><p><strong>study</strong> (<a class="reference internal" href="knn.html#knn.pipeline.context.StudySpec" title="common.pipeline.models.StudySpec"><em>common.pipeline.models.StudySpec</em></a>)</p></li>
 <li><p><strong>config</strong> (<em>common.pipeline.types.ConfigT</em>)</p></li>
 <li><p><strong>metrics_path</strong> (<em>pathlib.Path</em>)</p></li>
 <li><p><strong>metrics</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em>)</p></li>
@@ -2752,7 +2752,7 @@ XGBoost-specific evaluation statistics.</p>
 <li><p><strong>tree_method</strong> (<em>str</em>) – Tree construction algorithm supplied to XGBoost.</p></li>
 <li><p><strong>train_participant_studies</strong> (<em>Tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>) – Participant study keys used for training.</p></li>
 <li><p><strong>index</strong> (<em>int</em>)</p></li>
-<li><p><strong>study</strong> (<em>common.pipeline.models.StudySpec</em>)</p></li>
+<li><p><strong>study</strong> (<a class="reference internal" href="knn.html#knn.pipeline.context.StudySpec" title="common.pipeline.models.StudySpec"><em>common.pipeline.models.StudySpec</em></a>)</p></li>
 <li><p><strong>config</strong> (<em>common.opinion.sweep_types.ConfigT</em>)</p></li>
 <li><p><strong>base_cli</strong> (<em>Tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>)</p></li>
 <li><p><strong>extra_cli</strong> (<em>Tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>)</p></li>

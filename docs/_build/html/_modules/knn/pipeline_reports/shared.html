@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html"><link rel="search" title="Search" href="../../../search.html">
 
     <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
-        <title>knn.cli.utils - GRAIL Simulation documentation</title>
+        <title>knn.pipeline_reports.shared - GRAIL Simulation documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=580074bf" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
@@ -257,7 +257,7 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <h1>Source code for knn.cli.utils</h1><div class="highlight"><pre>
+          <h1>Source code for knn.pipeline_reports.shared</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python</span>
 <span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
 <span class="c1">#</span>
@@ -273,57 +273,71 @@
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 
-<span class="sd">&quot;&quot;&quot;CLI utility helpers shared by the KNN baseline entry points.&quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;Shared helpers for the modular KNN report generation pipeline.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">argparse</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArgumentParser</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shlex</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">common.cli.args</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_sentence_transformer_normalise_flags</span>  <span class="c1"># pylint: disable=import-error</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.pipeline.formatters</span><span class="w"> </span><span class="kn">import</span> <span class="n">safe_int</span>
 
-<div class="viewcode-block" id="add_sentence_transformer_normalize_flags">
-<a class="viewcode-back" href="../../../api/knn.html#knn.cli.utils.add_sentence_transformer_normalize_flags">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">add_sentence_transformer_normalize_flags</span><span class="p">(</span>
-    <span class="n">parser</span><span class="p">:</span> <span class="n">ArgumentParser</span><span class="p">,</span>
-    <span class="o">*</span><span class="p">,</span>
-    <span class="n">legacy_aliases</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">help_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;knn.pipeline.reports&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_format_shell_command</span><span class="p">(</span><span class="n">bits</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Join CLI arguments into a shell-friendly command.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">bit</span><span class="p">))</span> <span class="k">for</span> <span class="n">bit</span> <span class="ow">in</span> <span class="n">bits</span> <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">bit</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_feature_space_heading</span><span class="p">(</span><span class="n">feature_space</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a Markdown heading for the target feature space.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">feature_space</span> <span class="o">==</span> <span class="s2">&quot;tfidf&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;## TF-IDF Feature Space&quot;</span>
+    <span class="k">if</span> <span class="n">feature_space</span> <span class="o">==</span> <span class="s2">&quot;word2vec&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;## Word2Vec Feature Space&quot;</span>
+    <span class="k">if</span> <span class="n">feature_space</span> <span class="o">==</span> <span class="s2">&quot;sentence_transformer&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;## Sentence-Transformer Feature Space&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;## </span><span class="si">{</span><span class="n">feature_space</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39; &#39;</span><span class="p">)</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="si">}</span><span class="s2"> Feature Space&quot;</span>
+
+<div class="viewcode-block" id="parse_k_sweep">
+<a class="viewcode-back" href="../../../api/knn.html#knn.pipeline_reports.shared.parse_k_sweep">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_k_sweep</span><span class="p">(</span><span class="n">k_sweep</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Attach normalisation toggle flags for sentence-transformer embeddings to a parser.</span>
+<span class="sd">    Convert the stored ``k`` sweep representation into integers.</span>
 
-<span class="sd">    :param parser: Argument parser receiving the flags that control embedding normalisation.</span>
-<span class="sd">    :type parser: argparse.ArgumentParser</span>
-<span class="sd">    :param legacy_aliases: Register underscore-separated aliases to maintain compatibility with</span>
-<span class="sd">        pre-refactor invocations.</span>
-<span class="sd">    :type legacy_aliases: bool</span>
-<span class="sd">    :param help_prefix: Optional text prepended to the generated help strings to provide context.</span>
-<span class="sd">    :type help_prefix: str</span>
-<span class="sd">    :returns: ``None``. Flags are added to ``parser`` in-place.</span>
-<span class="sd">    :rtype: None</span>
+<span class="sd">    :param k_sweep: Either a comma- or slash-delimited string of integers or an</span>
+<span class="sd">        iterable of integer-like values.</span>
+<span class="sd">    :returns: Tuple of parsed ``k`` values with invalid tokens skipped.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">normalize_flags</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--sentence-transformer-normalize&quot;</span><span class="p">]</span>
-    <span class="n">no_normalize_flags</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--sentence-transformer-no-normalize&quot;</span><span class="p">]</span>
-    <span class="k">if</span> <span class="n">legacy_aliases</span><span class="p">:</span>
-        <span class="n">normalize_flags</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">normalize_flags</span><span class="p">,</span> <span class="s2">&quot;--sentence_transformer_normalize&quot;</span><span class="p">]</span>
-        <span class="n">no_normalize_flags</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">no_normalize_flags</span><span class="p">,</span> <span class="s2">&quot;--sentence_transformer_no_normalize&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">k_sweep</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">tokens</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">k_sweep</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="p">]</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">:</span>
+            <span class="n">parsed</span> <span class="o">=</span> <span class="n">safe_int</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">parsed</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Skipping non-numeric k sweep token: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">token</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">parsed</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
 
-    <span class="n">help_prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">help_prefix</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2"> &quot;</span> <span class="k">if</span> <span class="n">help_prefix</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
-    <span class="n">add_sentence_transformer_normalise_flags</span><span class="p">(</span>
-        <span class="n">parser</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;sentence_transformer_normalize&quot;</span><span class="p">,</span>
-        <span class="n">enable_flags</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">normalize_flags</span><span class="p">),</span>
-        <span class="n">disable_flags</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">no_normalize_flags</span><span class="p">),</span>
-        <span class="n">enable_help</span><span class="o">=</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">help_prefix</span><span class="si">}</span><span class="s2">Enable L2-normalisation for sentence-transformer &quot;</span>
-            <span class="s2">&quot;embeddings (default).&quot;</span>
-        <span class="p">),</span>
-        <span class="n">disable_help</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">help_prefix</span><span class="si">}</span><span class="s2">Disable L2-normalisation for sentence-transformer embeddings.&quot;</span><span class="p">,</span>
-    <span class="p">)</span></div>
+    <span class="n">values</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">k_sweep</span><span class="p">:</span>
+        <span class="n">parsed</span> <span class="o">=</span> <span class="n">safe_int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">parsed</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Skipping non-numeric k sweep token: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">parsed</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">values</span><span class="p">)</span></div>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;add_sentence_transformer_normalize_flags&quot;</span><span class="p">]</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;LOGGER&quot;</span><span class="p">,</span> <span class="s2">&quot;_feature_space_heading&quot;</span><span class="p">,</span> <span class="s2">&quot;_format_shell_command&quot;</span><span class="p">,</span> <span class="s2">&quot;parse_k_sweep&quot;</span><span class="p">]</span>
 </pre></div>
         </article>
       </div>

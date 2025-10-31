@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html">
 
     <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
-        <title>knn.core.evaluate.k_selection - GRAIL Simulation documentation</title>
+        <title>knn.pipeline.reports.shared - GRAIL Simulation documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=580074bf" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
@@ -257,7 +257,7 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <h1>Source code for knn.core.evaluate.k_selection</h1><div class="highlight"><pre>
+          <h1>Source code for knn.pipeline.reports.shared</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python</span>
 <span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
 <span class="c1">#</span>
@@ -273,87 +273,71 @@
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 
-<span class="sd">&quot;&quot;&quot;Neighbourhood selection utilities for the KNN evaluator.&quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;Shared helpers for the modular KNN report generation pipeline.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shlex</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.pipeline.formatters</span><span class="w"> </span><span class="kn">import</span> <span class="n">safe_int</span>
+
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;knn.pipeline.reports&quot;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="parse_k_values">
-<a class="viewcode-back" href="../../../../api/knn.html#knn.evaluate.parse_k_values">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_k_values</span><span class="p">(</span><span class="n">k_default</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">sweep</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_format_shell_command</span><span class="p">(</span><span class="n">bits</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Join CLI arguments into a shell-friendly command.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">bit</span><span class="p">))</span> <span class="k">for</span> <span class="n">bit</span> <span class="ow">in</span> <span class="n">bits</span> <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">bit</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_feature_space_heading</span><span class="p">(</span><span class="n">feature_space</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a Markdown heading for the target feature space.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">feature_space</span> <span class="o">==</span> <span class="s2">&quot;tfidf&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;## TF-IDF Feature Space&quot;</span>
+    <span class="k">if</span> <span class="n">feature_space</span> <span class="o">==</span> <span class="s2">&quot;word2vec&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;## Word2Vec Feature Space&quot;</span>
+    <span class="k">if</span> <span class="n">feature_space</span> <span class="o">==</span> <span class="s2">&quot;sentence_transformer&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;## Sentence-Transformer Feature Space&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;## </span><span class="si">{</span><span class="n">feature_space</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39; &#39;</span><span class="p">)</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="si">}</span><span class="s2"> Feature Space&quot;</span>
+
+<div class="viewcode-block" id="parse_k_sweep">
+<a class="viewcode-back" href="../../../../api/knn.html#knn.pipeline.reports.shared.parse_k_sweep">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_k_sweep</span><span class="p">(</span><span class="n">k_sweep</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Derive the sorted set of ``k`` values requested for evaluation.</span>
+<span class="sd">    Convert the stored ``k`` sweep representation into integers.</span>
 
-<span class="sd">    :param k_default: Baseline ``k`` value used when the sweep is empty.</span>
-<span class="sd">    :param sweep: Comma-delimited string of additional ``k`` candidates.</span>
-<span class="sd">    :returns: Strictly positive ``k`` values in ascending order. Falls back to</span>
-<span class="sd">        ``k_default`` (or ``25`` when unset) if no valid integers are supplied.</span>
+<span class="sd">    :param k_sweep: Either a comma- or slash-delimited string of integers or an</span>
+<span class="sd">        iterable of integer-like values.</span>
+<span class="sd">    :returns: Tuple of parsed ``k`` values with invalid tokens skipped.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">k_sweep</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">tokens</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">k_sweep</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="p">]</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">:</span>
+            <span class="n">parsed</span> <span class="o">=</span> <span class="n">safe_int</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">parsed</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Skipping non-numeric k sweep token: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">token</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">parsed</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
 
-    <span class="n">values</span> <span class="o">=</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">k_default</span><span class="p">)}</span> <span class="k">if</span> <span class="n">k_default</span> <span class="k">else</span> <span class="nb">set</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">sweep</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">):</span>
-        <span class="n">token</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">token</span><span class="p">:</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">k_sweep</span><span class="p">:</span>
+        <span class="n">parsed</span> <span class="o">=</span> <span class="n">safe_int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">parsed</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Skipping non-numeric k sweep token: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
             <span class="k">continue</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">values</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">token</span><span class="p">))</span>
-        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-            <span class="k">continue</span>
-    <span class="n">k_vals</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">values</span> <span class="k">if</span> <span class="n">k</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">k_vals</span> <span class="ow">or</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">k_default</span><span class="p">)</span> <span class="k">if</span> <span class="n">k_default</span> <span class="k">else</span> <span class="mi">25</span><span class="p">]</span></div>
+        <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">parsed</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">values</span><span class="p">)</span></div>
 
 
 
-<div class="viewcode-block" id="select_best_k">
-<a class="viewcode-back" href="../../../../api/knn.html#knn.evaluate.select_best_k">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">select_best_k</span><span class="p">(</span>
-    <span class="n">k_values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
-    <span class="n">accuracy_by_k</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
-    <span class="o">*</span><span class="p">,</span>
-    <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;elbow&quot;</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Select ``k`` using either max-accuracy or an elbow heuristic.</span>
-
-<span class="sd">    :param k_values: Sorted sequence of evaluated ``k`` values.</span>
-<span class="sd">    :param accuracy_by_k: Observed eligible-only accuracy for each ``k`` on the</span>
-<span class="sd">        validation split.</span>
-<span class="sd">    :param method: Selection strategy (default: ``&quot;elbow&quot;``). ``&quot;max&quot;`` picks</span>
-<span class="sd">        the accuracy-maximising ``k``. ``&quot;elbow&quot;`` picks the first ``k`` where</span>
-<span class="sd">        marginal gains fall below half the initial slope, falling back to</span>
-<span class="sd">        max-accuracy when the heuristic is not applicable.</span>
-<span class="sd">    :returns: Selected ``k`` per the requested method.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">method_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">method</span> <span class="ow">or</span> <span class="s2">&quot;max&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">method_norm</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;max&quot;</span><span class="p">,</span> <span class="s2">&quot;elbow&quot;</span><span class="p">}:</span>
-        <span class="n">method_norm</span> <span class="o">=</span> <span class="s2">&quot;max&quot;</span>
-
-    <span class="k">if</span> <span class="n">method_norm</span> <span class="o">==</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">k_values</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="n">accuracy_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
-
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">k_values</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">k_values</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="n">accuracy_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
-    <span class="n">accuracies</span> <span class="o">=</span> <span class="p">[</span><span class="n">accuracy_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span><span class="p">]</span>
-    <span class="n">slopes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">k_values</span><span class="p">)):</span>
-        <span class="n">delta_acc</span> <span class="o">=</span> <span class="n">accuracies</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="n">accuracies</span><span class="p">[</span><span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
-        <span class="n">delta_k</span> <span class="o">=</span> <span class="n">k_values</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="n">k_values</span><span class="p">[</span><span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
-        <span class="n">slopes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">delta_acc</span> <span class="o">/</span> <span class="n">delta_k</span> <span class="k">if</span> <span class="n">delta_k</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">slopes</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">k_values</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="n">accuracy_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
-    <span class="n">first_slope</span> <span class="o">=</span> <span class="n">slopes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">threshold</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">first_slope</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.001</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">slope</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">slopes</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">slope</span> <span class="o">&lt;=</span> <span class="n">threshold</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">k_values</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
-    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">k_values</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="n">accuracy_by_k</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span></div>
-
-
-
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;parse_k_values&quot;</span><span class="p">,</span> <span class="s2">&quot;select_best_k&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;LOGGER&quot;</span><span class="p">,</span> <span class="s2">&quot;_feature_space_heading&quot;</span><span class="p">,</span> <span class="s2">&quot;_format_shell_command&quot;</span><span class="p">,</span> <span class="s2">&quot;parse_k_sweep&quot;</span><span class="p">]</span>
 </pre></div>
         </article>
       </div>

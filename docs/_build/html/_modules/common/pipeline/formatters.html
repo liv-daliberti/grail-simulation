@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html"><link rel="search" title="Search" href="../../../search.html">
 
     <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
-        <title>knn.cli.utils - GRAIL Simulation documentation</title>
+        <title>common.pipeline.formatters - GRAIL Simulation documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=580074bf" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
@@ -257,7 +257,7 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <h1>Source code for knn.cli.utils</h1><div class="highlight"><pre>
+          <h1>Source code for common.pipeline.formatters</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python</span>
 <span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
 <span class="c1">#</span>
@@ -273,57 +273,107 @@
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 
-<span class="sd">&quot;&quot;&quot;CLI utility helpers shared by the KNN baseline entry points.&quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;Formatting helpers used by pipeline reports and logs.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">argparse</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArgumentParser</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">common.cli.args</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_sentence_transformer_normalise_flags</span>  <span class="c1"># pylint: disable=import-error</span>
 
-<div class="viewcode-block" id="add_sentence_transformer_normalize_flags">
-<a class="viewcode-back" href="../../../api/knn.html#knn.cli.utils.add_sentence_transformer_normalize_flags">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">add_sentence_transformer_normalize_flags</span><span class="p">(</span>
-    <span class="n">parser</span><span class="p">:</span> <span class="n">ArgumentParser</span><span class="p">,</span>
-    <span class="o">*</span><span class="p">,</span>
-    <span class="n">legacy_aliases</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">help_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">format_float</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Attach normalisation toggle flags for sentence-transformer embeddings to a parser.</span>
+<span class="sd">    Format a floating-point metric with three decimal places.</span>
 
-<span class="sd">    :param parser: Argument parser receiving the flags that control embedding normalisation.</span>
-<span class="sd">    :type parser: argparse.ArgumentParser</span>
-<span class="sd">    :param legacy_aliases: Register underscore-separated aliases to maintain compatibility with</span>
-<span class="sd">        pre-refactor invocations.</span>
-<span class="sd">    :type legacy_aliases: bool</span>
-<span class="sd">    :param help_prefix: Optional text prepended to the generated help strings to provide context.</span>
-<span class="sd">    :type help_prefix: str</span>
-<span class="sd">    :returns: ``None``. Flags are added to ``parser`` in-place.</span>
-<span class="sd">    :rtype: None</span>
+<span class="sd">    :param value: Metric value to format.</span>
+<span class="sd">    :returns: String formatted with ``\&quot;{value:.3f}\&quot;``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">normalize_flags</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--sentence-transformer-normalize&quot;</span><span class="p">]</span>
-    <span class="n">no_normalize_flags</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--sentence-transformer-no-normalize&quot;</span><span class="p">]</span>
-    <span class="k">if</span> <span class="n">legacy_aliases</span><span class="p">:</span>
-        <span class="n">normalize_flags</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">normalize_flags</span><span class="p">,</span> <span class="s2">&quot;--sentence_transformer_normalize&quot;</span><span class="p">]</span>
-        <span class="n">no_normalize_flags</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">no_normalize_flags</span><span class="p">,</span> <span class="s2">&quot;--sentence_transformer_no_normalize&quot;</span><span class="p">]</span>
-
-    <span class="n">help_prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">help_prefix</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2"> &quot;</span> <span class="k">if</span> <span class="n">help_prefix</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
-    <span class="n">add_sentence_transformer_normalise_flags</span><span class="p">(</span>
-        <span class="n">parser</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;sentence_transformer_normalize&quot;</span><span class="p">,</span>
-        <span class="n">enable_flags</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">normalize_flags</span><span class="p">),</span>
-        <span class="n">disable_flags</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">no_normalize_flags</span><span class="p">),</span>
-        <span class="n">enable_help</span><span class="o">=</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">help_prefix</span><span class="si">}</span><span class="s2">Enable L2-normalisation for sentence-transformer &quot;</span>
-            <span class="s2">&quot;embeddings (default).&quot;</span>
-        <span class="p">),</span>
-        <span class="n">disable_help</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">help_prefix</span><span class="si">}</span><span class="s2">Disable L2-normalisation for sentence-transformer embeddings.&quot;</span><span class="p">,</span>
-    <span class="p">)</span></div>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;add_sentence_transformer_normalize_flags&quot;</span><span class="p">]</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">format_optional_float</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return ``format_float`` output or an em dash when the value is ``None``.</span>
+
+<span class="sd">    :param value: Optional metric value to format.</span>
+<span class="sd">    :returns: Formatted metric or ``\&quot;—\&quot;`` when ``value`` is ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">format_float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;—&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">format_delta</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Render a signed delta using ``+0.000`` formatting.</span>
+
+<span class="sd">    :param value: Optional delta value to format.</span>
+<span class="sd">    :returns: Signed delta string or ``\&quot;—\&quot;`` when ``value`` is ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">+.3f</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;—&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">format_count</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Format integer counts with thousands separators or return an em dash.</span>
+
+<span class="sd">    :param value: Optional integer count.</span>
+<span class="sd">    :returns: Formatted count or ``\&quot;—\&quot;`` when ``value`` is ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;—&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">format_ratio</span><span class="p">(</span><span class="n">numerator</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">denominator</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Format ratios as ``hits/total`` when both parts are available.</span>
+
+<span class="sd">    :param numerator: Numerator of the ratio.</span>
+<span class="sd">    :param denominator: Denominator of the ratio.</span>
+<span class="sd">    :returns: ``\&quot;numerator/denominator\&quot;`` or ``\&quot;—\&quot;`` when values are missing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">numerator</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">denominator</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;—&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">numerator</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">denominator</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">&quot;</span>
+
+
+<div class="viewcode-block" id="safe_float">
+<a class="viewcode-back" href="../../../api/knn.html#knn.pipeline.utils.safe_float">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">safe_float</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Attempt to convert ``value`` to ``float`` returning ``None`` on failure.</span>
+
+<span class="sd">    :param value: Candidate value to convert.</span>
+<span class="sd">    :returns: Float representation or ``None`` when conversion fails.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="safe_int">
+<a class="viewcode-back" href="../../../api/knn.html#knn.pipeline.utils.safe_int">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">safe_int</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Best-effort conversion to int.</span>
+
+
+
+<span class="sd">    :param value: Value provided for ``value``.</span>
+
+<span class="sd">    :type value: object</span>
+
+<span class="sd">    :returns: Result produced by ``safe_int``.</span>
+
+<span class="sd">    :rtype: Optional[int]</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
 </pre></div>
         </article>
       </div>

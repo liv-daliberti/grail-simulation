@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html"><link rel="search" title="Search" href="../../../search.html">
 
     <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
-        <title>knn.cli.utils - GRAIL Simulation documentation</title>
+        <title>knn.pipeline.data - GRAIL Simulation documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=580074bf" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
@@ -257,7 +257,7 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <h1>Source code for knn.cli.utils</h1><div class="highlight"><pre>
+          <h1>Source code for knn.pipeline.data</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python</span>
 <span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
 <span class="c1">#</span>
@@ -273,57 +273,131 @@
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 
-<span class="sd">&quot;&quot;&quot;CLI utility helpers shared by the KNN baseline entry points.&quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;Study metadata helpers used by the Grail Simulation KNN pipeline.</span>
+
+<span class="sd">Provides canonical participant-study specifications plus helper functions</span>
+<span class="sd">for interpreting CLI tokens and mapping them onto pipeline studies.</span>
+<span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">argparse</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArgumentParser</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">common.cli.args</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_sentence_transformer_normalise_flags</span>  <span class="c1"># pylint: disable=import-error</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.opinion</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_SPECS</span> <span class="k">as</span> <span class="n">_DEFAULT_OPINION_SPECS</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">StudySpec</span>
 
-<div class="viewcode-block" id="add_sentence_transformer_normalize_flags">
-<a class="viewcode-back" href="../../../api/knn.html#knn.cli.utils.add_sentence_transformer_normalize_flags">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">add_sentence_transformer_normalize_flags</span><span class="p">(</span>
-    <span class="n">parser</span><span class="p">:</span> <span class="n">ArgumentParser</span><span class="p">,</span>
-    <span class="o">*</span><span class="p">,</span>
-    <span class="n">legacy_aliases</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">help_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;knn.pipeline.data&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="study_specs">
+<a class="viewcode-back" href="../../../api/knn.html#knn.pipeline.data.study_specs">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">study_specs</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">StudySpec</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Attach normalisation toggle flags for sentence-transformer embeddings to a parser.</span>
+<span class="sd">    Return the canonical participant-study specifications bundled with the project.</span>
 
-<span class="sd">    :param parser: Argument parser receiving the flags that control embedding normalisation.</span>
-<span class="sd">    :type parser: argparse.ArgumentParser</span>
-<span class="sd">    :param legacy_aliases: Register underscore-separated aliases to maintain compatibility with</span>
-<span class="sd">        pre-refactor invocations.</span>
-<span class="sd">    :type legacy_aliases: bool</span>
-<span class="sd">    :param help_prefix: Optional text prepended to the generated help strings to provide context.</span>
-<span class="sd">    :type help_prefix: str</span>
-<span class="sd">    :returns: ``None``. Flags are added to ``parser`` in-place.</span>
+<span class="sd">    :returns: Tuple of opinion-study descriptors used for sweeps and reporting.</span>
+<span class="sd">    :rtype: Tuple[~knn.pipeline.context.StudySpec, ...]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">StudySpec</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">issue</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">label</span><span class="p">)</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">_DEFAULT_OPINION_SPECS</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="warn_if_issue_tokens_used">
+<a class="viewcode-back" href="../../../api/knn.html#knn.pipeline.data.warn_if_issue_tokens_used">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">warn_if_issue_tokens_used</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Log a gentle reminder that ``--issues`` is deprecated for the pipeline.</span>
+
+<span class="sd">    :param args: Parsed CLI namespace to inspect for deprecated ``--issues`` usage.</span>
+<span class="sd">    :type args: argparse.Namespace</span>
+<span class="sd">    :returns: None.</span>
 <span class="sd">    :rtype: None</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">normalize_flags</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--sentence-transformer-normalize&quot;</span><span class="p">]</span>
-    <span class="n">no_normalize_flags</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--sentence-transformer-no-normalize&quot;</span><span class="p">]</span>
-    <span class="k">if</span> <span class="n">legacy_aliases</span><span class="p">:</span>
-        <span class="n">normalize_flags</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">normalize_flags</span><span class="p">,</span> <span class="s2">&quot;--sentence_transformer_normalize&quot;</span><span class="p">]</span>
-        <span class="n">no_normalize_flags</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">no_normalize_flags</span><span class="p">,</span> <span class="s2">&quot;--sentence_transformer_no_normalize&quot;</span><span class="p">]</span>
-
-    <span class="n">help_prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">help_prefix</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2"> &quot;</span> <span class="k">if</span> <span class="n">help_prefix</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
-    <span class="n">add_sentence_transformer_normalise_flags</span><span class="p">(</span>
-        <span class="n">parser</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;sentence_transformer_normalize&quot;</span><span class="p">,</span>
-        <span class="n">enable_flags</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">normalize_flags</span><span class="p">),</span>
-        <span class="n">disable_flags</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">no_normalize_flags</span><span class="p">),</span>
-        <span class="n">enable_help</span><span class="o">=</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">help_prefix</span><span class="si">}</span><span class="s2">Enable L2-normalisation for sentence-transformer &quot;</span>
-            <span class="s2">&quot;embeddings (default).&quot;</span>
-        <span class="p">),</span>
-        <span class="n">disable_help</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">help_prefix</span><span class="si">}</span><span class="s2">Disable L2-normalisation for sentence-transformer embeddings.&quot;</span><span class="p">,</span>
-    <span class="p">)</span></div>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_split_tokens</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;studies&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span> <span class="ow">and</span> <span class="n">_split_tokens</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">issues</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">):</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;`--issues` is deprecated for the pipeline; interpreting as study keys.&quot;</span><span class="p">)</span></div>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;add_sentence_transformer_normalize_flags&quot;</span><span class="p">]</span>
+<div class="viewcode-block" id="issue_slug_for_study">
+<a class="viewcode-back" href="../../../api/knn.html#knn.pipeline.data.issue_slug_for_study">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">issue_slug_for_study</span><span class="p">(</span><span class="n">study</span><span class="p">:</span> <span class="n">StudySpec</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Derive the filesystem slug used for artefacts associated with ``study``.</span>
+
+<span class="sd">    :param study: Study specification providing issue/study slugs.</span>
+<span class="sd">    :type study: ~knn.pipeline.context.StudySpec</span>
+<span class="sd">    :returns: Concatenated issue and study slug (e.g. ``issue_study``).</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">study</span><span class="o">.</span><span class="n">issue_slug</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">study</span><span class="o">.</span><span class="n">study_slug</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+<div class="viewcode-block" id="resolve_studies">
+<a class="viewcode-back" href="../../../api/knn.html#knn.pipeline.data.resolve_studies">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_studies</span><span class="p">(</span><span class="n">tokens</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">StudySpec</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return participant studies matching ``tokens``.</span>
+
+<span class="sd">    :param tokens: Iterable of study keys or issue names received from the CLI.</span>
+<span class="sd">    :type tokens: Sequence[str]</span>
+<span class="sd">    :returns: Ordered list of study specifications corresponding to the provided tokens.</span>
+<span class="sd">    :rtype: List[~knn.pipeline.context.StudySpec]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">available</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">study_specs</span><span class="p">())</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">tokens</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">available</span>
+
+    <span class="n">key_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span> <span class="n">spec</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">available</span><span class="p">}</span>
+    <span class="n">issue_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">StudySpec</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">available</span><span class="p">:</span>
+        <span class="n">issue_map</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">issue</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+
+    <span class="n">resolved</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">StudySpec</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">:</span>
+        <span class="n">normalised</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">normalised</span> <span class="ow">or</span> <span class="n">normalised</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">available</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+                    <span class="n">resolved</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+                    <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">normalised</span> <span class="ow">in</span> <span class="n">key_map</span><span class="p">:</span>
+            <span class="n">spec</span> <span class="o">=</span> <span class="n">key_map</span><span class="p">[</span><span class="n">normalised</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+                <span class="n">resolved</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+                <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">normalised</span> <span class="ow">in</span> <span class="n">issue_map</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">issue_map</span><span class="p">[</span><span class="n">normalised</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+                    <span class="n">resolved</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+                    <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">available</span><span class="p">}</span> <span class="o">|</span> <span class="p">{</span><span class="n">spec</span><span class="o">.</span><span class="n">issue</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">available</span><span class="p">})</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown study token &#39;</span><span class="si">{</span><span class="n">token</span><span class="si">}</span><span class="s2">&#39;. Expected one of </span><span class="si">{</span><span class="n">valid</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">resolved</span></div>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_split_tokens</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a cleaned list of comma-separated tokens.</span>
+
+<span class="sd">    :param raw: Raw comma-separated string sourced from CLI/environment.</span>
+<span class="sd">    :type raw: str | None</span>
+<span class="sd">    :returns: Cleaned tokens excluding whitespace-only items.</span>
+<span class="sd">    :rtype: List[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">raw</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">raw</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;issue_slug_for_study&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;resolve_studies&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;study_specs&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;warn_if_issue_tokens_used&quot;</span><span class="p">,</span>
+<span class="p">]</span>
 </pre></div>
         </article>
       </div>

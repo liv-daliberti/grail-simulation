@@ -420,7 +420,7 @@
         <span class="k">return</span> <span class="n">_aggregate_scores</span><span class="p">(</span><span class="n">score_vector</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">unique_k</span><span class="p">)</span>
 
 <div class="viewcode-block" id="build_tfidf_index">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.index.build_tfidf_index">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.index.build_tfidf_index">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_tfidf_index</span><span class="p">(</span>
     <span class="n">train_ds</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -455,7 +455,7 @@
 
 
 <div class="viewcode-block" id="build_word2vec_index">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.index.build_word2vec_index">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.index.build_word2vec_index">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_word2vec_index</span><span class="p">(</span>
     <span class="n">train_ds</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -491,7 +491,7 @@
 
 
 <div class="viewcode-block" id="build_sentence_transformer_index">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.index.build_sentence_transformer_index">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.index.build_sentence_transformer_index">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_sentence_transformer_index</span><span class="p">(</span>
     <span class="n">train_ds</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -602,7 +602,7 @@
     <span class="k">return</span> <span class="n">encoder</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">st_config</span>
 
 <div class="viewcode-block" id="save_tfidf_index">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.index.save_tfidf_index">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.index.save_tfidf_index">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">save_tfidf_index</span><span class="p">(</span><span class="n">index</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">out_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Persist the TF-IDF index to ``out_dir`` for later reuse.</span>
 
@@ -633,7 +633,7 @@
 
 
 <div class="viewcode-block" id="load_tfidf_index">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.index.load_tfidf_index">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.index.load_tfidf_index">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_tfidf_index</span><span class="p">(</span><span class="n">in_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a TF-IDF index previously saved via :func:`save_tfidf_index`.</span>
 
@@ -655,7 +655,7 @@
 
 
 <div class="viewcode-block" id="save_word2vec_index">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.index.save_word2vec_index">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.index.save_word2vec_index">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">save_word2vec_index</span><span class="p">(</span><span class="n">index</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">out_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Persist the Word2Vec index to ``out_dir`` for later reuse.</span>
 
@@ -704,7 +704,7 @@
 
 
 <div class="viewcode-block" id="save_sentence_transformer_index">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.index.save_sentence_transformer_index">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.index.save_sentence_transformer_index">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">save_sentence_transformer_index</span><span class="p">(</span><span class="n">index</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">out_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Persist the sentence-transformer index to ``out_dir`` for later reuse.</span>
@@ -757,7 +757,7 @@
 
 
 <div class="viewcode-block" id="load_word2vec_index">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.index.load_word2vec_index">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.index.load_word2vec_index">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_word2vec_index</span><span class="p">(</span><span class="n">in_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a Word2Vec index previously saved via :func:`save_word2vec_index`.</span>
 
@@ -800,7 +800,7 @@
 
 
 <div class="viewcode-block" id="load_sentence_transformer_index">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.index.load_sentence_transformer_index">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.index.load_sentence_transformer_index">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_sentence_transformer_index</span><span class="p">(</span><span class="n">in_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Load a sentence-transformer index saved via :func:`save_sentence_transformer_index`.</span>
@@ -1035,7 +1035,7 @@
     <span class="k">return</span> <span class="n">mask</span>
 
 <div class="viewcode-block" id="knn_predict_among_slate_multi">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.index.knn_predict_among_slate_multi">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.index.knn_predict_among_slate_multi">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">knn_predict_among_slate_multi</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">knn_index</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>

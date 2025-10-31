@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html"><link rel="search" title="Search" href="../../../search.html">
 
     <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
-        <title>knn.cli.utils - GRAIL Simulation documentation</title>
+        <title>common.pipeline.models - GRAIL Simulation documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=580074bf" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
@@ -257,7 +257,7 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <h1>Source code for knn.cli.utils</h1><div class="highlight"><pre>
+          <h1>Source code for common.pipeline.models</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python</span>
 <span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
 <span class="c1">#</span>
@@ -273,57 +273,45 @@
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 
-<span class="sd">&quot;&quot;&quot;CLI utility helpers shared by the KNN baseline entry points.&quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;Shared dataclasses representing participant studies.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">argparse</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArgumentParser</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">common.cli.args</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_sentence_transformer_normalise_flags</span>  <span class="c1"># pylint: disable=import-error</span>
-
-<div class="viewcode-block" id="add_sentence_transformer_normalize_flags">
-<a class="viewcode-back" href="../../../api/knn.html#knn.cli.utils.add_sentence_transformer_normalize_flags">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">add_sentence_transformer_normalize_flags</span><span class="p">(</span>
-    <span class="n">parser</span><span class="p">:</span> <span class="n">ArgumentParser</span><span class="p">,</span>
-    <span class="o">*</span><span class="p">,</span>
-    <span class="n">legacy_aliases</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">help_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Attach normalisation toggle flags for sentence-transformer embeddings to a parser.</span>
-
-<span class="sd">    :param parser: Argument parser receiving the flags that control embedding normalisation.</span>
-<span class="sd">    :type parser: argparse.ArgumentParser</span>
-<span class="sd">    :param legacy_aliases: Register underscore-separated aliases to maintain compatibility with</span>
-<span class="sd">        pre-refactor invocations.</span>
-<span class="sd">    :type legacy_aliases: bool</span>
-<span class="sd">    :param help_prefix: Optional text prepended to the generated help strings to provide context.</span>
-<span class="sd">    :type help_prefix: str</span>
-<span class="sd">    :returns: ``None``. Flags are added to ``parser`` in-place.</span>
-<span class="sd">    :rtype: None</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">normalize_flags</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--sentence-transformer-normalize&quot;</span><span class="p">]</span>
-    <span class="n">no_normalize_flags</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--sentence-transformer-no-normalize&quot;</span><span class="p">]</span>
-    <span class="k">if</span> <span class="n">legacy_aliases</span><span class="p">:</span>
-        <span class="n">normalize_flags</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">normalize_flags</span><span class="p">,</span> <span class="s2">&quot;--sentence_transformer_normalize&quot;</span><span class="p">]</span>
-        <span class="n">no_normalize_flags</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">no_normalize_flags</span><span class="p">,</span> <span class="s2">&quot;--sentence_transformer_no_normalize&quot;</span><span class="p">]</span>
-
-    <span class="n">help_prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">help_prefix</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2"> &quot;</span> <span class="k">if</span> <span class="n">help_prefix</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
-    <span class="n">add_sentence_transformer_normalise_flags</span><span class="p">(</span>
-        <span class="n">parser</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;sentence_transformer_normalize&quot;</span><span class="p">,</span>
-        <span class="n">enable_flags</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">normalize_flags</span><span class="p">),</span>
-        <span class="n">disable_flags</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">no_normalize_flags</span><span class="p">),</span>
-        <span class="n">enable_help</span><span class="o">=</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">help_prefix</span><span class="si">}</span><span class="s2">Enable L2-normalisation for sentence-transformer &quot;</span>
-            <span class="s2">&quot;embeddings (default).&quot;</span>
-        <span class="p">),</span>
-        <span class="n">disable_help</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">help_prefix</span><span class="si">}</span><span class="s2">Disable L2-normalisation for sentence-transformer embeddings.&quot;</span><span class="p">,</span>
-    <span class="p">)</span></div>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;add_sentence_transformer_normalize_flags&quot;</span><span class="p">]</span>
+<div class="viewcode-block" id="StudySpec">
+<a class="viewcode-back" href="../../../api/knn.html#knn.pipeline.context.StudySpec">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">StudySpec</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Participant study metadata shared across pipeline packages.&quot;&quot;&quot;</span>
+
+
+    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">issue</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">study_slug</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a filesystem-safe slug for the study key.&quot;&quot;&quot;</span>
+
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">issue_slug</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a filesystem-safe slug for the associated issue.&quot;&quot;&quot;</span>
+
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">issue</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluation_slug</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the slug used when saving evaluation artefacts.&quot;&quot;&quot;</span>
+
+
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">issue_slug</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">study_slug</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
 </pre></div>
         </article>
       </div>

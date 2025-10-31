@@ -99,6 +99,8 @@ setup.py
 ../src/common/prompts/docs/trajectory.py
 ../src/common/reports/__init__.py
 ../src/common/reports/fields.py
+../src/common/reports/portfolio.py
+../src/common/reports/samples.py
 ../src/common/reports/tables.py
 ../src/common/reports/utils.py
 ../src/common/rlhf/__init__.py

@@ -87,6 +87,10 @@ class Sample:
     think: str
     answer: str
     opinion_label: Optional[str] = None  # increase|decrease|no_change when task=="opinion"
+    # Optional task-specific enrichments for clearer notes
+    chosen_option: Optional[int] = None
+    before: Optional[float] = None
+    predicted_after: Optional[float] = None
 
 
 def _iter_jsonl_rows(path: Path) -> Iterator[Mapping[str, object]]:
@@ -157,8 +161,22 @@ def _collect_next_video_samples(files: Sequence[Path]) -> List[Sample]:
             raw = str(row.get("gpt_output") or row.get("raw_output") or "")
             think, answer = _extract_think_answer(raw)
             issue = _normalise_issue(row.get("issue"))
+            chosen: Optional[int] = None
+            try:
+                chosen = int(answer) if answer.strip() else None
+            except Exception:
+                chosen = None
             if question and (think or answer):
-                out.append(Sample(issue=issue, task="next_video", question=question, think=think, answer=answer))
+                out.append(
+                    Sample(
+                        issue=issue,
+                        task="next_video",
+                        question=question,
+                        think=think,
+                        answer=answer,
+                        chosen_option=chosen,
+                    )
+                )
     return out
 
 
@@ -180,8 +198,30 @@ def _collect_opinion_samples(files: Sequence[Path]) -> List[Sample]:
             before = row.get("before")
             pred = row.get("predicted_after") or row.get("prediction")
             direction = _opinion_direction_label(before if before is not None else float("nan"), pred if pred is not None else float("nan"))
+            # Coerce numeric values when possible for clearer notes.
+            b_val: Optional[float]
+            a_val: Optional[float]
+            try:
+                b_val = float(before) if before is not None else None
+            except Exception:
+                b_val = None
+            try:
+                a_val = float(pred) if pred is not None else None
+            except Exception:
+                a_val = None
             if question and (think or answer):
-                out.append(Sample(issue=issue, task="opinion", question=question, think=think, answer=answer, opinion_label=direction))
+                out.append(
+                    Sample(
+                        issue=issue,
+                        task="opinion",
+                        question=question,
+                        think=think,
+                        answer=answer,
+                        opinion_label=direction,
+                        before=b_val,
+                        predicted_after=a_val,
+                    )
+                )
     return out
 
 
@@ -199,8 +239,9 @@ def _format_sample_block(idx: int, sample: Sample) -> List[str]:
     lines.append("")
     lines.append("#### Model Response")
     lines.append("")
-    # Write <think> and <answer> blocks exactly as the model produced them.
-    # Preserve empty blocks when only one tag is available.
+    # Present the model's response inside a code fence as requested.
+    # Keep <opinion> (derived) together for quick scanning.
+    lines.append("```text")
     if sample.think:
         lines.append("<think>")
         lines.append(sample.think)
@@ -213,7 +254,39 @@ def _format_sample_block(idx: int, sample: Sample) -> List[str]:
         lines.append("")
     if sample.task == "opinion" and sample.opinion_label:
         lines.append(f"<opinion>{sample.opinion_label}</opinion>")
-        lines.append("")
+    lines.append("```")
+    lines.append("")
+
+    # Add an explicit notes section explaining what the sample shows.
+    def _bool_label(flag: bool) -> str:
+        return "yes" if flag else "no"
+
+    has_think = bool(sample.think)
+    has_answer = bool(sample.answer)
+
+    lines.append("#### Notes")
+    lines.append("")
+    lines.append(f"- Issue: {sample.issue.replace('_', ' ')}")
+    lines.append(f"- Task: {'Next-video selection' if sample.task == 'next_video' else 'Opinion shift prediction'}")
+    lines.append(f"- Tags present — think: {_bool_label(has_think)}, answer: {_bool_label(has_answer)}")
+    if sample.task == "next_video":
+        chosen = sample.chosen_option if sample.chosen_option is not None else sample.answer.strip()
+        lines.append(f"- Chosen option: {chosen}")
+    else:  # opinion
+        if sample.before is not None:
+            lines.append(f"- Pre-study opinion index: {sample.before:.2f}")
+        if sample.predicted_after is not None:
+            lines.append(f"- Predicted post-study index: {sample.predicted_after:.2f}")
+        if sample.opinion_label:
+            lines.append(f"- Predicted direction: {sample.opinion_label}")
+
+    # Include a short rationale summary from <think> when available.
+    if sample.think:
+        snippet = sample.think.strip().splitlines()[0]
+        if len(snippet) > 240:
+            snippet = snippet[:237] + "..."
+        lines.append(f"- Short rationale: {snippet}")
+
     return lines
 
 
@@ -245,6 +318,16 @@ def write_sample_responses_report(
     path = samples_dir / "README.md"
 
     lines: List[str] = [f"# {family_label} Sample Generative Model Responses", ""]
+    lines.extend([
+        "This gallery shows concrete questions given to the model and the",
+        "exact structured <think>/<answer> outputs it produced. Each example",
+        "adds explicit notes clarifying what the model did (selection or",
+        "opinion prediction), whether tags are present, and a short rationale",
+        "summarised from the <think> block.",
+        "",
+        "Sections are grouped by issue and each includes up to 5 examples.",
+        "",
+    ])
 
     nv_samples = _collect_next_video_samples(list(next_video_files)) if next_video_files else []
     op_samples = _collect_opinion_samples(list(opinion_files)) if opinion_files else []
@@ -265,21 +348,115 @@ def write_sample_responses_report(
         write_markdown_lines(path, lines)
         return
 
-    # For each issue, select up to per_issue examples preferring next_video first.
-    for issue_key, issue_label in (("gun_control", "Gun Control"), ("minimum_wage", "Minimum Wage")):
-        selected: List[Sample] = []
-        nv_list = [s for s in nv_samples if s.issue == issue_key]
-        op_list = [s for s in op_samples if s.issue == issue_key]
-        selected.extend(nv_list[:per_issue])
-        if len(selected) < per_issue:
-            remaining = per_issue - len(selected)
-            selected.extend(op_list[:remaining])
+    # Select a balanced mix: 10 total (5 gun, 5 wage) with 5 opinion and 5 next-video.
+    def _bin(items: Sequence[Sample], *, issue: str | None = None, task: str | None = None) -> List[Sample]:
+        out: List[Sample] = []
+        for s in items:
+            if issue and s.issue != issue:
+                continue
+            if task and s.task != task:
+                continue
+            out.append(s)
+        return out
+
+    gun_nv = _bin(nv_samples, issue="gun_control")
+    wage_nv = _bin(nv_samples, issue="minimum_wage")
+    gun_op = _bin(op_samples, issue="gun_control")
+    wage_op = _bin(op_samples, issue="minimum_wage")
+
+    # Decide which issue takes 3 opinion vs 2 opinion based on availability.
+    # Aim for: gun_op_quota + wage_op_quota = 5 and gun_total = wage_total = 5.
+    gun_op_quota, wage_op_quota = 2, 3
+    if len(gun_op) >= 3 and (len(gun_op) >= len(wage_op) or len(wage_op) < 3):
+        gun_op_quota, wage_op_quota = 3, 2
+    elif len(wage_op) >= 3:
+        gun_op_quota, wage_op_quota = 2, 3
+
+    # Clamp by availability first.
+    gun_op_take = min(gun_op_quota, len(gun_op))
+    wage_op_take = min(wage_op_quota, len(wage_op))
+    # If we fell short on one side, try to borrow from the other issue to still reach 5 opinions.
+    total_op = gun_op_take + wage_op_take
+    if total_op < 5:
+        deficit = 5 - total_op
+        # Prefer borrowing from the issue with more remaining op samples.
+        gun_op_rem = len(gun_op) - gun_op_take
+        wage_op_rem = len(wage_op) - wage_op_take
+        while deficit > 0 and (gun_op_rem > 0 or wage_op_rem > 0):
+            if gun_op_rem >= wage_op_rem and gun_op_rem > 0:
+                gun_op_take += 1
+                gun_op_rem -= 1
+            elif wage_op_rem > 0:
+                wage_op_take += 1
+                wage_op_rem -= 1
+            deficit -= 1
+        total_op = gun_op_take + wage_op_take
+
+    # Next-video quotas per issue so that per-issue totals are 5 and total NV=5.
+    gun_nv_quota = max(0, 5 - gun_op_take)
+    wage_nv_quota = max(0, 5 - wage_op_take)
+    # Clamp by availability and ensure total NV aims at 5.
+    gun_nv_take = min(gun_nv_quota, len(gun_nv))
+    wage_nv_take = min(wage_nv_quota, len(wage_nv))
+    total_nv = gun_nv_take + wage_nv_take
+    if total_nv < 5:
+        deficit = 5 - total_nv
+        gun_nv_rem = len(gun_nv) - gun_nv_take
+        wage_nv_rem = len(wage_nv) - wage_nv_take
+        while deficit > 0 and (gun_nv_rem > 0 or wage_nv_rem > 0):
+            if gun_nv_rem >= wage_nv_rem and gun_nv_rem > 0 and gun_nv_take < 5:
+                gun_nv_take += 1
+                gun_nv_rem -= 1
+            elif wage_nv_rem > 0 and wage_nv_take < 5:
+                wage_nv_take += 1
+                wage_nv_rem -= 1
+            deficit -= 1
+        total_nv = gun_nv_take + wage_nv_take
+
+    # Assemble selections.
+    select_gun: List[Sample] = gun_op[:gun_op_take] + gun_nv[:gun_nv_take]
+    select_wage: List[Sample] = wage_op[:wage_op_take] + wage_nv[:wage_nv_take]
+
+    # If any issue exceeds 5 due to borrowing logic, trim.
+    select_gun = select_gun[:5]
+    select_wage = select_wage[:5]
+
+    # If overall fewer than 10 (due to limited artefacts), top up with any remaining samples.
+    total_selected = len(select_gun) + len(select_wage)
+    if total_selected < 10:
+        pool: List[Sample] = []
+        # Prefer to satisfy remaining task quotas first.
+        selected_op = sum(1 for s in select_gun + select_wage if s.task == "opinion")
+        selected_nv = sum(1 for s in select_gun + select_wage if s.task == "next_video")
+        if selected_op < 5:
+            pool.extend(gun_op[gun_op_take:] + wage_op[wage_op_take:])
+        if selected_nv < 5:
+            pool.extend(gun_nv[gun_nv_take:] + wage_nv[wage_nv_take:])
+        # Fallback: any remaining samples if still short.
+        if not pool:
+            pool.extend([s for s in (nv_samples + op_samples) if s not in select_gun and s not in select_wage])
+        for s in pool:
+            if total_selected >= 10:
+                break
+            if s.issue == "gun_control" and len(select_gun) < 5:
+                select_gun.append(s)
+                total_selected += 1
+            elif s.issue == "minimum_wage" and len(select_wage) < 5:
+                select_wage.append(s)
+                total_selected += 1
+
+    # Render sections
+    sections = [("gun_control", "Gun Control", select_gun), ("minimum_wage", "Minimum Wage", select_wage)]
+    for issue_key, issue_label, selected in sections:
         if not selected:
-            # Skip empty sections entirely to keep the report concise.
             continue
         lines.append(f"## {issue_label}")
         lines.append("")
-        for idx, sample in enumerate(selected, start=1):
+        # Ensure a stable ordering: show opinions first, then next-video, interleave otherwise.
+        def _order_key(s: Sample) -> Tuple[int, str]:
+            # opinion first (0), then next_video (1); keep original question hash as tiebreaker
+            return (0 if s.task == "opinion" else 1, s.question[:60])
+        for idx, sample in enumerate(sorted(selected, key=_order_key), start=1):
             lines.extend(_format_sample_block(idx, sample))
 
     write_markdown_lines(path, lines)
@@ -288,4 +465,3 @@ def write_sample_responses_report(
 __all__ = [
     "write_sample_responses_report",
 ]
-

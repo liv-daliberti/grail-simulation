@@ -300,7 +300,7 @@
 <span class="p">)</span>
 
 <div class="viewcode-block" id="load_dataset_source">
-<a class="viewcode-back" href="../../../api/xgb.html#knn.core.data.load_dataset_source">[docs]</a>
+<a class="viewcode-back" href="../../../api/xgb.html#knn.data.load_dataset_source">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_dataset_source</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">cache_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DatasetDict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Load a cleaned dataset from disk or from the Hugging Face Hub.</span>
@@ -325,7 +325,7 @@
 
 
 <div class="viewcode-block" id="issues_in_dataset">
-<a class="viewcode-back" href="../../../api/xgb.html#knn.core.data.issues_in_dataset">[docs]</a>
+<a class="viewcode-back" href="../../../api/xgb.html#knn.data.issues_in_dataset">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">issues_in_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">DatasetDict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Return the list of issue labels present in the dataset.</span>
@@ -343,7 +343,7 @@
 
 
 <div class="viewcode-block" id="filter_dataset_for_issue">
-<a class="viewcode-back" href="../../../api/xgb.html#knn.core.data.filter_dataset_for_issue">[docs]</a>
+<a class="viewcode-back" href="../../../api/xgb.html#knn.data.filter_dataset_for_issue">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">filter_dataset_for_issue</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">DatasetDict</span><span class="p">,</span> <span class="n">issue</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DatasetDict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Filter a dataset down to a specific issue label.</span>
@@ -397,7 +397,7 @@
     <span class="k">return</span> <span class="n">normalised</span>
 
 <div class="viewcode-block" id="filter_split_for_participant_studies">
-<a class="viewcode-back" href="../../../api/xgb.html#knn.core.data.filter_split_for_participant_studies">[docs]</a>
+<a class="viewcode-back" href="../../../api/xgb.html#knn.data.filter_split_for_participant_studies">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">filter_split_for_participant_studies</span><span class="p">(</span><span class="n">split_ds</span><span class="p">,</span> <span class="n">studies</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Filter a dataset split to the requested ``participant_study`` tokens.</span>
@@ -431,7 +431,7 @@
 
 
 <div class="viewcode-block" id="filter_dataset_for_participant_studies">
-<a class="viewcode-back" href="../../../api/xgb.html#knn.core.data.filter_dataset_for_participant_studies">[docs]</a>
+<a class="viewcode-back" href="../../../api/xgb.html#knn.data.filter_dataset_for_participant_studies">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">filter_dataset_for_participant_studies</span><span class="p">(</span>
     <span class="n">dataset</span><span class="p">:</span> <span class="n">DatasetDict</span><span class="p">,</span>
     <span class="n">studies</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>

@@ -333,7 +333,7 @@
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="Word2VecConfig">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.features.Word2VecConfig">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.features.Word2VecConfig">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Word2VecConfig</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -364,7 +364,7 @@
 
 
 <div class="viewcode-block" id="Word2VecFeatureBuilder">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.features.Word2VecFeatureBuilder">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.features.Word2VecFeatureBuilder">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Word2VecFeatureBuilder</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Create Word2Vec embeddings from viewer prompts.</span>
@@ -375,7 +375,7 @@
 <span class="sd">    :vartype _model: gensim.models.Word2Vec | None</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 <div class="viewcode-block" id="Word2VecFeatureBuilder.__init__">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.features.Word2VecFeatureBuilder.__init__">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.features.Word2VecFeatureBuilder.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Word2VecConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialise the builder with optional configuration overrides.</span>
@@ -400,7 +400,7 @@
         <span class="k">return</span> <span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
 
 <div class="viewcode-block" id="Word2VecFeatureBuilder.train">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.features.Word2VecFeatureBuilder.train">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.features.Word2VecFeatureBuilder.train">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">corpus</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Train a Word2Vec model using the provided corpus.</span>
@@ -426,7 +426,7 @@
 
 
 <div class="viewcode-block" id="Word2VecFeatureBuilder.load">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.features.Word2VecFeatureBuilder.load">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.features.Word2VecFeatureBuilder.load">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">directory</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Load a previously trained Word2Vec model from disk.</span>
@@ -441,7 +441,7 @@
 
 
 <div class="viewcode-block" id="Word2VecFeatureBuilder.save">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.features.Word2VecFeatureBuilder.save">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.features.Word2VecFeatureBuilder.save">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">directory</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Persist the trained model to ``directory``.</span>
@@ -457,7 +457,7 @@
 
 
 <div class="viewcode-block" id="Word2VecFeatureBuilder.encode">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.features.Word2VecFeatureBuilder.encode">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.features.Word2VecFeatureBuilder.encode">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return the averaged embedding vector for ``text``.</span>
@@ -477,7 +477,7 @@
 
 
 <div class="viewcode-block" id="Word2VecFeatureBuilder.transform">
-<a class="viewcode-back" href="../../../api/knn.html#knn.core.features.Word2VecFeatureBuilder.transform">[docs]</a>
+<a class="viewcode-back" href="../../../api/knn.html#knn.features.Word2VecFeatureBuilder.transform">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">corpus</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return stacked embeddings for ``corpus``.</span>

@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Iterator, Mapping, MutableMapping, Sequence
+from typing import Any, Iterable, Iterator, Mapping, Sequence
 
 import common.data.hf_datasets as _hf_datasets
 from common.open_r1.example_utils import row_to_training_example
@@ -194,25 +194,3 @@ def prepare_examples(
         except (TypeError, ValueError):
             continue
         yield prepared
-
-
-def group_rows_by_participant(
-    rows: Sequence[Mapping[str, Any]],
-    *,
-    key: str,
-) -> MutableMapping[str, list[Mapping[str, Any]]]:
-    """Return participant-indexed mappings used by opinion evaluations.
-
-    :param rows: Sequence of dataset rows to index.
-    :param key: Column name containing the participant identifier.
-    :returns: Mapping from participant id to a list of associated rows.
-    :rtype: MutableMapping[str, list[Mapping[str, Any]]]
-    """
-
-    grouped: MutableMapping[str, list[Mapping[str, Any]]] = {}
-    for row in rows:
-        participant_id = str(row.get(key) or "").strip()
-        if not participant_id:
-            continue
-        grouped.setdefault(participant_id, []).append(row)
-    return grouped

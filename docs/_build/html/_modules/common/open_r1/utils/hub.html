@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html">
 
-    <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
+    <!-- Generated with Sphinx 7.4.7 and Furo 2025.09.25 -->
         <title>common.open_r1.utils.hub - GRAIL Simulation documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=580074bf" />
@@ -416,42 +416,6 @@
 
 
 
-<div class="viewcode-block" id="check_hub_revision_exists">
-<a class="viewcode-back" href="../../../../api/open_r1.html#common.open_r1.utils.hub.check_hub_revision_exists">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">check_hub_revision_exists</span><span class="p">(</span><span class="n">training_args</span><span class="p">:</span> <span class="n">SFTConfig</span> <span class="o">|</span> <span class="n">GRPOConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check whether the configured Hub revision already exists.</span>
-
-<span class="sd">    :param training_args: Training arguments including Hub revision metadata.</span>
-<span class="sd">    :returns: ``None``. Raises ``ValueError`` when the revision exists without overwrite.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="p">(</span>
-        <span class="o">*</span><span class="n">_</span><span class="p">,</span>
-        <span class="n">repo_exists_fn</span><span class="p">,</span>
-        <span class="n">list_repo_refs_fn</span><span class="p">,</span>
-        <span class="n">list_repo_files_fn</span><span class="p">,</span>
-        <span class="n">__</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">=</span> <span class="n">_require_huggingface_hub</span><span class="p">()</span>
-
-    <span class="k">if</span> <span class="n">repo_exists_fn</span><span class="p">(</span><span class="n">training_args</span><span class="o">.</span><span class="n">hub_model_id</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">training_args</span><span class="o">.</span><span class="n">push_to_hub_revision</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
-            <span class="c1"># First check if the revision exists</span>
-            <span class="n">revisions</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">rev</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">rev</span> <span class="ow">in</span> <span class="n">list_repo_refs_fn</span><span class="p">(</span><span class="n">training_args</span><span class="o">.</span><span class="n">hub_model_id</span><span class="p">)</span><span class="o">.</span><span class="n">branches</span>
-            <span class="p">]</span>
-            <span class="c1"># If the revision exists, we next check it has a README file</span>
-            <span class="k">if</span> <span class="n">training_args</span><span class="o">.</span><span class="n">hub_model_revision</span> <span class="ow">in</span> <span class="n">revisions</span><span class="p">:</span>
-                <span class="n">repo_files</span> <span class="o">=</span> <span class="n">list_repo_files_fn</span><span class="p">(</span>
-                    <span class="n">repo_id</span><span class="o">=</span><span class="n">training_args</span><span class="o">.</span><span class="n">hub_model_id</span><span class="p">,</span>
-                    <span class="n">revision</span><span class="o">=</span><span class="n">training_args</span><span class="o">.</span><span class="n">hub_model_revision</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="k">if</span> <span class="s2">&quot;README.md&quot;</span> <span class="ow">in</span> <span class="n">repo_files</span> <span class="ow">and</span> <span class="n">training_args</span><span class="o">.</span><span class="n">overwrite_hub_revision</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;Revision </span><span class="si">{</span><span class="n">training_args</span><span class="o">.</span><span class="n">hub_model_revision</span><span class="si">}</span><span class="s2"> already exists. &quot;</span>
-                        <span class="s2">&quot;Use --overwrite_hub_revision to overwrite it.&quot;</span>
-                    <span class="p">)</span></div>
-
-
-
 <div class="viewcode-block" id="get_param_count_from_repo_id">
 <a class="viewcode-back" href="../../../../api/open_r1.html#common.open_r1.utils.hub.get_param_count_from_repo_id">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_param_count_from_repo_id</span><span class="p">(</span><span class="n">repo_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
@@ -558,7 +522,7 @@
     </aside>
   </div>
 </div><script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../../_static/doctools.js?v=9a2dae69"></script>
     <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../../_static/scripts/furo.js?v=46bd48cc"></script>
     </body>

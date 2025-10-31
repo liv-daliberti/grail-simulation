@@ -179,15 +179,6 @@ class Word2VecFeatureBuilder:
         directory.mkdir(parents=True, exist_ok=True)
         self._model.save(str(directory / "word2vec.model"))
 
-    def is_trained(self) -> bool:
-        """
-        Indicate whether the underlying Word2Vec model is ready for inference.
-
-        :returns: ``True`` when a trained model is loaded.
-        :rtype: bool
-        """
-        return self._model is not None
-
     def encode(self, text: str) -> np.ndarray:
         """
         Return the averaged embedding vector for ``text``.

@@ -56,7 +56,7 @@ def _opinion_sweep_outcome_from_metrics(
     Convert cached opinion sweep metrics into an outcome instance.
 
     :param task: Opinion sweep task metadata associated with the metrics.
-    :type task: OpinionSweepTask
+    :type task: ~xgb.pipeline.context.OpinionSweepTask
     :param metrics: Metrics dictionary loaded from disk.
     :type metrics: Mapping[str, object]
     :param metrics_path: Filesystem path to the metrics artefact.
@@ -237,7 +237,8 @@ def _build_opinion_task(
     task_index: int,
 ) -> OpinionSweepTask:
     """
-    Create a fully-populated :class:`OpinionSweepTask` for a single study/config pair.
+    Create a fully-populated :class:`~xgb.pipeline.context.OpinionSweepTask`
+    for a single study/config pair.
 
     :param config: Sweep configuration describing the model variant to run.
     :type config: SweepConfig
@@ -248,7 +249,7 @@ def _build_opinion_task(
     :param task_index: Deterministic order index for the task.
     :type task_index: int
     :returns: Opinion sweep task ready for execution.
-    :rtype: OpinionSweepTask
+    :rtype: ~xgb.pipeline.context.OpinionSweepTask
     """
 
     vectorizer_builder = cast(
@@ -303,7 +304,7 @@ def _iter_opinion_sweep_tasks(
     :param context: Shared opinion sweep execution context.
     :type context: OpinionSweepRunContext
     :returns: Iterable sequence of opinion sweep tasks sorted by a stable index.
-    :rtype: Sequence[OpinionSweepTask]
+    :rtype: Sequence[~xgb.pipeline.context.OpinionSweepTask]
     """
 
     tasks: List[OpinionSweepTask] = []
@@ -381,9 +382,9 @@ def _execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
     Execute a single opinion sweep task and return the resulting metrics.
 
     :param task: Opinion sweep task carrying configuration, study, and paths.
-    :type task: OpinionSweepTask
+    :type task: ~xgb.pipeline.context.OpinionSweepTask
     :returns: Opinion sweep outcome populated from persisted metrics.
-    :rtype: OpinionSweepOutcome
+    :rtype: ~xgb.pipeline.context.OpinionSweepOutcome
     :raises RuntimeError: Propagates evaluation errors raised by ``run_opinion_eval``.
     """
 
@@ -449,11 +450,11 @@ def _execute_opinion_sweep_tasks(
     Execute opinion sweep tasks, optionally in parallel.
 
     :param tasks: Opinion sweep tasks scheduled for execution.
-    :type tasks: Sequence[OpinionSweepTask]
+    :type tasks: Sequence[~xgb.pipeline.context.OpinionSweepTask]
     :param jobs: Maximum number of concurrent worker processes.
     :type jobs: int
     :returns: Opinion sweep outcomes computed for each task.
-    :rtype: List[OpinionSweepOutcome]
+    :rtype: List[~xgb.pipeline.context.OpinionSweepOutcome]
     """
 
     return execute_indexed_tasks(

@@ -299,7 +299,6 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
         )
     if not normalized_tasks:
         normalized_tasks.update({"next_video", "opinion"})
-    parsed.tasks_tokens = sorted(normalized_tasks)
     parsed.run_next_video = "next_video" in normalized_tasks
     parsed.run_opinion = "opinion" in normalized_tasks
     return parsed, list(extra)

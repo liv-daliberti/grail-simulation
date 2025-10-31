@@ -153,39 +153,6 @@ def push_to_hub_revision(
     return future
 
 
-def check_hub_revision_exists(training_args: SFTConfig | GRPOConfig):
-    """Check whether the configured Hub revision already exists.
-
-    :param training_args: Training arguments including Hub revision metadata.
-    :returns: ``None``. Raises ``ValueError`` when the revision exists without overwrite.
-    """
-    (
-        *_,
-        repo_exists_fn,
-        list_repo_refs_fn,
-        list_repo_files_fn,
-        __,
-    ) = _require_huggingface_hub()
-
-    if repo_exists_fn(training_args.hub_model_id):
-        if training_args.push_to_hub_revision is True:
-            # First check if the revision exists
-            revisions = [
-                rev.name for rev in list_repo_refs_fn(training_args.hub_model_id).branches
-            ]
-            # If the revision exists, we next check it has a README file
-            if training_args.hub_model_revision in revisions:
-                repo_files = list_repo_files_fn(
-                    repo_id=training_args.hub_model_id,
-                    revision=training_args.hub_model_revision,
-                )
-                if "README.md" in repo_files and training_args.overwrite_hub_revision is False:
-                    raise ValueError(
-                        f"Revision {training_args.hub_model_revision} already exists. "
-                        "Use --overwrite_hub_revision to overwrite it."
-                    )
-
-
 def get_param_count_from_repo_id(repo_id: str) -> int:
     """Return parameter count from safetensors metadata or repo naming pattern.
 

@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Iterable, Sequence
+from typing import Any, Sequence
 
 import numpy as np
 
@@ -188,19 +188,6 @@ class SentenceTransformerEncoder:
         if array.ndim == 1:
             array = array.reshape(1, -1)
         return array
-
-    def encode_iter(self, texts: Iterable[str]) -> np.ndarray:
-        """
-        Encode an iterable of texts by materialising it once.
-
-        :param texts: Iterable of documents to embed.
-        :type texts: Iterable[str]
-        :returns: Matrix of embeddings corresponding to ``texts``.
-        :rtype: numpy.ndarray
-        """
-
-
-        return self.encode(list(texts))
 
     def embedding_dimension(self) -> int:
         """

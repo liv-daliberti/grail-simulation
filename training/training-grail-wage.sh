@@ -39,9 +39,9 @@ export GIT_STATUS
 # ────────────────────────────────────────────────────────────────
 # Environment bootstrap (modules / Conda)
 # ────────────────────────────────────────────────────────────────
-if command -v module >/dev/null 2>&1; then
-  module load cudatoolkit/12.4
-fi
+#if command -v module >/dev/null 2>&1; then
+#  module load cudatoolkit/12.4
+#fi
 
 CONDA_SH=${CONDA_SH:-/usr/local/anaconda3/2024.02/etc/profile.d/conda.sh}
 if [ -f "$CONDA_SH" ]; then

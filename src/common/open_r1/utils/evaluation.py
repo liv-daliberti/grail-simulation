@@ -101,9 +101,6 @@ def get_lighteval_tasks() -> list[str]:
     return list(LIGHTEVAL_TASKS.keys())
 
 
-SUPPORTED_BENCHMARKS = get_lighteval_tasks()
-
-
 def run_lighteval_job(
     benchmark: str,
     training_args: Union["SFTConfig", "GRPOConfig"],

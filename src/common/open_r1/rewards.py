@@ -179,28 +179,6 @@ def _parse_slate_names(slate: str) -> Tuple[List[str], dict[int, str]]:
         idxmap = {i + 1: option_name for i, option_name in enumerate(names)}
     return names, idxmap
 
-def _gold_index_from_gold_and_slate(gold: str, slate: str) -> int:
-    """Return 1-based gold index, or ``-1`` if not resolvable.
-
-    :param gold: Gold identifier or option text.
-    :param slate: Slate text containing the list of options.
-    :returns: 1-based index of the gold option, ``-1`` otherwise.
-    """
-    gold = (gold or "").strip()
-    match_num_only = _NUM_ONLY.match(gold)
-    if match_num_only:
-        try:
-            return int(match_num_only.group(1))
-        except ValueError:
-            return -1
-    _, idxmap = _parse_slate_names(slate)
-    gcan = _canon(gold)
-    if gcan:
-        for key, name in idxmap.items():
-            if _canon(name) == gcan:
-                return key
-    return -1
-
 def _completion_text(comp: Any) -> str:
     """Extract plain assistant text from various completion shapes.
 
@@ -379,46 +357,10 @@ def formating(completions, **kwargs):
     return _match_pattern_reward(completions, pattern)
 
 
-def format_reward(
-    completions: List[List[dict]],
-    solution: Optional[List[str]] = None,  # keep for backwards‐compat
-    answer: Optional[List[str]] = None,  # new name
-    **kwargs,
-) -> List[Optional[float]]:
-    """
-    Return the usual format reward only if the sample's accuracy reward is 0.
-    Works with either `solution=[…]` or `answer=[…]`.
-
-    :param completions: Chat-style completions to evaluate.
-    :type completions: list[list[dict]]
-    :param solution: Optional list of ground-truth answers.
-    :type solution: list[str] | None
-    :param answer: Alias for ``solution``.
-    :type answer: list[str] | None
-    :param kwargs: Additional keyword arguments forwarded to :func:`accuracy_reward`.
-    :type kwargs: dict
-    :returns: Format rewards gated by accuracy (``None`` when accuracy cannot be computed).
-    :rtype: list[Optional[float]]
-    """
-    golds = solution if solution is not None else answer
-
-    acc = accuracy_reward(completions, solution=golds, **kwargs)
-    fmt = formating(completions)
-
-    gated: List[Optional[float]] = []
-    for accuracy_score, format_score in zip(acc, fmt):
-        if accuracy_score is None:
-            gated.append(None)      # skip
-        elif accuracy_score == 0.0:
-            gated.append(format_score)         # wrong → formatting bonus
-        else:
-            gated.append(0.0)       # correct → no bonus
-    return gated
-
 def tag_count_reward(completions, **kwargs) -> list[float]:
     """
     Reward function that checks if we produce the desired number of think and
-    answer tags associated with :func:`format_reward`.
+    answer tags associated with the formatting guard.
 
     Adapted from:
     https://gist.github.com/willccbb/4676755236bb08cab5f4e54a0475d6fb#file-grpo_demo-py-L90

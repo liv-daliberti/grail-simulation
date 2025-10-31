@@ -439,28 +439,6 @@
         <span class="n">idxmap</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span> <span class="n">option_name</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">option_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">names</span><span class="p">)}</span>
     <span class="k">return</span> <span class="n">names</span><span class="p">,</span> <span class="n">idxmap</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_gold_index_from_gold_and_slate</span><span class="p">(</span><span class="n">gold</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">slate</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return 1-based gold index, or ``-1`` if not resolvable.</span>
-
-<span class="sd">    :param gold: Gold identifier or option text.</span>
-<span class="sd">    :param slate: Slate text containing the list of options.</span>
-<span class="sd">    :returns: 1-based index of the gold option, ``-1`` otherwise.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">gold</span> <span class="o">=</span> <span class="p">(</span><span class="n">gold</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="n">match_num_only</span> <span class="o">=</span> <span class="n">_NUM_ONLY</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">gold</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">match_num_only</span><span class="p">:</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">match_num_only</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
-        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
-    <span class="n">_</span><span class="p">,</span> <span class="n">idxmap</span> <span class="o">=</span> <span class="n">_parse_slate_names</span><span class="p">(</span><span class="n">slate</span><span class="p">)</span>
-    <span class="n">gcan</span> <span class="o">=</span> <span class="n">_canon</span><span class="p">(</span><span class="n">gold</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">gcan</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">idxmap</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">_canon</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">==</span> <span class="n">gcan</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">key</span>
-    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_completion_text</span><span class="p">(</span><span class="n">comp</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract plain assistant text from various completion shapes.</span>
 
@@ -646,45 +624,6 @@
     <span class="n">pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;^&lt;think&gt;\n.*?\n&lt;/think&gt;\n&lt;answer&gt;\n.*?\n&lt;/answer&gt;$&quot;</span>
     <span class="k">return</span> <span class="n">_match_pattern_reward</span><span class="p">(</span><span class="n">completions</span><span class="p">,</span> <span class="n">pattern</span><span class="p">)</span></div>
 
-
-
-<div class="viewcode-block" id="format_reward">
-<a class="viewcode-back" href="../../../api/open_r1.html#common.open_r1.rewards.format_reward">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">format_reward</span><span class="p">(</span>
-    <span class="n">completions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]],</span>
-    <span class="n">solution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># keep for backwards‐compat</span>
-    <span class="n">answer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># new name</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Return the usual format reward only if the sample&#39;s accuracy reward is 0.</span>
-<span class="sd">    Works with either `solution=[…]` or `answer=[…]`.</span>
-
-<span class="sd">    :param completions: Chat-style completions to evaluate.</span>
-<span class="sd">    :type completions: list[list[dict]]</span>
-<span class="sd">    :param solution: Optional list of ground-truth answers.</span>
-<span class="sd">    :type solution: list[str] | None</span>
-<span class="sd">    :param answer: Alias for ``solution``.</span>
-<span class="sd">    :type answer: list[str] | None</span>
-<span class="sd">    :param kwargs: Additional keyword arguments forwarded to :func:`accuracy_reward`.</span>
-<span class="sd">    :type kwargs: dict</span>
-<span class="sd">    :returns: Format rewards gated by accuracy (``None`` when accuracy cannot be computed).</span>
-<span class="sd">    :rtype: list[Optional[float]]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">golds</span> <span class="o">=</span> <span class="n">solution</span> <span class="k">if</span> <span class="n">solution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">answer</span>
-
-    <span class="n">acc</span> <span class="o">=</span> <span class="n">accuracy_reward</span><span class="p">(</span><span class="n">completions</span><span class="p">,</span> <span class="n">solution</span><span class="o">=</span><span class="n">golds</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="n">fmt</span> <span class="o">=</span> <span class="n">formating</span><span class="p">(</span><span class="n">completions</span><span class="p">)</span>
-
-    <span class="n">gated</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">accuracy_score</span><span class="p">,</span> <span class="n">format_score</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">acc</span><span class="p">,</span> <span class="n">fmt</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">accuracy_score</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">gated</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>      <span class="c1"># skip</span>
-        <span class="k">elif</span> <span class="n">accuracy_score</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
-            <span class="n">gated</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">format_score</span><span class="p">)</span>         <span class="c1"># wrong → formatting bonus</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">gated</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>       <span class="c1"># correct → no bonus</span>
-    <span class="k">return</span> <span class="n">gated</span></div>
 
 
 <div class="viewcode-block" id="tag_count_reward">

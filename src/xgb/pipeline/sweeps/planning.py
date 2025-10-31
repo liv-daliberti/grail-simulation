@@ -98,7 +98,7 @@ def _format_opinion_sweep_task_descriptor(task: OpinionSweepTask) -> str:
     Return a short descriptor for an opinion sweep task.
 
     :param task: Opinion sweep task to describe.
-    :type task: OpinionSweepTask
+    :type task: ~xgb.pipeline.context.OpinionSweepTask
     :returns: Concise descriptor combining study and configuration.
     :rtype: str
     """

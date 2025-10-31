@@ -69,7 +69,6 @@ setup.py
 ../src/common/open_r1/utils/evaluation.py
 ../src/common/open_r1/utils/hub.py
 ../src/common/open_r1/utils/model_utils.py
-../src/common/open_r1/utils/replay_buffer.py
 ../src/common/opinion/__init__.py
 ../src/common/opinion/metrics.py
 ../src/common/opinion/models.py
@@ -82,6 +81,7 @@ setup.py
 ../src/common/pipeline/formatters.py
 ../src/common/pipeline/gpt4o_models.py
 ../src/common/pipeline/io.py
+../src/common/pipeline/metrics.py
 ../src/common/pipeline/models.py
 ../src/common/pipeline/prompts.py
 ../src/common/pipeline/stage.py
@@ -126,6 +126,7 @@ setup.py
 ../src/gpt4o/core/opinion/runner.py
 ../src/gpt4o/core/opinion/settings.py
 ../src/gpt4o/pipeline/__init__.py
+../src/gpt4o/pipeline/__main__.py
 ../src/gpt4o/pipeline/cache.py
 ../src/gpt4o/pipeline/models.py
 ../src/gpt4o/pipeline/sweeps.py
@@ -141,6 +142,7 @@ setup.py
 ../src/grail/pipeline.py
 ../src/grail/reports.py
 ../src/grail_simulation.egg-info/PKG-INFO
+../src/grail_simulation.egg-info/README.md
 ../src/grail_simulation.egg-info/SOURCES.txt
 ../src/grail_simulation.egg-info/dependency_links.txt
 ../src/grail_simulation.egg-info/requires.txt
@@ -267,7 +269,6 @@ setup.py
 ../src/xgb/pipeline/cli.py
 ../src/xgb/pipeline/context.py
 ../src/xgb/pipeline/evaluate.py
-../src/xgb/pipeline/sweeps.py
 ../src/xgb/pipeline/reports/__init__.py
 ../src/xgb/pipeline/reports/catalog.py
 ../src/xgb/pipeline/reports/features.py
@@ -285,6 +286,11 @@ setup.py
 ../src/xgb/pipeline/reports/opinion/report.py
 ../src/xgb/pipeline/reports/opinion/summaries.py
 ../src/xgb/pipeline/reports/opinion/tables.py
+../src/xgb/pipeline/sweeps/__init__.py
+../src/xgb/pipeline/sweeps/common.py
+../src/xgb/pipeline/sweeps/next_video.py
+../src/xgb/pipeline/sweeps/opinion.py
+../src/xgb/pipeline/sweeps/planning.py
 ../src/xgb/pipeline_reports/__init__.py
 ../src/xgb/pipeline_reports/catalog.py
 ../src/xgb/pipeline_reports/features.py

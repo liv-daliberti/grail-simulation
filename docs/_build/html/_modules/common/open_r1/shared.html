@@ -363,58 +363,6 @@
     <span class="s2">&quot;mix_copy_idx&quot;</span><span class="p">,</span>
 <span class="p">}</span>
 
-<span class="n">_WANDB_GUARD_ATTR</span> <span class="o">=</span> <span class="s2">&quot;_grail_error_guard_installed&quot;</span>
-<span class="n">_WANDB_GUARD_WARNED</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">install_wandb_error_guard</span><span class="p">(</span><span class="n">logger</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrap wandb logging calls to prevent outages from aborting training.</span>
-
-<span class="sd">    :param logger: Optional logger used for warning messages.</span>
-<span class="sd">    :returns: ``None``. Installs best-effort guards around wandb I/O.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
-        <span class="kn">import</span><span class="w"> </span><span class="nn">wandb</span>  <span class="c1"># type: ignore  # pylint: disable=import-outside-toplevel</span>
-    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
-        <span class="k">return</span>
-
-    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">wandb</span><span class="p">,</span> <span class="n">_WANDB_GUARD_ATTR</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
-        <span class="k">return</span>
-
-    <span class="n">sink</span> <span class="o">=</span> <span class="n">logger</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">logger</span><span class="p">,</span> <span class="s2">&quot;log&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;common.open_r1.wandb&quot;</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_wrap</span><span class="p">(</span><span class="n">fn_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">target</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">wandb</span><span class="p">,</span> <span class="n">fn_name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">target</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="s2">&quot;_grail_error_guard_wrapped&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
-            <span class="k">return</span>
-
-        <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
-        <span class="k">def</span><span class="w"> </span><span class="nf">_guarded</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">target</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># pylint: disable=broad-except</span>
-                <span class="n">level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span> <span class="k">if</span> <span class="n">fn_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_WANDB_GUARD_WARNED</span> <span class="k">else</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span>
-                <span class="n">sink</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
-                    <span class="n">level</span><span class="p">,</span>
-                    <span class="s2">&quot;wandb.</span><span class="si">%s</span><span class="s2"> failed (</span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">); continuing without logging&quot;</span><span class="p">,</span>
-                    <span class="n">fn_name</span><span class="p">,</span>
-                    <span class="n">exc</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
-                    <span class="n">exc</span><span class="p">,</span>
-                    <span class="n">exc_info</span><span class="o">=</span><span class="n">level</span> <span class="o">==</span> <span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="n">_WANDB_GUARD_WARNED</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">fn_name</span><span class="p">)</span>
-                <span class="k">return</span> <span class="kc">None</span>
-
-        <span class="nb">setattr</span><span class="p">(</span><span class="n">_guarded</span><span class="p">,</span> <span class="s2">&quot;_grail_error_guard_wrapped&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
-        <span class="nb">setattr</span><span class="p">(</span><span class="n">wandb</span><span class="p">,</span> <span class="n">fn_name</span><span class="p">,</span> <span class="n">_guarded</span><span class="p">)</span>
-
-    <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">,</span> <span class="s2">&quot;log_artifact&quot;</span><span class="p">):</span>
-        <span class="n">_wrap</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
-
-    <span class="nb">setattr</span><span class="p">(</span><span class="n">wandb</span><span class="p">,</span> <span class="n">_WANDB_GUARD_ATTR</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
-
-
 <span class="k">def</span><span class="w"> </span><span class="nf">collect_passthrough_fields</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a mapping containing the shared passthrough metadata.</span>
 
@@ -795,61 +743,6 @@
         <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
         <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
     <span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">build_grpo_pipeline_bundle</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-arguments</span>
-    <span class="o">*</span><span class="p">,</span>
-    <span class="n">model_builder</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">],</span>
-    <span class="n">trainer_cls</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="n">reward_funcs</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
-    <span class="n">tokenizer</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="n">dataset</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
-    <span class="n">script_args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="n">training_args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="n">model_args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="n">logger</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">peft_config_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">evaluate_fn_factory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">EvalFnFactory</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">GrpoPipelineComponents</span><span class="p">,</span> <span class="n">GrpoPipelineContext</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Assemble the shared GRPO pipeline components and execution context.</span>
-
-<span class="sd">    Centralises the repeated constructor invocations used by the GRPO entry</span>
-<span class="sd">    points so that pylint&#39;s duplicate-code check sees a single implementation.</span>
-
-<span class="sd">    :param model_builder: Callable used to construct the GRPO model.</span>
-<span class="sd">    :param trainer_cls: Trainer class implementing the GRPO interface.</span>
-<span class="sd">    :param reward_funcs: Reward functions to include in the trainer.</span>
-<span class="sd">    :param tokenizer: Tokenizer passed to the trainer.</span>
-<span class="sd">    :param dataset: Dataset mapping containing the training split.</span>
-<span class="sd">    :param script_args: Script configuration namespace.</span>
-<span class="sd">    :param training_args: Training arguments namespace.</span>
-<span class="sd">    :param model_args: Model configuration namespace.</span>
-<span class="sd">    :param logger: Logger used for informational output.</span>
-<span class="sd">    :param prefix: Prefix applied to log messages.</span>
-<span class="sd">    :param peft_config_fn: Optional callable producing PEFT configuration.</span>
-<span class="sd">    :param evaluate_fn_factory: Optional factory for evaluation wrappers.</span>
-<span class="sd">    :returns: Tuple of pipeline components and execution context.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">components</span> <span class="o">=</span> <span class="n">GrpoPipelineComponents</span><span class="p">(</span>
-        <span class="n">model_builder</span><span class="o">=</span><span class="n">model_builder</span><span class="p">,</span>
-        <span class="n">trainer_cls</span><span class="o">=</span><span class="n">trainer_cls</span><span class="p">,</span>
-        <span class="n">reward_funcs</span><span class="o">=</span><span class="n">reward_funcs</span><span class="p">,</span>
-        <span class="n">tokenizer</span><span class="o">=</span><span class="n">tokenizer</span><span class="p">,</span>
-        <span class="n">peft_config_fn</span><span class="o">=</span><span class="n">peft_config_fn</span><span class="p">,</span>
-        <span class="n">evaluate_fn_factory</span><span class="o">=</span><span class="n">evaluate_fn_factory</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">context</span> <span class="o">=</span> <span class="n">GrpoPipelineContext</span><span class="p">(</span>
-        <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
-        <span class="n">script_args</span><span class="o">=</span><span class="n">script_args</span><span class="p">,</span>
-        <span class="n">training_args</span><span class="o">=</span><span class="n">training_args</span><span class="p">,</span>
-        <span class="n">model_args</span><span class="o">=</span><span class="n">model_args</span><span class="p">,</span>
-        <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
-        <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">components</span><span class="p">,</span> <span class="n">context</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">build_grpo_trainer</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">setup</span><span class="p">:</span> <span class="n">GrpoTrainerSetup</span><span class="p">,</span> <span class="n">datasets</span><span class="p">:</span> <span class="n">GrpoTrainerDatasets</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>

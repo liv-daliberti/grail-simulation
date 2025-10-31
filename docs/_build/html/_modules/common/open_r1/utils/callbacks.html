@@ -276,10 +276,9 @@
 <span class="sd">&quot;&quot;&quot;Trainer callbacks that integrate Open-R1 runs with auxiliary services.</span>
 
 <span class="sd">The callbacks defined here extend Hugging Face ``Trainer`` runs with behaviour</span>
-<span class="sd">used by the Open-R1 experiments: automatically pushing checkpoints to the Hub,</span>
-<span class="sd">collecting high-performing prompts in a replay buffer, and mirroring batches</span>
-<span class="sd">into that buffer in real time.  The functions are written to be picked up by</span>
-<span class="sd">Sphinx autodoc so they show up in the generated API reference.</span>
+<span class="sd">used by the Open-R1 experiments, focusing on pushing checkpoints to the Hub.</span>
+<span class="sd">The functions are written to be picked up by Sphinx autodoc so they show up in</span>
+<span class="sd">the generated API reference.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -287,10 +286,6 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">Future</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimpleNamespace</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">.replay_buffer</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReplayBuffer</span>
-
 <span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># pylint: disable=import-error</span>
         <span class="n">TrainerCallback</span><span class="p">,</span>
@@ -410,207 +405,6 @@
                 <span class="n">run_benchmark_jobs</span><span class="p">(</span><span class="n">dummy</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_cfg</span><span class="p">)</span>
             <span class="n">fut</span><span class="o">.</span><span class="n">add_done_callback</span><span class="p">(</span><span class="n">_after</span><span class="p">)</span>  <span class="c1"># pylint: disable=no-member</span></div>
 </div>
-
-
-<span class="c1"># ---------------------------------------------------------------------------</span>
-<span class="c1">#  Success-caching callback (text-log scraper) -------------------------------</span>
-<span class="c1"># ---------------------------------------------------------------------------</span>
-
-<div class="viewcode-block" id="SuccessCachingCallback">
-<a class="viewcode-back" href="../../../../api/open_r1.html#common.open_r1.utils.callbacks.SuccessCachingCallback">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">SuccessCachingCallback</span><span class="p">(</span><span class="n">TrainerCallback</span><span class="p">):</span>  <span class="c1"># pylint: disable=too-few-public-methods</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Scrape ``trainer._textual_logs`` after each log step and push any prompt whose</span>
-<span class="sd">    accuracy meets or exceeds ``acc_threshold`` into the attached ``ReplayBuffer``.</span>
-
-<span class="sd">    Note:</span>
-<span class="sd">        Transformers never passes the trainer instance via ``**kwargs``; call</span>
-<span class="sd">        :meth:`set_trainer` during setup to register it.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-<div class="viewcode-block" id="SuccessCachingCallback.__init__">
-<a class="viewcode-back" href="../../../../api/open_r1.html#common.open_r1.utils.callbacks.SuccessCachingCallback.__init__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">replay_buffer</span><span class="p">:</span> <span class="n">ReplayBuffer</span><span class="p">,</span> <span class="n">acc_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.999</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialise the callback with a replay buffer and accuracy threshold.</span>
-
-<span class="sd">        :param replay_buffer: Buffer that stores high-quality prompts.</span>
-<span class="sd">        :param acc_threshold: Minimum accuracy required to cache a prompt.</span>
-<span class="sd">        :returns: ``None``. Stores references for later callbacks.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">buf</span> <span class="o">=</span> <span class="n">replay_buffer</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">thr</span> <span class="o">=</span> <span class="n">acc_threshold</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_trainer</span> <span class="o">=</span> <span class="kc">None</span>                         <span class="c1"># will be set later</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;SuccessCache&quot;</span><span class="p">)</span></div>
-
-
-    <span class="c1"># ---------- lifecycle hooks ------------------------------------------</span>
-<div class="viewcode-block" id="SuccessCachingCallback.set_trainer">
-<a class="viewcode-back" href="../../../../api/open_r1.html#common.open_r1.utils.callbacks.SuccessCachingCallback.set_trainer">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">set_trainer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trainer</span><span class="p">):</span>                  <span class="c1"># called once at start</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Register the owning trainer instance for later log inspection.</span>
-
-<span class="sd">        :param trainer: Trainer instance exposing ``_textual_logs``.</span>
-<span class="sd">        :returns: ``None``. Saves the trainer reference.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_trainer</span> <span class="o">=</span> <span class="n">trainer</span></div>
-
-
-    <span class="c1"># ---------- main hook -------------------------------------------------</span>
-<div class="viewcode-block" id="SuccessCachingCallback.on_log">
-<a class="viewcode-back" href="../../../../api/open_r1.html#common.open_r1.utils.callbacks.SuccessCachingCallback.on_log">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">on_log</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">_args</span><span class="p">:</span> <span class="n">TrainingArguments</span><span class="p">,</span>
-        <span class="n">_state</span><span class="p">:</span> <span class="n">TrainerState</span><span class="p">,</span>
-        <span class="n">_control</span><span class="p">:</span> <span class="n">TrainerControl</span><span class="p">,</span>
-        <span class="n">_logs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">_kwargs</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Scrape textual logs and add high-accuracy prompts to the buffer.</span>
-
-<span class="sd">        :param _args: Training arguments (unused).</span>
-<span class="sd">        :param _state: Trainer state (unused).</span>
-<span class="sd">        :param _control: Trainer control object (unused).</span>
-<span class="sd">        :param _logs: Latest scalar logs emitted by the trainer.</span>
-<span class="sd">        :param _kwargs: Additional keyword arguments from the trainer.</span>
-<span class="sd">        :returns: ``None``. Adds prompts to the buffer when thresholds are met.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trainer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span>
-
-        <span class="n">txt_logs</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_trainer</span><span class="p">,</span> <span class="s2">&quot;_textual_logs&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">txt_logs</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
-            <span class="k">return</span>
-
-        <span class="n">prompts</span> <span class="o">=</span> <span class="n">txt_logs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;prompt&quot;</span><span class="p">)</span>
-        <span class="n">rewards</span> <span class="o">=</span> <span class="n">txt_logs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rewards&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
-            <span class="nb">isinstance</span><span class="p">(</span><span class="n">rewards</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">)</span>
-            <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prompts</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">)</span>
-            <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prompts</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">))</span>
-            <span class="ow">and</span> <span class="n">prompts</span>
-        <span class="p">):</span>
-            <span class="k">return</span>
-
-        <span class="c1"># pick the accuracy reward head (name may differ in your config)</span>
-        <span class="n">acc_key</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">rewards</span> <span class="k">if</span> <span class="s2">&quot;accuracy&quot;</span> <span class="ow">in</span> <span class="n">k</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">acc_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span>
-
-        <span class="n">accuracy_series</span> <span class="o">=</span> <span class="n">rewards</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">acc_key</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
-            <span class="nb">isinstance</span><span class="p">(</span><span class="n">accuracy_series</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">)</span>
-            <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">accuracy_series</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">))</span>
-        <span class="p">):</span>
-            <span class="k">return</span>
-
-        <span class="k">for</span> <span class="n">prompt</span><span class="p">,</span> <span class="n">acc</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">prompts</span><span class="p">,</span> <span class="n">accuracy_series</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">acc</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thr</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">buf</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span></div>
-</div>
-
-
-<span class="c1"># ---------------------------------------------------------------------------</span>
-<span class="c1">#  Replay-buffer callback (fast path – uses training_step outputs) ----------</span>
-<span class="c1"># ---------------------------------------------------------------------------</span>
-
-<div class="viewcode-block" id="ReplayBufferCallback">
-<a class="viewcode-back" href="../../../../api/open_r1.html#common.open_r1.utils.callbacks.ReplayBufferCallback">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">ReplayBufferCallback</span><span class="p">(</span><span class="n">TrainerCallback</span><span class="p">):</span>  <span class="c1"># pylint: disable=too-few-public-methods</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Callback that logs batches directly into the replay buffer.&quot;&quot;&quot;</span>
-
-<div class="viewcode-block" id="ReplayBufferCallback.__init__">
-<a class="viewcode-back" href="../../../../api/open_r1.html#common.open_r1.utils.callbacks.ReplayBufferCallback.__init__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">replay_buffer</span><span class="p">:</span> <span class="n">ReplayBuffer</span><span class="p">,</span>
-        <span class="n">tokenizer</span><span class="p">,</span>
-        <span class="n">accuracy_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;crossword_accuracy_reward&quot;</span><span class="p">,</span>
-        <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
-    <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Configure the callback with replay buffer, tokenizer and reward key.</span>
-
-<span class="sd">        :param replay_buffer: Buffer storing prompts that exceed the threshold.</span>
-<span class="sd">        :param tokenizer: Tokenizer used to decode prompt token ids.</span>
-<span class="sd">        :param accuracy_key: Reward head name providing accuracy scores.</span>
-<span class="sd">        :param threshold: Minimum reward required to enqueue a prompt.</span>
-<span class="sd">        :returns: ``None``. Prepares the callback for training hooks.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">buf</span>  <span class="o">=</span> <span class="n">replay_buffer</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">tok</span>  <span class="o">=</span> <span class="n">tokenizer</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">key</span>  <span class="o">=</span> <span class="n">accuracy_key</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">thr</span>  <span class="o">=</span> <span class="n">threshold</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;[ReplayBufferCallback] registered ✔️&quot;</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
-
-
-    <span class="c1"># ←–––– this fires AFTER loss.backward() and BEFORE scheduler/step().</span>
-    <span class="c1"># It always receives both `inputs` and `outputs`.</span>
-<div class="viewcode-block" id="ReplayBufferCallback.on_train_batch_end">
-<a class="viewcode-back" href="../../../../api/open_r1.html#common.open_r1.utils.callbacks.ReplayBufferCallback.on_train_batch_end">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">on_train_batch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">_state</span><span class="p">,</span> <span class="n">_control</span><span class="p">,</span> <span class="o">**</span><span class="n">batch_kwargs</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Inspect training outputs and enqueue prompts crossing the threshold.</span>
-
-<span class="sd">        :param args: Training arguments providing runtime metadata.</span>
-<span class="sd">        :param _state: Trainer state (unused).</span>
-<span class="sd">        :param _control: Trainer control object (unused).</span>
-<span class="sd">        :param batch_kwargs: Dictionary containing ``inputs`` and ``outputs``.</span>
-<span class="sd">        :returns: ``None``. Adds prompts to the replay buffer when eligible.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">outputs</span> <span class="o">=</span> <span class="n">batch_kwargs</span><span class="p">[</span><span class="s2">&quot;outputs&quot;</span><span class="p">]</span>             <span class="c1"># dict from training_step</span>
-        <span class="n">rewards</span> <span class="o">=</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rewards&quot;</span><span class="p">,</span> <span class="p">{})</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">rewards</span><span class="p">:</span>
-            <span class="k">return</span>
-
-        <span class="n">batch_inputs</span> <span class="o">=</span> <span class="n">batch_kwargs</span><span class="p">[</span><span class="s2">&quot;inputs&quot;</span><span class="p">]</span>
-        <span class="n">input_ids</span> <span class="o">=</span> <span class="n">batch_inputs</span><span class="p">[</span><span class="s2">&quot;input_ids&quot;</span><span class="p">]</span>
-        <span class="n">accuracies</span> <span class="o">=</span> <span class="n">rewards</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
-
-        <span class="n">added</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_maybe_store_prompt</span><span class="p">(</span><span class="n">accuracy</span><span class="p">,</span> <span class="n">token_ids</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">accuracy</span><span class="p">,</span> <span class="n">token_ids</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">accuracies</span><span class="p">,</span> <span class="n">input_ids</span><span class="p">)</span>
-        <span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_log_batch_stats</span><span class="p">(</span>
-            <span class="n">args</span><span class="p">,</span>
-            <span class="n">batch_inputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;is_replay&quot;</span><span class="p">),</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">input_ids</span><span class="p">),</span>
-            <span class="n">added</span><span class="p">,</span>
-        <span class="p">)</span></div>
-
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_maybe_store_prompt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">accuracy</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">token_ids</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Decode and store prompts meeting the accuracy threshold.</span>
-
-<span class="sd">        :param accuracy: Reward score for the prompt.</span>
-<span class="sd">        :param token_ids: Token ids forming the prompt input.</span>
-<span class="sd">        :returns: ``1`` when the prompt was stored, otherwise ``0``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">accuracy</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">thr</span><span class="p">:</span>
-            <span class="k">return</span> <span class="mi">0</span>
-        <span class="n">prompt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tok</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">token_ids</span><span class="p">,</span> <span class="n">skip_special_tokens</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">buf</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
-        <span class="k">return</span> <span class="mi">1</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_log_batch_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">replay_flags</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">added</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Log replay buffer statistics for debugging.</span>
-
-<span class="sd">        :param args: Training arguments namespace (used for rank detection).</span>
-<span class="sd">        :param replay_flags: Flags indicating replay-originated samples.</span>
-<span class="sd">        :param batch_size: Size of the processed batch.</span>
-<span class="sd">        :param added: Number of prompts added to the buffer.</span>
-<span class="sd">        :returns: ``None``. Emits structured logs.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">local_rank</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;local_rank&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">rank</span> <span class="o">=</span> <span class="n">local_rank</span> <span class="k">if</span> <span class="n">local_rank</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="k">else</span> <span class="mi">0</span>
-        <span class="n">replay_count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">replay_flags</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span> <span class="k">if</span> <span class="n">replay_flags</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span>
-
-        <span class="nb">print</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;[ReplayBufferCallback][rank</span><span class="si">{</span><span class="n">rank</span><span class="si">}</span><span class="s2">] added </span><span class="si">{</span><span class="n">added</span><span class="si">}</span><span class="s2"> new • &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">replay_count</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">batch_size</span><span class="si">}</span><span class="s2"> replay • buffer = </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">buf</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="p">)</span></div>
 
 </pre></div>
         </article>

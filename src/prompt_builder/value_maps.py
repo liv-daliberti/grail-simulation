@@ -389,8 +389,6 @@ FEELING_THERMOMETER_FIELDS = {
     "political_lead_feels_5",
 }
 
-IDEOLOGY_FIELDS = {"ideo1", "ideo2", "ideo3", "ideo4", "ideo5", "ideology", "ideology_text"}
-
 GUN_IMPORTANCE_FIELDS = {"gun_importance", "gun_priority"}
 
 

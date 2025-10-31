@@ -65,19 +65,3 @@ def execute_indexed_tasks(
         results.append(maybe_result)
     return results
 
-
-def execute_sequential_tasks(
-    tasks: Sequence[TaskT],
-    worker: Callable[[TaskT], ResultT],
-) -> List[ResultT]:
-    """
-    Execute ``tasks`` sequentially and collect the corresponding results.
-
-    :param tasks: Ordered sequence of task payloads.
-    :param worker: Callable invoked for each task payload.
-    :returns: List of results aligned with the original task ordering.
-    """
-    results: List[ResultT] = []
-    for task in tasks:
-        results.append(worker(task))
-    return results

@@ -103,58 +103,6 @@ BASE_TRAIN_KEEP_COLUMNS = {
     "mix_copy_idx",
 }
 
-_WANDB_GUARD_ATTR = "_grail_error_guard_installed"
-_WANDB_GUARD_WARNED: set[str] = set()
-
-
-def install_wandb_error_guard(logger: Any = None) -> None:
-    """Wrap wandb logging calls to prevent outages from aborting training.
-
-    :param logger: Optional logger used for warning messages.
-    :returns: ``None``. Installs best-effort guards around wandb I/O.
-    """
-
-    try:  # pragma: no cover - optional dependency
-        import wandb  # type: ignore  # pylint: disable=import-outside-toplevel
-    except ImportError:  # pragma: no cover - optional dependency
-        return
-
-    if getattr(wandb, _WANDB_GUARD_ATTR, False):
-        return
-
-    sink = logger if hasattr(logger, "log") else logging.getLogger("common.open_r1.wandb")
-
-    def _wrap(fn_name: str) -> None:
-        target = getattr(wandb, fn_name, None)
-        if not callable(target) or getattr(target, "_grail_error_guard_wrapped", False):
-            return
-
-        @functools.wraps(target)
-        def _guarded(*args: Any, **kwargs: Any) -> Any:
-            try:
-                return target(*args, **kwargs)
-            except Exception as exc:  # pylint: disable=broad-except
-                level = logging.WARNING if fn_name not in _WANDB_GUARD_WARNED else logging.DEBUG
-                sink.log(
-                    level,
-                    "wandb.%s failed (%s: %s); continuing without logging",
-                    fn_name,
-                    exc.__class__.__name__,
-                    exc,
-                    exc_info=level == logging.WARNING,
-                )
-                _WANDB_GUARD_WARNED.add(fn_name)
-                return None
-
-        setattr(_guarded, "_grail_error_guard_wrapped", True)
-        setattr(wandb, fn_name, _guarded)
-
-    for method in ("log", "log_artifact"):
-        _wrap(method)
-
-    setattr(wandb, _WANDB_GUARD_ATTR, True)
-
-
 def collect_passthrough_fields(example: Mapping[str, Any]) -> Dict[str, Any]:
     """Return a mapping containing the shared passthrough metadata.
 
@@ -535,61 +483,6 @@ def build_grpo_context(  # pylint: disable=too-many-arguments
         logger=logger,
         prefix=prefix,
     )
-
-
-def build_grpo_pipeline_bundle(  # pylint: disable=too-many-arguments
-    *,
-    model_builder: Callable[[Any, Any], Any],
-    trainer_cls: Any,
-    reward_funcs: Sequence[Any],
-    tokenizer: Any,
-    dataset: Mapping[str, Any],
-    script_args: Any,
-    training_args: Any,
-    model_args: Any,
-    logger: Any,
-    prefix: str,
-    peft_config_fn: Optional[Callable[[Any], Any]] = None,
-    evaluate_fn_factory: Optional[EvalFnFactory] = None,
-) -> Tuple[GrpoPipelineComponents, GrpoPipelineContext]:
-    """
-    Assemble the shared GRPO pipeline components and execution context.
-
-    Centralises the repeated constructor invocations used by the GRPO entry
-    points so that pylint's duplicate-code check sees a single implementation.
-
-    :param model_builder: Callable used to construct the GRPO model.
-    :param trainer_cls: Trainer class implementing the GRPO interface.
-    :param reward_funcs: Reward functions to include in the trainer.
-    :param tokenizer: Tokenizer passed to the trainer.
-    :param dataset: Dataset mapping containing the training split.
-    :param script_args: Script configuration namespace.
-    :param training_args: Training arguments namespace.
-    :param model_args: Model configuration namespace.
-    :param logger: Logger used for informational output.
-    :param prefix: Prefix applied to log messages.
-    :param peft_config_fn: Optional callable producing PEFT configuration.
-    :param evaluate_fn_factory: Optional factory for evaluation wrappers.
-    :returns: Tuple of pipeline components and execution context.
-    """
-
-    components = GrpoPipelineComponents(
-        model_builder=model_builder,
-        trainer_cls=trainer_cls,
-        reward_funcs=reward_funcs,
-        tokenizer=tokenizer,
-        peft_config_fn=peft_config_fn,
-        evaluate_fn_factory=evaluate_fn_factory,
-    )
-    context = GrpoPipelineContext(
-        dataset=dataset,
-        script_args=script_args,
-        training_args=training_args,
-        model_args=model_args,
-        logger=logger,
-        prefix=prefix,
-    )
-    return components, context
 
 
 def build_grpo_trainer(*, setup: GrpoTrainerSetup, datasets: GrpoTrainerDatasets) -> Any:

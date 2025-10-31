@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="GRAIL Utilities" href="grail.html"><link rel="prev" title="Open-R1 Training API" href="open_r1.html">
 
-    <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
+    <!-- Generated with Sphinx 7.4.7 and Furo 2025.09.25 -->
         <title>Shared RLHF Helpers - GRAIL Simulation documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=580074bf" />
@@ -269,7 +269,7 @@
 <p>Markdown report builders shared by GRPO and GRAIL baselines.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="common.rlhf.reports.ReportOptions">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">common.rlhf.reports.</span></span><span class="sig-name descname"><span class="pre">ReportOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reports_subdir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'rlhf'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseline_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'RLHF'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regenerate_hint</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/rlhf/reports.html#ReportOptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.rlhf.reports.ReportOptions" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">common.rlhf.reports.</span></span><span class="sig-name descname"><span class="pre">ReportOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reports_subdir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'rlhf'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseline_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'RLHF'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regenerate_hint</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/rlhf/reports.html#ReportOptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.rlhf.reports.ReportOptions" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Configuration controlling how RLHF reports are rendered.</p>
 <dl class="field-list simple">
@@ -300,15 +300,15 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="common.rlhf.reports.generate_reports">
-<span class="sig-prename descclassname"><span class="pre">common.rlhf.reports.</span></span><span class="sig-name descname"><span class="pre">generate_reports</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">repo_root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">next_video</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opinion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/rlhf/reports.html#generate_reports"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.rlhf.reports.generate_reports" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">common.rlhf.reports.</span></span><span class="sig-name descname"><span class="pre">generate_reports</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repo_root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">next_video</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opinion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/rlhf/reports.html#generate_reports"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.rlhf.reports.generate_reports" title="Link to this definition">¶</a></dt>
 <dd><p>Materialise Markdown reports for RL fine-tuning baselines.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>repo_root</strong> (<em>pathlib.Path</em>) – Root of the repository where reports are rendered.</p></li>
-<li><p><strong>next_video</strong> (<em>grpo.next_video.NextVideoEvaluationResult</em><em> | </em><em>None</em>) – Optional next-video evaluation artefacts.</p></li>
-<li><p><strong>opinion</strong> (<em>grpo.opinion.OpinionEvaluationResult</em><em> | </em><em>None</em>) – Optional opinion evaluation artefacts.</p></li>
-<li><p><strong>options</strong> (<a class="reference internal" href="#common.rlhf.reports.ReportOptions" title="common.rlhf.reports.ReportOptions"><em>common.rlhf.reports.ReportOptions</em></a><em> | </em><em>None</em>) – Optional configuration controlling output locations and labels.</p></li>
+<li><p><strong>repo_root</strong> (<em>Path</em>) – Root of the repository where reports are rendered.</p></li>
+<li><p><strong>next_video</strong> (<em>NextVideoEvaluationResult</em><em> | </em><em>None</em>) – Optional next-video evaluation artefacts.</p></li>
+<li><p><strong>opinion</strong> (<em>OpinionEvaluationResult</em><em> | </em><em>None</em>) – Optional opinion evaluation artefacts.</p></li>
+<li><p><strong>options</strong> (<a class="reference internal" href="#common.rlhf.reports.ReportOptions" title="common.rlhf.reports.ReportOptions"><em>ReportOptions</em></a><em> | </em><em>None</em>) – Optional configuration controlling output locations and labels.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -397,7 +397,7 @@
     </aside>
   </div>
 </div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
     </body>

@@ -46,7 +46,6 @@ class _PortfolioAccumulator:  # pylint: disable=too-many-instance-attributes
     """
     Accumulate portfolio-level statistics across studies.
 
-    :ivar total_correct: Sum of correctly ranked slates across studies (eligible-only).
     :ivar total_evaluated: Total number of evaluated slates with accuracy metrics
         (kept for availability).
     :ivar total_correct_eligible: Sum of correctly ranked slates among eligible rows.
@@ -57,7 +56,6 @@ class _PortfolioAccumulator:  # pylint: disable=too-many-instance-attributes
     :ivar probability_values: Recorded mean probabilities for known candidates.
     """
 
-    total_correct: int = 0
     total_evaluated: int = 0
     total_correct_eligible: int = 0
     total_eligible: int = 0
@@ -90,7 +88,6 @@ class _PortfolioAccumulator:  # pylint: disable=too-many-instance-attributes
         """
 
         if summary.correct is not None and summary.evaluated is not None:
-            self.total_correct += summary.correct
             self.total_evaluated += summary.evaluated
         # Track eligible-only tallies for parity with KNN.
         if summary.correct_eligible is not None and summary.eligible is not None:

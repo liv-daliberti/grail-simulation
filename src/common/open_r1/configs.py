@@ -33,7 +33,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Literal, Optional
+from typing import Any, Optional
 
 try:  # pragma: no cover - optional dependency
     import trl
@@ -198,10 +198,6 @@ class GRPOConfig(GRPOConfigBase):  # pylint: disable=too-many-instance-attribute
         default="main",
         metadata={"help": "The Hub model branch to push the model to."},
     )
-    num_completions_to_print: int = field(
-        default=0,
-        metadata={"help": "Number of completions to print."},
-    )
     overwrite_hub_revision: bool = field(
         default=False,
         metadata={"help": "Whether to overwrite the Hub revision."},
@@ -218,27 +214,6 @@ class GRPOConfig(GRPOConfigBase):  # pylint: disable=too-many-instance-attribute
     system_prompt: Optional[str] = field(
         default=None,
         metadata={"help": "The optional system prompt to use."},
-    )
-    wandb_log_unique_prompts: bool = field(
-        default=True,
-        metadata={
-            "help": (
-                "Whether to log the unique prompts to wandb. This will create a new run "
-                "for each unique prompt."
-            )
-        },
-    )
-    wandb_entity: Optional[str] = field(
-        default=None,
-        metadata={"help": "The entity to store runs under."},
-    )
-    wandb_project: Optional[str] = field(
-        default=None,
-        metadata={"help": "The project to store runs under."},
-    )
-    wandb_run_group: Optional[str] = field(
-        default=None,
-        metadata={"help": "The group to store runs under."},
     )
 
     def __post_init__(self) -> None:
@@ -408,26 +383,6 @@ class GRPOScriptArguments(ScriptArguments):  # pylint: disable=too-many-instance
             "choices": ["python", "javascript", "r", "java", "bash", "cpp"],
         },
     )
-    code_eval_test_batch_size: int = field(
-        default=1,
-        metadata={
-            "help": (
-                "For each generation, evaluate this many test cases in parallel. "
-                "If any fail (score 0) stop evaluating early; otherwise continue "
-                "with the next batch. Helps avoid overloading the eval server and "
-                "saves time on wrong solutions."
-            )
-        },
-    )
-    code_eval_scoring_mode: Literal["pass_fail", "partial", "weighted_sum"] = field(
-        default="weighted_sum",
-        metadata={
-            "help": (
-                "Use fraction of passed test cases as reward. If false, use 0/1 "
-                "scoring."
-            )
-        },
-    )
     parallel_code_exec_per_proc: int = field(
         default=2,
         metadata={
@@ -437,15 +392,6 @@ class GRPOScriptArguments(ScriptArguments):  # pylint: disable=too-many-instance
         },
     )
 
-    dataset_prompt_column: str = field(
-        default="problem",
-        metadata={"help": "Column to use as prompts for training."},
-    )
-    dataset_solution_column: str = field(
-        default="answer",
-        metadata={"help": "Column to use as the gold solution/answer for training."},
-    )
-
     max_completion_len: int = field(
         default=16384,
         metadata={"help": "Maximum number of characters in completion."},
@@ -453,17 +399,4 @@ class GRPOScriptArguments(ScriptArguments):  # pylint: disable=too-many-instance
     soft_punish_cache: int = field(
         default=4096,
         metadata={"help": "Minimum number of characters in completion."},
-    )
-
-    span_kl_target: float = field(
-        default=0.05,
-        metadata={"help": "Per-token KL target."},
-    )
-    span_kl_beta0: float = field(
-        default=0.12,
-        metadata={"help": "Initial KL coefficient."},
-    )
-    span_kl_horizon: int = field(
-        default=10000,
-        metadata={"help": "Horizon for the KL controller."},
     )

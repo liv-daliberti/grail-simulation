@@ -20,9 +20,9 @@ Accuracy values reflect eligible-only accuracy on the validation split at the se
 
 | Study | Metric | Text fields | Acc (best k) ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible | Command |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| **Study 1 – Gun Control (MTurk)** | cosine | viewer_profile, state_text, freq_youtube | 0.788 | 0.540 | +0.248 | 1 | 548 | `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues gun_control --participant-studies study1 --knn-metric cosine --knn-k 1 --knn-k-sweep 1 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text,freq_youtube` |
+| **Study 1 – Gun Control (MTurk)** | cosine | viewer_profile, state_text, youtube_time | 0.828 | 0.540 | +0.288 | 1 | 548 | `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues gun_control --participant-studies study1 --knn-metric cosine --knn-k 1 --knn-k-sweep 1 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text,youtube_time` |
 | **Study 2 – Minimum Wage (MTurk)** | cosine | viewer_profile, state_text, freq_youtube | 0.361 | 0.368 | -0.007 | 4 | 671 | `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study2 --knn-metric cosine --knn-k 4 --knn-k-sweep 4 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text,freq_youtube` |
-| **Study 3 – Minimum Wage (YouGov)** | cosine | viewer_profile, state_text | 0.309 | 0.479 | -0.170 | 2 | 1,200 | `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study3 --knn-metric cosine --knn-k 2 --knn-k-sweep 2 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text` |
+| **Study 3 – Minimum Wage (YouGov)** | cosine | viewer_profile, state_text, youtube_time | 0.324 | 0.479 | -0.155 | 50 | 1,200 | `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study3 --knn-metric cosine --knn-k 50 --knn-k-sweep 50 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text,youtube_time` |
 
 ## Word2Vec Feature Space
 
@@ -43,10 +43,10 @@ Accuracy values reflect eligible-only accuracy on the validation split at the se
 
 ### Observations
 
-- TFIDF: Study 1 – Gun Control (MTurk): accuracy 0.788 (baseline 0.540, Δ +0.248, k=1) using cosine distance with viewer_profile, state_text, freq_youtube; Study 2 – Minimum Wage (MTurk): accuracy 0.361 (baseline 0.368, Δ -0.007, k=4) using cosine distance with viewer_profile, state_text, freq_youtube; Study 3 – Minimum Wage (YouGov): accuracy 0.309 (baseline 0.479, Δ -0.170, k=2) using cosine distance with viewer_profile, state_text.
-  Command (Study 1 – Gun Control (MTurk)): `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues gun_control --participant-studies study1 --knn-metric cosine --knn-k 1 --knn-k-sweep 1 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text,freq_youtube`
+- TFIDF: Study 1 – Gun Control (MTurk): accuracy 0.828 (baseline 0.540, Δ +0.288, k=1) using cosine distance with viewer_profile, state_text, youtube_time; Study 2 – Minimum Wage (MTurk): accuracy 0.361 (baseline 0.368, Δ -0.007, k=4) using cosine distance with viewer_profile, state_text, freq_youtube; Study 3 – Minimum Wage (YouGov): accuracy 0.324 (baseline 0.479, Δ -0.155, k=50) using cosine distance with viewer_profile, state_text, youtube_time.
+  Command (Study 1 – Gun Control (MTurk)): `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues gun_control --participant-studies study1 --knn-metric cosine --knn-k 1 --knn-k-sweep 1 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text,youtube_time`
   Command (Study 2 – Minimum Wage (MTurk)): `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study2 --knn-metric cosine --knn-k 4 --knn-k-sweep 4 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text,freq_youtube`
-  Command (Study 3 – Minimum Wage (YouGov)): `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study3 --knn-metric cosine --knn-k 2 --knn-k-sweep 2 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text`
+  Command (Study 3 – Minimum Wage (YouGov)): `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space tfidf --issues minimum_wage --participant-studies study3 --knn-metric cosine --knn-k 50 --knn-k-sweep 50 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text,youtube_time`
 - WORD2VEC: Study 1 – Gun Control (MTurk): accuracy 0.296 (baseline 0.540, Δ -0.245, k=2) using word2vec (256d, window 5, min_count 1) with viewer_profile, state_text, religpew; Study 2 – Minimum Wage (MTurk): accuracy 0.319 (baseline 0.368, Δ -0.049, k=5) using word2vec (128d, window 5, min_count 1) with viewer_profile, state_text, religpew; Study 3 – Minimum Wage (YouGov): accuracy 0.292 (baseline 0.479, Δ -0.188, k=10) using word2vec (256d, window 5, min_count 1) with viewer_profile, state_text, ideo1.
   Command (Study 1 – Gun Control (MTurk)): `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space word2vec --issues gun_control --participant-studies study1 --knn-metric l2 --knn-k 2 --knn-k-sweep 2 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text,religpew --word2vec-size 256 --word2vec-window 5 --word2vec-min-count 1 --word2vec-epochs 10 --word2vec-workers 8`
   Command (Study 2 – Minimum Wage (MTurk)): `python -m knn.cli --task slate --dataset /n/fs/similarity/grail-simulation/data/cleaned_grail --feature-space word2vec --issues minimum_wage --participant-studies study2 --knn-metric cosine --knn-k 5 --knn-k-sweep 5 --out-dir '<run_dir>' --knn-text-fields viewer_profile,state_text,religpew --word2vec-size 128 --word2vec-window 5 --word2vec-min-count 1 --word2vec-epochs 10 --word2vec-workers 8`
@@ -78,6 +78,15 @@ Accuracy values reflect eligible-only accuracy on the validation split at the se
 | 14 | Study 3 – Minimum Wage (YouGov) | TFIDF | cosine | viewer_profile, state_text, religpew | 0.309 | 0.479 | -0.170 | 2 | 1,200 |
 | 15 | Study 1 – Gun Control (MTurk) | TFIDF | cosine | viewer_profile, state_text, freq_youtube | 0.788 | 0.540 | +0.248 | 1 | 548 |
 | 16 | Study 2 – Minimum Wage (MTurk) | TFIDF | cosine | viewer_profile, state_text, freq_youtube | 0.361 | 0.368 | -0.007 | 4 | 671 |
+| 17 | Study 3 – Minimum Wage (YouGov) | TFIDF | cosine | viewer_profile, state_text, freq_youtube | 0.322 | 0.479 | -0.158 | 50 | 1,200 |
+| 18 | Study 1 – Gun Control (MTurk) | TFIDF | cosine | viewer_profile, state_text, youtube_time | 0.828 | 0.540 | +0.288 | 1 | 548 |
+| 19 | Study 2 – Minimum Wage (MTurk) | TFIDF | cosine | viewer_profile, state_text, youtube_time | 0.361 | 0.368 | -0.007 | 4 | 671 |
+| 20 | Study 3 – Minimum Wage (YouGov) | TFIDF | cosine | viewer_profile, state_text, youtube_time | 0.324 | 0.479 | -0.155 | 50 | 1,200 |
+| 21 | Study 1 – Gun Control (MTurk) | TFIDF | cosine | viewer_profile, state_text, newsint | 0.828 | 0.540 | +0.288 | 1 | 548 |
+| 22 | Study 2 – Minimum Wage (MTurk) | TFIDF | cosine | viewer_profile, state_text, newsint | 0.361 | 0.368 | -0.007 | 4 | 671 |
+| 23 | Study 3 – Minimum Wage (YouGov) | TFIDF | cosine | viewer_profile, state_text, newsint | 0.324 | 0.479 | -0.155 | 50 | 1,200 |
+| 24 | Study 1 – Gun Control (MTurk) | TFIDF | cosine | viewer_profile, state_text, slate_source | 0.792 | 0.540 | +0.252 | 1 | 548 |
+| 25 | Study 2 – Minimum Wage (MTurk) | TFIDF | cosine | viewer_profile, state_text, slate_source | 0.359 | 0.368 | -0.009 | 4 | 671 |
 | 45 | Study 1 – Gun Control (MTurk) | TFIDF | cosine | viewer_profile, state_text, ideo1, ideo2, pol_interest, religpew, freq_youtube, youtube_time, newsint, slate_source, educ, employ, child18, inputstate, income, participant_study | 0.719 | 0.540 | +0.179 | 2 | 548 |
 | 46 | Study 2 – Minimum Wage (MTurk) | TFIDF | cosine | viewer_profile, state_text, ideo1, ideo2, pol_interest, religpew, freq_youtube, youtube_time, newsint, slate_source, educ, employ, child18, inputstate, income, participant_study | 0.349 | 0.368 | -0.019 | 2 | 671 |
 | 47 | Study 3 – Minimum Wage (YouGov) | TFIDF | cosine | viewer_profile, state_text, ideo1, ideo2, pol_interest, religpew, freq_youtube, youtube_time, newsint, slate_source, educ, employ, child18, inputstate, income, participant_study | 0.303 | 0.479 | -0.176 | 2 | 1,200 |
@@ -258,30 +267,30 @@ Configurations are ranked by validation MAE (lower is better). Bold rows indicat
 | Study | Metric | Text fields | Model | Vec size | Window | Min count | Accuracy ↑ | Baseline ↑ | Δ vs baseline ↑ | Best k | Eligible | MAE ↓ | Δ vs baseline ↓ | RMSE ↓ | R² ↑ | Participants |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | **Study 1 – Gun Control (MTurk)** | cosine | viewer_profile, state_text, freq_youtube | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.704 | 0.074 | +0.630 | 150 | 162 | 0.030 | +0.007 | 0.037 | 0.983 | 162 |
-| Study 1 – Gun Control (MTurk) | cosine | viewer_profile, state_text, ideo1 | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | +0.007 | 0.038 | 0.983 | 162 |
-| Study 1 – Gun Control (MTurk) | cosine | viewer_profile, state_text, religpew | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | +0.007 | 0.038 | 0.983 | 162 |
-| Study 1 – Gun Control (MTurk) | cosine | viewer_profile, state_text | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | +0.007 | 0.038 | 0.983 | 162 |
-| Study 1 – Gun Control (MTurk) | cosine | viewer_profile, state_text, ideo2 | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.704 | 0.074 | +0.630 | 50 | 162 | 0.030 | +0.007 | 0.038 | 0.983 | 162 |
+| Study 1 – Gun Control (MTurk) | cosine | viewer_profile, state_text, youtube_time | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.704 | 0.074 | +0.630 | 150 | 162 | 0.030 | +0.007 | 0.037 | 0.983 | 162 |
+| Study 1 – Gun Control (MTurk) | cosine | viewer_profile, state_text, newsint | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.704 | 0.074 | +0.630 | 150 | 162 | 0.030 | +0.007 | 0.037 | 0.983 | 162 |
+| Study 1 – Gun Control (MTurk) | cosine | viewer_profile, state_text, slate_source | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.704 | 0.074 | +0.630 | 150 | 162 | 0.030 | +0.007 | 0.037 | 0.983 | 162 |
+| Study 1 – Gun Control (MTurk) | cosine | viewer_profile, state_text, educ | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.704 | 0.074 | +0.630 | 150 | 162 | 0.030 | +0.007 | 0.037 | 0.983 | 162 |
 | **Study 2 – Minimum Wage (MTurk)** | l2 | viewer_profile, state_text | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.564 | 0.061 | +0.503 | 25 | 165 | 0.089 | +0.007 | 0.126 | 0.792 | 165 |
 | Study 2 – Minimum Wage (MTurk) | l2 | viewer_profile, state_text, ideo2 | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.564 | 0.061 | +0.503 | 25 | 165 | 0.089 | +0.007 | 0.126 | 0.792 | 165 |
 | Study 2 – Minimum Wage (MTurk) | l2 | viewer_profile, state_text, pol_interest | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.564 | 0.061 | +0.503 | 25 | 165 | 0.089 | +0.007 | 0.126 | 0.792 | 165 |
 | Study 2 – Minimum Wage (MTurk) | l2 | viewer_profile, state_text, ideo1, ideo2, pol_interest, religpew, freq_youtube, youtube_time, newsint, slate_source, educ, employ, child18, inputstate, income, participant_study | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.564 | 0.061 | +0.503 | 25 | 165 | 0.089 | +0.007 | 0.126 | 0.792 | 165 |
 | Study 2 – Minimum Wage (MTurk) | l2 | viewer_profile, state_text, ideo1 | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.564 | 0.061 | +0.503 | 25 | 165 | 0.089 | +0.007 | 0.126 | 0.792 | 165 |
 | **Study 3 – Minimum Wage (YouGov)** | cosine | viewer_profile, state_text, freq_youtube | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.525 | 0.058 | +0.467 | 150 | 257 | 0.088 | -0.003 | 0.125 | 0.772 | 257 |
-| Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile, state_text, ideo1 | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.521 | 0.058 | +0.463 | 50 | 257 | 0.089 | -0.004 | 0.125 | 0.768 | 257 |
-| Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile, state_text, pol_interest | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.521 | 0.058 | +0.463 | 50 | 257 | 0.089 | -0.004 | 0.125 | 0.768 | 257 |
-| Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile, state_text, ideo1, ideo2, pol_interest, religpew, freq_youtube, youtube_time, newsint, slate_source, educ, employ, child18, inputstate, income, participant_study | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.521 | 0.058 | +0.463 | 50 | 257 | 0.089 | -0.004 | 0.125 | 0.768 | 257 |
-| Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile, state_text | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.521 | 0.058 | +0.463 | 50 | 257 | 0.089 | -0.004 | 0.125 | 0.768 | 257 |
+| Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile, state_text, youtube_time | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.525 | 0.058 | +0.467 | 150 | 257 | 0.088 | -0.003 | 0.125 | 0.772 | 257 |
+| Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile, state_text, newsint | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.525 | 0.058 | +0.467 | 150 | 257 | 0.088 | -0.003 | 0.125 | 0.772 | 257 |
+| Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile, state_text, slate_source | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.525 | 0.058 | +0.467 | 150 | 257 | 0.088 | -0.003 | 0.125 | 0.772 | 257 |
+| Study 3 – Minimum Wage (YouGov) | cosine | viewer_profile, state_text, educ | sentence-transformers/all-mpnet-base-v2 | — | — | — | 0.525 | 0.058 | +0.467 | 150 | 257 | 0.088 | -0.003 | 0.125 | 0.772 | 257 |
 
 ### Portfolio Summary
 
 - Weighted MAE 0.072 across 8,760 participants.
 - Weighted baseline MAE 0.074 (+0.002 vs. final).
-- Weighted directional accuracy 0.573 across 8,760 participants.
+- Weighted directional accuracy 0.574 across 8,760 participants.
 - Weighted baseline accuracy 0.063 (+0.510 vs. final).
 - Weighted RMSE (change) 0.101 (+0.006 vs. baseline).
-- Weighted calibration ECE 0.020 (— vs. baseline).
-- Weighted KL divergence 10.932 (+7.503 vs. baseline).
+- Weighted calibration ECE 0.021 (— vs. baseline).
+- Weighted KL divergence 11.133 (+7.302 vs. baseline).
 - Largest MAE reduction: WORD2VEC – Study 2 – Minimum Wage (MTurk) (+0.008).
 - Largest RMSE(change) reduction: WORD2VEC – Study 2 – Minimum Wage (MTurk) (+0.014).
 - Lowest MAE: TFIDF – Study 1 – Gun Control (MTurk) (0.030); Highest MAE: TFIDF – Study 2 – Minimum Wage (MTurk) (0.093).

@@ -28,6 +28,7 @@ from functools import partial
 from pathlib import Path
 from typing import Dict, List, Mapping, Sequence, Set
 
+from common.pipeline.metrics import ensure_metrics_with_placeholder
 from common.pipeline.utils import (
     StageOverwriteContext,
     compose_cli_args,
@@ -58,7 +59,6 @@ from .sweeps import (
     _load_opinion_from_next_metrics_from_disk,
     _run_xgb_cli,
 )
-from common.pipeline.metrics import ensure_metrics_with_placeholder
 
 
 LOGGER = logging.getLogger("xgb.pipeline.finalize")

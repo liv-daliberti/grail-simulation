@@ -408,17 +408,17 @@ def _execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
 
     # Opinion evaluations may be skipped (e.g., no train/eval rows).
     # Tolerate missing metrics by logging and returning a placeholder outcome.
-    metrics = ensure_metrics_with_placeholder(
-        lambda: load_metrics_with_log(
-            task.metrics_path,
-            task.study,
-            log_level=logging.WARNING,
-            message=(
-                "[OPINION][SWEEP][MISS] issue=%s study=%s expected metrics at %s; "
-                "recording placeholder outcome."
-            ),
+    metrics = load_metrics_with_log(
+        task.metrics_path,
+        task.study,
+        log_level=logging.WARNING,
+        message=(
+            "[OPINION][SWEEP][MISS] issue=%s study=%s expected metrics at %s; "
+            "recording placeholder outcome."
         ),
-        placeholder_factory=lambda: {
+    )
+    if metrics is None:
+        metrics = {
             "model": "xgb_opinion",
             "feature_space": task.feature_space,
             "study": task.study.key,
@@ -427,10 +427,12 @@ def _execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
             "metrics": {},
             "baseline": {},
             "skipped": True,
-        },
-        metrics_path=task.metrics_path,
-        debug_message="[OPINION][SWEEP][MISS] Unable to write placeholder metrics at %s",
-    )
+        }
+        persist_metrics_payload(
+            task.metrics_path,
+            metrics,
+            debug_message="[OPINION][SWEEP][MISS] Unable to write placeholder metrics at %s",
+        )
     return outcome_factory(task, metrics, task.metrics_path)
 
 

@@ -33,11 +33,7 @@ from ..context import (
     SweepRunContext,
     SweepTask,
 )
-from .common import (
-    LOGGER,
-    build_merge_sweep_outcomes,
-    get_sweeps_attr,
-)
+from .common import LOGGER, get_sweeps_attr, merge_sweep_outcomes
 
 
 def _sweep_outcome_from_metrics(
@@ -168,12 +164,26 @@ def _prepare_sweep_tasks(
     return pending, cached
 
 
-_merge_sweep_outcomes = cast(
-    Callable[[Sequence[SweepOutcome], Sequence[SweepOutcome]], List[SweepOutcome]],
-    build_merge_sweep_outcomes(
+def _merge_sweep_outcomes(
+    cached: Sequence[SweepOutcome],
+    executed: Sequence[SweepOutcome],
+) -> List[SweepOutcome]:
+    """
+    Combine cached and freshly executed sweep outcomes while preserving order indices.
+
+    :param cached: Previously cached sweep outcomes loaded from disk.
+    :type cached: Sequence[SweepOutcome]
+    :param executed: Newly generated sweep outcomes from the current run.
+    :type executed: Sequence[SweepOutcome]
+    :returns: Ordered list containing the merged sweep outcomes.
+    :rtype: List[SweepOutcome]
+    """
+
+    return merge_sweep_outcomes(
+        cached,
+        executed,
         duplicate_message="Duplicate sweep outcome for index=%d; replacing cached result.",
-    ),
-)
+    )
 
 
 def _execute_sweep_tasks(

@@ -160,7 +160,6 @@ def build_merge_sweep_outcomes(
     )
     return _merge
 
-
 def _gpu_tree_method_supported() -> bool:
     """
     Determine whether the installed XGBoost build supports GPU boosters.
@@ -194,8 +193,8 @@ def _gpu_tree_method_supported() -> bool:
 __all__ = [
     "DEFAULT_OPINION_FEATURE_SPACE",
     "LOGGER",
-    "build_merge_sweep_outcomes",
     "get_sweeps_attr",
+    "build_merge_sweep_outcomes",
     "merge_sweep_outcomes",
     "persist_metrics_payload",
     "xgboost",

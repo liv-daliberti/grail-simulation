@@ -23,8 +23,19 @@ import sys
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
-from transformers import set_seed  # pylint: disable=import-error
-from trl import ModelConfig  # pylint: disable=import-error
+try:  # pragma: no cover - optional dependency
+    from transformers import set_seed  # pylint: disable=import-error
+except Exception:  # pragma: no cover - optional dependency
+    # Avoid failing import-time when transformers has indirect import issues
+    # (e.g. due to partial stubs injected into sys.modules by tests).
+    set_seed = None  # type: ignore[assignment]
+
+try:  # pragma: no cover - optional dependency
+    from trl import ModelConfig  # pylint: disable=import-error
+except Exception:  # pragma: no cover - optional dependency
+    # Minimal placeholder used only for type annotations / script entrypoint.
+    class ModelConfig:  # type: ignore[no-redef]
+        pass
 
 try:
     from common.open_r1.configs import GRPOConfig, GRPOScriptArguments
@@ -68,16 +79,56 @@ except ModuleNotFoundError as exc:  # pragma: no cover - script execution fallba
         _grail_extra_fields,
         _prepare_dataset,
     )
-from grail.grail_gail import (
-    OnlineDiscriminator,
-    RewardContext,
-    _build_reward_contexts,
-    _context_from_completion,
-    _render_disc_text,
-    _select_disc_device,
-    _train_discriminator_from_contexts,
-    make_gail_reward_fn,
-)
+try:  # pragma: no cover - optional dependency re-export
+    from grail.grail_gail import (
+        OnlineDiscriminator,
+        RewardContext,
+        _build_reward_contexts,
+        _context_from_completion,
+        _render_disc_text,
+        _select_disc_device,
+        _train_discriminator_from_contexts,
+        make_gail_reward_fn,
+    )
+except Exception as _gail_import_error:  # pragma: no cover - optional dependency
+    # Provide minimal shims so importing this module doesn't require transformers.
+    class OnlineDiscriminator:  # type: ignore[too-few-public-methods]
+        def __init__(self, *_args, **_kwargs) -> None:
+            raise ImportError(
+                "GAIL components require transformers. Install it with `pip install transformers`."
+            ) from _gail_import_error
+
+    RewardContext = None  # type: ignore[assignment]
+
+    def _build_reward_contexts(*_args, **_kwargs):  # type: ignore[empty-body]
+        raise ImportError(
+            "GAIL components require transformers. Install it with `pip install transformers`."
+        )
+
+    def _context_from_completion(*_args, **_kwargs):  # type: ignore[empty-body]
+        raise ImportError(
+            "GAIL components require transformers. Install it with `pip install transformers`."
+        )
+
+    def _render_disc_text(*_args, **_kwargs):  # type: ignore[empty-body]
+        raise ImportError(
+            "GAIL components require transformers. Install it with `pip install transformers`."
+        )
+
+    def _select_disc_device(*_args, **_kwargs):  # type: ignore[empty-body]
+        raise ImportError(
+            "GAIL components require transformers. Install it with `pip install transformers`."
+        )
+
+    def _train_discriminator_from_contexts(*_args, **_kwargs):  # type: ignore[empty-body]
+        raise ImportError(
+            "GAIL components require transformers. Install it with `pip install transformers`."
+        )
+
+    def make_gail_reward_fn(*_args, **_kwargs):  # type: ignore[empty-body]
+        raise ImportError(
+            "GAIL components require transformers. Install it with `pip install transformers`."
+        )
 from grail.grail_mixer import LearnableRewardCallable, LearnableRewardMixer, MixerSetup
 from grail.grail_rewards import (
     _adjust_reward_weights,

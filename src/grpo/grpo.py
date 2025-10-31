@@ -23,13 +23,16 @@ from typing import Any, List, Optional
 
 try:  # pragma: no cover - optional dependency
     from transformers import set_seed
-except ImportError:  # pragma: no cover - optional dependency
+except Exception:  # pragma: no cover - optional dependency
+    # Catch broad exceptions because some environments inject partial stubs
+    # (e.g. openai) that cause non-ImportError failures during import resolution.
     set_seed = None  # type: ignore[assignment]
 
 try:  # pragma: no cover - optional dependency
     from trl import ModelConfig, get_peft_config
     from trl.trainer.grpo_trainer import GRPOTrainer
-except ImportError:  # pragma: no cover - optional dependency
+except Exception:  # pragma: no cover - optional dependency
+    # Be defensive – treat any import failure as the dependency being unavailable.
     ModelConfig = None  # type: ignore[assignment]
     get_peft_config = None  # type: ignore[assignment]
     GRPOTrainer = None  # type: ignore[assignment]

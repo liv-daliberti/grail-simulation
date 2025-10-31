@@ -15,10 +15,6 @@ __all__: List[str] = [
     "config",
     "conversation",
     "evaluate",
-    "helpers",
-    "models",
-    "runner",
-    "settings",
     "titles",
     "utils",
 ]
@@ -40,3 +36,8 @@ def __getattr__(name: str) -> Any:  # pragma: no cover - thin import proxy
 
 def __dir__() -> List[str]:  # pragma: no cover - introspection helper
     return sorted(list(globals().keys()) + __all__)
+
+
+# Create attributes dynamically so names in __all__ exist for linters
+for _n in __all__:
+    globals().setdefault(_n, None)

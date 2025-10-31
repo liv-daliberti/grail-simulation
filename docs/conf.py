@@ -167,6 +167,7 @@ autodoc_type_aliases = {
 autodoc_typehints_format = "fully-qualified"
 python_use_unqualified_type_names = False
 napoleon_include_init_with_doc = True
+napoleon_use_ivar = True
 
 templates_path = ["_templates"]
 exclude_patterns: list[str] = ["_build", "Thumbs.db", ".DS_Store"]

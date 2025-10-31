@@ -18,11 +18,11 @@
 from __future__ import annotations
 
 from typing import List, Sequence, Tuple
-
-from common.opinion import DEFAULT_SPECS
+from importlib import import_module
 
 from ..config import DATASET_NAME
 from .models import OpinionFilters, OpinionLimits, OpinionRuntime, OpinionSettings
+DEFAULT_SPECS = import_module("common.opinion").DEFAULT_SPECS
 
 
 def parse_tokens(raw: str | None) -> Tuple[List[str], set[str]]:

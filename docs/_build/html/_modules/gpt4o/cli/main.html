@@ -275,15 +275,13 @@
 
 <span class="sd">&quot;&quot;&quot;Command-line interface for evaluating the GPT-4o baseline model.&quot;&quot;&quot;</span>
 
-<span class="c1"># pylint: disable=duplicate-code</span>
-
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">common.cli.args</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_comma_separated_argument</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">importlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">import_module</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">..core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_CACHE_DIR</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..core.evaluate</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_eval</span>
@@ -301,110 +299,11 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Evaluate GPT-4o on the GRAIL slate dataset.&quot;</span><span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--eval_max&quot;</span><span class="p">,</span>
-        <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Limit evaluation examples (0 means evaluate every row).&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--dataset&quot;</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dataset path or Hugging Face dataset id (defaults to config.DATASET_NAME).&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--issues&quot;</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Comma-separated list of issue labels to evaluate (defaults to all issues).&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">add_comma_separated_argument</span><span class="p">(</span>
+    <span class="n">add_opts</span> <span class="o">=</span> <span class="n">import_module</span><span class="p">(</span><span class="s2">&quot;common.cli.options&quot;</span><span class="p">)</span>
+    <span class="n">add_opts</span><span class="o">.</span><span class="n">add_gpt4o_eval_arguments</span><span class="p">(</span>
         <span class="n">parser</span><span class="p">,</span>
-        <span class="n">flags</span><span class="o">=</span><span class="s2">&quot;--studies&quot;</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;studies&quot;</span><span class="p">,</span>
-        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">&quot;Comma-separated participant study identifiers to filter (defaults to all studies).&quot;</span>
-        <span class="p">),</span>
-    <span class="p">)</span>
-    <span class="n">add_comma_separated_argument</span><span class="p">(</span>
-        <span class="n">parser</span><span class="p">,</span>
-        <span class="n">flags</span><span class="o">=</span><span class="s2">&quot;--opinion_studies&quot;</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;opinion_studies&quot;</span><span class="p">,</span>
-        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">&quot;Comma-separated opinion study keys to evaluate (defaults to all &quot;</span>
-            <span class="s2">&quot;opinion studies).&quot;</span>
-        <span class="p">),</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--opinion_max_participants&quot;</span><span class="p">,</span>
-        <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">&quot;Optional cap on participants per opinion study (0 keeps all).&quot;</span>
-        <span class="p">),</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--opinion_direction_tolerance&quot;</span><span class="p">,</span>
-        <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">&quot;Tolerance for treating opinion deltas as no-change when measuring &quot;</span>
-            <span class="s2">&quot;direction accuracy.&quot;</span>
-        <span class="p">),</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--out_dir&quot;</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">DEFAULT_OUT_DIR</span><span class="p">),</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Directory for predictions and metrics.&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--overwrite&quot;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Overwrite existing files inside --out_dir.&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--temperature&quot;</span><span class="p">,</span>
-        <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Sampling temperature passed to GPT-4o.&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--max_tokens&quot;</span><span class="p">,</span>
-        <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Maximum number of tokens in the model response.&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--top_p&quot;</span><span class="p">,</span>
-        <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Nucleus sampling probability mass forwarded to GPT-4o.&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--request_retries&quot;</span><span class="p">,</span>
-        <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Maximum GPT-4o attempts per request (default: 5).&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--request_retry_delay&quot;</span><span class="p">,</span>
-        <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Seconds to wait between GPT-4o request retries (default: 1.0).&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--cache_dir&quot;</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">DEFAULT_CACHE_DIR</span><span class="p">),</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;HF datasets cache directory.&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--deployment&quot;</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Optional Azure deployment identifier (defaults to the config setting).&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--log_level&quot;</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Logging level (DEBUG, INFO, WARNING, ERROR).&quot;</span><span class="p">,</span>
+        <span class="n">default_out_dir</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">DEFAULT_OUT_DIR</span><span class="p">),</span>
+        <span class="n">default_cache_dir</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">DEFAULT_CACHE_DIR</span><span class="p">),</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">parser</span></div>
 

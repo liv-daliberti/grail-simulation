@@ -19,7 +19,8 @@ from __future__ import annotations
 
 import os
 from functools import lru_cache
-from typing import Any, Dict, List, TYPE_CHECKING
+from typing import Any, Dict, List
+from importlib import import_module
 
 from .config import (
     DEPLOYMENT_NAME,
@@ -28,21 +29,6 @@ from .config import (
     SANDBOX_ENDPOINT,
     ensure_azure_env,
 )
-
-if TYPE_CHECKING:  # pragma: no cover
-    from openai import AzureOpenAI as AzureOpenAIType
-else:
-    AzureOpenAIType = Any  # type: ignore[assignment]
-
-_azure_openai_import_error: ImportError | None = None  # pylint: disable=invalid-name
-
-try:  # pragma: no cover - optional dependency
-    from openai import AzureOpenAI as _AzureOpenAI  # type: ignore  # pylint: disable=import-error
-except ImportError as exc:  # pragma: no cover - optional dependency
-    _AzureOpenAI = None  # type: ignore[assignment]
-    _azure_openai_import_error = exc  # pylint: disable=invalid-name
-else:  # pragma: no cover
-    _azure_openai_import_error = None  # pylint: disable=invalid-name
 
 
 def _require_openai() -> Any:
@@ -53,18 +39,21 @@ def _require_openai() -> Any:
     :raises ImportError: If the ``openai`` package (with Azure support) is unavailable.
     """
 
-    if _AzureOpenAI is None:
+    try:  # pragma: no cover - optional dependency
+        mod = import_module("openai")
+        client_cls = getattr(mod, "AzureOpenAI")
+    except (ImportError, AttributeError) as exc:  # pragma: no cover - optional dependency
         raise ImportError(
             "The 'openai' package is required to use Azure OpenAI client helpers. "
             "Install it with `pip install openai`."
-        ) from _azure_openai_import_error
-    return _AzureOpenAI
+        ) from exc
+    return client_cls
 
 
 @lru_cache(maxsize=1)
 def _cached_client(
     api_key: str, endpoint: str, api_version: str
-) -> AzureOpenAIType:
+) -> Any:
     """Return a cached Azure OpenAI client instance.
 
     :param api_key: Azure OpenAI API key used for authentication.
@@ -85,7 +74,7 @@ def _cached_client(
     )
 
 
-def get_client() -> AzureOpenAIType:
+def get_client() -> Any:
     """Construct or reuse the singleton Azure OpenAI client.
 
     :returns: Cached client configured with environment or default credentials.

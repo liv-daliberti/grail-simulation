@@ -6,6 +6,8 @@
 #SBATCH --mem=256G
 #SBATCH --time=05:00:00
 #SBATCH --output=logs/grail_wage/slurm_%j.out
+#SBATCH --account=mltheory
+
 set -euo pipefail
 
 # ────────────────────────────────────────────────────────────────
@@ -73,6 +75,7 @@ export HF_HOME=${HF_HOME:-"$ROOT_DIR/.hf_cache"}
 export HF_HUB_CACHE=${HF_HUB_CACHE:-"$ROOT_DIR/.cache/huggingface/transformers"}
 export HF_DATASETS_CACHE=${HF_DATASETS_CACHE:-"$ROOT_DIR/.cache/huggingface/datasets"}
 export XDG_CACHE_HOME=${XDG_CACHE_HOME:-"$ROOT_DIR/.cache"}
+export XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-"$ROOT_DIR/.config"}
 export TMPDIR=${TMPDIR:-"$ROOT_DIR/.tmp"}
 export PIP_CACHE_DIR=${PIP_CACHE_DIR:-"$ROOT_DIR/.cache/pip"}
 export PIP_BUILD_DIR=${PIP_BUILD_DIR:-"$ROOT_DIR/.cache/pip/build"}
@@ -85,6 +88,14 @@ for dir in "$HF_HOME" "$HF_HUB_CACHE" "$HF_DATASETS_CACHE" "$XDG_CACHE_HOME" \
            "$PIP_CACHE_DIR" "$PIP_BUILD_DIR" "$PYTHONPYCACHEPREFIX" "$CONDA_CACHE_DIR"; do
   mkdir -p "$dir"
 done
+
+# Ensure vLLM and related caches/config live under the project directory
+export VLLM_CONFIG_ROOT=${VLLM_CONFIG_ROOT:-"$XDG_CONFIG_HOME/vllm"}
+export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-"$XDG_CACHE_HOME/vllm"}
+export VLLM_RPC_BASE_PATH=${VLLM_RPC_BASE_PATH:-"$TMPDIR"}
+export TORCH_HOME=${TORCH_HOME:-"$XDG_CACHE_HOME/torch"}
+export CUDA_CACHE_PATH=${CUDA_CACHE_PATH:-"$XDG_CACHE_HOME/nv"}
+mkdir -p "$VLLM_CONFIG_ROOT" "$VLLM_CACHE_ROOT" "$TORCH_HOME" "$CUDA_CACHE_PATH"
 
 ENV_DIR=${ENV_DIR:-"$CONDA_ENVS_PATH/grail-training"}
 PYTHON_VERSION=${PYTHON_VERSION:-3.10}
@@ -215,6 +226,21 @@ export NCCL_DEBUG=\${NCCL_DEBUG:-INFO}
 export NCCL_ASYNC_ERROR_HANDLING=1
 export TRITON_CACHE_DIR="\$PWD/.triton"
 mkdir -p "\$TRITON_CACHE_DIR"
+
+# Keep vLLM usage + config under the job folder and avoid home dirs
+export XDG_CONFIG_HOME="\$PWD/.config"
+export XDG_CACHE_HOME="\$PWD/.cache"
+export VLLM_CONFIG_ROOT="\$XDG_CONFIG_HOME/vllm"
+export VLLM_CACHE_ROOT="\$XDG_CACHE_HOME/vllm"
+export VLLM_RPC_BASE_PATH="\$PWD/.tmp"
+export TORCH_HOME="\$XDG_CACHE_HOME/torch"
+export CUDA_CACHE_PATH="\$XDG_CACHE_HOME/nv"
+mkdir -p "\$VLLM_CONFIG_ROOT" "\$VLLM_CACHE_ROOT" "\$VLLM_RPC_BASE_PATH" "\$TORCH_HOME" "\$CUDA_CACHE_PATH"
+
+# Also disable vLLM usage stats to avoid background writers entirely
+export VLLM_NO_USAGE_STATS=1
+export VLLM_DO_NOT_TRACK=1
+export DO_NOT_TRACK=1
 
 # Spawn vLLM on the reserved GPU
 export CUDA_VISIBLE_DEVICES="$VLLM_GPU"

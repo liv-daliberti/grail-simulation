@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass, field
+from itertools import islice
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, List, Mapping, Sequence
 
@@ -29,7 +30,8 @@ from common.pipeline.io import (
     write_metrics_json,
     write_segmented_markdown_log,
 )
-from gpt4o.core import utils as gpt4o_utils
+import importlib as _importlib  # avoid triggering gpt4o.core lazy attribute sentinel
+gpt4o_utils = _importlib.import_module("gpt4o.core.utils")
 
 from .dataset import PreparedExample, load_dataset_split, prepare_examples
 from .model import generate_chat_completion
@@ -39,6 +41,22 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 
 LOGGER = logging.getLogger("grpo.next_video")
 
+
+def _extract_user_question(messages: Sequence[Mapping[str, str]]) -> str:
+    """Return the most recent user message content from ``messages``.
+
+    :param messages: Ordered chat message payloads.
+    :returns: Stripped user content or an empty string when missing.
+    """
+
+    for message in reversed(messages):
+        if (
+            isinstance(message, Mapping)
+            and message.get("role") == "user"
+            and message.get("content")
+        ):
+            return str(message["content"]).strip()
+    return ""
 
 def _parse_index(raw_output: str) -> int | None:
     """Parse the predicted option index from raw model output.
@@ -247,6 +265,91 @@ class _NextVideoRunState:
         self.qa_entries.append(artefacts.qa_entry)
 
 
+def _artefacts_from_saved_row(row: Mapping[str, object]) -> _ExampleArtefacts:
+    """Reconstruct evaluation artefacts from a saved prediction row."""
+
+    try:
+        n_options = int(row.get("n_options") or 0)
+    except (TypeError, ValueError):
+        n_options = 0
+    try:
+        position_index = int(row.get("position_index") or -1)
+    except (TypeError, ValueError):
+        position_index = -1
+    try:
+        gold_index = int(row.get("gold_index") or 0)
+    except (TypeError, ValueError):
+        gold_index = 0
+    parsed_index = row.get("parsed_index")
+    try:
+        parsed_index = int(parsed_index) if parsed_index is not None else None
+    except (TypeError, ValueError):
+        parsed_index = None
+    issue = str(row.get("issue") or "unspecified")
+    study = str(row.get("participant_study") or "unspecified")
+    eligible = bool(row.get("eligible"))
+    is_correct = bool(row.get("correct"))
+    messages = row.get("messages")
+    raw_output = str(row.get("gpt_output") or "")
+    is_formatted = bool(gpt4o_utils.ANS_TAG.search(raw_output)) if raw_output else False
+
+    observation = slate_eval.Observation(
+        issue_label=issue,
+        study_label=study,
+        position_bucket=slate_eval.bucket_from_position(position_index),
+        option_bucket=slate_eval.bucket_from_options(n_options),
+        option_count=n_options,
+        gold_index=gold_index,
+        parsed_index=parsed_index,
+        is_formatted=is_formatted,
+        eligible=eligible,
+        is_correct=is_correct,
+    )
+    prediction = dict(row)
+    qa_entry = "\n".join(
+        [
+            "## Example",
+            f"- Issue: {issue}",
+            f"- Participant study: {study}",
+            "",
+            "### Prompt",
+            json.dumps(messages, indent=2, ensure_ascii=False) if messages is not None else "",
+            "",
+            "### Model output",
+            raw_output.strip(),
+            "",
+            f"### Parsed index: {parsed_index}",
+            f"### Gold index: {gold_index}",
+        ]
+    )
+    return _ExampleArtefacts(observation=observation, prediction=prediction, qa_entry=qa_entry)
+
+
+def _seed_state_from_predictions(path: Path) -> _NextVideoRunState:
+    """Return run state pre-populated from existing predictions JSONL."""
+
+    state = _NextVideoRunState(
+        accumulator=slate_eval.EvaluationAccumulator(),
+        example_cap=None,
+    )
+    if not path.exists():
+        return state
+    with path.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(row, Mapping):
+                continue
+            artefacts = _artefacts_from_saved_row(row)
+            state.record(artefacts)
+    return state
+
+
 @dataclass(frozen=True)
 class _NextVideoOutputPaths:
     """Filesystem destinations for next-video evaluation artefacts."""
@@ -323,10 +426,12 @@ def _evaluate_examples(
     model: 'ModelLike',
     tokenizer: 'TokenizerLike',
     example_cap: int | None,
+    initial_state: _NextVideoRunState | None = None,
+    start_from: int = 0,
 ) -> _NextVideoRunState:
     """Return aggregated evaluation state for the provided examples."""
 
-    state = _NextVideoRunState(
+    state = initial_state or _NextVideoRunState(
         accumulator=slate_eval.EvaluationAccumulator(),
         example_cap=example_cap,
     )
@@ -344,6 +449,41 @@ def _evaluate_examples(
         )
         artefacts = _build_example_artefacts(example, response)
         state.record(artefacts)
+        # Emit a per-example QA log line with correctness and running accuracy.
+        try:
+            question = _extract_user_question(example.messages)
+        except Exception:  # pragma: no cover - defensive
+            question = ""
+        running_acc = state.accumulator.accuracy()
+        LOGGER.info(
+            "[NEXT][%d] issue=%s study=%s correct=%s parsed=%s gold=%s acc=%.3f\nQuestion: %s\nAnswer: %s",
+            start_from + idx,
+            artefacts.prediction.get("issue", "unspecified"),
+            artefacts.prediction.get("participant_study", "unspecified"),
+            artefacts.prediction.get("correct", False),
+            artefacts.prediction.get("parsed_index"),
+            artefacts.prediction.get("gold_index"),
+            running_acc,
+            question,
+            response.strip(),
+        )
+        # Also mirror a concise summary to stdout for SLURM logs.
+        print(
+            (
+                "[grpo.next_video] ex=%d issue=%s study=%s correct=%s parsed=%s "
+                "gold=%s acc=%.3f"
+            )
+            % (
+                start_from + idx,
+                artefacts.prediction.get("issue", "unspecified"),
+                artefacts.prediction.get("participant_study", "unspecified"),
+                str(artefacts.prediction.get("correct", False)).lower(),
+                artefacts.prediction.get("parsed_index"),
+                artefacts.prediction.get("gold_index"),
+                running_acc,
+            ),
+            flush=True,
+        )
         if idx % 25 == 0:
             LOGGER.info(
                 "[NEXT] processed=%d accuracy=%.3f parsed=%.3f formatted=%.3f",
@@ -459,24 +599,36 @@ def run_next_video_evaluation(
     run_dir = out_dir / config_label
     try:
         _ensure_output_dir(run_dir, settings.overwrite)
-    except FileExistsError as exc:
+        resume = False
+        seeded_state = None
+        processed_count = 0
+    except FileExistsError:
         metrics_path = run_dir / "metrics.json"
         predictions_path = run_dir / "predictions.jsonl"
         qa_log = _qa_log_path(run_dir)
-        if not metrics_path.exists():
-            raise
-        LOGGER.info(
-            "[NEXT] found cached artefacts at %s; skipping re-evaluation.", run_dir
-        )
-        cached_payload = load_metrics_json(metrics_path)
-        metrics = cached_payload.get("metrics", cached_payload)
-        return NextVideoEvaluationResult(
-            run_dir=run_dir,
-            metrics_path=metrics_path,
-            predictions_path=predictions_path,
-            qa_log_path=qa_log,
-            metrics=metrics,
-        )
+        if metrics_path.exists():
+            LOGGER.info(
+                "[NEXT] found cached artefacts at %s; skipping re-evaluation.", run_dir
+            )
+            cached_payload = load_metrics_json(metrics_path)
+            metrics = cached_payload.get("metrics", cached_payload)
+            return NextVideoEvaluationResult(
+                run_dir=run_dir,
+                metrics_path=metrics_path,
+                predictions_path=predictions_path,
+                qa_log_path=qa_log,
+                metrics=metrics,
+            )
+        # Partial run: resume using existing predictions.jsonl if present.
+        seeded_state = _seed_state_from_predictions(predictions_path)
+        processed_count = len(seeded_state.predictions)
+        resume = processed_count > 0
+        if resume:
+            LOGGER.info(
+                "[NEXT] resuming evaluation at %d processed examples in %s",
+                processed_count,
+                run_dir,
+            )
     example_cap = settings.limits.example_cap()
     if example_cap is not None:
         LOGGER.info("[NEXT] limiting evaluation to %d examples", example_cap)
@@ -484,12 +636,22 @@ def run_next_video_evaluation(
     LOGGER.info("[NEXT] writing artefacts to %s", run_dir)
     print(f"[grpo.next_video] writing artefacts to {run_dir}", flush=True)
 
+    # Apply example cap relative to any already processed examples.
+    cap = settings.limits.example_cap()
+    if processed_count and cap is not None:
+        cap = max(0, cap - processed_count)
+    # Skip already processed examples if resuming.
+    if processed_count:
+        examples_iter = islice(examples_iter, processed_count, None)
+
     state = _evaluate_examples(
         examples_iter,
         settings=settings,
         model=model,
         tokenizer=tokenizer,
-        example_cap=settings.limits.example_cap(),
+        example_cap=cap,
+        initial_state=seeded_state,
+        start_from=processed_count,
     )
 
     request = slate_eval.SlateMetricsRequest(

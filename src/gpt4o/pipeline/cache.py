@@ -22,10 +22,8 @@ import logging
 from pathlib import Path
 from typing import Dict, List, Mapping, Tuple
 
-from common.pipeline.io import load_metrics_json
-from common.opinion.metrics import compute_opinion_metrics
-
-from common.pipeline.gpt4o_models import (
+from importlib import import_module
+from .models import (
     PipelinePaths,
     SweepOutcome,
     coerce_float,
@@ -39,8 +37,73 @@ from ..core.opinion import (
     OpinionStudyResult,
 )
 from ..core.utils import qa_log_path_for
+load_metrics_json = import_module("common.pipeline.io").load_metrics_json
+compute_opinion_metrics = import_module("common.opinion.metrics").compute_opinion_metrics
 
 LOGGER = logging.getLogger("gpt4o.pipeline.cache")
+
+
+def _load_single_opinion_study(
+    study_dir: Path,
+) -> Tuple[str, OpinionStudyResult | None, List[float], List[float], List[float]]:
+    """Load metrics and vectors for a single opinion study directory.
+
+    :param study_dir: Directory containing ``metrics.json`` and ``predictions.jsonl``.
+    :returns: Tuple of ``(study_key, result_or_none, before_vec, after_vec, pred_vec)``.
+    """
+    metrics_path = study_dir / "metrics.json"
+    if not metrics_path.exists():
+        return study_dir.name, None, [], [], []
+    try:
+        with metrics_path.open("r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+    except (OSError, json.JSONDecodeError):
+        LOGGER.warning(
+            "[REPORTS] Skipping opinion study at %s (unreadable metrics).",
+            metrics_path,
+        )
+        return study_dir.name, None, [], [], []
+
+    # The metrics/baseline mappings are used directly in the return payload.
+    metrics = payload.get("metrics", {}) or {}
+    baseline = payload.get("baseline", {}) or {}
+    participants = int(payload.get("participants", 0) or 0)
+    study_key = str(payload.get("study", study_dir.name))
+    study_label = str(payload.get("study_label", study_key))
+    issue = str(payload.get("issue", ""))
+    eligible = int(metrics.get("eligible", participants))
+
+    vectors = OpinionEvaluationRunner.load_cached_prediction_vectors(
+        study_dir / "predictions.jsonl",
+        study_key=study_key,
+    )
+    if vectors and vectors.truth_after:
+        if not participants:
+            participants = len(vectors.truth_after)
+        if not eligible:
+            eligible = len(vectors.truth_after)
+
+    artifacts = OpinionArtifacts(
+        metrics=metrics_path,
+        predictions=study_dir / "predictions.jsonl",
+        qa_log=qa_log_path_for(study_dir),
+    )
+    return (
+        study_key,
+        OpinionStudyResult(
+            study_key=study_key,
+            study_label=study_label,
+            issue=issue,
+            participants=participants,
+            eligible=eligible,
+            metrics=metrics,
+            baseline=baseline,
+            artifacts=artifacts,
+        ),
+        (vectors.truth_before if vectors else []),
+        (vectors.truth_after if vectors else []),
+        (vectors.pred_after if vectors else []),
+    )
 
 
 def _load_sweep_outcomes_from_disk(sweep_dir: Path) -> List[SweepOutcome]:
@@ -161,7 +224,7 @@ def _load_selected_outcome_from_disk(
     return selected, final_metrics
 
 
-def _load_opinion_result_from_disk(  # pylint: disable=too-many-locals
+def _load_opinion_result_from_disk(
     paths: PipelinePaths, config_label: str
 ) -> OpinionEvaluationResult | None:
     """
@@ -183,59 +246,15 @@ def _load_opinion_result_from_disk(  # pylint: disable=too-many-locals
     for study_dir in sorted(opinion_root.iterdir()):
         if not study_dir.is_dir():
             continue
-        metrics_path = study_dir / "metrics.json"
-        if not metrics_path.exists():
+        study_key, result, before_vec, after_vec, pred_vec = _load_single_opinion_study(
+            study_dir
+        )
+        if result is None:
             continue
-        try:
-            with metrics_path.open("r", encoding="utf-8") as handle:
-                payload = json.load(handle)
-        except (OSError, json.JSONDecodeError):
-            LOGGER.warning(
-                "[REPORTS] Skipping opinion study at %s (unreadable metrics).",
-                metrics_path,
-            )
-            continue
-
-        metrics = payload.get("metrics", {}) or {}
-        baseline = payload.get("baseline", {}) or {}
-        participants = int(payload.get("participants", 0) or 0)
-        study_key = str(payload.get("study", study_dir.name))
-        study_label = str(payload.get("study_label", study_key))
-        issue = str(payload.get("issue", ""))
-        eligible = int(metrics.get("eligible", participants))
-
-        predictions_path = study_dir / "predictions.jsonl"
-        vectors = OpinionEvaluationRunner.load_cached_prediction_vectors(
-            predictions_path,
-            study_key=study_key,
-        )
-        vector_len = 0
-        if vectors:
-            combined_before.extend(vectors.truth_before)
-            combined_after.extend(vectors.truth_after)
-            combined_pred.extend(vectors.pred_after)
-            vector_len = len(vectors.truth_after)
-
-        if not participants and vector_len:
-            participants = vector_len
-        if not eligible and vector_len:
-            eligible = vector_len
-
-        artifacts = OpinionArtifacts(
-            metrics=metrics_path,
-            predictions=predictions_path,
-            qa_log=qa_log_path_for(study_dir),
-        )
-        studies[study_key] = OpinionStudyResult(
-            study_key=study_key,
-            study_label=study_label,
-            issue=issue,
-            participants=participants,
-            eligible=eligible,
-            metrics=metrics,
-            baseline=baseline,
-            artifacts=artifacts,
-        )
+        studies[study_key] = result
+        combined_before.extend(before_vec)
+        combined_after.extend(after_vec)
+        combined_pred.extend(pred_vec)
 
     if not studies:
         return None

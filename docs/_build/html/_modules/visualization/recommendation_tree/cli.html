@@ -290,7 +290,14 @@
 
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">BatchRenderSettings</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Rendering preferences shared across batch session exports.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Rendering preferences shared across batch session exports.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        session_options: Options controlling session graph rendering.</span>
+<span class="sd">        output_format: Graphviz output format for batch artifacts (e.g. ``svg``).</span>
+<span class="sd">        batch_prefix: Filename prefix for emitted batch visualisations.</span>
+<span class="sd">        max_steps: Optional cap on the number of steps per session.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">session_options</span><span class="p">:</span> <span class="n">render</span><span class="o">.</span><span class="n">SessionGraphOptions</span>
     <span class="n">output_format</span><span class="p">:</span> <span class="nb">str</span>
@@ -300,7 +307,15 @@
 
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">BatchContext</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for batch session rendering.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for batch session rendering.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        dataset: Loaded cleaned dataset object.</span>
+<span class="sd">        issue_targets: Mapping of issue names to the number of sessions to render.</span>
+<span class="sd">        output_dir: Destination directory for batch outputs.</span>
+<span class="sd">        split: Optional dataset split name when selecting rows.</span>
+<span class="sd">        settings: Shared rendering configuration and preferences.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">dataset</span><span class="p">:</span> <span class="nb">object</span>
     <span class="n">issue_targets</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
@@ -465,6 +480,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Entry point for the recommendation tree visualiser.</span>
 
 <span class="sd">    :param argv: Optional CLI argument list; defaults to ``sys.argv``.</span>
+<span class="sd">    :returns: ``None``. Exits the process on invalid arguments.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">args</span> <span class="o">=</span> <span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
@@ -649,6 +665,7 @@
 <span class="sd">    :param args: Parsed CLI arguments.</span>
 <span class="sd">    :param dataset: Loaded cleaned dataset object.</span>
 <span class="sd">    :param highlight_path: Sequence of identifiers to highlight.</span>
+<span class="sd">    :returns: ``None``. Raises :class:`SystemExit` when no sessions are emitted.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">context</span> <span class="o">=</span> <span class="n">_prepare_batch_context</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">highlight_path</span><span class="p">)</span>

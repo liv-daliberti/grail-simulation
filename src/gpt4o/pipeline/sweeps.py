@@ -22,11 +22,11 @@ import shutil
 from pathlib import Path
 from typing import List, Mapping, Sequence, Tuple
 
-from common.pipeline.gpt4o_models import SweepConfig, SweepOutcome
-from common.pipeline.io import load_metrics_json
-
+from importlib import import_module
 from ..cli import build_parser as build_gpt_parser
 from ..core.evaluate import run_eval
+from .models import SweepConfig, SweepOutcome
+load_metrics_json = import_module("common.pipeline.io").load_metrics_json
 
 LOGGER = logging.getLogger("gpt4o.pipeline.sweeps")
 

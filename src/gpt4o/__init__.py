@@ -31,9 +31,11 @@ if str(_CORE_PATH) not in __path__:
     __path__.append(str(_CORE_PATH))
 
 
-def __getattr__(name: str):  # pragma: no cover - thin import proxy
-    if name == "run_eval":
-        return importlib.import_module("gpt4o.core.evaluate").run_eval
-    if name == "pipeline_main":
-        return importlib.import_module("gpt4o.pipeline").main
-    raise AttributeError(name)
+def run_eval(args):  # pragma: no cover - proxy import on call
+    """Evaluate GPT-4o on the configured dataset. Proxy to core.evaluate."""
+    return importlib.import_module("gpt4o.core.evaluate").run_eval(args)
+
+
+def pipeline_main(argv=None):  # pragma: no cover - proxy import on call
+    """Run the GPT-4o pipeline entry point. Proxy to pipeline.main."""
+    return importlib.import_module("gpt4o.pipeline").main(argv)

@@ -5,7 +5,12 @@ from __future__ import annotations
 import os
 from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
 
-from trl import ModelConfig  # pylint: disable=import-error
+try:  # pragma: no cover - optional dependency
+    from trl import ModelConfig  # pylint: disable=import-error
+except Exception:  # pragma: no cover - optional dependency
+    # Minimal placeholder for import-time; real usage happens in training scripts.
+    class ModelConfig:  # type: ignore[no-redef]
+        pass
 
 from common.data.hf_datasets import DatasetDict
 from common.open_r1.configs import GRPOConfig, GRPOScriptArguments

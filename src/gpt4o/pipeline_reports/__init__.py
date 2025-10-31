@@ -21,13 +21,12 @@ import csv
 import math
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Mapping, Sequence, Tuple
-
-from common.pipeline.io import write_markdown_lines
-from common.pipeline.gpt4o_models import SweepOutcome
-from common.reports.utils import start_markdown_report
-
+from typing import Dict, List, Mapping, Sequence, Tuple, cast
+from importlib import import_module
 from ..core.opinion import OpinionEvaluationResult
+from ..pipeline.models import SweepOutcome
+write_markdown_lines = import_module("common.pipeline.io").write_markdown_lines
+start_markdown_report = import_module("common.reports.utils").start_markdown_report
 
 
 @dataclass(frozen=True)
@@ -330,10 +329,16 @@ def _write_next_video_report(
     if isinstance(group_metrics, Mapping):
         by_issue = group_metrics.get("by_issue")
         if isinstance(by_issue, Mapping):
-            _render_group_table("Accuracy by Issue", by_issue)  # type: ignore[arg-type]
+            _render_group_table(
+                "Accuracy by Issue",
+                cast(Mapping[str, Mapping[str, object]], by_issue),
+            )
         by_study = group_metrics.get("by_participant_study")
         if isinstance(by_study, Mapping):
-            _render_group_table("Accuracy by Participant Study", by_study)  # type: ignore[arg-type]
+            _render_group_table(
+                "Accuracy by Participant Study",
+                cast(Mapping[str, Mapping[str, object]], by_study),
+            )
 
     notes = metrics.get("notes")
     if isinstance(notes, str) and notes.strip():

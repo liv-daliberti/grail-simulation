@@ -20,6 +20,8 @@ The actual prompt-construction utilities now live under the
 code that still references ``prompt_builder.py`` directly.
 """
 
+from __future__ import annotations
+
 # pylint: skip-file
 """Backward-compatibility shim for :mod:`prompt_builder`.
 
@@ -28,8 +30,6 @@ resides in the ``prompt_builder`` package under ``src/prompt_builder/``.
 Importing from here continues to work while downstream code migrates to
 the new module layout.
 """
-
-from __future__ import annotations
 
 import warnings
 

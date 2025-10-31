@@ -275,30 +275,26 @@
 
 <span class="sd">&quot;&quot;&quot;Prompt construction utilities for GPT-4o slate evaluations.&quot;&quot;&quot;</span>
 
-<span class="c1"># pylint: disable=too-many-return-statements,too-many-branches,too-many-locals</span>
-<span class="c1"># pylint: disable=too-many-statements,too-many-nested-blocks,broad-exception-caught</span>
-
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">suppress</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">importlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">import_module</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">common.prompts.docs</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">PromptDocumentBuilder</span><span class="p">,</span>
-    <span class="n">default_title_resolver</span><span class="p">,</span>
-    <span class="n">load_trajectory_entries</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">common.prompts.fields</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">NOW_PLAYING_ID_KEYS</span><span class="p">,</span>
-    <span class="n">NOW_PLAYING_TITLE_KEYS</span><span class="p">,</span>
-    <span class="n">NOW_PLAYING_TITLE_KEYS_WITH_META</span><span class="p">,</span>
-<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">PROMPT_COLUMN</span><span class="p">,</span> <span class="n">SOLUTION_COLUMN</span><span class="p">,</span> <span class="n">SYSTEM_PROMPT</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">canon_text</span><span class="p">,</span> <span class="n">canon_video_id</span><span class="p">,</span> <span class="n">is_nan_like</span><span class="p">,</span> <span class="n">truthy</span>
+<span class="n">_docs</span> <span class="o">=</span> <span class="n">import_module</span><span class="p">(</span><span class="s2">&quot;common.prompts.docs&quot;</span><span class="p">)</span>
+<span class="n">PromptDocumentBuilder</span> <span class="o">=</span> <span class="n">_docs</span><span class="o">.</span><span class="n">PromptDocumentBuilder</span>
+<span class="n">default_title_resolver</span> <span class="o">=</span> <span class="n">_docs</span><span class="o">.</span><span class="n">default_title_resolver</span>
+<span class="n">load_trajectory_entries</span> <span class="o">=</span> <span class="n">_docs</span><span class="o">.</span><span class="n">load_trajectory_entries</span>
+<span class="n">_fields</span> <span class="o">=</span> <span class="n">import_module</span><span class="p">(</span><span class="s2">&quot;common.prompts.fields&quot;</span><span class="p">)</span>
+<span class="n">NOW_PLAYING_ID_KEYS</span> <span class="o">=</span> <span class="n">_fields</span><span class="o">.</span><span class="n">NOW_PLAYING_ID_KEYS</span>
+<span class="n">NOW_PLAYING_TITLE_KEYS</span> <span class="o">=</span> <span class="n">_fields</span><span class="o">.</span><span class="n">NOW_PLAYING_TITLE_KEYS</span>
+<span class="n">NOW_PLAYING_TITLE_KEYS_WITH_META</span> <span class="o">=</span> <span class="n">_fields</span><span class="o">.</span><span class="n">NOW_PLAYING_TITLE_KEYS_WITH_META</span>
 
 <span class="n">_PROMPT_CONSTANTS</span> <span class="o">=</span> <span class="n">import_module</span><span class="p">(</span><span class="s2">&quot;prompt_builder.constants&quot;</span><span class="p">)</span>
 <span class="n">YT_FREQ_MAP</span> <span class="o">=</span> <span class="n">_PROMPT_CONSTANTS</span><span class="o">.</span><span class="n">YT_FREQ_MAP</span>
@@ -342,6 +338,99 @@
 <span class="p">}</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_gender_label</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a gender label inferred from binary survey signals.</span>
+
+<span class="sd">    :param example: Dataset row containing boolean gender indicators.</span>
+<span class="sd">    :returns: Canonical gender string or ``None`` when unspecified.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">female</span> <span class="o">=</span> <span class="n">truthy</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;female&quot;</span><span class="p">))</span>
+    <span class="n">male</span> <span class="o">=</span> <span class="n">truthy</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;male&quot;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">female</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">male</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;woman&quot;</span>
+    <span class="k">if</span> <span class="n">male</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">female</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;man&quot;</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_party_from_text</span><span class="p">(</span><span class="n">lowered</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">original</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a normalised party label based on ``lowered`` text.</span>
+
+<span class="sd">    :param lowered: Lower-cased party descriptor.</span>
+<span class="sd">    :param original: Original string prior to normalisation.</span>
+<span class="sd">    :returns: Canonical party description when recognised.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">mapping</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;democrat&quot;</span><span class="p">:</span> <span class="s2">&quot;Democratic&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;dem&quot;</span><span class="p">:</span> <span class="s2">&quot;Democratic&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;republican&quot;</span><span class="p">:</span> <span class="s2">&quot;Republican&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;rep&quot;</span><span class="p">:</span> <span class="s2">&quot;Republican&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;gop&quot;</span><span class="p">:</span> <span class="s2">&quot;Republican&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;independent&quot;</span><span class="p">:</span> <span class="s2">&quot;Independent&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;libertarian&quot;</span><span class="p">:</span> <span class="s2">&quot;Libertarian&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;green&quot;</span><span class="p">:</span> <span class="s2">&quot;Green&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">for</span> <span class="n">token</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">mapping</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">lowered</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">label</span>
+    <span class="k">if</span> <span class="s2">&quot;closer to the democratic&quot;</span> <span class="ow">in</span> <span class="n">lowered</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;Democratic-leaning&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;closer to the republican&quot;</span> <span class="ow">in</span> <span class="n">lowered</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;Republican-leaning&quot;</span>
+    <span class="k">return</span> <span class="n">original</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">original</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_numeric_ideology_label</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a canonical ideology label derived from numeric encodings.</span>
+
+<span class="sd">    :param value: Raw string value representing the ideology indicator.</span>
+<span class="sd">    :returns: Canonical ideology label or ``None`` when parsing fails.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">numeric</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">thresholds</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="mf">1.5</span><span class="p">,</span> <span class="s2">&quot;Extremely liberal&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">2.5</span><span class="p">,</span> <span class="s2">&quot;Liberal&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">3.5</span><span class="p">,</span> <span class="s2">&quot;Slightly liberal&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">4.5</span><span class="p">,</span> <span class="s2">&quot;Moderate&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">5.5</span><span class="p">,</span> <span class="s2">&quot;Slightly conservative&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">6.5</span><span class="p">,</span> <span class="s2">&quot;Conservative&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">selected</span> <span class="o">=</span> <span class="s2">&quot;Extremely conservative&quot;</span>
+    <span class="k">for</span> <span class="n">limit</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">thresholds</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">numeric</span> <span class="o">&lt;=</span> <span class="n">limit</span><span class="p">:</span>
+            <span class="n">selected</span> <span class="o">=</span> <span class="n">label</span>
+            <span class="k">break</span>
+    <span class="k">return</span> <span class="n">selected</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_textual_ideology_label</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a canonical ideology label derived from textual descriptors.</span>
+
+<span class="sd">    :param value: Raw string description of ideology.</span>
+<span class="sd">    :returns: Canonical ideology label or ``None`` when unrecognised.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">lowered</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">mapping</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="s2">&quot;extreme&quot;</span><span class="p">,</span> <span class="s2">&quot;lib&quot;</span><span class="p">,</span> <span class="s2">&quot;Extremely liberal&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;lib&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Liberal&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;moderate&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Moderate&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;centrist&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Moderate&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;conservative&quot;</span><span class="p">,</span> <span class="s2">&quot;extreme&quot;</span><span class="p">,</span> <span class="s2">&quot;Extremely conservative&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;conservative&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Conservative&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">token</span><span class="p">,</span> <span class="n">qualifier</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">mapping</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">lowered</span> <span class="ow">and</span> <span class="p">(</span><span class="n">qualifier</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">qualifier</span> <span class="ow">in</span> <span class="n">lowered</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">label</span>
+    <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="kc">None</span>
+
+
 <div class="viewcode-block" id="pick_case_insensitive">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.conversation.pick_case_insensitive">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">pick_case_insensitive</span><span class="p">(</span><span class="n">record</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">*</span><span class="n">candidates</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
@@ -379,12 +468,10 @@
             <span class="n">stripped</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">_INCOME_PATTERN</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">stripped</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;income&quot;</span> <span class="ow">in</span> <span class="n">stripped</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
                 <span class="k">return</span> <span class="n">stripped</span>
-    <span class="k">try</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">example</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">example</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_nan_like</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_INCOME_PATTERN</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
                 <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-        <span class="k">pass</span>
     <span class="k">if</span> <span class="s2">&quot;income_gt50k&quot;</span> <span class="ow">in</span> <span class="n">example</span><span class="p">:</span>
         <span class="n">high_income</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;income_gt50k&quot;</span><span class="p">))</span>
         <span class="k">return</span> <span class="s2">&quot;&gt;$50k household income&quot;</span> <span class="k">if</span> <span class="n">high_income</span> <span class="k">else</span> <span class="s2">&quot;≤$50k household income&quot;</span>
@@ -404,30 +491,16 @@
     <span class="n">pid_text</span> <span class="o">=</span> <span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pid&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pid_text</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_nan_like</span><span class="p">(</span><span class="n">pid_text</span><span class="p">):</span>
         <span class="n">lowered</span> <span class="o">=</span> <span class="n">pid_text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-        <span class="k">if</span> <span class="s2">&quot;dem&quot;</span> <span class="ow">in</span> <span class="n">lowered</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;Democratic&quot;</span>
-        <span class="k">if</span> <span class="s2">&quot;rep&quot;</span> <span class="ow">in</span> <span class="n">lowered</span> <span class="ow">or</span> <span class="s2">&quot;gop&quot;</span> <span class="ow">in</span> <span class="n">lowered</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;Republican&quot;</span>
-        <span class="k">if</span> <span class="s2">&quot;independent&quot;</span> <span class="ow">in</span> <span class="n">lowered</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;Independent&quot;</span>
-        <span class="k">if</span> <span class="s2">&quot;libertarian&quot;</span> <span class="ow">in</span> <span class="n">lowered</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;Libertarian&quot;</span>
-        <span class="k">if</span> <span class="s2">&quot;green&quot;</span> <span class="ow">in</span> <span class="n">lowered</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;Green&quot;</span>
-        <span class="k">if</span> <span class="s2">&quot;closer to the democratic&quot;</span> <span class="ow">in</span> <span class="n">lowered</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;Democratic-leaning&quot;</span>
-        <span class="k">if</span> <span class="s2">&quot;closer to the republican&quot;</span> <span class="ow">in</span> <span class="n">lowered</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;Republican-leaning&quot;</span>
-        <span class="k">return</span> <span class="n">pid_text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">candidate</span> <span class="o">=</span> <span class="n">_party_from_text</span><span class="p">(</span><span class="n">lowered</span><span class="p">,</span> <span class="n">pid_text</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">candidate</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">candidate</span>
 
     <span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;pid1&quot;</span><span class="p">,</span> <span class="s2">&quot;pid2&quot;</span><span class="p">,</span> <span class="s2">&quot;pid3&quot;</span><span class="p">,</span> <span class="s2">&quot;pid4&quot;</span><span class="p">):</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">value</span> <span class="o">=</span> <span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
                 <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="k">continue</span>
     <span class="k">if</span> <span class="n">values</span><span class="p">:</span>
         <span class="n">mean_value</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">mean_value</span> <span class="o">&lt;=</span> <span class="mf">3.0</span><span class="p">:</span>
@@ -453,35 +526,13 @@
     <span class="n">value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">is_nan_like</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">None</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">numeric</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">numeric</span> <span class="o">&lt;=</span> <span class="mf">1.5</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;Extremely liberal&quot;</span>
-        <span class="k">if</span> <span class="n">numeric</span> <span class="o">&lt;=</span> <span class="mf">2.5</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;Liberal&quot;</span>
-        <span class="k">if</span> <span class="n">numeric</span> <span class="o">&lt;=</span> <span class="mf">3.5</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;Slightly liberal&quot;</span>
-        <span class="k">if</span> <span class="n">numeric</span> <span class="o">&lt;=</span> <span class="mf">4.5</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;Moderate&quot;</span>
-        <span class="k">if</span> <span class="n">numeric</span> <span class="o">&lt;=</span> <span class="mf">5.5</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;Slightly conservative&quot;</span>
-        <span class="k">if</span> <span class="n">numeric</span> <span class="o">&lt;=</span> <span class="mf">6.5</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;Conservative&quot;</span>
-        <span class="k">return</span> <span class="s2">&quot;Extremely conservative&quot;</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-        <span class="k">pass</span>
-    <span class="n">lowered</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-    <span class="k">if</span> <span class="s2">&quot;extreme&quot;</span> <span class="ow">in</span> <span class="n">lowered</span> <span class="ow">and</span> <span class="s2">&quot;lib&quot;</span> <span class="ow">in</span> <span class="n">lowered</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;Extremely liberal&quot;</span>
-    <span class="k">if</span> <span class="s2">&quot;lib&quot;</span> <span class="ow">in</span> <span class="n">lowered</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;Liberal&quot;</span>
-    <span class="k">if</span> <span class="s2">&quot;moderate&quot;</span> <span class="ow">in</span> <span class="n">lowered</span> <span class="ow">or</span> <span class="s2">&quot;centrist&quot;</span> <span class="ow">in</span> <span class="n">lowered</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;Moderate&quot;</span>
-    <span class="k">if</span> <span class="s2">&quot;conservative&quot;</span> <span class="ow">in</span> <span class="n">lowered</span> <span class="ow">and</span> <span class="s2">&quot;extreme&quot;</span> <span class="ow">in</span> <span class="n">lowered</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;Extremely conservative&quot;</span>
-    <span class="k">if</span> <span class="s2">&quot;conservative&quot;</span> <span class="ow">in</span> <span class="n">lowered</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;Conservative&quot;</span>
-    <span class="k">return</span> <span class="n">value</span></div>
+
+    <span class="n">numeric_label</span> <span class="o">=</span> <span class="n">_numeric_ideology_label</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">numeric_label</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">numeric_label</span>
+
+    <span class="n">textual_label</span> <span class="o">=</span> <span class="n">_textual_ideology_label</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">textual_label</span></div>
 
 
 
@@ -494,24 +545,27 @@
 <span class="sd">    :returns: Normalised marital descriptor or ``None`` if unknown.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">synonyms</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">((</span><span class="s2">&quot;married&quot;</span><span class="p">,),</span> <span class="s2">&quot;Married&quot;</span><span class="p">),</span>
+        <span class="p">((</span><span class="s2">&quot;partner&quot;</span><span class="p">,</span> <span class="s2">&quot;cohabit&quot;</span><span class="p">),</span> <span class="s2">&quot;Living with partner&quot;</span><span class="p">),</span>
+        <span class="p">((</span><span class="s2">&quot;single&quot;</span><span class="p">,),</span> <span class="s2">&quot;Single&quot;</span><span class="p">),</span>
+        <span class="p">((</span><span class="s2">&quot;divorced&quot;</span><span class="p">,),</span> <span class="s2">&quot;Divorced&quot;</span><span class="p">),</span>
+        <span class="p">((</span><span class="s2">&quot;widow&quot;</span><span class="p">,),</span> <span class="s2">&quot;Widowed&quot;</span><span class="p">),</span>
+        <span class="p">((</span><span class="s2">&quot;separated&quot;</span><span class="p">,),</span> <span class="s2">&quot;Separated&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">result</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">_MARITAL_KEYS</span><span class="p">:</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_nan_like</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
             <span class="n">lowered</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-            <span class="k">if</span> <span class="s2">&quot;married&quot;</span> <span class="ow">in</span> <span class="n">lowered</span><span class="p">:</span>
-                <span class="k">return</span> <span class="s2">&quot;Married&quot;</span>
-            <span class="k">if</span> <span class="s2">&quot;partner&quot;</span> <span class="ow">in</span> <span class="n">lowered</span> <span class="ow">or</span> <span class="s2">&quot;cohabit&quot;</span> <span class="ow">in</span> <span class="n">lowered</span><span class="p">:</span>
-                <span class="k">return</span> <span class="s2">&quot;Living with partner&quot;</span>
-            <span class="k">if</span> <span class="s2">&quot;single&quot;</span> <span class="ow">in</span> <span class="n">lowered</span><span class="p">:</span>
-                <span class="k">return</span> <span class="s2">&quot;Single&quot;</span>
-            <span class="k">if</span> <span class="s2">&quot;divorced&quot;</span> <span class="ow">in</span> <span class="n">lowered</span><span class="p">:</span>
-                <span class="k">return</span> <span class="s2">&quot;Divorced&quot;</span>
-            <span class="k">if</span> <span class="s2">&quot;widow&quot;</span> <span class="ow">in</span> <span class="n">lowered</span><span class="p">:</span>
-                <span class="k">return</span> <span class="s2">&quot;Widowed&quot;</span>
-            <span class="k">if</span> <span class="s2">&quot;separated&quot;</span> <span class="ow">in</span> <span class="n">lowered</span><span class="p">:</span>
-                <span class="k">return</span> <span class="s2">&quot;Separated&quot;</span>
-            <span class="k">return</span> <span class="n">value</span>
-    <span class="k">return</span> <span class="kc">None</span></div>
+            <span class="k">for</span> <span class="n">tokens</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">synonyms</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">token</span> <span class="ow">in</span> <span class="n">lowered</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">):</span>
+                    <span class="n">result</span> <span class="o">=</span> <span class="n">label</span>
+                    <span class="k">break</span>
+            <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">break</span>
+    <span class="k">return</span> <span class="n">result</span></div>
 
 
 
@@ -532,6 +586,97 @@
     <span class="k">return</span> <span class="n">raw</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_demographic_fragments</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return demographic fragments used in the profile sentence.</span>
+
+<span class="sd">    :param example: Dataset row containing demographic indicators</span>
+<span class="sd">        (e.g. ``female``, ``male``, race fields, marital status).</span>
+<span class="sd">    :returns: List of short phrases that describe the viewer&#39;s demographics.</span>
+<span class="sd">    :rtype: list[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">fragments</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">race</span> <span class="o">=</span> <span class="n">extract_race</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
+    <span class="n">gender</span> <span class="o">=</span> <span class="n">_gender_label</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">race</span> <span class="ow">and</span> <span class="n">gender</span><span class="p">:</span>
+        <span class="n">fragments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">race</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">gender</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">fragments</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">frag</span> <span class="k">for</span> <span class="n">frag</span> <span class="ow">in</span> <span class="p">(</span><span class="n">gender</span><span class="p">,</span> <span class="n">race</span><span class="p">)</span> <span class="k">if</span> <span class="n">frag</span><span class="p">])</span>
+
+    <span class="n">marital</span> <span class="o">=</span> <span class="n">extract_marital_status</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">marital</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_nan_like</span><span class="p">(</span><span class="n">marital</span><span class="p">):</span>
+        <span class="n">common</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Married&quot;</span><span class="p">,</span> <span class="s2">&quot;Single&quot;</span><span class="p">,</span> <span class="s2">&quot;Divorced&quot;</span><span class="p">,</span> <span class="s2">&quot;Widowed&quot;</span><span class="p">,</span> <span class="s2">&quot;Separated&quot;</span><span class="p">}</span>
+        <span class="n">fragments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">marital</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">if</span> <span class="n">marital</span> <span class="ow">in</span> <span class="n">common</span> <span class="k">else</span> <span class="n">marital</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">fragments</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_political_fragments</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return political fragments for the viewer profile.</span>
+
+<span class="sd">    :param example: Dataset row with partisan/ideology and income signals.</span>
+<span class="sd">    :returns: List of phrases capturing party/ideology and income when present.</span>
+<span class="sd">    :rtype: list[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">fragments</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">party</span> <span class="o">=</span> <span class="n">extract_party</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
+    <span class="n">ideology</span> <span class="o">=</span> <span class="n">format_ideology</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ideo&quot;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">party</span> <span class="ow">and</span> <span class="n">ideology</span><span class="p">:</span>
+        <span class="n">fragments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">party</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">ideology</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">party</span><span class="p">:</span>
+        <span class="n">fragments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">party</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">ideology</span><span class="p">:</span>
+        <span class="n">fragments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ideology</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+
+    <span class="n">income</span> <span class="o">=</span> <span class="n">extract_income</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">income</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_nan_like</span><span class="p">(</span><span class="n">income</span><span class="p">):</span>
+        <span class="n">fragments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">income</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fragments</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_education_fragments</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return education-related fragments for the profile.</span>
+
+<span class="sd">    :param example: Dataset row with a ``college`` boolean flag.</span>
+<span class="sd">    :returns: List containing a single education phrase when applicable.</span>
+<span class="sd">    :rtype: list[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">truthy</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;college&quot;</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;college-educated&quot;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">[]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_viewing_fragments</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return viewing-habit fragments for the profile.</span>
+
+<span class="sd">    :param example: Dataset row with ``freq_youtube`` frequency values.</span>
+<span class="sd">    :returns: List containing a single viewing-habit phrase when recognised.</span>
+<span class="sd">    :rtype: list[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">youtube_freq</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;freq_youtube&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">youtube_freq</span> <span class="ow">in</span> <span class="n">YT_FREQ_MAP</span><span class="p">:</span>
+        <span class="n">viewing_phrase</span> <span class="o">=</span> <span class="n">YT_FREQ_MAP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">youtube_freq</span><span class="p">,</span> <span class="s2">&quot;regularly&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;watches YouTube </span><span class="si">{</span><span class="n">viewing_phrase</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">[]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_age_fragments</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return age-based fragments for the viewer profile.</span>
+
+<span class="sd">    :param example: Dataset row containing age metadata.</span>
+<span class="sd">    :returns: List containing a single age descriptor when available.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">age</span> <span class="o">=</span> <span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;age&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">age</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span> <span class="ow">and</span> <span class="n">age</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">age</span><span class="p">)</span><span class="si">}</span><span class="s2">-year-old&quot;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">[]</span>
+
+
 <div class="viewcode-block" id="extract_race">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.conversation.extract_race">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">extract_race</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
@@ -541,15 +686,12 @@
 <span class="sd">    :returns: Canonical race label or ``None`` when no signal is found.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">try</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">truthy</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;white&quot;</span><span class="p">))</span> <span class="ow">and</span> <span class="n">truthy</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;black&quot;</span><span class="p">)):</span>
-            <span class="k">return</span> <span class="s2">&quot;Multiracial&quot;</span>
-        <span class="k">if</span> <span class="n">truthy</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;white&quot;</span><span class="p">)):</span>
-            <span class="k">return</span> <span class="s2">&quot;White&quot;</span>
-        <span class="k">if</span> <span class="n">truthy</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;black&quot;</span><span class="p">)):</span>
-            <span class="k">return</span> <span class="s2">&quot;Black&quot;</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-        <span class="k">pass</span>
+    <span class="k">if</span> <span class="n">truthy</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;white&quot;</span><span class="p">))</span> <span class="ow">and</span> <span class="n">truthy</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;black&quot;</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="s2">&quot;Multiracial&quot;</span>
+    <span class="k">if</span> <span class="n">truthy</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;white&quot;</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="s2">&quot;White&quot;</span>
+    <span class="k">if</span> <span class="n">truthy</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;black&quot;</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="s2">&quot;Black&quot;</span>
 
     <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">_RACE_TEXT_FIELDS</span><span class="p">:</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
@@ -571,52 +713,11 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">fragments</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">age</span> <span class="o">=</span> <span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;age&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">age</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span> <span class="ow">and</span> <span class="n">age</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">fragments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">age</span><span class="p">)</span><span class="si">}</span><span class="s2">-year-old&quot;</span><span class="p">)</span>
-
-    <span class="n">race</span> <span class="o">=</span> <span class="n">extract_race</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
-    <span class="n">female</span> <span class="o">=</span> <span class="n">truthy</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;female&quot;</span><span class="p">))</span>
-    <span class="n">male</span> <span class="o">=</span> <span class="n">truthy</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;male&quot;</span><span class="p">))</span>
-    <span class="n">gender</span> <span class="o">=</span> <span class="s2">&quot;woman&quot;</span> <span class="k">if</span> <span class="p">(</span><span class="n">female</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">male</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="s2">&quot;man&quot;</span> <span class="k">if</span> <span class="p">(</span><span class="n">male</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">female</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">race</span> <span class="ow">and</span> <span class="n">gender</span><span class="p">:</span>
-        <span class="n">fragments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">race</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">gender</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">gender</span><span class="p">:</span>
-            <span class="n">fragments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gender</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">race</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">gender</span><span class="p">:</span>
-            <span class="n">fragments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">race</span><span class="p">)</span>
-
-    <span class="n">marital</span> <span class="o">=</span> <span class="n">extract_marital_status</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">marital</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_nan_like</span><span class="p">(</span><span class="n">marital</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">marital</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;Married&quot;</span><span class="p">,</span> <span class="s2">&quot;Single&quot;</span><span class="p">,</span> <span class="s2">&quot;Divorced&quot;</span><span class="p">,</span> <span class="s2">&quot;Widowed&quot;</span><span class="p">,</span> <span class="s2">&quot;Separated&quot;</span><span class="p">}:</span>
-            <span class="n">fragments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">marital</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">fragments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">marital</span><span class="p">)</span>
-
-    <span class="n">party</span> <span class="o">=</span> <span class="n">extract_party</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
-    <span class="n">ideology</span> <span class="o">=</span> <span class="n">format_ideology</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ideo&quot;</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">party</span> <span class="ow">and</span> <span class="n">ideology</span><span class="p">:</span>
-        <span class="n">fragments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">party</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">ideology</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">party</span><span class="p">:</span>
-        <span class="n">fragments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">party</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">ideology</span><span class="p">:</span>
-        <span class="n">fragments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ideology</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
-
-    <span class="n">income</span> <span class="o">=</span> <span class="n">extract_income</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">income</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_nan_like</span><span class="p">(</span><span class="n">income</span><span class="p">):</span>
-        <span class="n">fragments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">income</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">truthy</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;college&quot;</span><span class="p">))</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span>
-        <span class="s2">&quot;degree&quot;</span> <span class="ow">in</span> <span class="p">(</span><span class="n">income</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="p">):</span>
-        <span class="n">fragments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;college-educated&quot;</span><span class="p">)</span>
-
-    <span class="n">youtube_freq</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;freq_youtube&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">youtube_freq</span> <span class="ow">in</span> <span class="n">YT_FREQ_MAP</span><span class="p">:</span>
-        <span class="n">viewing_phrase</span> <span class="o">=</span> <span class="n">YT_FREQ_MAP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">youtube_freq</span><span class="p">,</span> <span class="s2">&quot;regularly&quot;</span><span class="p">)</span>
-        <span class="n">fragments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;watches YouTube </span><span class="si">{</span><span class="n">viewing_phrase</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">fragments</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_age_fragments</span><span class="p">(</span><span class="n">example</span><span class="p">))</span>
+    <span class="n">fragments</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_demographic_fragments</span><span class="p">(</span><span class="n">example</span><span class="p">))</span>
+    <span class="n">fragments</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_political_fragments</span><span class="p">(</span><span class="n">example</span><span class="p">))</span>
+    <span class="n">fragments</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_education_fragments</span><span class="p">(</span><span class="n">example</span><span class="p">))</span>
+    <span class="n">fragments</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_viewing_fragments</span><span class="p">(</span><span class="n">example</span><span class="p">))</span>
 
     <span class="n">sentence_parts</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">fragment</span> <span class="k">for</span> <span class="n">fragment</span> <span class="ow">in</span> <span class="n">fragments</span> <span class="k">if</span> <span class="n">fragment</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_nan_like</span><span class="p">(</span><span class="n">fragment</span><span class="p">)</span>
@@ -738,7 +839,7 @@
                         <span class="n">title</span> <span class="o">=</span> <span class="n">_PROMPT_DOC_BUILDER</span><span class="o">.</span><span class="n">title_for</span><span class="p">(</span><span class="n">video_id</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
                     <span class="k">if</span> <span class="n">title</span> <span class="ow">or</span> <span class="n">video_id</span><span class="p">:</span>
                         <span class="k">return</span> <span class="p">(</span><span class="n">title</span> <span class="ow">or</span> <span class="s2">&quot;(untitled)&quot;</span><span class="p">),</span> <span class="p">(</span><span class="n">video_id</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
             <span class="k">pass</span>
     <span class="k">return</span> <span class="kc">None</span>
 
@@ -754,7 +855,7 @@
         <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">trajectory_json</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="k">except</span> <span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
     <span class="n">pointer</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;current_index&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">pointer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -762,14 +863,12 @@
     <span class="n">end_ms</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;current_end_ms&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">end_ms</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">end_ms</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;currentEndMs&quot;</span><span class="p">)</span>
-    <span class="k">try</span><span class="p">:</span>
+    <span class="n">pointer_int</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
         <span class="n">pointer_int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">pointer</span><span class="p">)</span> <span class="k">if</span> <span class="n">pointer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-        <span class="n">pointer_int</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">try</span><span class="p">:</span>
+    <span class="n">end_float</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
         <span class="n">end_float</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">end_ms</span><span class="p">)</span> <span class="k">if</span> <span class="n">end_ms</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-        <span class="n">end_float</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">return</span> <span class="n">pointer_int</span><span class="p">,</span> <span class="n">end_float</span>
 
 
@@ -793,7 +892,7 @@
         <span class="k">return</span> <span class="p">[]</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">trajectory_json</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="k">except</span> <span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[]</span>
     <span class="n">rows</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;order&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;videos&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;history&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
@@ -848,11 +947,9 @@
         <span class="n">idx_val</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;idx&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">idx_val</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
             <span class="k">return</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">idx_val</span><span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">end</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;end_ms&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="n">end</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>
-        <span class="k">return</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;end_ms&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+        <span class="k">return</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">)</span>
 
     <span class="n">extracted</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">_hist_key</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">up_to_idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -863,7 +960,7 @@
             <span class="ow">or</span> <span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;idx&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">up_to_idx</span> <span class="ow">or</span> <span class="p">(</span><span class="n">include_current</span> <span class="ow">and</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;idx&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">up_to_idx</span><span class="p">))</span>
         <span class="p">]</span>
     <span class="k">elif</span> <span class="n">up_to_end_ms</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
             <span class="n">threshold</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">up_to_end_ms</span><span class="p">)</span>
             <span class="n">extracted</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="n">row</span>
@@ -874,8 +971,6 @@
                     <span class="ow">or</span> <span class="p">(</span><span class="n">include_current</span> <span class="ow">and</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;end_ms&quot;</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="n">threshold</span><span class="p">)</span>
                 <span class="p">)</span>
             <span class="p">]</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="k">pass</span>
     <span class="k">return</span> <span class="n">extracted</span>
 
 
@@ -902,7 +997,7 @@
                 <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">surface</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">items</span><span class="p">:</span>
-        <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">load_trajectory_entries</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;trajectory_json&quot;</span><span class="p">)):</span>
                 <span class="n">raw_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span>
                     <span class="n">pick_case_insensitive</span><span class="p">(</span>
@@ -927,8 +1022,6 @@
                     <span class="n">title</span> <span class="o">=</span> <span class="n">_PROMPT_DOC_BUILDER</span><span class="o">.</span><span class="n">title_for</span><span class="p">(</span><span class="n">raw_id</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
                 <span class="k">if</span> <span class="n">raw_id</span> <span class="ow">or</span> <span class="n">title</span><span class="p">:</span>
                     <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">title</span> <span class="ow">or</span> <span class="s2">&quot;(untitled)&quot;</span><span class="p">,</span> <span class="n">raw_id</span><span class="p">))</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="k">pass</span>
 
     <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
     <span class="n">deduped</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -952,10 +1045,9 @@
 <span class="sd">        :param value: Raw seconds or timing value to convert.</span>
 <span class="sd">        :returns: Human-readable suffix string (e.g. ``10s`` or ``?``).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
             <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)))</span><span class="si">}</span><span class="s2">s&quot;</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;?&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;?&quot;</span>
 
     <span class="n">lines</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">sequence</span><span class="p">:</span>
@@ -973,13 +1065,10 @@
     <span class="k">return</span> <span class="n">lines</span>
 
 
-<div class="viewcode-block" id="make_conversation_record">
-<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.conversation.make_conversation_record">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">make_conversation_record</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transform a dataset row into the prompt payload consumed by GPT-4o.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_history_builder_size</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the max history size configured for prompt construction.</span>
 
-<span class="sd">    :param example: Dataset row containing slate options and viewer metadata.</span>
-<span class="sd">    :returns: Dictionary with prompt messages and evaluation metadata.</span>
+<span class="sd">    :returns: Integer describing the history depth for the prompt builder.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">max_history</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;GRAIL_MAX_HISTORY&quot;</span><span class="p">,</span> <span class="s2">&quot;8&quot;</span><span class="p">))</span>
@@ -990,96 +1079,162 @@
         <span class="ow">or</span> <span class="n">history_full_mode</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">,</span> <span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="s2">&quot;yes&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">}</span>
         <span class="ow">or</span> <span class="n">max_history</span> <span class="o">&lt;=</span> <span class="mi">0</span>
     <span class="p">)</span>
+    <span class="k">return</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">show_full</span> <span class="k">else</span> <span class="n">max_history</span>
 
-    <span class="n">builder_history</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">show_full</span> <span class="k">else</span> <span class="n">max_history</span>
-    <span class="n">_PROMPT_DOC_BUILDER</span><span class="o">.</span><span class="n">max_history</span> <span class="o">=</span> <span class="n">builder_history</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sanitise_context</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the raw prompt context stripped of NaN-like placeholders.</span>
+
+<span class="sd">    :param example: Dataset row containing prompt metadata.</span>
+<span class="sd">    :returns: Stripped context string or an empty fallback.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">raw_context</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">PROMPT_COLUMN</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">is_nan_like</span><span class="p">(</span><span class="n">raw_context</span><span class="p">):</span>
-        <span class="n">raw_context</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">return</span> <span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="n">is_nan_like</span><span class="p">(</span><span class="n">raw_context</span><span class="p">)</span> <span class="k">else</span> <span class="n">raw_context</span>
 
-    <span class="n">base_prompt</span> <span class="o">=</span> <span class="n">_PROMPT_DOC_BUILDER</span><span class="o">.</span><span class="n">prompt_from_builder</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">base_prompt</span> <span class="ow">and</span> <span class="n">raw_context</span><span class="p">:</span>
-        <span class="n">base_prompt</span> <span class="o">=</span> <span class="n">raw_context</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_compose_user_message</span><span class="p">(</span><span class="n">base_prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compose the user message including the instruction tail.</span>
+
+<span class="sd">    :param base_prompt: Viewer context built by the prompt builder.</span>
+<span class="sd">    :returns: Full user message dispatched to GPT-4o.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">instruction_tail</span> <span class="o">=</span> <span class="p">(</span>
         <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">After thinking in &lt;think&gt;, choose exactly one candidate from OPTIONS and&quot;</span>
         <span class="s2">&quot; return ONLY its NUMBER in &lt;answer&gt;.&quot;</span>
     <span class="p">)</span>
-    <span class="n">user_message</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base_prompt</span><span class="si">}{</span><span class="n">instruction_tail</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">base_prompt</span> <span class="k">else</span> <span class="n">instruction_tail</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base_prompt</span><span class="si">}{</span><span class="n">instruction_tail</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">base_prompt</span> <span class="k">else</span> <span class="n">instruction_tail</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_gold_index</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">slate_pairs</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Determine the gold option index associated with ``example``.</span>
+
+<span class="sd">    :param example: Dataset row containing answer metadata.</span>
+<span class="sd">    :param slate_pairs: Ordered slate entries presented to the model.</span>
+<span class="sd">    :returns: 1-based gold index or ``-1`` when unavailable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">gold_raw</span> <span class="o">=</span> <span class="n">_preferred_answer</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
+    <span class="n">matched</span> <span class="o">=</span> <span class="n">_match_gold_to_slate</span><span class="p">(</span><span class="n">gold_raw</span><span class="p">,</span> <span class="n">slate_pairs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">matched</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">matched</span>
+
+    <span class="n">limit</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">slate_pairs</span><span class="p">)</span> <span class="k">if</span> <span class="n">slate_pairs</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">dataset_index</span> <span class="o">=</span> <span class="n">_bounded_index</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gold_index&quot;</span><span class="p">),</span> <span class="n">limit</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">dataset_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">dataset_index</span>
+    <span class="n">answer_index</span> <span class="o">=</span> <span class="n">_bounded_index</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;answer&quot;</span><span class="p">),</span> <span class="n">limit</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">answer_index</span> <span class="k">if</span> <span class="n">answer_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_now_playing_line</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the formatted now-playing metadata line.</span>
+
+<span class="sd">    :param example: Dataset row containing now-playing metadata.</span>
+<span class="sd">    :returns: Human-readable description of the current video.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">now_watching</span> <span class="o">=</span> <span class="n">_PROMPT_DOC_BUILDER</span><span class="o">.</span><span class="n">extract_now_watching</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">now_watching</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;(none)&quot;</span>
+    <span class="n">title</span><span class="p">,</span> <span class="n">video_id</span> <span class="o">=</span> <span class="n">now_watching</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">title</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;(untitled)&#39;</span><span class="si">}{</span><span class="p">(</span><span class="s1">&#39; — id: &#39;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">video_id</span><span class="p">)</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">video_id</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="si">}</span><span class="s2">&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_position_index</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the integer position index for ``example``.</span>
+
+<span class="sd">    :param example: Dataset row containing ``video_index`` metadata.</span>
+<span class="sd">    :returns: Zero-based position index or ``-1`` by default.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;video_index&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">raw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_preferred_answer</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the canonical answer string extracted from the dataset row.</span>
+
+<span class="sd">    :param example: Dataset row containing potential answer keys.</span>
+<span class="sd">    :returns: Preferred answer string or an empty string when absent.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">candidate_keys</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">SOLUTION_COLUMN</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">SOLUTION_COLUMN</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;gold_id&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;next_video_id&quot;</span><span class="p">,</span>
     <span class="p">)</span>
-
-    <span class="n">slate_pairs</span> <span class="o">=</span> <span class="n">_PROMPT_DOC_BUILDER</span><span class="o">.</span><span class="n">extract_slate_items</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_coerce_positive_index</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a strictly positive integer parsed from ``value``.&quot;&quot;&quot;</span>
-
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">candidate</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
-            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
-        <span class="k">return</span> <span class="n">candidate</span> <span class="k">if</span> <span class="n">candidate</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
-
-    <span class="n">candidate_keys</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
-        <span class="n">key</span>
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span>
-            <span class="n">SOLUTION_COLUMN</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">SOLUTION_COLUMN</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;gold_id&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;next_video_id&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="n">key</span>
-    <span class="p">)</span>
-    <span class="n">gold_index</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-    <span class="n">gold_raw</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
     <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">candidate_keys</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="k">continue</span>
-        <span class="n">cleaned</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">cleaned</span><span class="p">:</span>
-            <span class="k">continue</span>
-        <span class="n">gold_raw</span> <span class="o">=</span> <span class="n">cleaned</span>
-        <span class="k">break</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">return</span> <span class="s2">&quot;&quot;</span>
 
-    <span class="k">if</span> <span class="n">gold_raw</span> <span class="ow">and</span> <span class="n">slate_pairs</span><span class="p">:</span>
-        <span class="n">gold_id_canon</span> <span class="o">=</span> <span class="n">canon_video_id</span><span class="p">(</span><span class="n">gold_raw</span><span class="p">)</span>
-        <span class="n">gold_title_canon</span> <span class="o">=</span> <span class="n">canon_text</span><span class="p">(</span><span class="n">gold_raw</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">video_id</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">slate_pairs</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
-            <span class="n">vid_canon</span> <span class="o">=</span> <span class="n">canon_video_id</span><span class="p">(</span><span class="n">video_id</span><span class="p">)</span>
-            <span class="n">title_canon</span> <span class="o">=</span> <span class="n">canon_text</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
-            <span class="k">if</span> <span class="p">(</span>
-                <span class="n">gold_raw</span> <span class="o">==</span> <span class="n">video_id</span>
-                <span class="ow">or</span> <span class="p">(</span><span class="n">gold_id_canon</span> <span class="ow">and</span> <span class="n">vid_canon</span> <span class="o">==</span> <span class="n">gold_id_canon</span><span class="p">)</span>
-                <span class="ow">or</span> <span class="p">(</span><span class="n">gold_title_canon</span> <span class="ow">and</span> <span class="n">title_canon</span> <span class="o">==</span> <span class="n">gold_title_canon</span><span class="p">)</span>
-            <span class="p">):</span>
-                <span class="n">gold_index</span> <span class="o">=</span> <span class="n">idx</span>
-                <span class="k">break</span>
-    <span class="k">if</span> <span class="n">gold_index</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">dataset_index</span> <span class="o">=</span> <span class="n">_coerce_positive_index</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gold_index&quot;</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">dataset_index</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">slate_pairs</span> <span class="ow">or</span> <span class="n">dataset_index</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">slate_pairs</span><span class="p">)):</span>
-            <span class="n">gold_index</span> <span class="o">=</span> <span class="n">dataset_index</span>
-    <span class="k">if</span> <span class="n">gold_index</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">answer_index</span> <span class="o">=</span> <span class="n">_coerce_positive_index</span><span class="p">(</span><span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;answer&quot;</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">answer_index</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">slate_pairs</span> <span class="ow">or</span> <span class="n">answer_index</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">slate_pairs</span><span class="p">)):</span>
-            <span class="n">gold_index</span> <span class="o">=</span> <span class="n">answer_index</span>
 
-    <span class="n">now_watching</span> <span class="o">=</span> <span class="n">_PROMPT_DOC_BUILDER</span><span class="o">.</span><span class="n">extract_now_watching</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">now_watching</span><span class="p">:</span>
-        <span class="n">now_title</span><span class="p">,</span> <span class="n">now_id</span> <span class="o">=</span> <span class="n">now_watching</span>
-        <span class="n">now_line_state</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">now_title</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;(untitled)&#39;</span><span class="si">}{</span><span class="p">(</span><span class="s1">&#39; — id: &#39;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">now_id</span><span class="p">)</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">now_id</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">now_line_state</span> <span class="o">=</span> <span class="s2">&quot;(none)&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_match_gold_to_slate</span><span class="p">(</span><span class="n">gold_raw</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">slate_pairs</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the 1-based slate index matching ``gold_raw`` if available.</span>
 
+<span class="sd">    :param gold_raw: Answer string extracted from the dataset.</span>
+<span class="sd">    :param slate_pairs: Ordered slate entries presented to the model.</span>
+<span class="sd">    :returns: 1-based index when a match is found; ``-1`` otherwise.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">gold_raw</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">slate_pairs</span><span class="p">:</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">gold_id_canon</span> <span class="o">=</span> <span class="n">canon_video_id</span><span class="p">(</span><span class="n">gold_raw</span><span class="p">)</span>
+    <span class="n">gold_title_canon</span> <span class="o">=</span> <span class="n">canon_text</span><span class="p">(</span><span class="n">gold_raw</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">video_id</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">slate_pairs</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">vid_canon</span> <span class="o">=</span> <span class="n">canon_video_id</span><span class="p">(</span><span class="n">video_id</span><span class="p">)</span>
+        <span class="n">title_canon</span> <span class="o">=</span> <span class="n">canon_text</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">gold_raw</span> <span class="o">==</span> <span class="n">video_id</span>
+            <span class="ow">or</span> <span class="p">(</span><span class="n">gold_id_canon</span> <span class="ow">and</span> <span class="n">vid_canon</span> <span class="o">==</span> <span class="n">gold_id_canon</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="p">(</span><span class="n">gold_title_canon</span> <span class="ow">and</span> <span class="n">title_canon</span> <span class="o">==</span> <span class="n">gold_title_canon</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="n">idx</span>
+    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_bounded_index</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a positive index when within ``limit``; otherwise ``None``.</span>
+
+<span class="sd">    :param value: Raw candidate index to coerce.</span>
+<span class="sd">    :param limit: Optional inclusive upper bound for valid indices.</span>
+<span class="sd">    :returns: Positive integer index or ``None`` when out of bounds.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="n">candidate</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">candidate</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span><span class="n">limit</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">candidate</span> <span class="o">&lt;=</span> <span class="n">limit</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">candidate</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="make_conversation_record">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.conversation.make_conversation_record">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_conversation_record</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transform a dataset row into the prompt payload consumed by GPT-4o.</span>
+
+<span class="sd">    :param example: Dataset row containing slate options and viewer metadata.</span>
+<span class="sd">    :returns: Dictionary with prompt messages and evaluation metadata.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_PROMPT_DOC_BUILDER</span><span class="o">.</span><span class="n">max_history</span> <span class="o">=</span> <span class="n">_history_builder_size</span><span class="p">()</span>
+
+    <span class="n">base_prompt</span> <span class="o">=</span> <span class="n">_PROMPT_DOC_BUILDER</span><span class="o">.</span><span class="n">prompt_from_builder</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">base_prompt</span><span class="p">:</span>
+        <span class="n">base_prompt</span> <span class="o">=</span> <span class="n">_sanitise_context</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
+    <span class="n">user_message</span> <span class="o">=</span> <span class="n">_compose_user_message</span><span class="p">(</span><span class="n">base_prompt</span><span class="p">)</span>
+
+    <span class="n">slate_pairs</span> <span class="o">=</span> <span class="n">_extract_slate_items</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
+    <span class="n">gold_index</span> <span class="o">=</span> <span class="n">_resolve_gold_index</span><span class="p">(</span><span class="n">example</span><span class="p">,</span> <span class="n">slate_pairs</span><span class="p">)</span>
+    <span class="n">now_line_state</span> <span class="o">=</span> <span class="n">_now_playing_line</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
     <span class="n">profile_block</span> <span class="o">=</span> <span class="n">build_profile_block</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
-
-    <span class="n">position_index</span> <span class="o">=</span> <span class="n">example</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;video_index&quot;</span><span class="p">)</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">position_index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">position_index</span><span class="p">)</span> <span class="k">if</span> <span class="n">position_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-        <span class="n">position_index</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
 
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">&quot;prompt&quot;</span><span class="p">:</span> <span class="p">[</span>
@@ -1088,7 +1243,7 @@
         <span class="p">],</span>
         <span class="s2">&quot;gold_index&quot;</span><span class="p">:</span> <span class="n">gold_index</span><span class="p">,</span>
         <span class="s2">&quot;n_options&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">slate_pairs</span><span class="p">),</span>
-        <span class="s2">&quot;position_index&quot;</span><span class="p">:</span> <span class="n">position_index</span><span class="p">,</span>
+        <span class="s2">&quot;position_index&quot;</span><span class="p">:</span> <span class="n">_position_index</span><span class="p">(</span><span class="n">example</span><span class="p">),</span>
         <span class="s2">&quot;metadata&quot;</span><span class="p">:</span> <span class="p">{</span>
             <span class="s2">&quot;now_playing&quot;</span><span class="p">:</span> <span class="n">now_line_state</span><span class="p">,</span>
             <span class="s2">&quot;profile_block&quot;</span><span class="p">:</span> <span class="n">profile_block</span><span class="p">,</span>

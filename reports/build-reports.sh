@@ -383,4 +383,14 @@ GRAIL_REPORTS_DIR="${GRAIL_REPORTS_DIR:-${REPO_ROOT}/reports/grail}"
 GRAIL_LABEL="${GRAIL_REPORT_LABEL:-}"
 process_rlhf_family "GRAIL" "grail.pipeline" "${GRAIL_MODELS_DIR}" "${GRAIL_REPORTS_DIR}" "${GRAIL_LABEL}"
 
+log "Generating main portfolio comparison report..."
+"${PYTHON_BIN}" - <<'PY'
+from pathlib import Path
+from common.reports.portfolio import generate_portfolio_report
+
+repo_root = Path(__file__).resolve().parents[1]
+generate_portfolio_report(repo_root)
+print(f"[build-reports] Main report written to {repo_root / 'reports' / 'main' / 'README.md'}")
+PY
+
 log "Report refresh completed."

@@ -24,14 +24,7 @@ import re
 from pathlib import Path
 from typing import Dict, List, Mapping, Sequence, Tuple
 
-from common.data import hf_datasets as _hf_datasets
-from common.opinion import (
-    DEFAULT_SPECS,
-    OpinionSpec,
-    compute_opinion_metrics,
-    format_opinion_user_prompt,
-)
-
+from importlib import import_module
 from ..config import EVAL_SPLIT, OPINION_SYSTEM_PROMPT
 from ..utils import InvocationParams, RetryPolicy, call_gpt4o_with_retries, qa_log_path_for
 from .helpers import (
@@ -55,10 +48,20 @@ from .models import (
     StudyPredictionBatch,
 )
 from .settings import build_settings
+_hf_datasets = import_module("common.data.hf_datasets")
+_common_opinion = import_module("common.opinion")
+DEFAULT_SPECS = _common_opinion.DEFAULT_SPECS
+OpinionSpec = _common_opinion.OpinionSpec
+compute_opinion_metrics = _common_opinion.compute_opinion_metrics
+format_opinion_user_prompt = _common_opinion.format_opinion_user_prompt
+
 
 LOGGER = logging.getLogger("gpt4o.opinion")
 
-DOWNLOAD_CONFIG_CLS, LOAD_DATASET, LOAD_FROM_DISK = _hf_datasets.get_dataset_loaders()
+from typing import Any, Callable, Tuple
+DOWNLOAD_CONFIG_CLS, LOAD_DATASET, LOAD_FROM_DISK = (
+    cast(Tuple[Any, Callable[..., Any], Callable[[str], Any]], _hf_datasets.get_dataset_loaders())
+)
 
 _ANSWER_PATTERN = re.compile(
     r"<answer>\s*([-+]?\d+(?:\.\d+)?)\s*</answer>",
@@ -150,16 +153,16 @@ class OpinionEvaluationRunner:
             _hf_datasets.require_dataset_support(needs_local=True)
             assert LOAD_FROM_DISK is not None  # narrow for mypy
             LOGGER.info("Loading opinion dataset from disk: %s", dataset_path)
-            dataset = LOAD_FROM_DISK(str(dataset_path))  # type: ignore[arg-type]
+            dataset = LOAD_FROM_DISK(str(dataset_path))
         else:
             _hf_datasets.require_dataset_support()
             assert LOAD_DATASET is not None and DOWNLOAD_CONFIG_CLS is not None
-            download_config = DOWNLOAD_CONFIG_CLS(  # type: ignore[misc]
+            download_config = DOWNLOAD_CONFIG_CLS(
                 resume_download=True,
                 max_retries=2,
             )
             LOGGER.info("Downloading opinion dataset %s", self.settings.dataset_name)
-            dataset = LOAD_DATASET(  # type: ignore[misc]
+            dataset = LOAD_DATASET(
                 self.settings.dataset_name,
                 cache_dir=self.settings.cache_dir,
                 download_config=download_config,
@@ -258,7 +261,7 @@ class OpinionEvaluationRunner:
                 retry=policy,
                 logger=LOGGER,
             )
-        except Exception as exc:  # pylint: disable=broad-except
+        except (RuntimeError, ConnectionError, ValueError) as exc:
             LOGGER.exception(
                 "Opinion evaluation call failed after %d attempts: %s",
                 policy.attempts,

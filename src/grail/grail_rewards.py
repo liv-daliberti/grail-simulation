@@ -7,7 +7,27 @@ import os
 from typing import Any, List, Sequence
 
 from common.open_r1.rewards import get_reward_funcs
-from .grail_gail import OnlineDiscriminator, make_gail_reward_fn, _select_disc_device
+try:  # pragma: no cover - optional dependency
+    from .grail_gail import OnlineDiscriminator, make_gail_reward_fn, _select_disc_device
+    _GAIL_AVAILABLE = True
+except Exception as _gail_import_error:  # pragma: no cover - optional dependency
+    _GAIL_AVAILABLE = False
+
+    class OnlineDiscriminator:  # type: ignore[too-few-public-methods]
+        def __init__(self, *_args, **_kwargs) -> None:
+            raise ImportError(
+                "GAIL components require transformers. Install it with `pip install transformers`."
+            ) from _gail_import_error
+
+    def make_gail_reward_fn(*_args, **_kwargs):  # type: ignore[empty-body]
+        raise ImportError(
+            "GAIL components require transformers. Install it with `pip install transformers`."
+        )
+
+    def _select_disc_device(*_args, **_kwargs):  # type: ignore[empty-body]
+        raise ImportError(
+            "GAIL components require transformers. Install it with `pip install transformers`."
+        )
 from .grail_mixer import LearnableRewardCallable, LearnableRewardMixer, MixerSetup
 
 logger = logging.getLogger(__name__)
@@ -36,8 +56,9 @@ def _maybe_enable_gail(reward_fns: List[Any]) -> bool:
     """
 
     use_gail = os.environ.get("GAIL_USE", "1") != "0"
-    if not use_gail:
-        logger.info("GAIL shaping DISABLED")
+    if not use_gail or not _GAIL_AVAILABLE:
+        suffix = " (missing transformers)" if not _GAIL_AVAILABLE else ""
+        logger.info("GAIL shaping DISABLED%s", suffix)
         return False
 
     disc_model = os.environ.get("GAIL_DISC_MODEL", "distilbert-base-uncased")

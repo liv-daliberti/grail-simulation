@@ -15,10 +15,10 @@
 
 """Legacy CLI entry point maintained for backwards compatibility."""
 
+from __future__ import annotations
+
 # pylint: skip-file
 """Backward-compatible entry point for the XGBoost baseline."""
-
-from __future__ import annotations
 
 from xgb.cli import main
 

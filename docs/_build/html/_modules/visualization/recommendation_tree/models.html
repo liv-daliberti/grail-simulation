@@ -287,7 +287,11 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">common.opinion</span><span class="w"> </span><span class="kn">import</span> <span class="n">float_or_none</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency for linting environments</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">float_or_none</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Best-effort local fallback mirroring the upstream helper.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Best-effort local fallback mirroring the upstream helper.</span>
+
+<span class="sd">        :param value: Input that may represent a floating-point number.</span>
+<span class="sd">        :returns: Parsed ``float`` when possible, otherwise ``None``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
@@ -296,7 +300,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_wrap_text</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrap ``text`` to the specified ``width`` using newline separators.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrap text to the specified width using newline separators.</span>
+
+<span class="sd">    :param text: Input string to wrap.</span>
+<span class="sd">    :param width: Maximum characters per line; set ``None`` or ``&lt;= 0`` to disable.</span>
+<span class="sd">    :returns: Wrapped text with newlines inserted between lines.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">width</span> <span class="ow">or</span> <span class="n">width</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">text</span>
@@ -307,7 +316,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_clean_repeated_quotes</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Collapse repeated double-quote runs to a single character.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Collapse repeated double-quote runs to a single character.</span>
+
+<span class="sd">    :param text: Raw text that may contain repeated double quotes.</span>
+<span class="sd">    :returns: Text with consecutive double quotes replaced by a single quote.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">_QUOTE_RUN_RE</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
 
@@ -316,7 +329,13 @@
 <a class="viewcode-back" href="../../../api/visualization.html#visualization.recommendation_tree_viz.TreeEdge">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">TreeEdge</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Directed edge connecting two nodes in the recommendation tree.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Directed edge connecting two nodes in the recommendation tree.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        parent: Identifier of the parent node.</span>
+<span class="sd">        child: Identifier of the child node.</span>
+<span class="sd">        rank: Optional recommendation rank for the edge.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">parent</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">child</span><span class="p">:</span> <span class="nb">str</span>
@@ -328,7 +347,13 @@
 <a class="viewcode-back" href="../../../api/visualization.html#visualization.recommendation_tree_viz.TreeData">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">TreeData</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container holding recommendation tree nodes and edges.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container holding recommendation tree nodes and edges.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        root: Identifier of the inferred root node.</span>
+<span class="sd">        nodes: Mapping from node id to node attribute mappings.</span>
+<span class="sd">        edges: List of directed edges connecting nodes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">root</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">nodes</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span>
@@ -340,7 +365,13 @@
 <a class="viewcode-back" href="../../../api/visualization.html#visualization.recommendation_tree_viz.OpinionFieldSpec">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">OpinionFieldSpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Specification describing opinion score columns used by a viewer cohort.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Specification describing opinion score columns used by a viewer cohort.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        before_keys: Ordered keys that may contain the initial opinion value.</span>
+<span class="sd">        after_keys: Ordered keys that may contain the final opinion value.</span>
+<span class="sd">        label: Human-friendly label for the opinion dimension.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">before_keys</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
     <span class="n">after_keys</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
@@ -352,7 +383,14 @@
 <a class="viewcode-back" href="../../../api/visualization.html#visualization.recommendation_tree_viz.OpinionAnnotation">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">OpinionAnnotation</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolved opinion values ready for annotation on a session graph.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolved opinion values ready for annotation on a session graph.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        issue: Normalised issue identifier (e.g. ``minimum_wage``).</span>
+<span class="sd">        before_value: Initial opinion score, if available.</span>
+<span class="sd">        after_value: Final opinion score, if available.</span>
+<span class="sd">        label: Human-friendly label for the opinion dimension.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">issue</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">before_value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
@@ -365,7 +403,14 @@
 <a class="viewcode-back" href="../../../api/visualization.html#visualization.recommendation_tree_viz.LabelRenderOptions">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">LabelRenderOptions</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration controlling how node labels are rendered.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration controlling how node labels are rendered.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        metadata: External per-node metadata keyed by identifier.</span>
+<span class="sd">        template: Python ``str.format`` template string for labels.</span>
+<span class="sd">        wrap_width: Optional maximum characters per line for wrapping.</span>
+<span class="sd">        append_id_if_missing: Whether to append the node id if the template omits it.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">metadata</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span>
     <span class="n">template</span><span class="p">:</span> <span class="nb">str</span>
@@ -380,6 +425,12 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Dictionary that returns placeholder values for missing template keys.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__missing__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Provide a default empty string for missing keys.</span>
+
+<span class="sd">        :param key: Missing mapping key requested by the formatter.</span>
+<span class="sd">        :returns: Empty string used as a safe placeholder.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="k">return</span> <span class="s2">&quot;&quot;</span></div>
 
 
@@ -404,15 +455,27 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_natural_sort_key</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a tuple suitable for natural sorting of identifiers with numerics.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a tuple suitable for natural sorting of identifiers with numerics.</span>
+
+<span class="sd">    :param value: Identifier to split into numeric and non-numeric components.</span>
+<span class="sd">    :returns: Tuple ``(numeric_component_or_inf, alpha_prefix, original)`` used for sorting.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ch</span> <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">value</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">ch</span><span class="o">.</span><span class="n">isdigit</span><span class="p">())</span>
     <span class="n">digits</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ch</span> <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">value</span> <span class="k">if</span> <span class="n">ch</span><span class="o">.</span><span class="n">isdigit</span><span class="p">())</span>
     <span class="k">return</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">digits</span><span class="p">)</span> <span class="k">if</span> <span class="n">digits</span> <span class="k">else</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_first_numeric</span><span class="p">(</span><span class="n">sources</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]],</span> <span class="n">keys</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the first numeric value located across ``keys`` and ``sources``.&quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_first_numeric</span><span class="p">(</span>
+    <span class="n">sources</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]],</span>
+    <span class="n">keys</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the first numeric value located across keys and sources.</span>
+
+<span class="sd">    :param sources: Sequence of mapping-like objects to probe for values.</span>
+<span class="sd">    :param keys: Ordered keys to try across each mapping in ``sources``.</span>
+<span class="sd">    :returns: First successfully parsed float value, otherwise ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">sources</span><span class="p">:</span>
@@ -426,7 +489,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_format_decimal</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Format ``value`` with up to two decimal places, trimming trailing zeros.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Format a float with up to two decimal places, trimming trailing zeros.</span>
+
+<span class="sd">    :param value: Numeric value to format.</span>
+<span class="sd">    :returns: String representation with at most two decimal places.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">formatted</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span>
     <span class="k">if</span> <span class="s2">&quot;.&quot;</span> <span class="ow">in</span> <span class="n">formatted</span><span class="p">:</span>
@@ -441,7 +508,14 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">delta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct a human-readable label for an opinion score stage.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct a human-readable label for an opinion score stage.</span>
+
+<span class="sd">    :param base_label: Base label describing the opinion dimension (e.g. policy area).</span>
+<span class="sd">    :param stage: Stage descriptor (e.g. ``&quot;Initial&quot;`` or ``&quot;Final&quot;``).</span>
+<span class="sd">    :param value: Opinion score at the given stage.</span>
+<span class="sd">    :param delta: Optional change between final and initial values.</span>
+<span class="sd">    :returns: Rendered label string or ``None`` when no value is available.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
@@ -455,7 +529,11 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_extract_opinion_annotation</span><span class="p">(</span>
     <span class="n">rows</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OpinionAnnotation</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve opinion indices for the viewer represented by ``rows``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve opinion indices for the viewer represented by the provided rows.</span>
+
+<span class="sd">    :param rows: Ordered or unordered session records containing opinion fields.</span>
+<span class="sd">    :returns: :class:`OpinionAnnotation` with resolved values or ``None`` if unavailable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">rows</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
@@ -502,7 +580,13 @@
     <span class="n">node_data</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span>
     <span class="n">options</span><span class="p">:</span> <span class="n">LabelRenderOptions</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a node label based on the configured template.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a node label based on the configured template.</span>
+
+<span class="sd">    :param node_id: Identifier of the node being labeled.</span>
+<span class="sd">    :param node_data: Mapping of node attributes available to the template.</span>
+<span class="sd">    :param options: Label rendering options, including metadata and template string.</span>
+<span class="sd">    :returns: Final label string suitable for Graphviz node attributes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">context</span> <span class="o">=</span> <span class="n">SafeDict</span><span class="p">({</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">node_id</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">node_id</span><span class="p">,</span> <span class="p">{}),</span> <span class="o">**</span><span class="n">node_data</span><span class="p">})</span>
     <span class="k">try</span><span class="p">:</span>

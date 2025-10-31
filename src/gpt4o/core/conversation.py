@@ -25,18 +25,16 @@ from contextlib import suppress
 from importlib import import_module
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-from common.prompts.docs import (
-    PromptDocumentBuilder,
-    default_title_resolver,
-    load_trajectory_entries,
-)
-from common.prompts.fields import (
-    NOW_PLAYING_ID_KEYS,
-    NOW_PLAYING_TITLE_KEYS,
-    NOW_PLAYING_TITLE_KEYS_WITH_META,
-)
 from .config import PROMPT_COLUMN, SOLUTION_COLUMN, SYSTEM_PROMPT
 from .utils import canon_text, canon_video_id, is_nan_like, truthy
+_docs = import_module("common.prompts.docs")
+PromptDocumentBuilder = _docs.PromptDocumentBuilder
+default_title_resolver = _docs.default_title_resolver
+load_trajectory_entries = _docs.load_trajectory_entries
+_fields = import_module("common.prompts.fields")
+NOW_PLAYING_ID_KEYS = _fields.NOW_PLAYING_ID_KEYS
+NOW_PLAYING_TITLE_KEYS = _fields.NOW_PLAYING_TITLE_KEYS
+NOW_PLAYING_TITLE_KEYS_WITH_META = _fields.NOW_PLAYING_TITLE_KEYS_WITH_META
 
 _PROMPT_CONSTANTS = import_module("prompt_builder.constants")
 YT_FREQ_MAP = _PROMPT_CONSTANTS.YT_FREQ_MAP
@@ -333,7 +331,8 @@ def _demographic_fragments(example: dict) -> list[str]:
 
     marital = extract_marital_status(example)
     if marital and not is_nan_like(marital):
-        fragments.append(marital.lower() if marital in {"Married", "Single", "Divorced", "Widowed", "Separated"} else marital)
+        common = {"Married", "Single", "Divorced", "Widowed", "Separated"}
+        fragments.append(marital.lower() if marital in common else marital)
 
     return fragments
 

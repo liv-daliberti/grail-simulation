@@ -26,7 +26,7 @@ import time
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Mapping, Sequence
+from typing import Iterable, Mapping, Sequence
 
 from common.opinion import DEFAULT_SPECS
 
@@ -34,12 +34,25 @@ try:
     # Evaluation pulls in Pydantic models that attach ``repr``/``frozen`` metadata
     # via ``Field(...)``. Pydantic 2.x warns about those attributes even though
     # the originating libraries expect them to be ignored. Filter to keep logs clean.
-    from pydantic.warnings import UnsupportedFieldAttributeWarning
-except ImportError:  # pragma: no cover - Pydantic may not be available in minimal envs
+    from pydantic.warnings import UnsupportedFieldAttributeWarning  # type: ignore[attr-defined]
+except Exception:  # pragma: no cover - Pydantic may be unavailable or name missing
     UnsupportedFieldAttributeWarning = None  # type: ignore[assignment]
-else:
-    warnings.filterwarnings("ignore", category=UnsupportedFieldAttributeWarning)
+finally:
+    # Only register the filter when we actually resolved a Warning subclass.
+    try:
+        if isinstance(UnsupportedFieldAttributeWarning, type) and issubclass(
+            UnsupportedFieldAttributeWarning, Warning
+        ):
+            warnings.filterwarnings("ignore", category=UnsupportedFieldAttributeWarning)
+    except Exception:
+        # Be conservative during import-time to avoid breaking autodoc.
+        pass
 from common.rlhf.reports import ReportOptions
+from common.pipeline.io import write_metrics_json
+from common.opinion.metrics import compute_opinion_metrics
+from common.evaluation import slate_eval
+import importlib as _importlib  # avoid triggering gpt4o.core lazy attribute sentinel
+gpt4o_utils = _importlib.import_module("gpt4o.core.utils")
 
 from . import DEFAULT_DATASET_PATH, DEFAULT_EVAL_SPLIT
 from .config import DEFAULT_SYSTEM_PROMPT, OPINION_SYSTEM_PROMPT, repo_root as _repo_root
@@ -630,6 +643,28 @@ def _load_json(path: Path) -> Mapping[str, object]:
         return json.load(handle)
 
 
+def _iter_jsonl_rows(path: Path) -> Iterable[Mapping[str, object]]:
+    """Yield JSONL rows one by one, skipping malformed lines.
+
+    :param path: Path to a JSONL file.
+    :returns: Iterable of parsed mapping rows.
+    """
+    try:
+        with path.open("r", encoding="utf-8") as handle:
+            for line in handle:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    row = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if isinstance(row, dict):
+                    yield row
+    except FileNotFoundError:
+        return
+
+
 def _load_next_video_from_disk(run_dir: Path) -> NextVideoEvaluationResult | None:
     """Return a :class:`NextVideoEvaluationResult` by reading existing metrics.
 
@@ -640,10 +675,94 @@ def _load_next_video_from_disk(run_dir: Path) -> NextVideoEvaluationResult | Non
     metrics_path = run_dir / "metrics.json"
     predictions_path = run_dir / "predictions.jsonl"
     qa_log_path = run_dir / "qa.log"
-    if not metrics_path.exists():
-        LOGGER.warning("Next-video metrics not found at %s; skipping report.", metrics_path)
+
+    # Fast-path when metrics exist.
+    if metrics_path.exists():
+        metrics = _load_json(metrics_path)
+        return NextVideoEvaluationResult(
+            run_dir=run_dir,
+            metrics_path=metrics_path,
+            predictions_path=predictions_path,
+            qa_log_path=qa_log_path,
+            metrics=metrics,
+        )
+
+    # Fallback: rebuild metrics from predictions.jsonl for partial runs.
+    if not predictions_path.exists():
+        LOGGER.warning(
+            "Next-video predictions not found at %s; cannot rebuild partial metrics.",
+            predictions_path,
+        )
         return None
-    metrics = _load_json(metrics_path)
+
+    LOGGER.info(
+        "Rebuilding next-video metrics from predictions at %s (partial run detected).",
+        predictions_path,
+    )
+    accumulator = slate_eval.EvaluationAccumulator()
+    total_rows = 0
+    for row in _iter_jsonl_rows(predictions_path):
+        total_rows += 1
+        issue = str(row.get("issue") or "unspecified")
+        study = str(row.get("participant_study") or "unspecified")
+        try:
+            n_options = int(row.get("n_options") or 0)
+        except (TypeError, ValueError):
+            n_options = 0
+        try:
+            position_index = int(row.get("position_index") or -1)
+        except (TypeError, ValueError):
+            position_index = -1
+        try:
+            gold_index = int(row.get("gold_index") or 0)
+        except (TypeError, ValueError):
+            gold_index = 0
+        parsed_index = row.get("parsed_index")
+        try:
+            parsed_index = int(parsed_index) if parsed_index is not None else None
+        except (TypeError, ValueError):
+            parsed_index = None
+        eligible = bool(row.get("eligible"))
+        # Prefer the stored correctness bit if present.
+        is_correct = bool(row.get("correct"))
+        # Derive formatting from the raw output when available.
+        raw_output = str(row.get("gpt_output") or "")
+        is_formatted = bool(gpt4o_utils.ANS_TAG.search(raw_output)) if raw_output else False
+
+        obs = slate_eval.Observation(
+            issue_label=issue,
+            study_label=study,
+            position_bucket=slate_eval.bucket_from_position(position_index),
+            option_bucket=slate_eval.bucket_from_options(n_options),
+            option_count=n_options,
+            gold_index=gold_index,
+            parsed_index=parsed_index,
+            is_formatted=is_formatted,
+            eligible=eligible,
+            is_correct=is_correct,
+        )
+        accumulator.observe(obs)
+
+    # Build a minimal request – dataset/split/filters may be unknown here.
+    request = slate_eval.SlateMetricsRequest(
+        model_name=run_dir.name,
+        dataset_name="cached",
+        eval_split="unknown",
+        filters=slate_eval.EvaluationFilters(issues=[], studies=[]),
+    )
+    metrics = accumulator.metrics_payload(request)
+    try:
+        write_metrics_json(metrics_path, metrics)
+    except Exception:  # pragma: no cover - defensive
+        LOGGER.warning("Unable to write rebuilt next-video metrics to %s", metrics_path)
+
+    LOGGER.info(
+        "Rebuilt next-video metrics over %d predictions: accuracy=%.3f parsed=%.3f formatted=%.3f",
+        total_rows,
+        accumulator.accuracy(),
+        accumulator.parsed_rate(),
+        accumulator.format_rate(),
+    )
     return NextVideoEvaluationResult(
         run_dir=run_dir,
         metrics_path=metrics_path,
@@ -676,6 +795,45 @@ def _build_opinion_study(study_dir: Path) -> OpinionStudyResult | None:
     if not study_dir.is_dir():
         return None
     metrics_path = study_dir / "metrics.json"
+    predictions_path = study_dir / "predictions.jsonl"
+    # Rebuild per-study metrics from predictions when missing.
+    if not metrics_path.exists() and predictions_path.exists():
+        LOGGER.info(
+            "Recomputing opinion study metrics from %s (partial run).",
+            predictions_path,
+        )
+        truth_before: list[float] = []
+        truth_after: list[float] = []
+        pred_after: list[float] = []
+        for row in _iter_jsonl_rows(predictions_path):
+            try:
+                b = float(row.get("before"))
+                a = float(row.get("after"))
+                p = float(row.get("prediction"))
+            except (TypeError, ValueError):
+                continue
+            if any(map(lambda x: x != x, (b, a, p))):  # NaN check
+                continue
+            truth_before.append(b)
+            truth_after.append(a)
+            pred_after.append(p)
+        metrics = compute_opinion_metrics(
+            truth_after=truth_after,
+            truth_before=truth_before,
+            pred_after=pred_after,
+            direction_tolerance=1e-6,
+        )
+        # Participants reflect number of prediction rows; store inside metrics for loaders.
+        metrics = dict(metrics)
+        metrics["participants"] = len(truth_after)
+        # Baseline bundle mirrors GRPO/GPT-4o helpers (no-change + global mean stats).
+        # Use shared baseline helper (no-change + global mean stats).
+        from gpt4o.core.opinion.helpers import baseline_metrics as _baseline_metrics  # lazy import
+        baseline = _baseline_metrics(truth_before, truth_after)
+        try:
+            write_metrics_json(metrics_path, {"metrics": metrics, "baseline": baseline})
+        except Exception:  # pragma: no cover - defensive
+            LOGGER.warning("Unable to write rebuilt opinion metrics to %s", metrics_path)
     if not metrics_path.exists():
         return None
     payload = _load_json(metrics_path)
@@ -686,13 +844,13 @@ def _build_opinion_study(study_dir: Path) -> OpinionStudyResult | None:
         return None
     files = OpinionStudyFiles(
         metrics=metrics_path,
-        predictions=study_dir / "predictions.jsonl",
+        predictions=predictions_path,
         qa_log=study_dir / "qa.log",
     )
     summary = OpinionStudySummary(
         metrics=metrics,
         baseline=payload.get("baseline", {}),
-        participants=int(metrics.get("participants") or 0),
+        participants=int(metrics.get("participants") or sum(1 for _ in _iter_jsonl_rows(predictions_path))),
         eligible=int(metrics.get("eligible", 0)),
     )
     return OpinionStudyResult(
@@ -710,17 +868,57 @@ def _load_opinion_from_disk(out_dir: Path) -> OpinionEvaluationResult | None:
     :rtype: OpinionEvaluationResult | None
     """
     combined_path = out_dir / "combined_metrics.json"
-    if not combined_path.exists():
-        LOGGER.warning("Opinion combined metrics missing at %s; skipping report.", combined_path)
-        return None
-    combined_payload = _load_json(combined_path)
-    combined_metrics = combined_payload.get("metrics", combined_payload)
 
+    # Always attempt to load per-study results (with fallback rebuilds).
     studies: list[OpinionStudyResult] = []
     for study_dir in sorted(out_dir.glob("*")):
         study = _build_opinion_study(study_dir)
         if study is not None:
             studies.append(study)
+
+    combined_metrics: Mapping[str, object] = {}
+    if combined_path.exists():
+        combined_payload = _load_json(combined_path)
+        combined_metrics = combined_payload.get("metrics", combined_payload)
+    else:
+        # Recompute combined metrics from available prediction vectors.
+        truth_before_all: list[float] = []
+        truth_after_all: list[float] = []
+        pred_after_all: list[float] = []
+        for study_dir in sorted(out_dir.glob("*")):
+            predictions_path = study_dir / "predictions.jsonl"
+            if not predictions_path.exists():
+                continue
+            for row in _iter_jsonl_rows(predictions_path):
+                try:
+                    b = float(row.get("before"))
+                    a = float(row.get("after"))
+                    p = float(row.get("prediction"))
+                except (TypeError, ValueError):
+                    continue
+                if any(map(lambda x: x != x, (b, a, p))):  # NaN guard
+                    continue
+                truth_before_all.append(b)
+                truth_after_all.append(a)
+                pred_after_all.append(p)
+        if truth_after_all and len(truth_after_all) == len(pred_after_all):
+            combined_metrics = compute_opinion_metrics(
+                truth_after=truth_after_all,
+                truth_before=truth_before_all[: len(truth_after_all)],
+                pred_after=pred_after_all,
+                direction_tolerance=1e-6,
+            )
+            try:
+                write_metrics_json(combined_path, {"metrics": combined_metrics})
+            except Exception:  # pragma: no cover - defensive
+                LOGGER.warning(
+                    "Unable to write rebuilt combined opinion metrics to %s",
+                    combined_path,
+                )
+
+    if not studies and not combined_metrics:
+        # Nothing to report.
+        return None
 
     return OpinionEvaluationResult(studies=studies, combined_metrics=combined_metrics)
 

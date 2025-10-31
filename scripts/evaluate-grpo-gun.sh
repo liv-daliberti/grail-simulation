@@ -59,6 +59,24 @@ fi
 
 export PYTHONPATH="${PYTHONPATH:-}:$ROOT_DIR/src:$ROOT_DIR"
 
+# Keep all caches/config under the repo to avoid HOME/TMP quota issues
+export XDG_CACHE_HOME=${XDG_CACHE_HOME:-"$ROOT_DIR/.cache"}
+export XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-"$ROOT_DIR/.config"}
+export TMPDIR=${TMPDIR:-"$ROOT_DIR/.tmp"}
+export HF_HOME=${HF_HOME:-"$ROOT_DIR/.hf_cache"}
+export HF_HUB_CACHE=${HF_HUB_CACHE:-"$ROOT_DIR/.cache/huggingface/transformers"}
+export HF_DATASETS_CACHE=${HF_DATASETS_CACHE:-"$ROOT_DIR/.cache/huggingface/datasets"}
+export TRANSFORMERS_CACHE=${TRANSFORMERS_CACHE:-"$HF_HUB_CACHE"}
+export TORCH_HOME=${TORCH_HOME:-"$XDG_CACHE_HOME/torch"}
+export TRITON_CACHE_DIR=${TRITON_CACHE_DIR:-"$ROOT_DIR/.triton"}
+export VLLM_CONFIG_ROOT=${VLLM_CONFIG_ROOT:-"$XDG_CONFIG_HOME/vllm"}
+export VLLM_CACHE_ROOT=${VLLM_CACHE_ROOT:-"$XDG_CACHE_HOME/vllm"}
+export VLLM_RPC_BASE_PATH=${VLLM_RPC_BASE_PATH:-"$TMPDIR"}
+export VLLM_NO_USAGE_STATS=${VLLM_NO_USAGE_STATS:-1}
+export VLLM_DO_NOT_TRACK=${VLLM_DO_NOT_TRACK:-1}
+export DO_NOT_TRACK=${DO_NOT_TRACK:-1}
+mkdir -p "$XDG_CACHE_HOME" "$XDG_CONFIG_HOME" "$TMPDIR" "$HF_HOME" "$HF_HUB_CACHE" "$HF_DATASETS_CACHE" "$TORCH_HOME" "$TRITON_CACHE_DIR" "$VLLM_CONFIG_ROOT" "$VLLM_CACHE_ROOT"
+
 EXTRA_ARGS=()
 [[ -n "${MODEL_DTYPE:-}" ]] && EXTRA_ARGS+=(--dtype "$MODEL_DTYPE")
 [[ -n "${MODEL_REVISION:-}" ]] && EXTRA_ARGS+=(--revision "$MODEL_REVISION")

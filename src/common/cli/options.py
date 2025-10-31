@@ -116,3 +116,111 @@ def add_studies_argument(
         dest=dest,
         help_text=help_text,
     )
+
+
+def add_gpt4o_eval_arguments(
+    parser: argparse.ArgumentParser,
+    *,
+    default_out_dir: str,
+    default_cache_dir: str,
+) -> None:
+    """
+    Register the standard GPT-4o evaluation arguments on ``parser``.
+
+    :param parser: Argument parser to extend.
+    :param default_out_dir: Default output directory path.
+    :param default_cache_dir: Default Hugging Face cache directory.
+    :returns: ``None``.
+    """
+
+    parser.add_argument(
+        "--eval_max",
+        type=int,
+        default=0,
+        help="Limit evaluation examples (0 means evaluate every row).",
+    )
+    parser.add_argument(
+        "--dataset",
+        default="",
+        help="Dataset path or Hugging Face dataset id (defaults to config.DATASET_NAME).",
+    )
+    parser.add_argument(
+        "--issues",
+        default="",
+        help="Comma-separated list of issue labels to evaluate (defaults to all issues).",
+    )
+    add_studies_argument(
+        parser,
+        help_text=(
+            "Comma-separated participant study identifiers to filter (defaults to all studies)."
+        ),
+    )
+    add_comma_separated_argument(
+        parser,
+        flags="--opinion_studies",
+        dest="opinion_studies",
+        help_text=(
+            "Comma-separated opinion study keys to evaluate (defaults to all opinion studies)."
+        ),
+    )
+    parser.add_argument(
+        "--opinion_max_participants",
+        type=int,
+        default=0,
+        help="Optional cap on participants per opinion study (0 keeps all).",
+    )
+    parser.add_argument(
+        "--opinion_direction_tolerance",
+        type=float,
+        default=1e-6,
+        help=(
+            "Tolerance for treating opinion deltas as no-change when measuring direction accuracy."
+        ),
+    )
+    parser.add_argument(
+        "--out_dir",
+        default=default_out_dir,
+        help="Directory for predictions and metrics.",
+    )
+    add_overwrite_argument(parser)
+    parser.add_argument(
+        "--temperature",
+        type=float,
+        default=0.0,
+        help="Sampling temperature passed to GPT-4o.",
+    )
+    parser.add_argument(
+        "--max_tokens",
+        type=int,
+        default=500,
+        help="Maximum number of tokens in the model response.",
+    )
+    parser.add_argument(
+        "--top_p",
+        type=float,
+        default=1.0,
+        help="Nucleus sampling probability mass forwarded to GPT-4o.",
+    )
+    parser.add_argument(
+        "--request_retries",
+        type=int,
+        default=5,
+        help="Maximum GPT-4o attempts per request (default: 5).",
+    )
+    parser.add_argument(
+        "--request_retry_delay",
+        type=float,
+        default=1.0,
+        help="Seconds to wait between GPT-4o request retries (default: 1.0).",
+    )
+    parser.add_argument(
+        "--cache_dir",
+        default=default_cache_dir,
+        help="HF datasets cache directory.",
+    )
+    parser.add_argument(
+        "--deployment",
+        default="",
+        help="Optional Azure deployment identifier (defaults to the config setting).",
+    )
+    add_log_level_argument(parser)

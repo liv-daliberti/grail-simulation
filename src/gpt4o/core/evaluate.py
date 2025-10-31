@@ -28,10 +28,11 @@ import time
 from dataclasses import dataclass
 from importlib import import_module
 import typing as t
+import argparse
 
-import common.evaluation.utils as _eval_utils
-import common.data.hf_datasets as _hf_datasets
-from common.evaluation import slate_eval
+_eval_utils = import_module("common.evaluation.utils")
+_hf_datasets = import_module("common.data.hf_datasets")
+slate_eval = import_module("common.evaluation.slate_eval")
 
 _client = import_module("gpt4o.core.client")
 _config = import_module("gpt4o.core.config")
@@ -41,9 +42,12 @@ _utils = import_module("gpt4o.core.utils")
 if t.TYPE_CHECKING:  # pragma: no cover - typing only imports
     from argparse import Namespace
 else:  # pragma: no cover - runtime fallback for type hints
-    Namespace = object  # type: ignore[misc]
+    Namespace = argparse.Namespace
 
-DOWNLOAD_CONFIG_CLS, LOAD_DATASET, LOAD_FROM_DISK = _hf_datasets.get_dataset_loaders()
+DOWNLOAD_CONFIG_CLS, LOAD_DATASET, LOAD_FROM_DISK = t.cast(
+    tuple[t.Any, t.Callable[..., t.Any], t.Callable[[str], t.Any]],
+    _hf_datasets.get_dataset_loaders(),
+)
 
 LOGGER = logging.getLogger("gpt4o.evaluate")
 
@@ -408,6 +412,43 @@ def _write_qa_entry(
     )
 
 
+def _log_qa_progress(
+    index: int,
+    payload: dict[str, object],
+    accumulator: slate_eval.EvaluationAccumulator,
+) -> None:
+    """Emit a per-example QA log line with correctness and running accuracy.
+
+    :param index: 1-based example index.
+    :param payload: Serialised prediction payload for the example.
+    :param accumulator: Metrics accumulator reflecting current totals.
+    :returns: ``None``.
+    """
+    messages = payload.get("messages", [])
+    question = _extract_user_question(messages if isinstance(messages, list) else [])
+    answer = str(payload.get("gpt_output", "")).strip()
+    issue = str(payload.get("issue", "unspecified"))
+    study = str(payload.get("participant_study", "unspecified"))
+    correct = bool(payload.get("correct", False))
+    parsed = payload.get("parsed_index")
+    gold = payload.get("gold_index")
+    running_acc = accumulator.accuracy()
+    LOGGER.info(
+        (
+            "[EVAL][%d] issue=%s study=%s correct=%s parsed=%s gold=%s acc=%.3f\n"
+            "Question: %s\nAnswer: %s"
+        ),
+        index,
+        issue,
+        study,
+        correct,
+        parsed,
+        gold,
+        running_acc,
+        question,
+        answer,
+    )
+
 class EvaluationRunner:
     """Stateful helper that orchestrates GPT-4o evaluation."""
 
@@ -479,7 +520,7 @@ class EvaluationRunner:
         if LOAD_FROM_DISK is None:  # pragma: no cover - guarded by require call
             return None
         logging.info("Detected local dataset at %s", dataset_path)
-        return LOAD_FROM_DISK(str(dataset_path))  # type: ignore[arg-type]
+        return LOAD_FROM_DISK(str(dataset_path))
 
     def _download_remote_dataset(self) -> object | None:
         """Download the dataset from Hugging Face, falling back to streaming."""
@@ -490,7 +531,7 @@ class EvaluationRunner:
         download_config = DOWNLOAD_CONFIG_CLS(
             resume_download=True,
             max_retries=2,
-        )  # type: ignore[misc]
+        )
         try:
             return LOAD_DATASET(
                 self.dataset_name,
@@ -516,19 +557,19 @@ class EvaluationRunner:
         """
         eval_split = _config.EVAL_SPLIT
         try:
-            data_iter = LOAD_DATASET(  # type: ignore[misc]
+            data_iter = t.cast(t.Iterable[dict[str, object]], LOAD_DATASET(
                 self.dataset_name,
                 split=eval_split,
                 streaming=True,
-            )
+            ))
         except (OSError, ValueError, RuntimeError, ConnectionError) as exc:  # pragma: no cover
             for fallback in ("validation", "eval", "test"):
                 try:
-                    data_iter = LOAD_DATASET(  # type: ignore[misc]
+                    data_iter = t.cast(t.Iterable[dict[str, object]], LOAD_DATASET(
                         self.dataset_name,
                         split=fallback,
                         streaming=True,
-                    )
+                    ))
                     eval_split = fallback
                     break
                 except (OSError, ValueError, RuntimeError, ConnectionError):
@@ -558,7 +599,7 @@ class EvaluationRunner:
         available_splits: list[str] = []
         if hasattr(dataset, "keys"):
             try:
-                available_splits = list(dataset.keys())  # type: ignore[assignment]
+                available_splits = list(t.cast(t.Mapping[str, t.Any], dataset).keys())
             except (TypeError, AttributeError):  # pragma: no cover - defensive fallback
                 available_splits = []
 
@@ -571,16 +612,15 @@ class EvaluationRunner:
                 ),
                 available_splits[0],
             )
-            data_iter = dataset[eval_split]  # type: ignore[index]
+            data_iter = t.cast(t.Mapping[str, t.Any], dataset)[eval_split]
         else:
-            eval_split = (
-                getattr(dataset, "split", None) or _config.EVAL_SPLIT
-            )  # type: ignore[attr-defined]
+            eval_split = t.cast(str, getattr(dataset, "split", None) or _config.EVAL_SPLIT)
             data_iter = dataset
 
-        if self.limits.eval_max and hasattr(data_iter, "select"):
-            limit = min(self.limits.eval_max, len(data_iter))  # type: ignore[arg-type]
-            data_iter = data_iter.select(range(limit))
+        if self.limits.eval_max and hasattr(data_iter, "select") and hasattr(data_iter, "__len__"):
+            length = t.cast(int, len(data_iter))
+            limit = min(self.limits.eval_max, length)
+            data_iter = t.cast(t.Any, data_iter).select(range(limit))
 
         self.state.set_split(eval_split)
         return data_iter
@@ -629,20 +669,12 @@ class EvaluationRunner:
             deployment=getattr(self.args, "deployment", None),
         )
         policy = _utils.RetryPolicy(attempts=retries, delay=delay)
-        try:
-            return _utils.call_gpt4o_with_retries(
-                messages,
-                invocation=invocation,
-                retry=policy,
-                logger=LOGGER,
-            )
-        except (RuntimeError, ConnectionError, ValueError) as exc:  # pragma: no cover
-            LOGGER.error(
-                "GPT-4o call failed after %d attempts; returning error stub: %s",
-                policy.attempts,
-                exc,
-            )
-            return f"(error after {policy.attempts} attempts: {exc})"
+        result, exc = _utils.try_call_with_policy(
+            messages, invocation=invocation, retry=policy, logger=LOGGER
+        )
+        if result is not None:
+            return result
+        return f"(error after {policy.attempts} attempts: {exc})"
 
     def _evaluate_example(
         self, example: dict[str, object]
@@ -761,6 +793,7 @@ class EvaluationRunner:
                 accumulator.observe(outcome.observation)
                 writer.write(_serialise_prediction(outcome.payload) + "\n")
                 _write_qa_entry(qa_log, index, outcome.payload)
+                _log_qa_progress(index, outcome.payload, accumulator)
                 qa_log.flush()
                 self._maybe_log_progress(index, start_time, accumulator)
 

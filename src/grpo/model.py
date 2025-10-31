@@ -25,7 +25,7 @@ try:
         AutoModelForCausalLM as _TRANSFORMERS_CAUSAL_LM_FACTORY,
         AutoTokenizer as _TRANSFORMERS_TOKENIZER_FACTORY,
     )
-except ModuleNotFoundError as import_error:  # pragma: no cover - optional dependency
+except Exception as import_error:  # pragma: no cover - optional dependency
     _TRANSFORMERS_CAUSAL_LM_FACTORY = None  # type: ignore[assignment]
     _TRANSFORMERS_TOKENIZER_FACTORY = None  # type: ignore[assignment]
     _TRANSFORMERS_IMPORT_ERROR = import_error
@@ -41,7 +41,7 @@ else:  # pragma: no cover - exercised when transformers missing
 
 try:
     import torch as _TORCH_MODULE  # type: ignore[import-not-found]
-except ModuleNotFoundError as import_error:  # pragma: no cover - optional dependency
+except Exception as import_error:  # pragma: no cover - optional dependency
     _TORCH_MODULE = None  # type: ignore[assignment]
     _TORCH_IMPORT_ERROR = import_error
 else:  # pragma: no cover - trivial branch
@@ -185,19 +185,36 @@ def generate_chat_completion(
             attention_mask = attention_mask.to(device)
     else:
         input_ids = inputs.to(device)
+        # Ensure attention_mask is set even if not returned by the tokenizer
+        # to avoid generation warnings and inconsistent behavior when
+        # pad_token_id equals eos_token_id.
         attention_mask = None
+
+    # If the attention mask was not provided, construct it from padding.
+    if attention_mask is None:
+        pad_id = tokenizer.pad_token_id
+        if pad_id is not None:
+            attention_mask = (input_ids != pad_id).to(device)
 
     module = _require_torch()
     with module.no_grad():
-        output_ids = model.generate(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            max_new_tokens=settings.max_new_tokens,
-            temperature=settings.temperature,
-            top_p=settings.top_p,
-            do_sample=settings.temperature > 0.0,
-            pad_token_id=tokenizer.pad_token_id,
-        )
+        # Only pass sampling-related flags when sampling is enabled to avoid
+        # transformer warnings about ignored/invalid generation flags.
+        gen_kwargs: dict[str, Any] = {
+            "input_ids": input_ids,
+            "attention_mask": attention_mask,
+            "max_new_tokens": settings.max_new_tokens,
+            "pad_token_id": tokenizer.pad_token_id,
+        }
+        if settings.temperature is not None and settings.temperature > 0.0:
+            gen_kwargs["do_sample"] = True
+            gen_kwargs["temperature"] = float(settings.temperature)
+            if settings.top_p is not None:
+                gen_kwargs["top_p"] = float(settings.top_p)
+        else:
+            gen_kwargs["do_sample"] = False
+
+        output_ids = model.generate(**gen_kwargs)
 
     sequences = getattr(output_ids, "sequences", output_ids)
     if isinstance(sequences, tuple):

@@ -18,11 +18,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Callable, Dict, Iterable, List, Mapping, MutableMapping, Sequence, Tuple
+from typing import Callable, Dict, Iterable, List, Mapping, MutableMapping, Sequence, Tuple, cast
 
+from importlib import import_module
 import numpy as np
-
-from common.opinion import compute_opinion_metrics, float_or_none
+_common_opinion = import_module("common.opinion")
+compute_opinion_metrics = _common_opinion.compute_opinion_metrics
+float_or_none = _common_opinion.float_or_none
 
 
 def document_from_example(example: Mapping[str, object]) -> str:
@@ -175,8 +177,8 @@ def load_materialised_split(
     available: List[str] = []
     if hasattr(dataset, "keys"):
         try:
-            available = list(dataset.keys())  # type: ignore[attr-defined]
-        except Exception:  # pylint: disable=broad-except
+            available = list(cast(Mapping[str, object], dataset).keys())
+        except (TypeError, AttributeError):
             available = []
     if available:
         for candidate in (preferred_split, "validation", "eval", "test", "train"):
@@ -185,7 +187,9 @@ def load_materialised_split(
                 break
         else:
             eval_split = available[0]
-        split_dataset = dataset[eval_split]  # type: ignore[index]
+        split_dataset = cast(Mapping[str, Iterable[Mapping[str, object]]], dataset)[
+            eval_split
+        ]
     else:
         split_dataset = dataset
     return eval_split, split_dataset

@@ -11,10 +11,12 @@ import pytest
 
 from .helpers.datasets_stub import ensure_datasets_stub
 from .helpers.graphviz_stub import ensure_graphviz_stub
+from .helpers.openai_stub import ensure_openai_stub
 
 # Ensure project modules and the datasets stub are available for imports.
 ensure_datasets_stub()
 ensure_graphviz_stub()
+ensure_openai_stub()
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "src"
 if str(SRC) not in sys.path:

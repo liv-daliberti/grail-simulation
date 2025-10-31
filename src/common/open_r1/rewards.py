@@ -65,7 +65,8 @@ else:  # pragma: no cover - optional dependency
 
 try:  # pragma: no cover - optional dependency
     import transformers  # type: ignore[import]
-except ImportError:  # pragma: no cover - optional dependency
+except Exception:  # pragma: no cover - optional dependency
+    # Catch broad exceptions to tolerate environments with partially stubbed deps
     transformers = None  # type: ignore[assignment]
 
 try:  # pragma: no cover - optional dependency

@@ -24,14 +24,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
-from common.text import (
-    canon_text as _canon_text,
-    canon_video_id as _canon_video_id,
-    resolve_paths_from_env as _resolve_paths_from_env,
-    split_env_list as _split_env_list,
-)
-
+from importlib import import_module
 from .client import ds_call
+_text = import_module("common.text")
+_canon_text = _text.canon_text
+_canon_video_id = _text.canon_video_id
+_resolve_paths_from_env = _text.resolve_paths_from_env
+_split_env_list = _text.split_env_list
+
 
 ANS_TAG = re.compile(r"(?si)<answer>\s*([^<\n]+?)\s*</answer>")
 THINK_BLOCK = re.compile(r"(?si)<think>.+?</think>")
@@ -210,7 +210,7 @@ def call_gpt4o_with_retries(
             if response and response.strip() and check(response):
                 return response
             raise RuntimeError("Malformed GPT-4o response (missing required tags).")
-        except Exception as exc:  # pylint: disable=broad-except
+        except (RuntimeError, OSError, ValueError, ConnectionError, TimeoutError) as exc:
             last_exc = exc
             if attempt < attempts:
                 log.warning(
@@ -226,3 +226,30 @@ def call_gpt4o_with_retries(
     raise RuntimeError(
         f"GPT-4o call failed after {attempts} attempts: {last_exc}"
     ) from last_exc
+
+
+def try_call_with_policy(
+    messages,
+    *,
+    invocation: InvocationParams,
+    retry: RetryPolicy,
+    logger: logging.Logger,
+):
+    """Attempt a GPT call and capture common error handling.
+
+    :param messages: Chat messages payload forwarded to the model.
+    :param invocation: Invocation parameters (temperature, tokens, etc.).
+    :param retry: Retry policy to apply.
+    :param logger: Logger used for diagnostics.
+    :returns: Tuple of ``(result_or_none, exc_or_none)``.
+    """
+    try:
+        result = call_gpt4o_with_retries(
+            messages, invocation=invocation, retry=retry, logger=logger
+        )
+        return result, None
+    except (RuntimeError, ConnectionError, ValueError) as exc:  # pragma: no cover
+        logger.error(
+            "GPT-4o call failed after %d attempts: %s", retry.attempts, exc
+        )
+        return None, exc

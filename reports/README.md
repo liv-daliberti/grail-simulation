@@ -2,6 +2,9 @@
 
 This directory surfaces analyst-facing summaries that pair with the modeling and data-processing workflows in the repository. Each subfolder owns the regenerated Markdown, tables, and figures for a specific track so you can browse results without digging through `models/` or raw logs.
 
+- `main/` — cross-baseline comparison that collates results from GRAIL, GRPO,
+  GPT-4o, KNN, and XGB across the next-video and opinion tasks (KNN/XGB opinion
+  metrics sourced from `opinion_from_next`).
 - `gpt4o/` — catalog of GPT-4o baselines, including the selected `next_video/` evaluation slice and the `hyperparameter_tuning/` sweep that produced it. Refresh via `python -m gpt4o.pipeline` or the helper script `training/training-gpt4o.sh`.
 - `grpo/` — GRPO finetuning evaluation catalog with `next_video/` ranking metrics and `opinion/` regression summaries. Refresh via `python -m grpo.pipeline --stage reports`.
 - `grail/` — GRAIL (GRPO+discriminator) evaluation artifacts mirroring the GRPO layout; regenerate with `python -m grail.pipeline --stage reports` once `models/grail/` contains the latest runs.

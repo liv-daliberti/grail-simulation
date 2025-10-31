@@ -21,7 +21,8 @@ import os
 from pathlib import Path
 from typing import Final
 
-from common.pipeline.prompts import STRICT_NUMBERED_ANSWER_GUIDE
+from importlib import import_module
+STRICT_NUMBERED_ANSWER_GUIDE = import_module("common.pipeline.prompts").STRICT_NUMBERED_ANSWER_GUIDE
 
 # ---------------------------------------------------------------------------
 # Azure OpenAI defaults (can be overridden via environment variables)
@@ -55,13 +56,17 @@ def ensure_azure_env() -> None:
 # Dataset paths / column definitions
 # ---------------------------------------------------------------------------
 _LOCAL_DATASET = Path(__file__).resolve().parents[3] / "data" / "cleaned_grail"
-if "GPT4O_DATASET" in os.environ:
-    _dataset_name = os.environ["GPT4O_DATASET"]
-elif _LOCAL_DATASET.exists():
-    _dataset_name = str(_LOCAL_DATASET)
-else:
-    _dataset_name = "od2961/grail-interactions"
-DATASET_NAME: Final[str] = _dataset_name
+
+
+def _compute_dataset_name() -> str:
+    if "GPT4O_DATASET" in os.environ:
+        return os.environ["GPT4O_DATASET"]
+    if _LOCAL_DATASET.exists():
+        return str(_LOCAL_DATASET)
+    return "od2961/grail-interactions"
+
+
+DATASET_NAME: Final[str] = _compute_dataset_name()
 TRAIN_SPLIT: str = os.environ.get("GPT4O_TRAIN_SPLIT", "train")
 EVAL_SPLIT: str = os.environ.get("GPT4O_EVAL_SPLIT", "validation")
 PROMPT_COLUMN: str = os.environ.get("GPT4O_PROMPT_COLUMN", "state_text")

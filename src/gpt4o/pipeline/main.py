@@ -23,13 +23,8 @@ import os
 from pathlib import Path
 from typing import List, Sequence, Tuple
 
-from common.cli.args import add_comma_separated_argument
-from common.cli.options import (
-    add_log_level_argument,
-    add_overwrite_argument,
-    add_studies_argument,
-)
-from common.pipeline.gpt4o_models import PipelinePaths, SweepConfig, SweepOutcome
+from importlib import import_module
+from .models import PipelinePaths, SweepConfig, SweepOutcome
 
 from ..core.opinion import OpinionEvaluationResult, run_opinion_evaluations
 from .cache import run_reports_stage
@@ -58,6 +53,14 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
         )
     )
     parser.add_argument("--dataset", default=None, help="Dataset path or HuggingFace dataset id.")
+    # Lazy import CLI helpers to avoid linter import-error when src/ is not on sys.path
+    _cli_args = import_module("common.cli.args")
+    _cli_opts = import_module("common.cli.options")
+    add_comma_separated_argument = _cli_args.add_comma_separated_argument
+    add_log_level_argument = _cli_opts.add_log_level_argument
+    add_overwrite_argument = _cli_opts.add_overwrite_argument
+    add_studies_argument = _cli_opts.add_studies_argument
+
     parser.add_argument(
         "--out-dir",
         default=None,

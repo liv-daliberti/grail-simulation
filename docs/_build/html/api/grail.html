@@ -264,9 +264,24 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="module-grail.reports">
-<span id="grail-utilities"></span><h1>GRAIL Utilities<a class="headerlink" href="#module-grail.reports" title="Link to this heading">¶</a></h1>
-<p>Markdown report builders for GRAIL baselines.</p>
+          <section id="module-grail.pipeline">
+<span id="grail-utilities"></span><h1>GRAIL Utilities<a class="headerlink" href="#module-grail.pipeline" title="Link to this heading">¶</a></h1>
+<p>CLI shim that reuses the GRPO evaluation pipeline for GRAIL runs.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="grail.pipeline.main">
+<span class="sig-prename descclassname"><span class="pre">grail.pipeline.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">argv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/grail/pipeline.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grail.pipeline.main" title="Link to this definition">¶</a></dt>
+<dd><p>Entrypoint mirroring <code class="xref py py-mod docutils literal notranslate"><span class="pre">grpo.pipeline</span></code> with GRAIL defaults.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>argv</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-grail.reports">Markdown report builders for GRAIL baselines.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="grail.reports.generate_reports">
 <span class="sig-prename descclassname"><span class="pre">grail.reports.</span></span><span class="sig-name descname"><span class="pre">generate_reports</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">repo_root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">next_video</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opinion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regenerate_hint</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Regenerate</span> <span class="pre">via</span> <span class="pre">`python</span> <span class="pre">-m</span> <span class="pre">grail.pipeline</span> <span class="pre">--stage</span> <span class="pre">full`</span> <span class="pre">after</span> <span class="pre">producing</span> <span class="pre">updated</span> <span class="pre">evaluation</span> <span class="pre">artifacts</span> <span class="pre">under</span> <span class="pre">`models/grail/`.'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/grail/reports.html#generate_reports"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grail.reports.generate_reports" title="Link to this definition">¶</a></dt>
@@ -347,6 +362,7 @@
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">GRAIL Utilities</a><ul>
+<li><a class="reference internal" href="#grail.pipeline.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 <li><a class="reference internal" href="#grail.reports.generate_reports"><code class="docutils literal notranslate"><span class="pre">generate_reports()</span></code></a></li>
 </ul>
 </li>

@@ -403,7 +403,7 @@ training and evaluation utilities that live under <code class="docutils literal 
 <li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#gpt4o.utils.resolve_paths_from_env"><code class="docutils literal notranslate"><span class="pre">resolve_paths_from_env()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#gpt4o.utils.split_env_list"><code class="docutils literal notranslate"><span class="pre">split_env_list()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#gpt4o.utils.truthy"><code class="docutils literal notranslate"><span class="pre">truthy()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#module-gpt4o.pipeline">Pipeline Orchestration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/gpt4o.html#pipeline-orchestration">Pipeline Orchestration</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api/open_r1.html">Open-R1 Training API</a><ul>
@@ -418,6 +418,7 @@ training and evaluation utilities that live under <code class="docutils literal 
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api/grail.html">GRAIL Utilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/grail.html#grail.pipeline.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/grail.html#grail.reports.generate_reports"><code class="docutils literal notranslate"><span class="pre">generate_reports()</span></code></a></li>
 </ul>
 </li>
@@ -427,32 +428,6 @@ training and evaluation utilities that live under <code class="docutils literal 
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api/visualization.html">Visualization Utilities</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.GraphCounts"><code class="docutils literal notranslate"><span class="pre">GraphCounts</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.GraphRenderOptions"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.GraphStyle"><code class="docutils literal notranslate"><span class="pre">GraphStyle</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.LabelRenderOptions"><code class="docutils literal notranslate"><span class="pre">LabelRenderOptions</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.OpinionAnnotation"><code class="docutils literal notranslate"><span class="pre">OpinionAnnotation</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.OpinionFieldSpec"><code class="docutils literal notranslate"><span class="pre">OpinionFieldSpec</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.SafeDict"><code class="docutils literal notranslate"><span class="pre">SafeDict</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.SessionGraphOptions"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.TreeData"><code class="docutils literal notranslate"><span class="pre">TreeData</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.TreeEdge"><code class="docutils literal notranslate"><span class="pre">TreeEdge</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.aggregate_counts"><code class="docutils literal notranslate"><span class="pre">aggregate_counts()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.build_graph"><code class="docutils literal notranslate"><span class="pre">build_graph()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.build_session_graph"><code class="docutils literal notranslate"><span class="pre">build_session_graph()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.collect_rows"><code class="docutils literal notranslate"><span class="pre">collect_rows()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.compute_depths"><code class="docutils literal notranslate"><span class="pre">compute_depths()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.extract_session_rows"><code class="docutils literal notranslate"><span class="pre">extract_session_rows()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.format_node_label"><code class="docutils literal notranslate"><span class="pre">format_node_label()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.group_rows_by_session"><code class="docutils literal notranslate"><span class="pre">group_rows_by_session()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.load_cleaned_dataset"><code class="docutils literal notranslate"><span class="pre">load_cleaned_dataset()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.load_metadata"><code class="docutils literal notranslate"><span class="pre">load_metadata()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.load_trajectories"><code class="docutils literal notranslate"><span class="pre">load_trajectories()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.load_tree_csv"><code class="docutils literal notranslate"><span class="pre">load_tree_csv()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.parse_args"><code class="docutils literal notranslate"><span class="pre">parse_args()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.parse_issue_counts"><code class="docutils literal notranslate"><span class="pre">parse_issue_counts()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree_viz.render_graph"><code class="docutils literal notranslate"><span class="pre">render_graph()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree.models.LabelRenderOptions"><code class="docutils literal notranslate"><span class="pre">LabelRenderOptions</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree.models.OpinionAnnotation"><code class="docutils literal notranslate"><span class="pre">OpinionAnnotation</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/visualization.html#visualization.recommendation_tree.models.OpinionFieldSpec"><code class="docutils literal notranslate"><span class="pre">OpinionFieldSpec</span></code></a></li>

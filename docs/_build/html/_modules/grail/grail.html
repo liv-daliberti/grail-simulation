@@ -283,8 +283,19 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Mapping</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_seed</span>  <span class="c1"># pylint: disable=import-error</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">trl</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelConfig</span>  <span class="c1"># pylint: disable=import-error</span>
+<span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_seed</span>  <span class="c1"># pylint: disable=import-error</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="c1"># Avoid failing import-time when transformers has indirect import issues</span>
+    <span class="c1"># (e.g. due to partial stubs injected into sys.modules by tests).</span>
+    <span class="n">set_seed</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
+
+<span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">trl</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelConfig</span>  <span class="c1"># pylint: disable=import-error</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="c1"># Minimal placeholder used only for type annotations / script entrypoint.</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">ModelConfig</span><span class="p">:</span>  <span class="c1"># type: ignore[no-redef]</span>
+        <span class="k">pass</span>
 
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">common.open_r1.configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">GRPOConfig</span><span class="p">,</span> <span class="n">GRPOScriptArguments</span>
@@ -328,16 +339,56 @@
         <span class="n">_grail_extra_fields</span><span class="p">,</span>
         <span class="n">_prepare_dataset</span><span class="p">,</span>
     <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">grail.grail_gail</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">OnlineDiscriminator</span><span class="p">,</span>
-    <span class="n">RewardContext</span><span class="p">,</span>
-    <span class="n">_build_reward_contexts</span><span class="p">,</span>
-    <span class="n">_context_from_completion</span><span class="p">,</span>
-    <span class="n">_render_disc_text</span><span class="p">,</span>
-    <span class="n">_select_disc_device</span><span class="p">,</span>
-    <span class="n">_train_discriminator_from_contexts</span><span class="p">,</span>
-    <span class="n">make_gail_reward_fn</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency re-export</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">grail.grail_gail</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">OnlineDiscriminator</span><span class="p">,</span>
+        <span class="n">RewardContext</span><span class="p">,</span>
+        <span class="n">_build_reward_contexts</span><span class="p">,</span>
+        <span class="n">_context_from_completion</span><span class="p">,</span>
+        <span class="n">_render_disc_text</span><span class="p">,</span>
+        <span class="n">_select_disc_device</span><span class="p">,</span>
+        <span class="n">_train_discriminator_from_contexts</span><span class="p">,</span>
+        <span class="n">make_gail_reward_fn</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">_gail_import_error</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="c1"># Provide minimal shims so importing this module doesn&#39;t require transformers.</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">OnlineDiscriminator</span><span class="p">:</span>  <span class="c1"># type: ignore[too-few-public-methods]</span>
+        <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                <span class="s2">&quot;GAIL components require transformers. Install it with `pip install transformers`.&quot;</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">_gail_import_error</span>
+
+    <span class="n">RewardContext</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_reward_contexts</span><span class="p">(</span><span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">):</span>  <span class="c1"># type: ignore[empty-body]</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="s2">&quot;GAIL components require transformers. Install it with `pip install transformers`.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_context_from_completion</span><span class="p">(</span><span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">):</span>  <span class="c1"># type: ignore[empty-body]</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="s2">&quot;GAIL components require transformers. Install it with `pip install transformers`.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_render_disc_text</span><span class="p">(</span><span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">):</span>  <span class="c1"># type: ignore[empty-body]</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="s2">&quot;GAIL components require transformers. Install it with `pip install transformers`.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_select_disc_device</span><span class="p">(</span><span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">):</span>  <span class="c1"># type: ignore[empty-body]</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="s2">&quot;GAIL components require transformers. Install it with `pip install transformers`.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_train_discriminator_from_contexts</span><span class="p">(</span><span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">):</span>  <span class="c1"># type: ignore[empty-body]</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="s2">&quot;GAIL components require transformers. Install it with `pip install transformers`.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">make_gail_reward_fn</span><span class="p">(</span><span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">):</span>  <span class="c1"># type: ignore[empty-body]</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="s2">&quot;GAIL components require transformers. Install it with `pip install transformers`.&quot;</span>
+        <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grail.grail_mixer</span><span class="w"> </span><span class="kn">import</span> <span class="n">LearnableRewardCallable</span><span class="p">,</span> <span class="n">LearnableRewardMixer</span><span class="p">,</span> <span class="n">MixerSetup</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grail.grail_rewards</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">_adjust_reward_weights</span><span class="p">,</span>

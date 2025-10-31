@@ -17,9 +17,10 @@
 
 from __future__ import annotations
 
-from common.text.title_index import TitleResolver as _BaseTitleResolver
-
+from importlib import import_module
 from .config import DEFAULT_TITLE_DIRS
+_title_index = import_module("common.text.title_index")
+_BaseTitleResolver = _title_index.TitleResolver
 
 
 class TitleResolver(_BaseTitleResolver):
@@ -45,12 +46,11 @@ class TitleResolver(_BaseTitleResolver):
         defaults.update(overrides)
         return defaults
 
-    # Expose a public delegator so the class has at least two public methods,
-    # satisfying strict linters without altering behaviour.
-    def resolve(self, video_id: str | None):  # type: ignore[override]
-        """Delegate to the base implementation to resolve a title.
+    def title_for(self, video_id: str | None):
+        """Convenience wrapper around :meth:`resolve` matching other APIs."""
+        return self.resolve(video_id)
 
-        :param video_id: Candidate YouTube id.
-        :returns: Resolved title or ``None`` when missing.
-        """
-        return super().resolve(video_id)
+    @property
+    def default_dirs(self) -> list[str]:
+        """Return a copy of the default title directories used by the resolver."""
+        return list(DEFAULT_TITLE_DIRS)

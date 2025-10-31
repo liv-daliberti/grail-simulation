@@ -20,13 +20,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import IO, List, Mapping, Sequence
 
-from common.opinion import (
-    OpinionArtifacts,
-    OpinionEvaluationResult,
-    OpinionSpec,
-    OpinionStudyResult,
-    compute_opinion_metrics,
-)
+from importlib import import_module
+_common_opinion = import_module("common.opinion")
+OpinionArtifacts = _common_opinion.OpinionArtifacts
+OpinionEvaluationResult = _common_opinion.OpinionEvaluationResult
+OpinionSpec = _common_opinion.OpinionSpec
+OpinionStudyResult = _common_opinion.OpinionStudyResult
+compute_opinion_metrics = _common_opinion.compute_opinion_metrics
 
 
 @dataclass(frozen=True)

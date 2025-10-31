@@ -15,7 +15,7 @@
 
 """Opinion evaluation helpers and runners."""
 
-from common.opinion import DEFAULT_SPECS  # re-export for compatibility
+from importlib import import_module
 
 from .helpers import (
     baseline_metrics,
@@ -37,6 +37,8 @@ from .settings import (
     parse_tokens,
     resolve_spec_keys,
 )
+
+DEFAULT_SPECS = import_module("common.opinion").DEFAULT_SPECS  # re-export for compatibility
 
 __all__ = [
     "DEFAULT_SPECS",

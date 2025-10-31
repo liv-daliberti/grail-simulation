@@ -408,6 +408,7 @@ class OpinionStudyContext:
     prompts: OpinionPromptSettings
     direction_tolerance: float
     inference: OpinionInferenceContext
+    overwrite: bool
 
 
 @dataclass(frozen=True)
@@ -514,6 +515,62 @@ def _persist_study_outputs(
     )
 
 
+def _seed_accumulator_from_predictions(path: Path) -> _StudyAccumulator:
+    """Return an accumulator pre-populated from an existing predictions JSONL.
+
+    :param path: Path to the predictions.jsonl file.
+    :returns: Accumulator containing prior predictions, QA entries, and vectors.
+    """
+    acc = _StudyAccumulator()
+    if not path.exists():
+        return acc
+    with path.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(row, dict):
+                continue
+            before = row.get("before")
+            after = row.get("after")
+            pred = row.get("prediction")
+            try:
+                b = float(before)
+                a = float(after)
+                p = float(pred)
+            except (TypeError, ValueError):
+                continue
+            messages = row.get("messages")
+            raw_output = str(row.get("raw_output") or "")
+            qa_entry = "\n".join(
+                [
+                    f"## Participant {row.get('participant_id', '<unknown>')}",
+                    f"- Study: {row.get('study', '<unknown>')}",
+                    f"- Before: {b:.2f}",
+                    f"- After: {a:.2f}",
+                    "",
+                    "### Prompt",
+                    json.dumps(messages, indent=2, ensure_ascii=False) if messages is not None else "",
+                    "",
+                    "### Model output",
+                    raw_output.strip(),
+                    "",
+                    f"### Parsed prediction: {p:.3f}",
+                ]
+            )
+            # Mirror what .record would append.
+            acc.predictions.append(row)
+            acc.qa_entries.append(qa_entry)
+            acc.truth_before.append(b)
+            acc.truth_after.append(a)
+            acc.pred_after.append(p)
+    return acc
+
+
 def _evaluate_study(
     *,
     spec: OpinionSpec,
@@ -523,8 +580,50 @@ def _evaluate_study(
 ) -> tuple[OpinionStudyResult, _StudyAccumulator]:
     """Score ``examples`` for ``spec`` and materialise study artefacts."""
 
+    # If overwrite is disabled and metrics are present, reuse cached results and
+    # only seed combined vectors from predictions.jsonl.
+    if not study_context.overwrite and files.metrics.exists():
+        try:
+            payload = json.loads(files.metrics.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            payload = {"metrics": {}, "baseline": {}}
+        metrics = payload.get("metrics", {}) or {}
+        baseline = payload.get("baseline", {}) or {}
+        acc = _seed_accumulator_from_predictions(files.predictions)
+        summary = OpinionStudySummary(
+            metrics=metrics,
+            baseline=baseline,
+            participants=int(metrics.get("participants") or acc.participants),
+            eligible=int(metrics.get("eligible", 0)),
+        )
+        return OpinionStudyResult(study=spec, files=files, summary=summary), acc
+
+    # Resume from predictions when present but metrics are missing.
     accumulator = _StudyAccumulator()
-    for example in examples:
+    if files.predictions.exists() and not files.metrics.exists():
+        seeded = _seed_accumulator_from_predictions(files.predictions)
+        if seeded.participants:
+            LOGGER.info(
+                "[OPINION] resuming study=%s at %d processed participants (resume=true)",
+                spec.key,
+                seeded.participants,
+            )
+            print(
+                f"[grpo.opinion] resume=true study={spec.key} processed={seeded.participants}",
+                flush=True,
+            )
+        accumulator.predictions.extend(seeded.predictions)
+        accumulator.qa_entries.extend(seeded.qa_entries)
+        accumulator.truth_before.extend(seeded.truth_before)
+        accumulator.truth_after.extend(seeded.truth_after)
+        accumulator.pred_after.extend(seeded.pred_after)
+        processed = seeded.participants
+    else:
+        processed = 0
+
+    for idx, example in enumerate(examples, start=1):
+        if processed and idx <= processed:
+            continue
         artefact = _score_opinion_example(
             example=example,
             spec=spec,
@@ -534,6 +633,47 @@ def _evaluate_study(
         if artefact is None:
             continue
         accumulator.record(artefact)
+        # Per-example QA logging with prediction quality details.
+        try:
+            messages = artefact.payload.get("messages", [])  # type: ignore[assignment]
+            user_prompt = _extract_user_prompt(messages if isinstance(messages, list) else [])
+        except Exception:  # pragma: no cover - defensive guard
+            user_prompt = ""
+        before = float(artefact.before)
+        after = float(artefact.after)
+        pred = float(artefact.prediction)
+        err = abs(pred - after)
+        tol = float(study_context.direction_tolerance)
+        delta_true = after - before
+        delta_pred = pred - before
+        def _dir_class(x: float) -> int:
+            if abs(x) <= tol:
+                return 0
+            return 1 if x > 0 else -1
+        dir_ok = _dir_class(delta_true) == _dir_class(delta_pred)
+        LOGGER.info(
+            (
+                "[OPINION][%s][%d] before=%.3f after=%.3f pred=%.3f "
+                "abs_err=%.3f dir_ok=%s\nQuestion: %s\nAnswer: %s"
+            ),
+            spec.key,
+            idx,
+            before,
+            after,
+            pred,
+            err,
+            dir_ok,
+            user_prompt,
+            str(artefact.payload.get("raw_output", "")).strip(),
+        )
+        print(
+            (
+                "[grpo.opinion] study=%s ex=%d before=%.2f after=%.2f pred=%.2f "
+                "abs_err=%.2f dir_ok=%s"
+            )
+            % (spec.key, idx, before, after, pred, err, str(dir_ok).lower()),
+            flush=True,
+        )
 
     metrics = compute_opinion_metrics(
         truth_after=accumulator.truth_after,
@@ -717,6 +857,7 @@ def run_opinion_evaluation(
         prompts=settings.prompts,
         direction_tolerance=settings.controls.direction_tolerance,
         inference=context,
+        overwrite=settings.controls.overwrite,
     )
 
     for spec in _resolve_studies(settings.include_studies):

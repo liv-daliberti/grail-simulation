@@ -277,14 +277,15 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">common.text.title_index</span><span class="w"> </span><span class="kn">import</span> <span class="n">TitleResolver</span> <span class="k">as</span> <span class="n">_BaseTitleResolver</span>
-
+<span class="kn">from</span><span class="w"> </span><span class="nn">importlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">import_module</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_TITLE_DIRS</span>
+<span class="n">_title_index</span> <span class="o">=</span> <span class="n">import_module</span><span class="p">(</span><span class="s2">&quot;common.text.title_index&quot;</span><span class="p">)</span>
+<span class="n">_BaseTitleResolver</span> <span class="o">=</span> <span class="n">_title_index</span><span class="o">.</span><span class="n">TitleResolver</span>
 
 
 <div class="viewcode-block" id="TitleResolver">
 <a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.titles.TitleResolver">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">TitleResolver</span><span class="p">(</span><span class="n">_BaseTitleResolver</span><span class="p">):</span>  <span class="c1"># pylint: disable=too-few-public-methods</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TitleResolver</span><span class="p">(</span><span class="n">_BaseTitleResolver</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve YouTube ids to titles using shared common helpers.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="TitleResolver.__init__">
@@ -308,7 +309,19 @@
 
         <span class="n">defaults</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;default_dirs&quot;</span><span class="p">:</span> <span class="n">DEFAULT_TITLE_DIRS</span><span class="p">}</span>
         <span class="n">defaults</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">overrides</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">defaults</span></div>
+        <span class="k">return</span> <span class="n">defaults</span>
+
+<div class="viewcode-block" id="TitleResolver.title_for">
+<a class="viewcode-back" href="../../api/gpt4o.html#gpt4o.titles.TitleResolver.title_for">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">title_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convenience wrapper around :meth:`resolve` matching other APIs.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">video_id</span><span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">default_dirs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a copy of the default title directories used by the resolver.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">DEFAULT_TITLE_DIRS</span><span class="p">)</span></div>
 
 </pre></div>
         </article>

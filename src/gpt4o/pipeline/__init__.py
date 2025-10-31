@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from common.pipeline.gpt4o_models import PipelinePaths, SweepConfig, SweepOutcome
+from .models import PipelinePaths, SweepConfig, SweepOutcome
 
 from .main import main
 

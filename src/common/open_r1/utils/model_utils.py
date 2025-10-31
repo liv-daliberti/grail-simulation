@@ -36,7 +36,7 @@ def _require_transformers() -> Any:
 
     try:
         return importlib.import_module("transformers")
-    except ImportError as exc:  # pragma: no cover
+    except Exception as exc:  # pragma: no cover
         raise ImportError(
             "transformers is required for Open-R1 training utilities. "
             "Install it with `pip install transformers`."
@@ -52,7 +52,7 @@ def _require_trl() -> Any:
 
     try:
         return importlib.import_module("trl")
-    except ImportError as exc:  # pragma: no cover
+    except Exception as exc:  # pragma: no cover
         raise ImportError(
             "trl is required for Open-R1 training utilities. "
             "Install it with `pip install trl`."
@@ -68,7 +68,7 @@ def _require_torch() -> Any:
 
     try:
         return importlib.import_module("torch")
-    except ImportError as exc:  # pragma: no cover
+    except Exception as exc:  # pragma: no cover
         raise ImportError(
             "torch is required for Open-R1 training utilities. "
             "Install it with `pip install torch` (or the appropriate wheel for your platform)."

@@ -64,4 +64,3 @@ def execute_indexed_tasks(
             raise RuntimeError(f"{label.capitalize()} completed without returning a result.")
         results.append(maybe_result)
     return results
-

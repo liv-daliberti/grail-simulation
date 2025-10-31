@@ -6,7 +6,6 @@
 #SBATCH --mem=256G
 #SBATCH --time=12:00:00
 #SBATCH --output=logs/grpo_gun/slurm_%j.out
-#SBATCH --account=mltheory
 
 set -euo pipefail
 

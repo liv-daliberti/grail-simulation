@@ -22,7 +22,7 @@ from common.text.title_index import TitleResolver as _BaseTitleResolver
 from .config import DEFAULT_TITLE_DIRS
 
 
-class TitleResolver(_BaseTitleResolver):
+class TitleResolver(_BaseTitleResolver):  # pylint: disable=too-few-public-methods
     """Resolve YouTube ids to titles using shared common helpers."""
 
     def __init__(self, **kwargs) -> None:

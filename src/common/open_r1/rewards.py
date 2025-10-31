@@ -179,6 +179,61 @@ def _parse_slate_names(slate: str) -> Tuple[List[str], dict[int, str]]:
         idxmap = {i + 1: option_name for i, option_name in enumerate(names)}
     return names, idxmap
 
+
+def _validate_numeric_index(
+    index: int,
+    names: List[str],
+    idxmap: dict[int, str],
+) -> int:
+    """Return a consistent 1-based index when the numeric hint is valid."""
+
+    if index <= 0:
+        return -1
+    if idxmap:
+        return index if index in idxmap else -1
+    if names:
+        return index if index <= len(names) else -1
+    return -1
+
+
+def _match_canonical_to_index(
+    canonical_gold: str,
+    names: List[str],
+    idxmap: dict[int, str],
+) -> int:
+    """Return the index whose label matches ``canonical_gold``."""
+
+    for idx, name in idxmap.items():
+        if canonical_gold == _canon(name):
+            return idx
+    for position, name in enumerate(names, 1):
+        if canonical_gold == _canon(name):
+            return position
+    return -1
+
+def _gold_index_from_gold_and_slate(gold: str, slate: str) -> int:
+    """Resolve a gold identifier to a 1-based slate index or ``-1`` when missing."""
+
+    gold = (gold or "").strip()
+    if not gold:
+        return -1
+
+    names, idxmap = _parse_slate_names(slate)
+
+    match = _NUM_ONLY.match(gold)
+    if match:
+        try:
+            idx = int(match.group(1))
+        except ValueError:
+            idx = -1
+        return _validate_numeric_index(idx, names, idxmap)
+
+    canonical = _canon(gold)
+    if not canonical or not names:
+        return -1
+
+    return _match_canonical_to_index(canonical, names, idxmap)
+
 def _completion_text(comp: Any) -> str:
     """Extract plain assistant text from various completion shapes.
 

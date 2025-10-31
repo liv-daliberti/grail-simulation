@@ -82,6 +82,7 @@ except ModuleNotFoundError:  # pragma: no cover - script execution fallback
     from common.open_r1.utils import get_dataset, get_tokenizer
 
 KEEP_COLUMNS = BASE_TRAIN_KEEP_COLUMNS
+PASSTHROUGH_KEYS = PASSTHROUGH_FIELDS
 
 logger = logging.getLogger(__name__)
 

@@ -17,7 +17,6 @@
 
 from __future__ import annotations
 
-import functools
 import logging
 import os
 from dataclasses import dataclass

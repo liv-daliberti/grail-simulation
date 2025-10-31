@@ -26,6 +26,7 @@ under the repository's Apache 2.0 license; see LICENSE for more details.
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
 from dataclasses import dataclass
@@ -223,7 +224,7 @@ def _opinion_direction_label(example: Mapping[str, Any]) -> Optional[str]:
 
     before = _normalise_direction(example.get(spec.before_column))
     after = _normalise_direction(example.get(spec.after_column))
-    if not (before == before and after == after):  # NaN comparisons
+    if math.isnan(before) or math.isnan(after):
         return None
 
     delta = after - before

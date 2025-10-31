@@ -9,9 +9,9 @@ try:  # pragma: no cover - optional dependency
     import torch  # pylint: disable=import-error
     from torch import nn, optim  # pylint: disable=import-error
 except ImportError:  # pragma: no cover - optional dependency
-    torch = None  # type: ignore[assignment]
-    nn = None  # type: ignore[assignment]
-    optim = None  # type: ignore[assignment]
+    torch = None  # type: ignore[assignment]  # pylint: disable=invalid-name
+    nn = None  # type: ignore[assignment]  # pylint: disable=invalid-name
+    optim = None  # type: ignore[assignment]  # pylint: disable=invalid-name
 
 from common.open_r1.torch_stub_utils import build_torch_stubs
 
@@ -53,6 +53,6 @@ def resolve_torch_modules() -> Tuple[object, object, object]:
     return torch, nn, optim
 
 
-torch, nn, optim = resolve_torch_modules()
+torch, nn, optim = resolve_torch_modules()  # pylint: disable=invalid-name
 
 __all__ = ["torch", "nn", "optim", "resolve_torch_modules"]

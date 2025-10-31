@@ -80,7 +80,7 @@ class TensorStub:
         """
         return float(self._data[0]) if self._data else 0.0
 
-    def to(self, *_args, **_kwargs):
+    def to(self, *_args, **_kwargs):  # pylint: disable=invalid-name
         """Return ``self`` regardless of target dtype or device.
 
         :param _args: Positional arguments accepted for compatibility.
@@ -202,7 +202,7 @@ def build_torch_stubs() -> Tuple[Any, Any, Any]:
             """
             self.value = value
 
-        def to(self, *_args: Any, **_kwargs: Any) -> "_ParameterStub":
+        def to(self, *_args: Any, **_kwargs: Any) -> "_ParameterStub":  # pylint: disable=invalid-name
             """Return ``self`` to align with the real ``Parameter.to`` API.
 
             :param _args: Positional arguments forwarded from callers.

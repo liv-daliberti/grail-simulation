@@ -94,8 +94,3 @@ Utility Modules
    :members:
    :undoc-members:
    :show-inheritance:
-
-.. automodule:: common.open_r1.utils.replay_buffer
-   :members:
-   :undoc-members:
-   :show-inheritance:

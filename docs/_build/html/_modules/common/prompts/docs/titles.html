@@ -313,7 +313,7 @@
 <span class="c1"># Materialize at import time so other modules can re-export a concrete list.</span>
 <span class="n">DEFAULT_TITLE_DIRS</span> <span class="o">=</span> <span class="n">_default_title_dirs</span><span class="p">()</span>
 
-<span class="n">_title_resolver_cache</span><span class="p">:</span> <span class="n">TitleResolver</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">_TITLE_RESOLVER_CACHE</span><span class="p">:</span> <span class="n">TitleResolver</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
 
 <div class="viewcode-block" id="default_title_resolver">
@@ -327,10 +327,10 @@
 <span class="sd">        backed by default paths.</span>
 <span class="sd">    :rtype: ~common.text.title_index.TitleResolver</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">global</span> <span class="n">_title_resolver_cache</span>  <span class="c1"># pylint: disable=global-statement</span>
-    <span class="k">if</span> <span class="n">_title_resolver_cache</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">_title_resolver_cache</span> <span class="o">=</span> <span class="n">TitleResolver</span><span class="p">(</span><span class="n">default_dirs</span><span class="o">=</span><span class="n">DEFAULT_TITLE_DIRS</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">_title_resolver_cache</span></div>
+    <span class="k">global</span> <span class="n">_TITLE_RESOLVER_CACHE</span>  <span class="c1"># pylint: disable=global-statement</span>
+    <span class="k">if</span> <span class="n">_TITLE_RESOLVER_CACHE</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_TITLE_RESOLVER_CACHE</span> <span class="o">=</span> <span class="n">TitleResolver</span><span class="p">(</span><span class="n">default_dirs</span><span class="o">=</span><span class="n">DEFAULT_TITLE_DIRS</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_TITLE_RESOLVER_CACHE</span></div>
 
 
 

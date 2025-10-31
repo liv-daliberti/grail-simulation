@@ -21,14 +21,37 @@ import argparse
 import sys
 from collections import Counter
 from pathlib import Path
-from typing import List, Optional, Sequence
+from dataclasses import dataclass
+from typing import Mapping, Optional, Sequence, Tuple, List
 
 from . import io, render
 from .models import DEFAULT_LABEL_TEMPLATE, SESSION_DEFAULT_LABEL_TEMPLATE
 
 
+@dataclass(frozen=True)
+class BatchContext:
+    """Configuration for batch session rendering."""
+
+    dataset: object
+    issue_targets: Mapping[str, int]
+    output_dir: Path
+    output_format: str
+    label_template: str
+    wrap_width: Optional[int]
+    rankdir: str
+    engine: str
+    highlight_path: Sequence[str]
+    split: Optional[str]
+    max_steps: Optional[int]
+    batch_prefix: str
+
+
 def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
-    """Parse CLI arguments for the recommendation visualiser."""
+    """Parse CLI arguments for the recommendation visualiser.
+
+    :param argv: Optional CLI argument list; defaults to ``sys.argv`` when ``None``.
+    :returns: Parsed argument namespace ready for execution.
+    """
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tree", type=Path, help="Path to a tree CSV file.")
@@ -171,124 +194,284 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
 
 
 def main(argv: Optional[Sequence[str]] = None) -> None:
-    """Entry point for the recommendation tree visualiser."""
+    """Entry point for the recommendation tree visualiser.
 
-    # pylint: disable=too-many-branches,too-many-locals,too-many-statements
+    :param argv: Optional CLI argument list; defaults to ``sys.argv``.
+    """
+
     args = parse_args(argv)
-    highlight_path: List[str] = []
-    if args.highlight:
-        highlight_path = [token.strip() for token in args.highlight.split(",") if token.strip()]
-
+    highlight_path = tuple(_parse_highlight_argument(args.highlight))
     dataset = io.load_cleaned_dataset(args.cleaned_data) if args.cleaned_data else None
 
     if args.batch_output_dir:
-        if args.tree:
-            raise SystemExit("--batch-output-dir currently supports --cleaned-data only.")
-        if not dataset:
-            raise SystemExit("--batch-output-dir requires --cleaned-data.")
-        if args.issue:
-            raise SystemExit(
-                "--batch-output-dir is incompatible with --issue. Use --batch-issues instead."
-            )
-        try:
-            issue_targets = io.parse_issue_counts(args.batch_issues)
-        except ValueError as exc:
-            raise SystemExit(str(exc)) from exc
-        if not issue_targets:
-            raise SystemExit("No issue counts provided for batch rendering.")
-        output_dir = args.batch_output_dir
-        output_dir.mkdir(parents=True, exist_ok=True)
-        output_format = args.format or "svg"
-        session_label_template = (
-            SESSION_DEFAULT_LABEL_TEMPLATE
-            if args.label_template == DEFAULT_LABEL_TEMPLATE
-            else args.label_template
-        )
-
-        emitted = 0
-        for issue, count in issue_targets.items():
-            if count <= 0:
-                continue
-            rows = io.collect_rows(dataset, split=args.split, issue=issue)
-            sessions = io.group_rows_by_session(rows)
-            if len(sessions) < count:
-                raise SystemExit(
-                    f"Requested {count} session(s) for issue '{issue}', "
-                    f"but only {len(sessions)} found."
-                )
-            for idx, session_id in enumerate(sorted(sessions)[:count], start=1):
-                session_rows = sessions[session_id]
-                if args.max_steps and args.max_steps > 0:
-                    session_rows = session_rows[: args.max_steps]
-                graph = render.build_session_graph(
-                    session_rows,
-                    label_template=session_label_template,
-                    wrap_width=args.wrap_width,
-                    rankdir=args.rankdir,
-                    engine=args.engine,
-                    highlight_path=highlight_path,
-                )
-                filename = f"{args.batch_prefix}_{issue}_{idx}.{output_format}"
-                output_path = output_dir / filename
-                render.render_graph(graph, output_path, output_format=output_format)
-                print(f"Wrote {output_path}", file=sys.stderr)
-                emitted += 1
-        if emitted == 0:
-            raise SystemExit(
-                "No sessions rendered. Check --batch-issues counts and dataset filters."
-            )
+        _render_batch_sessions(args, dataset, highlight_path)
         return
 
+    graph = _build_single_graph(args, dataset, highlight_path)
+    output_format = _resolve_output_format(args)
+    render.render_graph(graph, args.output, output_format=output_format)
+
+
+def _parse_highlight_argument(raw: Optional[str]) -> List[str]:
+    """Normalise the comma-separated highlight argument into identifiers.
+
+    :param raw: Raw comma-separated string supplied via ``--highlight``.
+    :returns: List of cleaned identifiers.
+    """
+
+    if not raw:
+        return []
+    return [token.strip() for token in raw.split(",") if token.strip()]
+
+
+def _build_single_graph(
+    args: argparse.Namespace,
+    dataset,
+    highlight_path: Sequence[str],
+):
+    """Construct the graph for either cleaned datasets or CSV inputs.
+
+    :param args: Parsed CLI arguments.
+    :param dataset: Loaded cleaned dataset when ``--cleaned-data`` is used.
+    :param highlight_path: Sequence of identifiers to highlight.
+    :returns: Graphviz graph ready to render.
+    """
+
     if args.cleaned_data:
-        assert dataset is not None  # for type checkers
-        session_id, session_rows = io.extract_session_rows(
-            dataset,
-            session_id=args.session_id,
-            split=args.split,
-            issue=args.issue,
-            max_steps=args.max_steps,
+        if dataset is None:
+            raise SystemExit("Unable to load the cleaned dataset from the provided path.")
+        return _session_graph_from_dataset(args, dataset, highlight_path)
+    return _tree_graph_from_files(args, highlight_path)
+
+
+def _session_graph_from_dataset(
+    args: argparse.Namespace,
+    dataset,
+    highlight_path: Sequence[str],
+):
+    """Build a session graph for a single viewer trajectory.
+
+    :param args: Parsed CLI arguments.
+    :param dataset: Loaded cleaned dataset object.
+    :param highlight_path: Sequence of identifiers to highlight.
+    :returns: Graphviz graph representing a session.
+    """
+
+    _, session_rows = io.extract_session_rows(
+        dataset,
+        session_id=args.session_id,
+        split=args.split,
+        issue=args.issue,
+        max_steps=args.max_steps,
+    )
+    label_template = _session_label_template(args)
+    return _build_session_graph_for_rows(
+        session_rows,
+        label_template,
+        args,
+        highlight_path,
+    )
+
+
+def _tree_graph_from_files(
+    args: argparse.Namespace,
+    highlight_path: Sequence[str],
+):
+    """Build a tree graph directly from CSV exports.
+
+    :param args: Parsed CLI arguments.
+    :param highlight_path: Sequence of identifiers to highlight.
+    :returns: Graphviz graph representing the tree export.
+    """
+
+    child_prefixes = _parse_child_prefixes(args.child_prefixes)
+    tree = io.load_tree_csv(args.tree, id_column=args.id_column, child_prefixes=child_prefixes)
+    metadata = io.load_metadata(args.metadata, id_column=args.metadata_id_column)
+    sequences = io.load_trajectories(args.trajectories, delimiter=args.trajectory_delimiter)
+    if sequences:
+        node_counts, edge_counts = render.aggregate_counts(sequences)
+    else:
+        node_counts, edge_counts = Counter(), Counter()
+    options = render.GraphRenderOptions(
+        metadata=metadata,
+        label_template=args.label_template,
+        wrap_width=args.wrap_width,
+        highlight_path=highlight_path,
+        node_counts=node_counts,
+        edge_counts=edge_counts,
+        max_depth=args.max_depth,
+        rankdir=args.rankdir,
+        engine=args.engine,
+        show_rank_labels=not args.hide_rank_labels,
+    )
+    return render.build_graph(tree, options)
+
+
+def _build_session_graph_for_rows(
+    rows,
+    label_template: str,
+    args: argparse.Namespace,
+    highlight_path: Sequence[str],
+):
+    """Render a session graph from pre-selected rows.
+
+    :param rows: Dataset rows for the target session.
+    :param label_template: Template string used for node labels.
+    :param args: Parsed CLI arguments to reuse other options.
+    :param highlight_path: Sequence of identifiers to highlight.
+    :returns: Graphviz graph representing the session.
+    """
+
+    options = render.SessionGraphOptions(
+        label_template=label_template,
+        wrap_width=args.wrap_width,
+        rankdir=args.rankdir,
+        engine=args.engine,
+        highlight_path=highlight_path,
+    )
+    return render.build_session_graph(rows, options)
+
+
+def _session_label_template(args: argparse.Namespace) -> str:
+    """Return the appropriate label template for session renders.
+
+    :param args: Parsed CLI arguments.
+    :returns: Template string to use when rendering session nodes.
+    """
+
+    if args.label_template == DEFAULT_LABEL_TEMPLATE:
+        return SESSION_DEFAULT_LABEL_TEMPLATE
+    return args.label_template
+
+
+def _parse_child_prefixes(raw: str) -> Tuple[str, ...]:
+    """Split and normalise child prefix specifications.
+
+    :param raw: Comma-separated list provided via ``--child-prefixes``.
+    :returns: Tuple of cleaned prefixes, defaulting to ``(\"rec\",)`` if empty.
+    """
+
+    prefixes = tuple(prefix.strip() for prefix in raw.split(",") if prefix.strip())
+    return prefixes or ("rec",)
+
+
+def _resolve_output_format(args: argparse.Namespace) -> str:
+    """Determine the user-requested output format.
+
+    :param args: Parsed CLI arguments.
+    :returns: Normalised Graphviz format name or an empty string.
+    """
+
+    if args.format:
+        return args.format
+    if args.output:
+        return args.output.suffix.lstrip(".")
+    return ""
+
+
+def _render_batch_sessions(
+    args: argparse.Namespace,
+    dataset,
+    highlight_path: Sequence[str],
+) -> None:
+    """Render multiple sessions organised by issue into an output directory.
+
+    :param args: Parsed CLI arguments.
+    :param dataset: Loaded cleaned dataset object.
+    :param highlight_path: Sequence of identifiers to highlight.
+    """
+
+    context = _prepare_batch_context(args, dataset, highlight_path)
+    emitted = 0
+    for issue, count in context.issue_targets.items():
+        emitted += _render_issue_sessions(issue, count, context)
+    if emitted == 0:
+        raise SystemExit(
+            "No sessions rendered. Check --batch-issues counts and dataset filters."
         )
-        session_label_template = (
-            SESSION_DEFAULT_LABEL_TEMPLATE
-            if args.label_template == DEFAULT_LABEL_TEMPLATE
-            else args.label_template
+
+
+def _prepare_batch_context(
+    args: argparse.Namespace,
+    dataset,
+    highlight_path: Sequence[str],
+) -> BatchContext:
+    """Validate batch arguments and assemble a rendering context.
+
+    :param args: Parsed CLI arguments.
+    :param dataset: Loaded cleaned dataset object.
+    :param highlight_path: Sequence of identifiers to highlight.
+    :returns: Batch rendering configuration.
+    """
+
+    if args.tree:
+        raise SystemExit("--batch-output-dir currently supports --cleaned-data only.")
+    if dataset is None:
+        raise SystemExit("--batch-output-dir requires --cleaned-data.")
+    if args.issue:
+        raise SystemExit("--batch-output-dir is incompatible with --issue. Use --batch-issues instead.")
+    try:
+        issue_targets = io.parse_issue_counts(args.batch_issues)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
+    if not issue_targets:
+        raise SystemExit("No issue counts provided for batch rendering.")
+    output_dir = args.batch_output_dir
+    output_dir.mkdir(parents=True, exist_ok=True)
+    return BatchContext(
+        dataset=dataset,
+        issue_targets=dict(issue_targets),
+        output_dir=output_dir,
+        output_format=args.format or "svg",
+        label_template=_session_label_template(args),
+        wrap_width=args.wrap_width,
+        rankdir=args.rankdir,
+        engine=args.engine,
+        highlight_path=tuple(highlight_path),
+        split=args.split,
+        max_steps=args.max_steps,
+        batch_prefix=args.batch_prefix,
+    )
+
+
+def _render_issue_sessions(issue: str, count: int, context: BatchContext) -> int:
+    """Render one issue's worth of sessions, returning the emitted graph count.
+
+    :param issue: Dataset issue identifier (e.g. ``minimum_wage``).
+    :param count: Number of sessions to render for the issue.
+    :param context: Batch rendering configuration.
+    :returns: Number of emitted graphs for the issue.
+    """
+
+    if count <= 0:
+        return 0
+    rows = io.collect_rows(context.dataset, split=context.split, issue=issue)
+    sessions = io.group_rows_by_session(rows)
+    if len(sessions) < count:
+        raise SystemExit(
+            f"Requested {count} session(s) for issue '{issue}', but only {len(sessions)} found."
         )
+    emitted = 0
+    for idx, session_id in enumerate(sorted(sessions)[:count], start=1):
+        session_rows = list(sessions[session_id])
+        if context.max_steps and context.max_steps > 0:
+            session_rows = session_rows[: context.max_steps]
         graph = render.build_session_graph(
             session_rows,
-            label_template=session_label_template,
-            wrap_width=args.wrap_width,
-            rankdir=args.rankdir,
-            engine=args.engine,
-            highlight_path=highlight_path,
+            render.SessionGraphOptions(
+                label_template=context.label_template,
+                wrap_width=context.wrap_width,
+                rankdir=context.rankdir,
+                engine=context.engine,
+                highlight_path=context.highlight_path,
+            ),
         )
-    else:
-        child_prefixes = tuple(
-            prefix.strip()
-            for prefix in args.child_prefixes.split(",")
-            if prefix.strip()
-        )
-        tree = io.load_tree_csv(args.tree, id_column=args.id_column, child_prefixes=child_prefixes)
-        metadata = io.load_metadata(args.metadata, id_column=args.metadata_id_column)
-        sequences = io.load_trajectories(args.trajectories, delimiter=args.trajectory_delimiter)
-        if sequences:
-            node_counts, edge_counts = render.aggregate_counts(sequences)
-        else:
-            node_counts, edge_counts = Counter(), Counter()
-        graph = render.build_graph(
-            tree,
-            metadata=metadata,
-            label_template=args.label_template,
-            wrap_width=args.wrap_width,
-            highlight_path=highlight_path,
-            node_counts=node_counts,
-            edge_counts=edge_counts,
-            max_depth=args.max_depth,
-            rankdir=args.rankdir,
-            engine=args.engine,
-            show_rank_labels=not args.hide_rank_labels,
-        )
-    output_format = args.format or (args.output.suffix.lstrip(".") if args.output else "")
-    render.render_graph(graph, args.output, output_format=output_format)
+        filename = f"{context.batch_prefix}_{issue}_{idx}.{context.output_format}"
+        output_path = context.output_dir / filename
+        render.render_graph(graph, output_path, output_format=context.output_format)
+        print(f"Wrote {output_path}", file=sys.stderr)
+        emitted += 1
+    return emitted
 
 
 __all__ = [

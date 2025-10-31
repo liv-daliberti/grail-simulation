@@ -4,7 +4,7 @@
 #SBATCH --gres=gpu:8
 #SBATCH --cpus-per-task=64
 #SBATCH --mem=256G
-#SBATCH --time=12:00:00
+#SBATCH --time=05:00:00
 #SBATCH --output=logs/grail_wage/slurm_%j.out
 #SBATCH --account=mltheory
 set -euo pipefail
@@ -39,9 +39,9 @@ export GIT_STATUS
 # ────────────────────────────────────────────────────────────────
 # Environment bootstrap (modules / Conda)
 # ────────────────────────────────────────────────────────────────
-#if command -v module >/dev/null 2>&1; then
-#  module load cudatoolkit/12.4
-#fi
+if command -v module >/dev/null 2>&1; then
+  module load cudatoolkit/12.4
+fi
 
 CONDA_SH=${CONDA_SH:-/usr/local/anaconda3/2024.02/etc/profile.d/conda.sh}
 if [ -f "$CONDA_SH" ]; then
@@ -66,6 +66,26 @@ EOF
 unset PYTHONPATH
 export PYTHONNOUSERSITE=1
 export PIP_USER=false
+
+# ────────────────────────────────────────────────────────────────
+# Cache roots
+# ────────────────────────────────────────────────────────────────
+export HF_HOME=${HF_HOME:-"$ROOT_DIR/.hf_cache"}
+export TRANSFORMERS_CACHE=${TRANSFORMERS_CACHE:-"$ROOT_DIR/.cache/huggingface/transformers"}
+export HF_DATASETS_CACHE=${HF_DATASETS_CACHE:-"$ROOT_DIR/.cache/huggingface/datasets"}
+export XDG_CACHE_HOME=${XDG_CACHE_HOME:-"$ROOT_DIR/.cache"}
+export TMPDIR=${TMPDIR:-"$ROOT_DIR/.tmp"}
+export PIP_CACHE_DIR=${PIP_CACHE_DIR:-"$ROOT_DIR/.cache/pip"}
+export PIP_BUILD_DIR=${PIP_BUILD_DIR:-"$ROOT_DIR/.cache/pip/build"}
+export PYTHONPYCACHEPREFIX=${PYTHONPYCACHEPREFIX:-"$ROOT_DIR/.cache/pyc"}
+export TORCHINDUCTOR_CACHE_DIR=${TORCHINDUCTOR_CACHE_DIR:-"$ROOT_DIR/.torchinductor"}
+export TRITON_CACHE_DIR=${TRITON_CACHE_DIR:-"$ROOT_DIR/.triton"}
+
+for dir in "$HF_HOME" "$TRANSFORMERS_CACHE" "$HF_DATASETS_CACHE" "$XDG_CACHE_HOME" \
+           "$TMPDIR" "$TORCHINDUCTOR_CACHE_DIR" "$TRITON_CACHE_DIR" "$LOG_DIR" \
+           "$PIP_CACHE_DIR" "$PIP_BUILD_DIR" "$PYTHONPYCACHEPREFIX" "$CONDA_CACHE_DIR"; do
+  mkdir -p "$dir"
+done
 
 ENV_DIR=${ENV_DIR:-"$CONDA_ENVS_PATH/grail-training"}
 PYTHON_VERSION=${PYTHON_VERSION:-3.10}
@@ -93,26 +113,6 @@ print(f"[torch file] {torch.__file__}")
 print(f"[user site] {site.getusersitepackages()}")
 print(f"[sys.path head] {sys.path[:5]}")
 PY
-
-# ────────────────────────────────────────────────────────────────
-# Cache roots
-# ────────────────────────────────────────────────────────────────
-export HF_HOME=${HF_HOME:-"$ROOT_DIR/.hf_cache"}
-export TRANSFORMERS_CACHE=${TRANSFORMERS_CACHE:-"$ROOT_DIR/.cache/huggingface/transformers"}
-export HF_DATASETS_CACHE=${HF_DATASETS_CACHE:-"$ROOT_DIR/.cache/huggingface/datasets"}
-export XDG_CACHE_HOME=${XDG_CACHE_HOME:-"$ROOT_DIR/.cache"}
-export TMPDIR=${TMPDIR:-"$ROOT_DIR/.tmp"}
-export PIP_CACHE_DIR=${PIP_CACHE_DIR:-"$ROOT_DIR/.cache/pip"}
-export PIP_BUILD_DIR=${PIP_BUILD_DIR:-"$ROOT_DIR/.cache/pip/build"}
-export PYTHONPYCACHEPREFIX=${PYTHONPYCACHEPREFIX:-"$ROOT_DIR/.cache/pyc"}
-export TORCHINDUCTOR_CACHE_DIR=${TORCHINDUCTOR_CACHE_DIR:-"$ROOT_DIR/.torchinductor"}
-export TRITON_CACHE_DIR=${TRITON_CACHE_DIR:-"$ROOT_DIR/.triton"}
-
-for dir in "$HF_HOME" "$TRANSFORMERS_CACHE" "$HF_DATASETS_CACHE" "$XDG_CACHE_HOME" \
-           "$TMPDIR" "$TORCHINDUCTOR_CACHE_DIR" "$TRITON_CACHE_DIR" "$LOG_DIR" \
-           "$PIP_CACHE_DIR" "$PIP_BUILD_DIR" "$PYTHONPYCACHEPREFIX" "$CONDA_CACHE_DIR"; do
-  mkdir -p "$dir"
-done
 
 # ────────────────────────────────────────────────────────────────
 # Hugging Face credentials

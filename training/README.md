@@ -5,13 +5,14 @@ described in the project README.
 
 ## Scripts
 
-- `evaluate-grail-gun.sh` / `evaluate-grail-wage.sh` – single-GPU evaluation jobs
-  that run `python -m grail.pipeline` on the gun-control and minimum-wage validation
-  splits. Override defaults via environment variables (for example, `MODEL_PATH`,
-  `RUN_LABEL`, or `LOG_DIR`).
-- `evaluate-grpo-gun.sh` / `evaluate-grpo-wage.sh` – single-GPU evaluation runs for
-  the GRPO baseline, forwarding to `python -m grpo.pipeline` with issue-specific
-  defaults (override `MODEL_PATH`, `ISSUES`, or other CLI flags as needed).
+- `scripts/evaluate-grail-gun.sh` / `scripts/evaluate-grail-wage.sh` – single-GPU
+  evaluation jobs that run `python -m grail.pipeline` on the gun-control and
+  minimum-wage validation splits. Override defaults via environment variables
+  (for example, `MODEL_PATH`, `RUN_LABEL`, or `LOG_DIR`).
+- `scripts/evaluate-grpo-gun.sh` / `scripts/evaluate-grpo-wage.sh` – single-GPU
+  evaluation runs for the GRPO baseline, forwarding to `python -m grpo.pipeline`
+  with issue-specific defaults (override `MODEL_PATH`, `ISSUES`, or other CLI
+  flags as needed).
 - `training-grpo.sh` – launches the GRPO baseline with the ZeRO-3 accelerate
   profile and optional discriminator disabled. Logs default to `logs/grpo/`
   (override with `LOG_DIR`).

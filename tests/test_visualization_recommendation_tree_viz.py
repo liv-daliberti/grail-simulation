@@ -10,7 +10,9 @@ from typing import Dict, Mapping
 import pytest
 
 from src.visualization.recommendation_tree_viz import (
+    GraphRenderOptions,
     LabelRenderOptions,
+    SessionGraphOptions,
     TreeData,
     TreeEdge,
     _extract_sequences_from_object,
@@ -110,8 +112,7 @@ def test_format_node_label_and_build_graph(
     node_counts = Counter({"root": 3, "child": 1})
     edge_counts = Counter({("root", "child"): 1})
 
-    graph = build_graph(
-        tree,
+    options = GraphRenderOptions(
         metadata=metadata,
         label_template="{title}",
         wrap_width=None,
@@ -123,6 +124,7 @@ def test_format_node_label_and_build_graph(
         engine="dot",
         show_rank_labels=True,
     )
+    graph = build_graph(tree, options)
 
     source = graph.source
     assert 'xlabel=3' in source
@@ -171,14 +173,14 @@ def test_build_session_graph_handles_highlights() -> None:
         },
     ]
 
-    graph = build_session_graph(
-        rows,
+    options = SessionGraphOptions(
         label_template="{title}",
         wrap_width=None,
         rankdir="LR",
         engine="dot",
         highlight_path=("v2",),
     )
+    graph = build_session_graph(rows, options)
 
     source = graph.source
     assert "step1_opt1" in source  # chosen option node exists
@@ -201,14 +203,14 @@ def test_build_session_graph_shows_negative_support_change() -> None:
             },
         },
     ]
-    graph = build_session_graph(
-        rows,
+    options = SessionGraphOptions(
         label_template="{title}",
         wrap_width=None,
         rankdir="LR",
         engine="dot",
         highlight_path=(),
     )
+    graph = build_session_graph(rows, options)
     source = graph.source
     assert "Initial Minimum wage support: 5" in source
     assert "Final Minimum wage support: 3 (-2)" in source
@@ -369,34 +371,9 @@ def test_main_invokes_build_and_render(tmp_path: Path, monkeypatch: pytest.Monke
 
     captured = {}
 
-    def _fake_build_graph(
-        tree,
-        *,
-        metadata,
-        label_template,
-        wrap_width,
-        highlight_path,
-        node_counts,
-        edge_counts,
-        max_depth,
-        rankdir,
-        engine,
-        show_rank_labels,
-    ):
-        del (
-            label_template,
-            wrap_width,
-            highlight_path,
-            node_counts,
-            edge_counts,
-            max_depth,
-            rankdir,
-            engine,
-            show_rank_labels,
-        )
-
+    def _fake_build_graph(tree, options):
         captured["tree"] = tree
-        captured["metadata"] = metadata
+        captured["metadata"] = options.metadata
 
         class _FakeGraph:
             format = "svg"

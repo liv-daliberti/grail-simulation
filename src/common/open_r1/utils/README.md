@@ -1,8 +1,8 @@
 # Open-R1 Utility Suite
 
 `common.open_r1.utils` gathers supporting utilities for the shared RL stack.
-These helpers cover callbacks, dataset management, Hugging Face Hub uploads,
-and replay buffers. Both `grpo` and `grail` trainers import from this package.
+These helpers cover callbacks, dataset management, and Hugging Face Hub uploads.
+Both `grpo` and `grail` trainers import from this package.
 
 ## Modules
 
@@ -16,8 +16,6 @@ and replay buffers. Both `grpo` and `grail` trainers import from this package.
   checkpoints or fetch reference models.
 - `model_utils.py` – Torch-centric utilities (parameter freezing, dtype/device
   helpers) that keep training scripts concise.
-- `replay_buffer.py` – lightweight replay buffer implementation for preference
-  data and batched rollouts.
 - `__init__.py` – exports the public helpers.
 
 Extend these modules when introducing new trainer integrations so both GRPO and

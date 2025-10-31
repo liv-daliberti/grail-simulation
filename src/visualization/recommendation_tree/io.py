@@ -29,7 +29,12 @@ from .models import TreeData, TreeEdge, _natural_sort_key
 
 
 def parse_issue_counts(spec: str) -> Dict[str, int]:
-    """Parse comma-separated ``issue=count`` specifications into a mapping."""
+    """Parse comma-separated ``issue=count`` specifications into a mapping.
+
+    :param spec: Raw specification string (e.g. ``"issue_a=2,issue_b=1"``).
+    :returns: Mapping of issue names to target counts.
+    :raises ValueError: If any chunk is missing an issue, count, or is invalid.
+    """
 
     result: Dict[str, int] = {}
     if not spec:
@@ -64,37 +69,88 @@ def load_tree_csv(
     id_column: str = "originId",
     child_prefixes: Sequence[str] = ("rec",),
 ) -> TreeData:
-    """Load a recommendation tree from a CSV export."""
+    """Load a recommendation tree from a CSV export.
 
-    # pylint: disable=too-many-locals
+    :param csv_path: Path to the CSV file describing the tree.
+    :param id_column: Column holding the node identifier.
+    :param child_prefixes: Column prefixes pointing to recommendation children.
+    :returns: Parsed :class:`TreeData` ready for rendering.
+    """
+
     csv_frame = pd.read_csv(csv_path)
-    normalized_cols = {col: col.lower() for col in csv_frame.columns}
-    if id_column not in csv_frame.columns:
-        lowered = id_column.lower()
-        for original, lower in normalized_cols.items():
-            if lower == lowered:
-                id_column = original
-                break
-        else:
-            id_column = csv_frame.columns[0]
-    children_cols: List[str] = []
-    for col in csv_frame.columns:
-        col_lower = col.lower()
-        for prefix in child_prefixes:
-            if col_lower.startswith(prefix.lower()):
-                children_cols.append(col)
-                break
-    if not children_cols:
+    resolved_id = _resolve_id_column(csv_frame, id_column)
+    children_cols = _identify_children_columns(csv_frame, child_prefixes)
+    nodes, edges, parent_order, seen_children = _build_tree_components(
+        csv_frame,
+        resolved_id,
+        children_cols,
+    )
+    root = _select_root(parent_order, seen_children)
+    return TreeData(root=root, nodes=nodes, edges=edges)
+
+
+def _resolve_id_column(frame: pd.DataFrame, preferred: str) -> str:
+    """Return the identifier column to use when parsing tree CSVs.
+
+    :param frame: DataFrame loaded from the tree CSV.
+    :param preferred: Desired identifier column name.
+    :returns: Column name present in the frame that will be used as the id.
+    """
+
+    if preferred in frame.columns:
+        return preferred
+    lowered = preferred.lower()
+    for column in frame.columns:
+        if column.lower() == lowered:
+            return column
+    return frame.columns[0]
+
+
+def _identify_children_columns(
+    frame: pd.DataFrame,
+    child_prefixes: Sequence[str],
+) -> List[str]:
+    """Detect recommendation child columns using prefix heuristics.
+
+    :param frame: DataFrame loaded from the tree CSV.
+    :param child_prefixes: Column prefixes pointing to child recommendations.
+    :returns: Sorted list of child column names.
+    :raises ValueError: If no matching columns are found.
+    """
+
+    prefixes = [prefix.lower() for prefix in child_prefixes]
+    columns = [
+        column
+        for column in frame.columns
+        if any(column.lower().startswith(prefix) for prefix in prefixes)
+    ]
+    if not columns:
         raise ValueError(
             "Could not identify recommendation columns. "
             "Use --child-prefixes to point to the recommendation columns."
         )
-    children_cols.sort(key=_natural_sort_key)
+    columns.sort(key=_natural_sort_key)
+    return columns
+
+
+def _build_tree_components(
+    frame: pd.DataFrame,
+    id_column: str,
+    children_cols: Sequence[str],
+) -> Tuple[Dict[str, Mapping[str, object]], List[TreeEdge], List[str], set[str]]:
+    """Populate the node and edge collections for the tree.
+
+    :param frame: DataFrame loaded from the tree CSV.
+    :param id_column: Identifier column to reference parent nodes.
+    :param children_cols: Ordered list of child columns discovered earlier.
+    :returns: Tuple containing node mapping, edges, parent order, and seen children.
+    """
+
     nodes: Dict[str, Mapping[str, object]] = {}
     edges: List[TreeEdge] = []
-    seen_children = set()
+    seen_children: set[str] = set()
     parent_order: List[str] = []
-    for _, row in csv_frame.iterrows():
+    for _, row in frame.iterrows():
         parent = str(row[id_column])
         parent_order.append(parent)
         nodes.setdefault(parent, row.to_dict())
@@ -105,11 +161,22 @@ def load_tree_csv(
             child = str(child_val)
             seen_children.add(child)
             edges.append(TreeEdge(parent=parent, child=child, rank=rank))
-            if child not in nodes:
-                nodes[child] = {}
-    roots = [node for node in parent_order if node not in seen_children]
-    root = roots[0] if roots else parent_order[0]
-    return TreeData(root=root, nodes=nodes, edges=edges)
+            nodes.setdefault(child, {})
+    return nodes, edges, parent_order, seen_children
+
+
+def _select_root(parent_order: Sequence[str], seen_children: Sequence[str]) -> str:
+    """Infer the root node for the tree by excluding seen children.
+
+    :param parent_order: Node identifiers in the order they appear in the CSV.
+    :param seen_children: Identifiers that appeared as child nodes.
+    :returns: Identifier for the inferred root node.
+    """
+
+    for node in parent_order:
+        if node not in seen_children:
+            return node
+    return parent_order[0] if parent_order else ""
 
 
 def load_metadata(
@@ -117,37 +184,90 @@ def load_metadata(
     *,
     id_column: str = "originId",
 ) -> Dict[str, Mapping[str, object]]:
-    """Load per-node metadata to enrich node labels."""
+    """Load per-node metadata to enrich node labels.
 
-    # pylint: disable=too-many-branches
+    :param metadata_path: Optional path to JSON/CSV metadata.
+    :param id_column: Identifier column used to index rows.
+    :returns: Mapping of identifier to metadata rows.
+    :raises ValueError: If the identifier column is missing in tabular inputs.
+    """
+
     if metadata_path is None:
         return {}
     suffix = metadata_path.suffix.lower()
     if suffix in {".json", ".jsonl"}:
-        records: List[Mapping[str, object]] = []
-        if suffix == ".jsonl":
-            with metadata_path.open("r", encoding="utf-8") as handle:
-                for line in handle:
-                    if not line.strip():
-                        continue
-                    obj = json.loads(line)
-                    if isinstance(obj, Mapping):
-                        records.append(obj)
-        else:
-            data = json.loads(metadata_path.read_text(encoding="utf-8"))
-            if isinstance(data, Mapping):
-                records = list(data.values())
-            elif isinstance(data, list):
-                records = data
-        lookup: Dict[str, Mapping[str, object]] = {}
-        for row in records:
-            if id_column in row:
-                lookup[str(row[id_column])] = row
-        return lookup
-    metadata_frame = pd.read_csv(metadata_path)
+        records = _read_json_metadata(metadata_path)
+        return _records_to_lookup(records, id_column)
+    return _read_tabular_metadata(metadata_path, id_column)
+
+
+def _read_json_metadata(path: Path) -> List[Mapping[str, object]]:
+    """Read metadata records from JSON or JSONL sources.
+
+    :param path: Path to the metadata file.
+    :returns: List of mapping records extracted from the file.
+    """
+
+    if path.suffix.lower() == ".jsonl":
+        return _read_jsonl_metadata(path)
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(data, list):
+        return [obj for obj in data if isinstance(obj, Mapping)]
+    if isinstance(data, Mapping):
+        return [value for value in data.values() if isinstance(value, Mapping)]
+    return []
+
+
+def _read_jsonl_metadata(path: Path) -> List[Mapping[str, object]]:
+    """Parse JSON Lines metadata into a list of mapping records.
+
+    :param path: Path to the JSONL metadata file.
+    :returns: List of mapping records parsed from the file.
+    """
+
+    records: List[Mapping[str, object]] = []
+    with path.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            obj = json.loads(line)
+            if isinstance(obj, Mapping):
+                records.append(obj)
+    return records
+
+
+def _records_to_lookup(
+    records: Sequence[Mapping[str, object]],
+    id_column: str,
+) -> Dict[str, Mapping[str, object]]:
+    """Convert metadata records into a lookup keyed by identifier.
+
+    :param records: Iterable of metadata mapping records.
+    :param id_column: Identifier key to use for the lookup.
+    :returns: Mapping from identifier to metadata record.
+    """
+
+    lookup: Dict[str, Mapping[str, object]] = {}
+    for row in records:
+        if id_column in row:
+            lookup[str(row[id_column])] = row
+    return lookup
+
+
+def _read_tabular_metadata(path: Path, id_column: str) -> Dict[str, Mapping[str, object]]:
+    """Load metadata from CSV/TSV exports.
+
+    :param path: Path to the CSV/TSV metadata file.
+    :param id_column: Identifier column expected in the file.
+    :returns: Mapping from identifier to metadata row.
+    :raises ValueError: If the identifier column is absent.
+    """
+
+    metadata_frame = pd.read_csv(path)
     if id_column not in metadata_frame.columns:
         raise ValueError(
-            f"Metadata file {metadata_path} is missing the identifier column '{id_column}'."
+            f"Metadata file {path} is missing the identifier column '{id_column}'."
         )
     result: Dict[str, Mapping[str, object]] = {}
     for _, row in metadata_frame.iterrows():

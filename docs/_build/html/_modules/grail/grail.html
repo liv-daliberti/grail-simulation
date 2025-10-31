@@ -296,9 +296,9 @@
     <span class="p">)</span>
 <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - script execution fallback</span>
     <span class="n">module_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span>
-    <span class="n">src_root</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">module_dir</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">src_root</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
-        <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">src_root</span><span class="p">)</span>
+    <span class="n">_SRC_ROOT</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">module_dir</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">_SRC_ROOT</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">_SRC_ROOT</span><span class="p">)</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">common.open_r1.configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">GRPOConfig</span><span class="p">,</span> <span class="n">GRPOScriptArguments</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">common.open_r1.shared</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
         <span class="n">execute_grpo_pipeline</span><span class="p">,</span>
@@ -318,9 +318,9 @@
     <span class="k">if</span> <span class="n">exc</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;grail&quot;</span><span class="p">,</span> <span class="s2">&quot;grail.grail_dataset&quot;</span><span class="p">}:</span>
         <span class="k">raise</span>
     <span class="n">module_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span>
-    <span class="n">src_root</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">module_dir</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">src_root</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
-        <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">src_root</span><span class="p">)</span>
+    <span class="n">_SRC_ROOT</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">module_dir</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">_SRC_ROOT</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">_SRC_ROOT</span><span class="p">)</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">grail.grail_dataset</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
         <span class="n">PASSTHROUGH_FIELDS</span> <span class="k">as</span> <span class="n">_DATASET_PASSTHROUGH_FIELDS</span><span class="p">,</span>
         <span class="n">TRAIN_KEEP_COLUMNS</span> <span class="k">as</span> <span class="n">_DATASET_TRAIN_KEEP_COLUMNS</span><span class="p">,</span>

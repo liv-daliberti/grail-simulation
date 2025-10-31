@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Open-R1 Training API" href="open_r1.html"><link rel="prev" title="KNN Baseline API" href="knn.html">
 
-    <!-- Generated with Sphinx 7.4.7 and Furo 2025.09.25 -->
+    <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
         <title>GPT-4o Tools API - GRAIL Simulation documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=580074bf" />
@@ -548,7 +548,7 @@ so we preserve that behaviour while still allowing explicit shell overrides.</p>
 responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.evaluate.EvaluationLimits">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">EvaluationLimits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eval_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#EvaluationLimits"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.EvaluationLimits" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">EvaluationLimits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eval_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#EvaluationLimits"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.EvaluationLimits" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">NamedTuple</span></code></p>
 <p>Encapsulates evaluation row limits for progress reporting.</p>
 <dl class="field-list simple">
@@ -567,7 +567,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="gpt4o.evaluate.EvaluationLimits.from_arg">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_arg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw_eval_max</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#EvaluationLimits.from_arg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.EvaluationLimits.from_arg" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_arg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw_eval_max</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#EvaluationLimits.from_arg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.EvaluationLimits.from_arg" title="Link to this definition">¶</a></dt>
 <dd><p>Create limits from the CLI <code class="docutils literal notranslate"><span class="pre">eval_max</span></code> argument.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -592,7 +592,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.evaluate.EvaluationRunner">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">EvaluationRunner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#EvaluationRunner"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.EvaluationRunner" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">EvaluationRunner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#EvaluationRunner"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.EvaluationRunner" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Stateful helper that orchestrates GPT-4o evaluation.</p>
 <dl class="field-list simple">
@@ -646,7 +646,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.evaluate.EvaluationState">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">EvaluationState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'validation'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">streaming</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#EvaluationState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.EvaluationState" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">EvaluationState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'validation'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">streaming</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#EvaluationState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.EvaluationState" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Mutable state tracked during evaluation.</p>
 <dl class="field-list simple">
@@ -705,7 +705,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.evaluate.ExampleLabels">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">ExampleLabels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issue_label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">study_label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">study_key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#ExampleLabels"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.ExampleLabels" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">ExampleLabels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issue_label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">study_label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">study_key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#ExampleLabels"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.ExampleLabels" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">NamedTuple</span></code></p>
 <p>Normalised issue/study labels used for filtering and reporting.</p>
 <dl class="field-list simple">
@@ -746,7 +746,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.evaluate.FilterSet">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">FilterSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">requested</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">active_keys</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#FilterSet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.FilterSet" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">FilterSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">requested</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">active_keys</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#FilterSet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.FilterSet" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">NamedTuple</span></code></p>
 <p>Container for requested filters and their lower-cased match set.</p>
 <dl class="field-list simple">
@@ -790,7 +790,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.evaluate.FilterState">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">FilterState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issues</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">studies</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#FilterState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.FilterState" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">FilterState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issues</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">studies</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#FilterState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.FilterState" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">NamedTuple</span></code></p>
 <p>Aggregate filters for issues and participant studies.</p>
 <dl class="field-list simple">
@@ -834,7 +834,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.evaluate.OutputPaths">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">OutputPaths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qa_log</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#OutputPaths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.OutputPaths" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.evaluate.</span></span><span class="sig-name descname"><span class="pre">OutputPaths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qa_log</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#OutputPaths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.OutputPaths" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">NamedTuple</span></code></p>
 <p>Resolved filesystem locations for evaluation artifacts.</p>
 <dl class="field-list simple">
@@ -849,7 +849,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="gpt4o.evaluate.OutputPaths.build">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#OutputPaths.build"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.OutputPaths.build" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/evaluate.html#OutputPaths.build"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.evaluate.OutputPaths.build" title="Link to this definition">¶</a></dt>
 <dd><p>Validate and construct the output directory structure.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -862,7 +862,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <dd class="field-even"><p>Populated <code class="docutils literal notranslate"><span class="pre">OutputPaths</span></code> instance.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="#gpt4o.evaluate.OutputPaths" title="gpt4o.evaluate.OutputPaths">OutputPaths</a></p>
+<dd class="field-odd"><p><a class="reference internal" href="#gpt4o.evaluate.OutputPaths" title="gpt4o.evaluate.OutputPaths">gpt4o.evaluate.OutputPaths</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -910,7 +910,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <p id="module-gpt4o.titles">GPT-4o helpers for resolving video titles used in evaluations.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.titles.TitleResolver">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.titles.</span></span><span class="sig-name descname"><span class="pre">TitleResolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/titles.html#TitleResolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.titles.TitleResolver" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.titles.</span></span><span class="sig-name descname"><span class="pre">TitleResolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/titles.html#TitleResolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.titles.TitleResolver" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="common.html#common.text.title_index.TitleResolver" title="common.text.title_index.TitleResolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">common.text.title_index.TitleResolver</span></code></a></p>
 <p>Resolve YouTube ids to titles using shared common helpers.</p>
 <dl class="field-list simple">
@@ -932,32 +932,12 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="gpt4o.titles.TitleResolver.with_directories">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">with_directories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">directories</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/titles.html#TitleResolver.with_directories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.titles.TitleResolver.with_directories" title="Link to this definition">¶</a></dt>
-<dd><p>Return a resolver overriding the default search directories.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>directories</strong> (<em>str</em>) – One or more directories to prioritise.</p></li>
-<li><p><strong>kwargs</strong> – Additional keyword arguments forwarded to <code class="docutils literal notranslate"><span class="pre">TitleResolver</span></code>.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Configured <code class="docutils literal notranslate"><span class="pre">TitleResolver</span></code> instance.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="#gpt4o.titles.TitleResolver" title="gpt4o.titles.TitleResolver">gpt4o.titles.TitleResolver</a></p>
-</dd>
-</dl>
-</dd></dl>
-
 </dd></dl>
 
 <p id="module-gpt4o.utils">Utility helpers shared across the GPT-4o baseline implementation.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.utils.InvocationParams">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">InvocationParams</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_tokens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top_p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deployment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#InvocationParams"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.InvocationParams" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">InvocationParams</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_tokens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top_p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deployment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#InvocationParams"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.InvocationParams" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Parameters controlling a single GPT-4o invocation.</p>
 <dl class="field-list simple">
@@ -994,7 +974,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.utils.RetryPolicy">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">RetryPolicy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attempts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#RetryPolicy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.RetryPolicy" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">RetryPolicy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attempts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#RetryPolicy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.RetryPolicy" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Retry behaviour applied to GPT-4o calls.</p>
 <dl class="field-list simple">
@@ -1025,14 +1005,14 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="gpt4o.utils.call_gpt4o_with_retries">
-<span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">call_gpt4o_with_retries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">messages</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">invocation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">retry</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#call_gpt4o_with_retries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.call_gpt4o_with_retries" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">call_gpt4o_with_retries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">messages</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">invocation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">retry</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#call_gpt4o_with_retries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.call_gpt4o_with_retries" title="Link to this definition">¶</a></dt>
 <dd><p>Invoke GPT-4o with retry semantics, propagating the first successful response.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>messages</strong> – Chat messages formatted for the Azure OpenAI API.</p></li>
-<li><p><strong>invocation</strong> (<a class="reference internal" href="#gpt4o.utils.InvocationParams" title="gpt4o.utils.InvocationParams"><em>InvocationParams</em></a>) – Model invocation parameters (temperature, max tokens, etc.).</p></li>
-<li><p><strong>retry</strong> (<a class="reference internal" href="#gpt4o.utils.RetryPolicy" title="gpt4o.utils.RetryPolicy"><em>RetryPolicy</em></a><em> | </em><em>None</em>) – Retry policy controlling attempts and delay.</p></li>
+<li><p><strong>invocation</strong> (<a class="reference internal" href="#gpt4o.utils.InvocationParams" title="gpt4o.utils.InvocationParams"><em>gpt4o.utils.InvocationParams</em></a>) – Model invocation parameters (temperature, max tokens, etc.).</p></li>
+<li><p><strong>retry</strong> (<a class="reference internal" href="#gpt4o.utils.RetryPolicy" title="gpt4o.utils.RetryPolicy"><em>gpt4o.utils.RetryPolicy</em></a><em> | </em><em>None</em>) – Retry policy controlling attempts and delay.</p></li>
 <li><p><strong>logger</strong> (<em>logging.Logger</em><em> | </em><em>None</em>) – Optional logger for warnings.</p></li>
 </ul>
 </dd>
@@ -1098,7 +1078,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="gpt4o.utils.qa_log_path_for">
-<span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">qa_log_path_for</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">run_dir</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'qa.log'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#qa_log_path_for"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.qa_log_path_for" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">qa_log_path_for</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">run_dir</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'qa.log'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#qa_log_path_for"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.qa_log_path_for" title="Link to this definition">¶</a></dt>
 <dd><p>Return the canonical QA log path under logs/gpt mirroring <code class="docutils literal notranslate"><span class="pre">run_dir</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1186,7 +1166,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <p>Pipeline runner for the GPT-4o slate baseline.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.pipeline.PipelinePaths">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">PipelinePaths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">final_out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opinion_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sweep_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reports_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/pipeline/gpt4o_models.html#PipelinePaths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">PipelinePaths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">final_out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opinion_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sweep_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reports_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/pipeline/gpt4o_models.html#PipelinePaths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Convenience container aggregating resolved output directories.</p>
 <dl class="field-list simple">
@@ -1235,7 +1215,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.pipeline.SweepConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">SweepConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tokens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top_p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/pipeline/gpt4o_models.html#SweepConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepConfig" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">SweepConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tokens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top_p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/pipeline/gpt4o_models.html#SweepConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepConfig" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Describe a GPT-4o configuration evaluated during sweeps.</p>
 <dl class="field-list simple">
@@ -1294,7 +1274,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="gpt4o.pipeline.SweepOutcome">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">SweepOutcome</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parsed_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/pipeline/gpt4o_models.html#SweepOutcome"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepOutcome" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">SweepOutcome</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parsed_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/pipeline/gpt4o_models.html#SweepOutcome"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepOutcome" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Capture metrics gathered during a sweep run.</p>
 <dl class="field-list simple">
@@ -1482,7 +1462,6 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <li><a class="reference internal" href="#gpt4o.evaluate.run_eval"><code class="docutils literal notranslate"><span class="pre">run_eval()</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.titles.TitleResolver"><code class="docutils literal notranslate"><span class="pre">TitleResolver</span></code></a><ul>
 <li><a class="reference internal" href="#gpt4o.titles.TitleResolver.__init__"><code class="docutils literal notranslate"><span class="pre">TitleResolver.__init__()</span></code></a></li>
-<li><a class="reference internal" href="#gpt4o.titles.TitleResolver.with_directories"><code class="docutils literal notranslate"><span class="pre">TitleResolver.with_directories()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#gpt4o.utils.InvocationParams"><code class="docutils literal notranslate"><span class="pre">InvocationParams</span></code></a><ul>
@@ -1549,7 +1528,7 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
     </aside>
   </div>
 </div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
     </body>

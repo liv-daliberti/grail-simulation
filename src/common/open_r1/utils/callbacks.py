@@ -33,7 +33,7 @@ try:  # pragma: no cover - optional dependency
         TrainerState,
         TrainingArguments,
     )
-except ImportError as exc:  # pragma: no cover
+except ImportError as import_error:  # pragma: no cover
     class TrainerCallback:  # type: ignore[too-few-public-methods]  # pylint: disable=too-few-public-methods
         """Fallback that surfaces a helpful error when Transformers is missing."""
 
@@ -41,7 +41,7 @@ except ImportError as exc:  # pragma: no cover
             raise ImportError(
                 "transformers is required to use Open-R1 Trainer callbacks. "
                 "Install it with `pip install transformers`."
-            ) from exc
+            ) from import_error
 
     class TrainerControl:  # type: ignore[too-few-public-methods]  # pylint: disable=too-few-public-methods
         """Transformers control placeholder used when the package is unavailable."""

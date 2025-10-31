@@ -25,12 +25,12 @@ try:
         AutoModelForCausalLM as _TRANSFORMERS_CAUSAL_LM_FACTORY,
         AutoTokenizer as _TRANSFORMERS_TOKENIZER_FACTORY,
     )
-except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency
+except ModuleNotFoundError as import_error:  # pragma: no cover - optional dependency
     _TRANSFORMERS_CAUSAL_LM_FACTORY = None  # type: ignore[assignment]
     _TRANSFORMERS_TOKENIZER_FACTORY = None  # type: ignore[assignment]
-    _transformers_import_error = exc
+    _TRANSFORMERS_IMPORT_ERROR = import_error
 else:  # pragma: no cover - trivial branch
-    _transformers_import_error = None
+    _TRANSFORMERS_IMPORT_ERROR = None
 
 if _TRANSFORMERS_TOKENIZER_FACTORY is not None:
     TokenizerLike = _TRANSFORMERS_TOKENIZER_FACTORY
@@ -41,11 +41,11 @@ else:  # pragma: no cover - exercised when transformers missing
 
 try:
     import torch as _TORCH_MODULE  # type: ignore[import-not-found]
-except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency
+except ModuleNotFoundError as import_error:  # pragma: no cover - optional dependency
     _TORCH_MODULE = None  # type: ignore[assignment]
-    _torch_import_error = exc
+    _TORCH_IMPORT_ERROR = import_error
 else:  # pragma: no cover - trivial branch
-    _torch_import_error = None
+    _TORCH_IMPORT_ERROR = None
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     import torch
@@ -58,7 +58,7 @@ def _require_torch() -> Any:
         raise ModuleNotFoundError(
             "PyTorch is required for GRPO model utilities. Install 'torch' to enable "
             "model loading or adjust the code to skip model-dependent paths."
-        ) from _torch_import_error
+        ) from _TORCH_IMPORT_ERROR
     return _TORCH_MODULE
 
 
@@ -73,7 +73,7 @@ def _require_transformers() -> tuple[Any, Any]:
             "The 'transformers' package is required for GRPO model utilities. Install "
             "'transformers' to enable model loading or adjust the code to skip model-dependent "
             "paths."
-        ) from _transformers_import_error
+        ) from _TRANSFORMERS_IMPORT_ERROR
     return _TRANSFORMERS_TOKENIZER_FACTORY, _TRANSFORMERS_CAUSAL_LM_FACTORY
 
 

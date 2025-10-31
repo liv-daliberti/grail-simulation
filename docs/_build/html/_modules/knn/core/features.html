@@ -456,18 +456,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;word2vec.model&quot;</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="Word2VecFeatureBuilder.is_trained">
-<a class="viewcode-back" href="../../../api/knn.html#knn.features.Word2VecFeatureBuilder.is_trained">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">is_trained</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Indicate whether the underlying Word2Vec model is ready for inference.</span>
-
-<span class="sd">        :returns: ``True`` when a trained model is loaded.</span>
-<span class="sd">        :rtype: bool</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
-
-
 <div class="viewcode-block" id="Word2VecFeatureBuilder.encode">
 <a class="viewcode-back" href="../../../api/knn.html#knn.features.Word2VecFeatureBuilder.encode">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>

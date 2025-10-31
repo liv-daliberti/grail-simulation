@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Reports" href="../reports/index.html"><link rel="prev" title="XGBoost Baseline API" href="xgb.html">
 
-    <!-- Generated with Sphinx 7.4.7 and Furo 2025.09.25 -->
+    <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
         <title>Visualization Utilities - GRAIL Simulation documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=580074bf" />
@@ -272,8 +272,81 @@ available tree plotting interfaces and configuration knobs.</p>
 <p id="module-visualization">Visualization utilities for Grail Simulation reports.</p>
 <p id="module-visualization.recommendation_tree_viz">Facade module exposing recommendation tree visualisation helpers.</p>
 <dl class="py class">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">GraphRenderOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metadata=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_template='{originTitle}'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrap_width=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">highlight_path=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_counts=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edge_counts=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_depth=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rankdir='LR'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine='dot'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_rank_labels=True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#GraphRenderOptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Configuration parameters for rendering tree-level graphs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>metadata</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>label_template</strong> (<em>str</em>)</p></li>
+<li><p><strong>wrap_width</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>highlight_path</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>node_counts</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>edge_counts</strong> (<em>Mapping</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>, </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>max_depth</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>rankdir</strong> (<em>str</em>)</p></li>
+<li><p><strong>engine</strong> (<em>str</em>)</p></li>
+<li><p><strong>show_rank_labels</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.edge_counts">
+<span class="sig-name descname"><span class="pre">edge_counts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.edge_counts" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.engine">
+<span class="sig-name descname"><span class="pre">engine</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'dot'</span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.engine" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.highlight_path">
+<span class="sig-name descname"><span class="pre">highlight_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.highlight_path" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.label_template">
+<span class="sig-name descname"><span class="pre">label_template</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'{originTitle}'</span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.label_template" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.max_depth">
+<span class="sig-name descname"><span class="pre">max_depth</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.max_depth" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.metadata">
+<span class="sig-name descname"><span class="pre">metadata</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">object</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.metadata" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.node_counts">
+<span class="sig-name descname"><span class="pre">node_counts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.node_counts" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.rankdir">
+<span class="sig-name descname"><span class="pre">rankdir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'LR'</span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.rankdir" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.show_rank_labels">
+<span class="sig-name descname"><span class="pre">show_rank_labels</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.show_rank_labels" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.GraphRenderOptions.wrap_width">
+<span class="sig-name descname"><span class="pre">wrap_width</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.GraphRenderOptions.wrap_width" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="visualization.recommendation_tree_viz.LabelRenderOptions">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">LabelRenderOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metadata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">template</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrap_width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append_id_if_missing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#LabelRenderOptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.LabelRenderOptions" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">LabelRenderOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metadata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">template</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrap_width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append_id_if_missing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#LabelRenderOptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.LabelRenderOptions" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Configuration controlling how node labels are rendered.</p>
 <dl class="field-list simple">
@@ -310,7 +383,7 @@ available tree plotting interfaces and configuration knobs.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="visualization.recommendation_tree_viz.OpinionAnnotation">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">OpinionAnnotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">before_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#OpinionAnnotation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.OpinionAnnotation" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">OpinionAnnotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">before_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#OpinionAnnotation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.OpinionAnnotation" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Resolved opinion values ready for annotation on a session graph.</p>
 <dl class="field-list simple">
@@ -347,7 +420,7 @@ available tree plotting interfaces and configuration knobs.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="visualization.recommendation_tree_viz.OpinionFieldSpec">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">OpinionFieldSpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">before_keys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after_keys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#OpinionFieldSpec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.OpinionFieldSpec" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">OpinionFieldSpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">before_keys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after_keys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#OpinionFieldSpec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.OpinionFieldSpec" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Specification describing opinion score columns used by a viewer cohort.</p>
 <dl class="field-list simple">
@@ -378,14 +451,57 @@ available tree plotting interfaces and configuration knobs.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="visualization.recommendation_tree_viz.SafeDict">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">SafeDict</span></span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#SafeDict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.SafeDict" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">SafeDict</span></span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#SafeDict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.SafeDict" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
 <p>Dictionary that returns placeholder values for missing template keys.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.SessionGraphOptions">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">SessionGraphOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label_template='{originTitle}'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrap_width=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rankdir='LR'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine='dot'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">highlight_path=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#SessionGraphOptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.SessionGraphOptions" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Configuration parameters for rendering viewer session graphs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>label_template</strong> (<em>str</em>)</p></li>
+<li><p><strong>wrap_width</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>rankdir</strong> (<em>str</em>)</p></li>
+<li><p><strong>engine</strong> (<em>str</em>)</p></li>
+<li><p><strong>highlight_path</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.SessionGraphOptions.engine">
+<span class="sig-name descname"><span class="pre">engine</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'dot'</span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.SessionGraphOptions.engine" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.SessionGraphOptions.highlight_path">
+<span class="sig-name descname"><span class="pre">highlight_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.SessionGraphOptions.highlight_path" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.SessionGraphOptions.label_template">
+<span class="sig-name descname"><span class="pre">label_template</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'{originTitle}'</span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.SessionGraphOptions.label_template" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.SessionGraphOptions.rankdir">
+<span class="sig-name descname"><span class="pre">rankdir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'LR'</span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.SessionGraphOptions.rankdir" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree_viz.SessionGraphOptions.wrap_width">
+<span class="sig-name descname"><span class="pre">wrap_width</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#visualization.recommendation_tree_viz.SessionGraphOptions.wrap_width" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="visualization.recommendation_tree_viz.TreeData">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">TreeData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edges</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#TreeData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.TreeData" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">TreeData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edges</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#TreeData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.TreeData" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Container holding recommendation tree nodes and edges.</p>
 <dl class="field-list simple">
@@ -416,7 +532,7 @@ available tree plotting interfaces and configuration knobs.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="visualization.recommendation_tree_viz.TreeEdge">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">TreeEdge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#TreeEdge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.TreeEdge" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">TreeEdge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#TreeEdge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.TreeEdge" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Directed edge connecting two nodes in the recommendation tree.</p>
 <dl class="field-list simple">
@@ -461,22 +577,13 @@ available tree plotting interfaces and configuration knobs.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="visualization.recommendation_tree_viz.build_graph">
-<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">build_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tree</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_template</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrap_width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">highlight_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_counts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edge_counts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_depth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rankdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_rank_labels</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#build_graph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.build_graph" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">build_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tree</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#build_graph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.build_graph" title="Link to this definition">¶</a></dt>
 <dd><p>Render a recommendation tree as a Graphviz graph.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>tree</strong> (<a class="reference internal" href="#visualization.recommendation_tree.models.TreeData" title="visualization.recommendation_tree.models.TreeData"><em>visualization.recommendation_tree.models.TreeData</em></a>)</p></li>
-<li><p><strong>metadata</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em><em>]</em>)</p></li>
-<li><p><strong>label_template</strong> (<em>str</em>)</p></li>
-<li><p><strong>wrap_width</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>highlight_path</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
-<li><p><strong>node_counts</strong> (<em>collections.Counter</em>)</p></li>
-<li><p><strong>edge_counts</strong> (<em>collections.Counter</em>)</p></li>
-<li><p><strong>max_depth</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>rankdir</strong> (<em>str</em>)</p></li>
-<li><p><strong>engine</strong> (<em>str</em>)</p></li>
-<li><p><strong>show_rank_labels</strong> (<em>bool</em>)</p></li>
+<li><p><strong>options</strong> (<a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions" title="visualization.recommendation_tree.render.GraphRenderOptions"><em>visualization.recommendation_tree.render.GraphRenderOptions</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -487,17 +594,13 @@ available tree plotting interfaces and configuration knobs.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="visualization.recommendation_tree_viz.build_session_graph">
-<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">build_session_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rows</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_template</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrap_width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rankdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">highlight_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#build_session_graph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.build_session_graph" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">build_session_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rows</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#build_session_graph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.build_session_graph" title="Link to this definition">¶</a></dt>
 <dd><p>Visualise a single viewer session as a Graphviz graph.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>rows</strong> (<em>Sequence</em><em>[</em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em><em>]</em>)</p></li>
-<li><p><strong>label_template</strong> (<em>str</em>)</p></li>
-<li><p><strong>wrap_width</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>rankdir</strong> (<em>str</em>)</p></li>
-<li><p><strong>engine</strong> (<em>str</em>)</p></li>
-<li><p><strong>highlight_path</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>options</strong> (<a class="reference internal" href="#visualization.recommendation_tree.render.SessionGraphOptions" title="visualization.recommendation_tree.render.SessionGraphOptions"><em>visualization.recommendation_tree.render.SessionGraphOptions</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -539,7 +642,7 @@ available tree plotting interfaces and configuration knobs.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="visualization.recommendation_tree_viz.extract_session_rows">
-<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">extract_session_rows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">session_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_steps</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/io.html#extract_session_rows"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.extract_session_rows" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">extract_session_rows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">session_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_steps</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/io.html#extract_session_rows"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.extract_session_rows" title="Link to this definition">¶</a></dt>
 <dd><p>Extract the rows that correspond to a target viewer session.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -558,7 +661,7 @@ available tree plotting interfaces and configuration knobs.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="visualization.recommendation_tree_viz.format_node_label">
-<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">format_node_label</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_id</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#format_node_label"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.format_node_label" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">format_node_label</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_id</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#format_node_label"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.format_node_label" title="Link to this definition">¶</a></dt>
 <dd><p>Render a node label based on the configured template.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -601,7 +704,7 @@ available tree plotting interfaces and configuration knobs.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="visualization.recommendation_tree_viz.load_metadata">
-<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">load_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metadata_path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'originId'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/io.html#load_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.load_metadata" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">load_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metadata_path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'originId'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/io.html#load_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.load_metadata" title="Link to this definition">¶</a></dt>
 <dd><p>Load per-node metadata to enrich node labels.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -618,7 +721,7 @@ available tree plotting interfaces and configuration knobs.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="visualization.recommendation_tree_viz.load_trajectories">
-<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">load_trajectories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delimiter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">','</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/io.html#load_trajectories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.load_trajectories" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">load_trajectories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">delimiter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">','</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/io.html#load_trajectories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.load_trajectories" title="Link to this definition">¶</a></dt>
 <dd><p>Load viewer trajectories from text, CSV, or JSON representations.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -635,7 +738,7 @@ available tree plotting interfaces and configuration knobs.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="visualization.recommendation_tree_viz.load_tree_csv">
-<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">load_tree_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'originId'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child_prefixes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('rec',)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/io.html#load_tree_csv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.load_tree_csv" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">load_tree_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'originId'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child_prefixes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('rec',)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/io.html#load_tree_csv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.load_tree_csv" title="Link to this definition">¶</a></dt>
 <dd><p>Load a recommendation tree from a CSV export.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -695,7 +798,7 @@ available tree plotting interfaces and configuration knobs.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="visualization.recommendation_tree_viz.render_graph">
-<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">render_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_format</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#render_graph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.render_graph" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree_viz.</span></span><span class="sig-name descname"><span class="pre">render_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_format</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#render_graph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree_viz.render_graph" title="Link to this definition">¶</a></dt>
 <dd><p>Render a Graphviz graph to disk, normalising the output path.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -714,7 +817,7 @@ available tree plotting interfaces and configuration knobs.</p>
 <p id="module-visualization.recommendation_tree.models">Dataclasses and formatting helpers for recommendation tree visualisations.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="visualization.recommendation_tree.models.LabelRenderOptions">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.models.</span></span><span class="sig-name descname"><span class="pre">LabelRenderOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metadata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">template</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrap_width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append_id_if_missing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#LabelRenderOptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.models.LabelRenderOptions" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.models.</span></span><span class="sig-name descname"><span class="pre">LabelRenderOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metadata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">template</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrap_width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append_id_if_missing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#LabelRenderOptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.models.LabelRenderOptions" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Configuration controlling how node labels are rendered.</p>
 <dl class="field-list simple">
@@ -751,7 +854,7 @@ available tree plotting interfaces and configuration knobs.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="visualization.recommendation_tree.models.OpinionAnnotation">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.models.</span></span><span class="sig-name descname"><span class="pre">OpinionAnnotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">before_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#OpinionAnnotation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.models.OpinionAnnotation" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.models.</span></span><span class="sig-name descname"><span class="pre">OpinionAnnotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">before_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#OpinionAnnotation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.models.OpinionAnnotation" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Resolved opinion values ready for annotation on a session graph.</p>
 <dl class="field-list simple">
@@ -788,7 +891,7 @@ available tree plotting interfaces and configuration knobs.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="visualization.recommendation_tree.models.OpinionFieldSpec">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.models.</span></span><span class="sig-name descname"><span class="pre">OpinionFieldSpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">before_keys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after_keys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#OpinionFieldSpec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.models.OpinionFieldSpec" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.models.</span></span><span class="sig-name descname"><span class="pre">OpinionFieldSpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">before_keys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after_keys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#OpinionFieldSpec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.models.OpinionFieldSpec" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Specification describing opinion score columns used by a viewer cohort.</p>
 <dl class="field-list simple">
@@ -819,14 +922,14 @@ available tree plotting interfaces and configuration knobs.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="visualization.recommendation_tree.models.SafeDict">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.models.</span></span><span class="sig-name descname"><span class="pre">SafeDict</span></span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#SafeDict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.models.SafeDict" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.models.</span></span><span class="sig-name descname"><span class="pre">SafeDict</span></span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#SafeDict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.models.SafeDict" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
 <p>Dictionary that returns placeholder values for missing template keys.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="visualization.recommendation_tree.models.TreeData">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.models.</span></span><span class="sig-name descname"><span class="pre">TreeData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edges</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#TreeData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.models.TreeData" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.models.</span></span><span class="sig-name descname"><span class="pre">TreeData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edges</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#TreeData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.models.TreeData" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Container holding recommendation tree nodes and edges.</p>
 <dl class="field-list simple">
@@ -857,7 +960,7 @@ available tree plotting interfaces and configuration knobs.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="visualization.recommendation_tree.models.TreeEdge">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.models.</span></span><span class="sig-name descname"><span class="pre">TreeEdge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#TreeEdge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.models.TreeEdge" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.models.</span></span><span class="sig-name descname"><span class="pre">TreeEdge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#TreeEdge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.models.TreeEdge" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Directed edge connecting two nodes in the recommendation tree.</p>
 <dl class="field-list simple">
@@ -888,7 +991,7 @@ available tree plotting interfaces and configuration knobs.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="visualization.recommendation_tree.models.format_node_label">
-<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.models.</span></span><span class="sig-name descname"><span class="pre">format_node_label</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_id</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#format_node_label"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.models.format_node_label" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.models.</span></span><span class="sig-name descname"><span class="pre">format_node_label</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_id</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/models.html#format_node_label"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.models.format_node_label" title="Link to this definition">¶</a></dt>
 <dd><p>Render a node label based on the configured template.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -924,7 +1027,7 @@ available tree plotting interfaces and configuration knobs.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="visualization.recommendation_tree.io.extract_session_rows">
-<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.io.</span></span><span class="sig-name descname"><span class="pre">extract_session_rows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">session_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_steps</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/io.html#extract_session_rows"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.io.extract_session_rows" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.io.</span></span><span class="sig-name descname"><span class="pre">extract_session_rows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">session_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_steps</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/io.html#extract_session_rows"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.io.extract_session_rows" title="Link to this definition">¶</a></dt>
 <dd><p>Extract the rows that correspond to a target viewer session.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -968,7 +1071,7 @@ available tree plotting interfaces and configuration knobs.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="visualization.recommendation_tree.io.load_metadata">
-<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.io.</span></span><span class="sig-name descname"><span class="pre">load_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metadata_path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'originId'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/io.html#load_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.io.load_metadata" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.io.</span></span><span class="sig-name descname"><span class="pre">load_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metadata_path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'originId'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/io.html#load_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.io.load_metadata" title="Link to this definition">¶</a></dt>
 <dd><p>Load per-node metadata to enrich node labels.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -985,7 +1088,7 @@ available tree plotting interfaces and configuration knobs.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="visualization.recommendation_tree.io.load_trajectories">
-<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.io.</span></span><span class="sig-name descname"><span class="pre">load_trajectories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delimiter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">','</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/io.html#load_trajectories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.io.load_trajectories" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.io.</span></span><span class="sig-name descname"><span class="pre">load_trajectories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">delimiter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">','</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/io.html#load_trajectories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.io.load_trajectories" title="Link to this definition">¶</a></dt>
 <dd><p>Load viewer trajectories from text, CSV, or JSON representations.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1002,7 +1105,7 @@ available tree plotting interfaces and configuration knobs.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="visualization.recommendation_tree.io.load_tree_csv">
-<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.io.</span></span><span class="sig-name descname"><span class="pre">load_tree_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'originId'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child_prefixes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('rec',)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/io.html#load_tree_csv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.io.load_tree_csv" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.io.</span></span><span class="sig-name descname"><span class="pre">load_tree_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'originId'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child_prefixes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('rec',)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/io.html#load_tree_csv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.io.load_tree_csv" title="Link to this definition">¶</a></dt>
 <dd><p>Load a recommendation tree from a CSV export.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1033,6 +1136,122 @@ available tree plotting interfaces and configuration knobs.</p>
 </dd></dl>
 
 <p id="module-visualization.recommendation_tree.render">Rendering helpers for recommendation tree visualisations.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.render.</span></span><span class="sig-name descname"><span class="pre">GraphRenderOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metadata=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_template='{originTitle}'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrap_width=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">highlight_path=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_counts=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edge_counts=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_depth=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rankdir='LR'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine='dot'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_rank_labels=True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#GraphRenderOptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Configuration parameters for rendering tree-level graphs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>metadata</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>label_template</strong> (<em>str</em>)</p></li>
+<li><p><strong>wrap_width</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>highlight_path</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>node_counts</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>edge_counts</strong> (<em>Mapping</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>, </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>max_depth</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>rankdir</strong> (<em>str</em>)</p></li>
+<li><p><strong>engine</strong> (<em>str</em>)</p></li>
+<li><p><strong>show_rank_labels</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.edge_counts">
+<span class="sig-name descname"><span class="pre">edge_counts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.edge_counts" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.engine">
+<span class="sig-name descname"><span class="pre">engine</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'dot'</span></em><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.engine" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.highlight_path">
+<span class="sig-name descname"><span class="pre">highlight_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.highlight_path" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.label_template">
+<span class="sig-name descname"><span class="pre">label_template</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'{originTitle}'</span></em><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.label_template" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.max_depth">
+<span class="sig-name descname"><span class="pre">max_depth</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.max_depth" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.metadata">
+<span class="sig-name descname"><span class="pre">metadata</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">object</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.metadata" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.node_counts">
+<span class="sig-name descname"><span class="pre">node_counts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.node_counts" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.rankdir">
+<span class="sig-name descname"><span class="pre">rankdir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'LR'</span></em><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.rankdir" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.show_rank_labels">
+<span class="sig-name descname"><span class="pre">show_rank_labels</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.show_rank_labels" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.GraphRenderOptions.wrap_width">
+<span class="sig-name descname"><span class="pre">wrap_width</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#visualization.recommendation_tree.render.GraphRenderOptions.wrap_width" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.SessionGraphOptions">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.render.</span></span><span class="sig-name descname"><span class="pre">SessionGraphOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label_template='{originTitle}'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrap_width=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rankdir='LR'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine='dot'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">highlight_path=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#SessionGraphOptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.render.SessionGraphOptions" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Configuration parameters for rendering viewer session graphs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>label_template</strong> (<em>str</em>)</p></li>
+<li><p><strong>wrap_width</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>rankdir</strong> (<em>str</em>)</p></li>
+<li><p><strong>engine</strong> (<em>str</em>)</p></li>
+<li><p><strong>highlight_path</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.SessionGraphOptions.engine">
+<span class="sig-name descname"><span class="pre">engine</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'dot'</span></em><a class="headerlink" href="#visualization.recommendation_tree.render.SessionGraphOptions.engine" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.SessionGraphOptions.highlight_path">
+<span class="sig-name descname"><span class="pre">highlight_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#visualization.recommendation_tree.render.SessionGraphOptions.highlight_path" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.SessionGraphOptions.label_template">
+<span class="sig-name descname"><span class="pre">label_template</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'{originTitle}'</span></em><a class="headerlink" href="#visualization.recommendation_tree.render.SessionGraphOptions.label_template" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.SessionGraphOptions.rankdir">
+<span class="sig-name descname"><span class="pre">rankdir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'LR'</span></em><a class="headerlink" href="#visualization.recommendation_tree.render.SessionGraphOptions.rankdir" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="visualization.recommendation_tree.render.SessionGraphOptions.wrap_width">
+<span class="sig-name descname"><span class="pre">wrap_width</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#visualization.recommendation_tree.render.SessionGraphOptions.wrap_width" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="visualization.recommendation_tree.render.aggregate_counts">
 <span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.render.</span></span><span class="sig-name descname"><span class="pre">aggregate_counts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequences</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#aggregate_counts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.render.aggregate_counts" title="Link to this definition">¶</a></dt>
@@ -1049,22 +1268,13 @@ available tree plotting interfaces and configuration knobs.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="visualization.recommendation_tree.render.build_graph">
-<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.render.</span></span><span class="sig-name descname"><span class="pre">build_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tree</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_template</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrap_width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">highlight_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_counts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edge_counts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_depth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rankdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_rank_labels</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#build_graph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.render.build_graph" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.render.</span></span><span class="sig-name descname"><span class="pre">build_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tree</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#build_graph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.render.build_graph" title="Link to this definition">¶</a></dt>
 <dd><p>Render a recommendation tree as a Graphviz graph.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>tree</strong> (<a class="reference internal" href="#visualization.recommendation_tree.models.TreeData" title="visualization.recommendation_tree.models.TreeData"><em>visualization.recommendation_tree.models.TreeData</em></a>)</p></li>
-<li><p><strong>metadata</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em><em>]</em>)</p></li>
-<li><p><strong>label_template</strong> (<em>str</em>)</p></li>
-<li><p><strong>wrap_width</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>highlight_path</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
-<li><p><strong>node_counts</strong> (<em>collections.Counter</em>)</p></li>
-<li><p><strong>edge_counts</strong> (<em>collections.Counter</em>)</p></li>
-<li><p><strong>max_depth</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>rankdir</strong> (<em>str</em>)</p></li>
-<li><p><strong>engine</strong> (<em>str</em>)</p></li>
-<li><p><strong>show_rank_labels</strong> (<em>bool</em>)</p></li>
+<li><p><strong>options</strong> (<a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions" title="visualization.recommendation_tree.render.GraphRenderOptions"><em>visualization.recommendation_tree.render.GraphRenderOptions</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1075,17 +1285,13 @@ available tree plotting interfaces and configuration knobs.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="visualization.recommendation_tree.render.build_session_graph">
-<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.render.</span></span><span class="sig-name descname"><span class="pre">build_session_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rows</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_template</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrap_width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rankdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">highlight_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#build_session_graph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.render.build_session_graph" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.render.</span></span><span class="sig-name descname"><span class="pre">build_session_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rows</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#build_session_graph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.render.build_session_graph" title="Link to this definition">¶</a></dt>
 <dd><p>Visualise a single viewer session as a Graphviz graph.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>rows</strong> (<em>Sequence</em><em>[</em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em><em>]</em>)</p></li>
-<li><p><strong>label_template</strong> (<em>str</em>)</p></li>
-<li><p><strong>wrap_width</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>rankdir</strong> (<em>str</em>)</p></li>
-<li><p><strong>engine</strong> (<em>str</em>)</p></li>
-<li><p><strong>highlight_path</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>options</strong> (<a class="reference internal" href="#visualization.recommendation_tree.render.SessionGraphOptions" title="visualization.recommendation_tree.render.SessionGraphOptions"><em>visualization.recommendation_tree.render.SessionGraphOptions</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1110,7 +1316,7 @@ available tree plotting interfaces and configuration knobs.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="visualization.recommendation_tree.render.render_graph">
-<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.render.</span></span><span class="sig-name descname"><span class="pre">render_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_format</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#render_graph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.render.render_graph" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">visualization.recommendation_tree.render.</span></span><span class="sig-name descname"><span class="pre">render_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_format</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/recommendation_tree/render.html#render_graph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.recommendation_tree.render.render_graph" title="Link to this definition">¶</a></dt>
 <dd><p>Render a Graphviz graph to disk, normalising the output path.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1213,6 +1419,19 @@ available tree plotting interfaces and configuration knobs.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Visualization Utilities</a><ul>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions</span></code></a><ul>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions.edge_counts"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.edge_counts</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions.engine"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.engine</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions.highlight_path"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.highlight_path</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions.label_template"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.label_template</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions.max_depth"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.max_depth</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions.metadata"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.metadata</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions.node_counts"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.node_counts</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions.rankdir"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.rankdir</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions.show_rank_labels"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.show_rank_labels</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.GraphRenderOptions.wrap_width"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.wrap_width</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#visualization.recommendation_tree_viz.LabelRenderOptions"><code class="docutils literal notranslate"><span class="pre">LabelRenderOptions</span></code></a><ul>
 <li><a class="reference internal" href="#visualization.recommendation_tree_viz.LabelRenderOptions.append_id_if_missing"><code class="docutils literal notranslate"><span class="pre">LabelRenderOptions.append_id_if_missing</span></code></a></li>
 <li><a class="reference internal" href="#visualization.recommendation_tree_viz.LabelRenderOptions.metadata"><code class="docutils literal notranslate"><span class="pre">LabelRenderOptions.metadata</span></code></a></li>
@@ -1234,6 +1453,14 @@ available tree plotting interfaces and configuration knobs.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#visualization.recommendation_tree_viz.SafeDict"><code class="docutils literal notranslate"><span class="pre">SafeDict</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.SessionGraphOptions"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions</span></code></a><ul>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.SessionGraphOptions.engine"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.engine</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.SessionGraphOptions.highlight_path"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.highlight_path</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.SessionGraphOptions.label_template"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.label_template</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.SessionGraphOptions.rankdir"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.rankdir</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree_viz.SessionGraphOptions.wrap_width"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.wrap_width</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#visualization.recommendation_tree_viz.TreeData"><code class="docutils literal notranslate"><span class="pre">TreeData</span></code></a><ul>
 <li><a class="reference internal" href="#visualization.recommendation_tree_viz.TreeData.edges"><code class="docutils literal notranslate"><span class="pre">TreeData.edges</span></code></a></li>
 <li><a class="reference internal" href="#visualization.recommendation_tree_viz.TreeData.nodes"><code class="docutils literal notranslate"><span class="pre">TreeData.nodes</span></code></a></li>
@@ -1304,6 +1531,27 @@ available tree plotting interfaces and configuration knobs.</p>
 <li><a class="reference internal" href="#visualization.recommendation_tree.io.load_trajectories"><code class="docutils literal notranslate"><span class="pre">load_trajectories()</span></code></a></li>
 <li><a class="reference internal" href="#visualization.recommendation_tree.io.load_tree_csv"><code class="docutils literal notranslate"><span class="pre">load_tree_csv()</span></code></a></li>
 <li><a class="reference internal" href="#visualization.recommendation_tree.io.parse_issue_counts"><code class="docutils literal notranslate"><span class="pre">parse_issue_counts()</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions</span></code></a><ul>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions.edge_counts"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.edge_counts</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions.engine"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.engine</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions.highlight_path"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.highlight_path</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions.label_template"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.label_template</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions.max_depth"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.max_depth</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions.metadata"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.metadata</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions.node_counts"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.node_counts</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions.rankdir"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.rankdir</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions.show_rank_labels"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.show_rank_labels</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.GraphRenderOptions.wrap_width"><code class="docutils literal notranslate"><span class="pre">GraphRenderOptions.wrap_width</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.SessionGraphOptions"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions</span></code></a><ul>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.SessionGraphOptions.engine"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.engine</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.SessionGraphOptions.highlight_path"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.highlight_path</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.SessionGraphOptions.label_template"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.label_template</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.SessionGraphOptions.rankdir"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.rankdir</span></code></a></li>
+<li><a class="reference internal" href="#visualization.recommendation_tree.render.SessionGraphOptions.wrap_width"><code class="docutils literal notranslate"><span class="pre">SessionGraphOptions.wrap_width</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#visualization.recommendation_tree.render.aggregate_counts"><code class="docutils literal notranslate"><span class="pre">aggregate_counts()</span></code></a></li>
 <li><a class="reference internal" href="#visualization.recommendation_tree.render.build_graph"><code class="docutils literal notranslate"><span class="pre">build_graph()</span></code></a></li>
 <li><a class="reference internal" href="#visualization.recommendation_tree.render.build_session_graph"><code class="docutils literal notranslate"><span class="pre">build_session_graph()</span></code></a></li>
@@ -1323,7 +1571,7 @@ available tree plotting interfaces and configuration knobs.</p>
     </aside>
   </div>
 </div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
     </body>

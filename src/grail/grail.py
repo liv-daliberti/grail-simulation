@@ -36,9 +36,9 @@ try:
     )
 except ModuleNotFoundError:  # pragma: no cover - script execution fallback
     module_dir = Path(__file__).resolve().parent
-    src_root = str(module_dir.parent)
-    if src_root not in sys.path:
-        sys.path.insert(0, src_root)
+    _SRC_ROOT = str(module_dir.parent)
+    if _SRC_ROOT not in sys.path:
+        sys.path.insert(0, _SRC_ROOT)
     from common.open_r1.configs import GRPOConfig, GRPOScriptArguments
     from common.open_r1.shared import (
         execute_grpo_pipeline,
@@ -58,9 +58,9 @@ except ModuleNotFoundError as exc:  # pragma: no cover - script execution fallba
     if exc.name not in {"grail", "grail.grail_dataset"}:
         raise
     module_dir = Path(__file__).resolve().parent
-    src_root = str(module_dir.parent)
-    if src_root not in sys.path:
-        sys.path.insert(0, src_root)
+    _SRC_ROOT = str(module_dir.parent)
+    if _SRC_ROOT not in sys.path:
+        sys.path.insert(0, _SRC_ROOT)
     from grail.grail_dataset import (
         PASSTHROUGH_FIELDS as _DATASET_PASSTHROUGH_FIELDS,
         TRAIN_KEEP_COLUMNS as _DATASET_TRAIN_KEEP_COLUMNS,

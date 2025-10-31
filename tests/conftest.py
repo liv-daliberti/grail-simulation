@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import os
 import sys
 from pathlib import Path
 
@@ -18,6 +19,30 @@ ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
+
+_CACHE_ROOT = ROOT / ".cache"
+_HF_CACHE = ROOT / ".hf_cache"
+_TMP_ROOT = ROOT / ".tmp"
+_PYTHON_CACHE = ROOT / ".cache" / "pyc"
+_TORCHINDUCTOR_CACHE = ROOT / ".torchinductor"
+_TRITON_CACHE = ROOT / ".triton"
+
+_ENV_PATHS: dict[str, Path] = {
+    "XDG_CACHE_HOME": _CACHE_ROOT,
+    "HF_HOME": _HF_CACHE,
+    "TRANSFORMERS_CACHE": _CACHE_ROOT / "huggingface" / "transformers",
+    "HF_DATASETS_CACHE": _CACHE_ROOT / "huggingface" / "datasets",
+    "TMPDIR": _TMP_ROOT,
+    "PIP_CACHE_DIR": _CACHE_ROOT / "pip",
+    "PIP_BUILD_DIR": _CACHE_ROOT / "pip" / "build",
+    "PYTHONPYCACHEPREFIX": _PYTHON_CACHE,
+    "TORCHINDUCTOR_CACHE_DIR": _TORCHINDUCTOR_CACHE,
+    "TRITON_CACHE_DIR": _TRITON_CACHE,
+}
+
+for env_var, path in _ENV_PATHS.items():
+    os.environ.setdefault(env_var, str(path))
+    path.mkdir(parents=True, exist_ok=True)
 
 # Single transparent 1x1 PNG (base64-encoded)
 _PNG_DATA = base64.b64decode(

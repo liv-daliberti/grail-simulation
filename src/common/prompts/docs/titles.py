@@ -53,7 +53,7 @@ def _default_title_dirs() -> list[str]:
 # Materialize at import time so other modules can re-export a concrete list.
 DEFAULT_TITLE_DIRS = _default_title_dirs()
 
-_title_resolver_cache: TitleResolver | None = None
+_TITLE_RESOLVER_CACHE: TitleResolver | None = None
 
 
 def default_title_resolver() -> TitleResolver:
@@ -65,10 +65,10 @@ def default_title_resolver() -> TitleResolver:
         backed by default paths.
     :rtype: ~common.text.title_index.TitleResolver
     """
-    global _title_resolver_cache  # pylint: disable=global-statement
-    if _title_resolver_cache is None:
-        _title_resolver_cache = TitleResolver(default_dirs=DEFAULT_TITLE_DIRS)
-    return _title_resolver_cache
+    global _TITLE_RESOLVER_CACHE  # pylint: disable=global-statement
+    if _TITLE_RESOLVER_CACHE is None:
+        _TITLE_RESOLVER_CACHE = TitleResolver(default_dirs=DEFAULT_TITLE_DIRS)
+    return _TITLE_RESOLVER_CACHE
 
 
 __all__ = ["DEFAULT_TITLE_DIRS", "TitleLookup", "default_title_resolver"]

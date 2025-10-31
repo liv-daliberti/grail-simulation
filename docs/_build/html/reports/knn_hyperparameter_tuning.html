@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="RESEARCH ARTICLE POLITICAL SCIENCES" href="research_article_political_sciences.html"><link rel="prev" title="KNN Opinion Regression" href="knn_opinion.html">
 
-    <!-- Generated with Sphinx 7.4.7 and Furo 2025.09.25 -->
+    <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
         <title>KNN Hyperparameter Tuning - GRAIL Simulation documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=580074bf" />
@@ -304,13 +304,13 @@ Accuracy values reflect eligible-only accuracy on the validation split at the se
 <tbody>
 <tr class="row-even"><td><p><strong>Study 1 – Gun Control (MTurk)</strong></p></td>
 <td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, freq_youtube</p></td>
-<td class="text-right"><p>0.788</p></td>
+<td><p>viewer_profile, state_text, youtube_time</p></td>
+<td class="text-right"><p>0.828</p></td>
 <td class="text-right"><p>0.540</p></td>
-<td class="text-right"><p>+0.248</p></td>
+<td class="text-right"><p>+0.288</p></td>
 <td class="text-right"><p>1</p></td>
 <td class="text-right"><p>548</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">gun_control</span> <span class="pre">--participant-studies</span> <span class="pre">study1</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">1</span> <span class="pre">--knn-k-sweep</span> <span class="pre">1</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text,freq_youtube</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">gun_control</span> <span class="pre">--participant-studies</span> <span class="pre">study1</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">1</span> <span class="pre">--knn-k-sweep</span> <span class="pre">1</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text,youtube_time</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p><strong>Study 2 – Minimum Wage (MTurk)</strong></p></td>
 <td><p>cosine</p></td>
@@ -324,13 +324,13 @@ Accuracy values reflect eligible-only accuracy on the validation split at the se
 </tr>
 <tr class="row-even"><td><p><strong>Study 3 – Minimum Wage (YouGov)</strong></p></td>
 <td><p>cosine</p></td>
-<td><p>viewer_profile, state_text</p></td>
-<td class="text-right"><p>0.309</p></td>
+<td><p>viewer_profile, state_text, youtube_time</p></td>
+<td class="text-right"><p>0.324</p></td>
 <td class="text-right"><p>0.479</p></td>
-<td class="text-right"><p>-0.170</p></td>
-<td class="text-right"><p>2</p></td>
+<td class="text-right"><p>-0.155</p></td>
+<td class="text-right"><p>50</p></td>
 <td class="text-right"><p>1,200</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">minimum_wage</span> <span class="pre">--participant-studies</span> <span class="pre">study3</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">2</span> <span class="pre">--knn-k-sweep</span> <span class="pre">2</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">minimum_wage</span> <span class="pre">--participant-studies</span> <span class="pre">study3</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">50</span> <span class="pre">--knn-k-sweep</span> <span class="pre">50</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text,youtube_time</span></code></p></td>
 </tr>
 </tbody>
 </table>
@@ -440,10 +440,10 @@ Accuracy values reflect eligible-only accuracy on the validation split at the se
 <section id="observations">
 <h3>Observations<a class="headerlink" href="#observations" title="Link to this heading">¶</a></h3>
 <ul class="simple">
-<li><p>TFIDF: Study 1 – Gun Control (MTurk): accuracy 0.788 (baseline 0.540, Δ +0.248, k=1) using cosine distance with viewer_profile, state_text, freq_youtube; Study 2 – Minimum Wage (MTurk): accuracy 0.361 (baseline 0.368, Δ -0.007, k=4) using cosine distance with viewer_profile, state_text, freq_youtube; Study 3 – Minimum Wage (YouGov): accuracy 0.309 (baseline 0.479, Δ -0.170, k=2) using cosine distance with viewer_profile, state_text.
-Command (Study 1 – Gun Control (MTurk)): <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">gun_control</span> <span class="pre">--participant-studies</span> <span class="pre">study1</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">1</span> <span class="pre">--knn-k-sweep</span> <span class="pre">1</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text,freq_youtube</span></code>
+<li><p>TFIDF: Study 1 – Gun Control (MTurk): accuracy 0.828 (baseline 0.540, Δ +0.288, k=1) using cosine distance with viewer_profile, state_text, youtube_time; Study 2 – Minimum Wage (MTurk): accuracy 0.361 (baseline 0.368, Δ -0.007, k=4) using cosine distance with viewer_profile, state_text, freq_youtube; Study 3 – Minimum Wage (YouGov): accuracy 0.324 (baseline 0.479, Δ -0.155, k=50) using cosine distance with viewer_profile, state_text, youtube_time.
+Command (Study 1 – Gun Control (MTurk)): <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">gun_control</span> <span class="pre">--participant-studies</span> <span class="pre">study1</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">1</span> <span class="pre">--knn-k-sweep</span> <span class="pre">1</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text,youtube_time</span></code>
 Command (Study 2 – Minimum Wage (MTurk)): <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">minimum_wage</span> <span class="pre">--participant-studies</span> <span class="pre">study2</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">4</span> <span class="pre">--knn-k-sweep</span> <span class="pre">4</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text,freq_youtube</span></code>
-Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">minimum_wage</span> <span class="pre">--participant-studies</span> <span class="pre">study3</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">2</span> <span class="pre">--knn-k-sweep</span> <span class="pre">2</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text</span></code></p></li>
+Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">tfidf</span> <span class="pre">--issues</span> <span class="pre">minimum_wage</span> <span class="pre">--participant-studies</span> <span class="pre">study3</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">50</span> <span class="pre">--knn-k-sweep</span> <span class="pre">50</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text,youtube_time</span></code></p></li>
 <li><p>WORD2VEC: Study 1 – Gun Control (MTurk): accuracy 0.296 (baseline 0.540, Δ -0.245, k=2) using word2vec (256d, window 5, min_count 1) with viewer_profile, state_text, religpew; Study 2 – Minimum Wage (MTurk): accuracy 0.319 (baseline 0.368, Δ -0.049, k=5) using word2vec (128d, window 5, min_count 1) with viewer_profile, state_text, religpew; Study 3 – Minimum Wage (YouGov): accuracy 0.292 (baseline 0.479, Δ -0.188, k=10) using word2vec (256d, window 5, min_count 1) with viewer_profile, state_text, ideo1.
 Command (Study 1 – Gun Control (MTurk)): <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">word2vec</span> <span class="pre">--issues</span> <span class="pre">gun_control</span> <span class="pre">--participant-studies</span> <span class="pre">study1</span> <span class="pre">--knn-metric</span> <span class="pre">l2</span> <span class="pre">--knn-k</span> <span class="pre">2</span> <span class="pre">--knn-k-sweep</span> <span class="pre">2</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text,religpew</span> <span class="pre">--word2vec-size</span> <span class="pre">256</span> <span class="pre">--word2vec-window</span> <span class="pre">5</span> <span class="pre">--word2vec-min-count</span> <span class="pre">1</span> <span class="pre">--word2vec-epochs</span> <span class="pre">10</span> <span class="pre">--word2vec-workers</span> <span class="pre">8</span></code>
 Command (Study 2 – Minimum Wage (MTurk)): <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">knn.cli</span> <span class="pre">--task</span> <span class="pre">slate</span> <span class="pre">--dataset</span> <span class="pre">/n/fs/similarity/grail-simulation/data/cleaned_grail</span> <span class="pre">--feature-space</span> <span class="pre">word2vec</span> <span class="pre">--issues</span> <span class="pre">minimum_wage</span> <span class="pre">--participant-studies</span> <span class="pre">study2</span> <span class="pre">--knn-metric</span> <span class="pre">cosine</span> <span class="pre">--knn-k</span> <span class="pre">5</span> <span class="pre">--knn-k-sweep</span> <span class="pre">5</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;run_dir&gt;'</span> <span class="pre">--knn-text-fields</span> <span class="pre">viewer_profile,state_text,religpew</span> <span class="pre">--word2vec-size</span> <span class="pre">128</span> <span class="pre">--word2vec-window</span> <span class="pre">5</span> <span class="pre">--word2vec-min-count</span> <span class="pre">1</span> <span class="pre">--word2vec-epochs</span> <span class="pre">10</span> <span class="pre">--word2vec-workers</span> <span class="pre">8</span></code>
@@ -659,7 +659,106 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>4</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>45</p></td>
+<tr class="row-odd"><td class="text-right"><p>17</p></td>
+<td><p>Study 3 – Minimum Wage (YouGov)</p></td>
+<td><p>TFIDF</p></td>
+<td><p>cosine</p></td>
+<td><p>viewer_profile, state_text, freq_youtube</p></td>
+<td class="text-right"><p>0.322</p></td>
+<td class="text-right"><p>0.479</p></td>
+<td class="text-right"><p>-0.158</p></td>
+<td class="text-right"><p>50</p></td>
+<td class="text-right"><p>1,200</p></td>
+</tr>
+<tr class="row-even"><td class="text-right"><p>18</p></td>
+<td><p>Study 1 – Gun Control (MTurk)</p></td>
+<td><p>TFIDF</p></td>
+<td><p>cosine</p></td>
+<td><p>viewer_profile, state_text, youtube_time</p></td>
+<td class="text-right"><p>0.828</p></td>
+<td class="text-right"><p>0.540</p></td>
+<td class="text-right"><p>+0.288</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>548</p></td>
+</tr>
+<tr class="row-odd"><td class="text-right"><p>19</p></td>
+<td><p>Study 2 – Minimum Wage (MTurk)</p></td>
+<td><p>TFIDF</p></td>
+<td><p>cosine</p></td>
+<td><p>viewer_profile, state_text, youtube_time</p></td>
+<td class="text-right"><p>0.361</p></td>
+<td class="text-right"><p>0.368</p></td>
+<td class="text-right"><p>-0.007</p></td>
+<td class="text-right"><p>4</p></td>
+<td class="text-right"><p>671</p></td>
+</tr>
+<tr class="row-even"><td class="text-right"><p>20</p></td>
+<td><p>Study 3 – Minimum Wage (YouGov)</p></td>
+<td><p>TFIDF</p></td>
+<td><p>cosine</p></td>
+<td><p>viewer_profile, state_text, youtube_time</p></td>
+<td class="text-right"><p>0.324</p></td>
+<td class="text-right"><p>0.479</p></td>
+<td class="text-right"><p>-0.155</p></td>
+<td class="text-right"><p>50</p></td>
+<td class="text-right"><p>1,200</p></td>
+</tr>
+<tr class="row-odd"><td class="text-right"><p>21</p></td>
+<td><p>Study 1 – Gun Control (MTurk)</p></td>
+<td><p>TFIDF</p></td>
+<td><p>cosine</p></td>
+<td><p>viewer_profile, state_text, newsint</p></td>
+<td class="text-right"><p>0.828</p></td>
+<td class="text-right"><p>0.540</p></td>
+<td class="text-right"><p>+0.288</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>548</p></td>
+</tr>
+<tr class="row-even"><td class="text-right"><p>22</p></td>
+<td><p>Study 2 – Minimum Wage (MTurk)</p></td>
+<td><p>TFIDF</p></td>
+<td><p>cosine</p></td>
+<td><p>viewer_profile, state_text, newsint</p></td>
+<td class="text-right"><p>0.361</p></td>
+<td class="text-right"><p>0.368</p></td>
+<td class="text-right"><p>-0.007</p></td>
+<td class="text-right"><p>4</p></td>
+<td class="text-right"><p>671</p></td>
+</tr>
+<tr class="row-odd"><td class="text-right"><p>23</p></td>
+<td><p>Study 3 – Minimum Wage (YouGov)</p></td>
+<td><p>TFIDF</p></td>
+<td><p>cosine</p></td>
+<td><p>viewer_profile, state_text, newsint</p></td>
+<td class="text-right"><p>0.324</p></td>
+<td class="text-right"><p>0.479</p></td>
+<td class="text-right"><p>-0.155</p></td>
+<td class="text-right"><p>50</p></td>
+<td class="text-right"><p>1,200</p></td>
+</tr>
+<tr class="row-even"><td class="text-right"><p>24</p></td>
+<td><p>Study 1 – Gun Control (MTurk)</p></td>
+<td><p>TFIDF</p></td>
+<td><p>cosine</p></td>
+<td><p>viewer_profile, state_text, slate_source</p></td>
+<td class="text-right"><p>0.792</p></td>
+<td class="text-right"><p>0.540</p></td>
+<td class="text-right"><p>+0.252</p></td>
+<td class="text-right"><p>1</p></td>
+<td class="text-right"><p>548</p></td>
+</tr>
+<tr class="row-odd"><td class="text-right"><p>25</p></td>
+<td><p>Study 2 – Minimum Wage (MTurk)</p></td>
+<td><p>TFIDF</p></td>
+<td><p>cosine</p></td>
+<td><p>viewer_profile, state_text, slate_source</p></td>
+<td class="text-right"><p>0.359</p></td>
+<td class="text-right"><p>0.368</p></td>
+<td class="text-right"><p>-0.009</p></td>
+<td class="text-right"><p>4</p></td>
+<td class="text-right"><p>671</p></td>
+</tr>
+<tr class="row-even"><td class="text-right"><p>45</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>cosine</p></td>
@@ -670,7 +769,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>46</p></td>
+<tr class="row-odd"><td class="text-right"><p>46</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>cosine</p></td>
@@ -681,7 +780,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>47</p></td>
+<tr class="row-even"><td class="text-right"><p>47</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>cosine</p></td>
@@ -692,7 +791,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>48</p></td>
+<tr class="row-odd"><td class="text-right"><p>48</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
@@ -703,7 +802,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>49</p></td>
+<tr class="row-even"><td class="text-right"><p>49</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
@@ -714,7 +813,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>3</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>50</p></td>
+<tr class="row-odd"><td class="text-right"><p>50</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
@@ -725,7 +824,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>51</p></td>
+<tr class="row-even"><td class="text-right"><p>51</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
@@ -736,7 +835,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>52</p></td>
+<tr class="row-odd"><td class="text-right"><p>52</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
@@ -747,7 +846,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>53</p></td>
+<tr class="row-even"><td class="text-right"><p>53</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
@@ -758,7 +857,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>54</p></td>
+<tr class="row-odd"><td class="text-right"><p>54</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
@@ -769,7 +868,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>55</p></td>
+<tr class="row-even"><td class="text-right"><p>55</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
@@ -780,7 +879,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>3</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>56</p></td>
+<tr class="row-odd"><td class="text-right"><p>56</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
@@ -791,7 +890,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>57</p></td>
+<tr class="row-even"><td class="text-right"><p>57</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
@@ -802,7 +901,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>58</p></td>
+<tr class="row-odd"><td class="text-right"><p>58</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
@@ -813,7 +912,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>3</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>59</p></td>
+<tr class="row-even"><td class="text-right"><p>59</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
@@ -824,7 +923,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>60</p></td>
+<tr class="row-odd"><td class="text-right"><p>60</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
@@ -835,7 +934,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>61</p></td>
+<tr class="row-even"><td class="text-right"><p>61</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
@@ -846,7 +945,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>3</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>62</p></td>
+<tr class="row-odd"><td class="text-right"><p>62</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
@@ -857,7 +956,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>93</p></td>
+<tr class="row-even"><td class="text-right"><p>93</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
@@ -868,7 +967,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>94</p></td>
+<tr class="row-odd"><td class="text-right"><p>94</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
@@ -879,7 +978,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>95</p></td>
+<tr class="row-even"><td class="text-right"><p>95</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>TFIDF</p></td>
 <td><p>l2</p></td>
@@ -890,7 +989,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>96</p></td>
+<tr class="row-odd"><td class="text-right"><p>96</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -901,7 +1000,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>97</p></td>
+<tr class="row-even"><td class="text-right"><p>97</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -912,7 +1011,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>98</p></td>
+<tr class="row-odd"><td class="text-right"><p>98</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -923,7 +1022,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>4</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>99</p></td>
+<tr class="row-even"><td class="text-right"><p>99</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -934,7 +1033,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>100</p></td>
+<tr class="row-odd"><td class="text-right"><p>100</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -945,7 +1044,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>101</p></td>
+<tr class="row-even"><td class="text-right"><p>101</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -956,7 +1055,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>4</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>102</p></td>
+<tr class="row-odd"><td class="text-right"><p>102</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -967,7 +1066,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>103</p></td>
+<tr class="row-even"><td class="text-right"><p>103</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -978,7 +1077,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>104</p></td>
+<tr class="row-odd"><td class="text-right"><p>104</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -989,7 +1088,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>10</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>105</p></td>
+<tr class="row-even"><td class="text-right"><p>105</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1000,7 +1099,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>106</p></td>
+<tr class="row-odd"><td class="text-right"><p>106</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1011,7 +1110,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>107</p></td>
+<tr class="row-even"><td class="text-right"><p>107</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1022,7 +1121,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>10</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>108</p></td>
+<tr class="row-odd"><td class="text-right"><p>108</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1033,7 +1132,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>109</p></td>
+<tr class="row-even"><td class="text-right"><p>109</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1044,7 +1143,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>110</p></td>
+<tr class="row-odd"><td class="text-right"><p>110</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1055,7 +1154,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>4</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>111</p></td>
+<tr class="row-even"><td class="text-right"><p>111</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1066,7 +1165,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>112</p></td>
+<tr class="row-odd"><td class="text-right"><p>112</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1077,7 +1176,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>113</p></td>
+<tr class="row-even"><td class="text-right"><p>113</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1088,7 +1187,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>114</p></td>
+<tr class="row-odd"><td class="text-right"><p>114</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1099,7 +1198,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>115</p></td>
+<tr class="row-even"><td class="text-right"><p>115</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1110,7 +1209,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>4</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>116</p></td>
+<tr class="row-odd"><td class="text-right"><p>116</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1121,7 +1220,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>117</p></td>
+<tr class="row-even"><td class="text-right"><p>117</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1132,7 +1231,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>118</p></td>
+<tr class="row-odd"><td class="text-right"><p>118</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1143,7 +1242,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>119</p></td>
+<tr class="row-even"><td class="text-right"><p>119</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1154,7 +1253,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>120</p></td>
+<tr class="row-odd"><td class="text-right"><p>120</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1165,7 +1264,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>121</p></td>
+<tr class="row-even"><td class="text-right"><p>121</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1176,7 +1275,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>5</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>122</p></td>
+<tr class="row-odd"><td class="text-right"><p>122</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1187,7 +1286,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>123</p></td>
+<tr class="row-even"><td class="text-right"><p>123</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1198,7 +1297,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>124</p></td>
+<tr class="row-odd"><td class="text-right"><p>124</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1209,7 +1308,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>125</p></td>
+<tr class="row-even"><td class="text-right"><p>125</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1220,7 +1319,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>4</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>186</p></td>
+<tr class="row-odd"><td class="text-right"><p>186</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1231,7 +1330,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>187</p></td>
+<tr class="row-even"><td class="text-right"><p>187</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1242,7 +1341,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>4</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>188</p></td>
+<tr class="row-odd"><td class="text-right"><p>188</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1253,7 +1352,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>189</p></td>
+<tr class="row-even"><td class="text-right"><p>189</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1264,7 +1363,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>190</p></td>
+<tr class="row-odd"><td class="text-right"><p>190</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1275,7 +1374,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>191</p></td>
+<tr class="row-even"><td class="text-right"><p>191</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>cosine</p></td>
@@ -1286,7 +1385,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>192</p></td>
+<tr class="row-odd"><td class="text-right"><p>192</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1297,7 +1396,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>193</p></td>
+<tr class="row-even"><td class="text-right"><p>193</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1308,7 +1407,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>194</p></td>
+<tr class="row-odd"><td class="text-right"><p>194</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1319,7 +1418,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>5</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>195</p></td>
+<tr class="row-even"><td class="text-right"><p>195</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1330,7 +1429,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>196</p></td>
+<tr class="row-odd"><td class="text-right"><p>196</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1341,7 +1440,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>197</p></td>
+<tr class="row-even"><td class="text-right"><p>197</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1352,7 +1451,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>4</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>198</p></td>
+<tr class="row-odd"><td class="text-right"><p>198</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1363,7 +1462,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>199</p></td>
+<tr class="row-even"><td class="text-right"><p>199</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1374,7 +1473,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>200</p></td>
+<tr class="row-odd"><td class="text-right"><p>200</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1385,7 +1484,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>4</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>201</p></td>
+<tr class="row-even"><td class="text-right"><p>201</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1396,7 +1495,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>202</p></td>
+<tr class="row-odd"><td class="text-right"><p>202</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1407,7 +1506,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>203</p></td>
+<tr class="row-even"><td class="text-right"><p>203</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1418,7 +1517,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>5</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>204</p></td>
+<tr class="row-odd"><td class="text-right"><p>204</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1429,7 +1528,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>205</p></td>
+<tr class="row-even"><td class="text-right"><p>205</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1440,7 +1539,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>206</p></td>
+<tr class="row-odd"><td class="text-right"><p>206</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1451,7 +1550,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>4</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>207</p></td>
+<tr class="row-even"><td class="text-right"><p>207</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1462,7 +1561,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>208</p></td>
+<tr class="row-odd"><td class="text-right"><p>208</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1473,7 +1572,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>209</p></td>
+<tr class="row-even"><td class="text-right"><p>209</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1484,7 +1583,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>4</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>210</p></td>
+<tr class="row-odd"><td class="text-right"><p>210</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1495,7 +1594,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>211</p></td>
+<tr class="row-even"><td class="text-right"><p>211</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1506,7 +1605,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>5</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>212</p></td>
+<tr class="row-odd"><td class="text-right"><p>212</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1517,7 +1616,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>213</p></td>
+<tr class="row-even"><td class="text-right"><p>213</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1528,7 +1627,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>214</p></td>
+<tr class="row-odd"><td class="text-right"><p>214</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1539,7 +1638,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>215</p></td>
+<tr class="row-even"><td class="text-right"><p>215</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1550,7 +1649,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>216</p></td>
+<tr class="row-odd"><td class="text-right"><p>216</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1561,7 +1660,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>217</p></td>
+<tr class="row-even"><td class="text-right"><p>217</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1572,7 +1671,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>218</p></td>
+<tr class="row-odd"><td class="text-right"><p>218</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1583,7 +1682,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>219</p></td>
+<tr class="row-even"><td class="text-right"><p>219</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1594,7 +1693,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>220</p></td>
+<tr class="row-odd"><td class="text-right"><p>220</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1605,7 +1704,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>221</p></td>
+<tr class="row-even"><td class="text-right"><p>221</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1616,7 +1715,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>282</p></td>
+<tr class="row-odd"><td class="text-right"><p>282</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1627,7 +1726,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>283</p></td>
+<tr class="row-even"><td class="text-right"><p>283</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1638,7 +1737,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>284</p></td>
+<tr class="row-odd"><td class="text-right"><p>284</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1649,7 +1748,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>4</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>285</p></td>
+<tr class="row-even"><td class="text-right"><p>285</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1660,7 +1759,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>286</p></td>
+<tr class="row-odd"><td class="text-right"><p>286</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1671,7 +1770,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>5</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>287</p></td>
+<tr class="row-even"><td class="text-right"><p>287</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>WORD2VEC</p></td>
 <td><p>l2</p></td>
@@ -1682,7 +1781,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>4</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>288</p></td>
+<tr class="row-odd"><td class="text-right"><p>288</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>cosine</p></td>
@@ -1693,7 +1792,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>289</p></td>
+<tr class="row-even"><td class="text-right"><p>289</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>cosine</p></td>
@@ -1704,7 +1803,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>3</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>290</p></td>
+<tr class="row-odd"><td class="text-right"><p>290</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>cosine</p></td>
@@ -1715,7 +1814,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>291</p></td>
+<tr class="row-even"><td class="text-right"><p>291</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>cosine</p></td>
@@ -1726,7 +1825,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>292</p></td>
+<tr class="row-odd"><td class="text-right"><p>292</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>cosine</p></td>
@@ -1737,7 +1836,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>3</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>293</p></td>
+<tr class="row-even"><td class="text-right"><p>293</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>cosine</p></td>
@@ -1748,7 +1847,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>294</p></td>
+<tr class="row-odd"><td class="text-right"><p>294</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>cosine</p></td>
@@ -1759,7 +1858,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>295</p></td>
+<tr class="row-even"><td class="text-right"><p>295</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>cosine</p></td>
@@ -1770,7 +1869,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>3</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>296</p></td>
+<tr class="row-odd"><td class="text-right"><p>296</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>cosine</p></td>
@@ -1781,7 +1880,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>297</p></td>
+<tr class="row-even"><td class="text-right"><p>297</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>cosine</p></td>
@@ -1792,7 +1891,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>298</p></td>
+<tr class="row-odd"><td class="text-right"><p>298</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>cosine</p></td>
@@ -1803,7 +1902,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>3</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>299</p></td>
+<tr class="row-even"><td class="text-right"><p>299</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>cosine</p></td>
@@ -1814,7 +1913,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>300</p></td>
+<tr class="row-odd"><td class="text-right"><p>300</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>cosine</p></td>
@@ -1825,7 +1924,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>301</p></td>
+<tr class="row-even"><td class="text-right"><p>301</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>cosine</p></td>
@@ -1836,7 +1935,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>3</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>302</p></td>
+<tr class="row-odd"><td class="text-right"><p>302</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>cosine</p></td>
@@ -1847,7 +1946,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>333</p></td>
+<tr class="row-even"><td class="text-right"><p>333</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>cosine</p></td>
@@ -1858,7 +1957,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>334</p></td>
+<tr class="row-odd"><td class="text-right"><p>334</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>cosine</p></td>
@@ -1869,7 +1968,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>3</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>335</p></td>
+<tr class="row-even"><td class="text-right"><p>335</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>cosine</p></td>
@@ -1880,7 +1979,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>336</p></td>
+<tr class="row-odd"><td class="text-right"><p>336</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>l2</p></td>
@@ -1891,7 +1990,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>337</p></td>
+<tr class="row-even"><td class="text-right"><p>337</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>l2</p></td>
@@ -1902,7 +2001,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>3</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>338</p></td>
+<tr class="row-odd"><td class="text-right"><p>338</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>l2</p></td>
@@ -1913,7 +2012,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>339</p></td>
+<tr class="row-even"><td class="text-right"><p>339</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>l2</p></td>
@@ -1924,7 +2023,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>340</p></td>
+<tr class="row-odd"><td class="text-right"><p>340</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>l2</p></td>
@@ -1935,7 +2034,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>3</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>341</p></td>
+<tr class="row-even"><td class="text-right"><p>341</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>l2</p></td>
@@ -1946,7 +2045,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>342</p></td>
+<tr class="row-odd"><td class="text-right"><p>342</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>l2</p></td>
@@ -1957,7 +2056,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>343</p></td>
+<tr class="row-even"><td class="text-right"><p>343</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>l2</p></td>
@@ -1968,7 +2067,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>3</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>344</p></td>
+<tr class="row-odd"><td class="text-right"><p>344</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>l2</p></td>
@@ -1979,7 +2078,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>345</p></td>
+<tr class="row-even"><td class="text-right"><p>345</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>l2</p></td>
@@ -1990,7 +2089,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>346</p></td>
+<tr class="row-odd"><td class="text-right"><p>346</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>l2</p></td>
@@ -2001,7 +2100,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>3</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>347</p></td>
+<tr class="row-even"><td class="text-right"><p>347</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>l2</p></td>
@@ -2012,7 +2111,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>348</p></td>
+<tr class="row-odd"><td class="text-right"><p>348</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>l2</p></td>
@@ -2023,7 +2122,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>349</p></td>
+<tr class="row-even"><td class="text-right"><p>349</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>l2</p></td>
@@ -2034,7 +2133,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>3</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>350</p></td>
+<tr class="row-odd"><td class="text-right"><p>350</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>l2</p></td>
@@ -2045,7 +2144,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>3</p></td>
 <td class="text-right"><p>1,200</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>381</p></td>
+<tr class="row-even"><td class="text-right"><p>381</p></td>
 <td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>l2</p></td>
@@ -2056,7 +2155,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>2</p></td>
 <td class="text-right"><p>548</p></td>
 </tr>
-<tr class="row-even"><td class="text-right"><p>382</p></td>
+<tr class="row-odd"><td class="text-right"><p>382</p></td>
 <td><p>Study 2 – Minimum Wage (MTurk)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>l2</p></td>
@@ -2067,7 +2166,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>3</p></td>
 <td class="text-right"><p>671</p></td>
 </tr>
-<tr class="row-odd"><td class="text-right"><p>383</p></td>
+<tr class="row-even"><td class="text-right"><p>383</p></td>
 <td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>SENTENCE_TRANSFORMER</p></td>
 <td><p>l2</p></td>
@@ -2730,7 +2829,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 </tr>
 <tr class="row-odd"><td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, ideo1</p></td>
+<td><p>viewer_profile, state_text, youtube_time</p></td>
 <td><p>sentence-transformers/all-mpnet-base-v2</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
@@ -2738,17 +2837,17 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>0.704</p></td>
 <td class="text-right"><p>0.074</p></td>
 <td class="text-right"><p>+0.630</p></td>
-<td class="text-right"><p>50</p></td>
+<td class="text-right"><p>150</p></td>
 <td class="text-right"><p>162</p></td>
 <td class="text-right"><p>0.030</p></td>
 <td class="text-right"><p>+0.007</p></td>
-<td class="text-right"><p>0.038</p></td>
+<td class="text-right"><p>0.037</p></td>
 <td class="text-right"><p>0.983</p></td>
 <td class="text-right"><p>162</p></td>
 </tr>
 <tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, religpew</p></td>
+<td><p>viewer_profile, state_text, newsint</p></td>
 <td><p>sentence-transformers/all-mpnet-base-v2</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
@@ -2756,17 +2855,17 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>0.704</p></td>
 <td class="text-right"><p>0.074</p></td>
 <td class="text-right"><p>+0.630</p></td>
-<td class="text-right"><p>50</p></td>
+<td class="text-right"><p>150</p></td>
 <td class="text-right"><p>162</p></td>
 <td class="text-right"><p>0.030</p></td>
 <td class="text-right"><p>+0.007</p></td>
-<td class="text-right"><p>0.038</p></td>
+<td class="text-right"><p>0.037</p></td>
 <td class="text-right"><p>0.983</p></td>
 <td class="text-right"><p>162</p></td>
 </tr>
 <tr class="row-odd"><td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>cosine</p></td>
-<td><p>viewer_profile, state_text</p></td>
+<td><p>viewer_profile, state_text, slate_source</p></td>
 <td><p>sentence-transformers/all-mpnet-base-v2</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
@@ -2774,17 +2873,17 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>0.704</p></td>
 <td class="text-right"><p>0.074</p></td>
 <td class="text-right"><p>+0.630</p></td>
-<td class="text-right"><p>50</p></td>
+<td class="text-right"><p>150</p></td>
 <td class="text-right"><p>162</p></td>
 <td class="text-right"><p>0.030</p></td>
 <td class="text-right"><p>+0.007</p></td>
-<td class="text-right"><p>0.038</p></td>
+<td class="text-right"><p>0.037</p></td>
 <td class="text-right"><p>0.983</p></td>
 <td class="text-right"><p>162</p></td>
 </tr>
 <tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
 <td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, ideo2</p></td>
+<td><p>viewer_profile, state_text, educ</p></td>
 <td><p>sentence-transformers/all-mpnet-base-v2</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
@@ -2792,11 +2891,11 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <td class="text-right"><p>0.704</p></td>
 <td class="text-right"><p>0.074</p></td>
 <td class="text-right"><p>+0.630</p></td>
-<td class="text-right"><p>50</p></td>
+<td class="text-right"><p>150</p></td>
 <td class="text-right"><p>162</p></td>
 <td class="text-right"><p>0.030</p></td>
 <td class="text-right"><p>+0.007</p></td>
-<td class="text-right"><p>0.038</p></td>
+<td class="text-right"><p>0.037</p></td>
 <td class="text-right"><p>0.983</p></td>
 <td class="text-right"><p>162</p></td>
 </tr>
@@ -2910,74 +3009,74 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 </tr>
 <tr class="row-odd"><td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, ideo1</p></td>
+<td><p>viewer_profile, state_text, youtube_time</p></td>
 <td><p>sentence-transformers/all-mpnet-base-v2</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
-<td class="text-right"><p>0.521</p></td>
+<td class="text-right"><p>0.525</p></td>
 <td class="text-right"><p>0.058</p></td>
-<td class="text-right"><p>+0.463</p></td>
-<td class="text-right"><p>50</p></td>
+<td class="text-right"><p>+0.467</p></td>
+<td class="text-right"><p>150</p></td>
 <td class="text-right"><p>257</p></td>
-<td class="text-right"><p>0.089</p></td>
-<td class="text-right"><p>-0.004</p></td>
+<td class="text-right"><p>0.088</p></td>
+<td class="text-right"><p>-0.003</p></td>
 <td class="text-right"><p>0.125</p></td>
-<td class="text-right"><p>0.768</p></td>
+<td class="text-right"><p>0.772</p></td>
 <td class="text-right"><p>257</p></td>
 </tr>
 <tr class="row-even"><td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, pol_interest</p></td>
+<td><p>viewer_profile, state_text, newsint</p></td>
 <td><p>sentence-transformers/all-mpnet-base-v2</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
-<td class="text-right"><p>0.521</p></td>
+<td class="text-right"><p>0.525</p></td>
 <td class="text-right"><p>0.058</p></td>
-<td class="text-right"><p>+0.463</p></td>
-<td class="text-right"><p>50</p></td>
+<td class="text-right"><p>+0.467</p></td>
+<td class="text-right"><p>150</p></td>
 <td class="text-right"><p>257</p></td>
-<td class="text-right"><p>0.089</p></td>
-<td class="text-right"><p>-0.004</p></td>
+<td class="text-right"><p>0.088</p></td>
+<td class="text-right"><p>-0.003</p></td>
 <td class="text-right"><p>0.125</p></td>
-<td class="text-right"><p>0.768</p></td>
+<td class="text-right"><p>0.772</p></td>
 <td class="text-right"><p>257</p></td>
 </tr>
 <tr class="row-odd"><td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>cosine</p></td>
-<td><p>viewer_profile, state_text, ideo1, ideo2, pol_interest, religpew, freq_youtube, youtube_time, newsint, slate_source, educ, employ, child18, inputstate, income, participant_study</p></td>
+<td><p>viewer_profile, state_text, slate_source</p></td>
 <td><p>sentence-transformers/all-mpnet-base-v2</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
-<td class="text-right"><p>0.521</p></td>
+<td class="text-right"><p>0.525</p></td>
 <td class="text-right"><p>0.058</p></td>
-<td class="text-right"><p>+0.463</p></td>
-<td class="text-right"><p>50</p></td>
+<td class="text-right"><p>+0.467</p></td>
+<td class="text-right"><p>150</p></td>
 <td class="text-right"><p>257</p></td>
-<td class="text-right"><p>0.089</p></td>
-<td class="text-right"><p>-0.004</p></td>
+<td class="text-right"><p>0.088</p></td>
+<td class="text-right"><p>-0.003</p></td>
 <td class="text-right"><p>0.125</p></td>
-<td class="text-right"><p>0.768</p></td>
+<td class="text-right"><p>0.772</p></td>
 <td class="text-right"><p>257</p></td>
 </tr>
 <tr class="row-even"><td><p>Study 3 – Minimum Wage (YouGov)</p></td>
 <td><p>cosine</p></td>
-<td><p>viewer_profile, state_text</p></td>
+<td><p>viewer_profile, state_text, educ</p></td>
 <td><p>sentence-transformers/all-mpnet-base-v2</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
-<td class="text-right"><p>0.521</p></td>
+<td class="text-right"><p>0.525</p></td>
 <td class="text-right"><p>0.058</p></td>
-<td class="text-right"><p>+0.463</p></td>
-<td class="text-right"><p>50</p></td>
+<td class="text-right"><p>+0.467</p></td>
+<td class="text-right"><p>150</p></td>
 <td class="text-right"><p>257</p></td>
-<td class="text-right"><p>0.089</p></td>
-<td class="text-right"><p>-0.004</p></td>
+<td class="text-right"><p>0.088</p></td>
+<td class="text-right"><p>-0.003</p></td>
 <td class="text-right"><p>0.125</p></td>
-<td class="text-right"><p>0.768</p></td>
+<td class="text-right"><p>0.772</p></td>
 <td class="text-right"><p>257</p></td>
 </tr>
 </tbody>
@@ -2988,11 +3087,11 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
 <ul class="simple">
 <li><p>Weighted MAE 0.072 across 8,760 participants.</p></li>
 <li><p>Weighted baseline MAE 0.074 (+0.002 vs. final).</p></li>
-<li><p>Weighted directional accuracy 0.573 across 8,760 participants.</p></li>
+<li><p>Weighted directional accuracy 0.574 across 8,760 participants.</p></li>
 <li><p>Weighted baseline accuracy 0.063 (+0.510 vs. final).</p></li>
 <li><p>Weighted RMSE (change) 0.101 (+0.006 vs. baseline).</p></li>
-<li><p>Weighted calibration ECE 0.020 (— vs. baseline).</p></li>
-<li><p>Weighted KL divergence 10.932 (+7.503 vs. baseline).</p></li>
+<li><p>Weighted calibration ECE 0.021 (— vs. baseline).</p></li>
+<li><p>Weighted KL divergence 11.133 (+7.302 vs. baseline).</p></li>
 <li><p>Largest MAE reduction: WORD2VEC – Study 2 – Minimum Wage (MTurk) (+0.008).</p></li>
 <li><p>Largest RMSE(change) reduction: WORD2VEC – Study 2 – Minimum Wage (MTurk) (+0.014).</p></li>
 <li><p>Lowest MAE: TFIDF – Study 1 – Gun Control (MTurk) (0.030); Highest MAE: TFIDF – Study 2 – Minimum Wage (MTurk) (0.093).</p></li>
@@ -3081,7 +3180,7 @@ Command (Study 3 – Minimum Wage (YouGov)): <code class="docutils literal notra
     </aside>
   </div>
 </div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
     </body>

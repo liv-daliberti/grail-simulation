@@ -2,6 +2,8 @@
 
 Utility entrypoints for running validations, report generation, and data cleaning tasks from the command line.
 
+- `scripts/evaluate-grail-gun.sh` / `scripts/evaluate-grail-wage.sh` — SLURM launchers for running the GRAIL pipeline evaluation stage on the gun-control and minimum-wage splits respectively. Configure overrides via environment variables like `MODEL_PATH`, `RUN_LABEL`, and `LOG_DIR`.
+- `scripts/evaluate-grpo-gun.sh` / `scripts/evaluate-grpo-wage.sh` — GRPO baseline evaluation launchers that forward to `python -m grpo.pipeline` with issue-specific defaults. Customize via `MODEL_PATH`, `ISSUES`, and other CLI overrides.
 - `scripts/run-tests.sh` — runs the Python test suite via `pytest` using `development/pytest.ini`. Accepts extra pytest flags. Sets up `PYTHONPATH` so in-repo packages resolve.
 - `scripts/run-lint.sh` — executes `pylint` with the repo config but only enables error-level checks. Pass additional paths or pylint flags after the script name.
 - `reports/build-reports.sh` — regenerates the KNN and XGBoost reports from existing sweep artifacts without rerunning training. Handles dataset discovery/assembly (local path, Hugging Face repo, or issue split assembly) before invoking `python -m knn.pipeline --stage reports` and `python -m xgb.pipeline --stage reports`. The legacy `scripts/run-build-reports.sh` wrapper now forwards directly to this entrypoint. Key env vars: `REPORTS_DATASET`, `REPORTS_ISSUE_DATASETS`, `KNN_REPORTS_*`, `XGB_REPORTS_*`. The pre-commit hook and the `Build Reports` GitHub Action both use this script so report markdown stays synced with the latest sweep artifacts while CI avoids training reruns.

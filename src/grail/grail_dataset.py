@@ -10,6 +10,12 @@ try:  # pragma: no cover - optional dependency
 except Exception:  # pragma: no cover - optional dependency
     # Minimal placeholder for import-time; real usage happens in training scripts.
     class ModelConfig:  # type: ignore[no-redef]
+        """Import-time stub for TRL's ``ModelConfig`` to satisfy type hints.
+
+        The actual configuration class is provided by TRL at runtime; this
+        placeholder exists so documentation builds and lightweight tools can
+        import the module without the dependency.
+        """
         pass
 
 from common.data.hf_datasets import DatasetDict

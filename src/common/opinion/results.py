@@ -111,7 +111,13 @@ class OpinionEvaluationResult:
         return self._studies
 
     def get(self, key: str, default: OpinionStudyResult | None = None) -> OpinionStudyResult | None:
-        """Return the study result for ``key`` if present."""
+        """
+        Return the study result for ``key`` if present.
+
+        :param key: Study identifier used as the mapping key.
+        :param default: Value returned when ``key`` is not present.
+        :returns: The :class:`OpinionStudyResult` for ``key`` or ``default``.
+        """
         return self._studies.get(key, default)
 
     def values(self):

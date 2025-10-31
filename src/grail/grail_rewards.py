@@ -14,12 +14,21 @@ except Exception as _gail_import_error:  # pragma: no cover - optional dependenc
     _GAIL_AVAILABLE = False
 
     class OnlineDiscriminator:  # type: ignore[too-few-public-methods]
+        """Import-time stub that instructs users to install ``transformers``.
+
+        The operational discriminator lives in :mod:`grail.grail_gail` and is
+        only available when the transformers dependency is installed.
+        """
         def __init__(self, *_args, **_kwargs) -> None:
             raise ImportError(
                 "GAIL components require transformers. Install it with `pip install transformers`."
             ) from _gail_import_error
 
     def make_gail_reward_fn(*_args, **_kwargs):  # type: ignore[empty-body]
+        """Stub reward-factory that raises when dependencies are missing.
+
+        :raises ImportError: Always, with instructions to install dependencies.
+        """
         raise ImportError(
             "GAIL components require transformers. Install it with `pip install transformers`."
         )

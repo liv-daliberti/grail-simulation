@@ -331,7 +331,13 @@ class _CurveAccumulator:
     _best: Optional[Tuple[int, float, float]] = None
 
     def add(self, k: int, values: Mapping[str, float]) -> None:
-        """Record metrics for a specific ``k`` and update best trackers."""
+        """
+        Record metrics for a specific ``k`` and update best trackers.
+
+        :param k: Neighbour count hyper-parameter.
+        :param values: Mapping that includes keys like ``mae_after`` and ``r2_after``.
+        :returns: ``None``.
+        """
         raw_mae = float(values.get("mae_after", float("nan")))
         raw_r2 = float(values.get("r2_after", float("nan")))
         mae_value = raw_mae if math.isfinite(raw_mae) else float("inf")
@@ -342,7 +348,12 @@ class _CurveAccumulator:
             self._best = (int(k), mae_value, r2_value)
 
     def best_summary(self, fallback_k: int) -> Tuple[int, Optional[float], Optional[float]]:
-        """Return the best-performing ``k`` and associated metrics (or fallback)."""
+        """
+        Return the best-performing ``k`` and associated metrics (or fallback).
+
+        :param fallback_k: Value returned for ``k`` when no metrics were recorded.
+        :returns: Tuple of ``(k, mae_after, r2_after)`` where metric entries may be ``None``.
+        """
         if self._best is None:
             return fallback_k, None, None
         best_k, mae_value, r2_value = self._best

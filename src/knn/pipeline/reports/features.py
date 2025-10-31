@@ -211,7 +211,13 @@ def _collect_opinion_final(bundle: ReportBundle) -> tuple[list[Sequence[str]], s
 
 
 def build_feature_report(repo_root: Path, bundle: ReportBundle) -> None:
-    """Write the KNN additional-feature markdown report."""
+    """
+    Write the KNN additional-feature markdown report.
+
+    :param repo_root: Repository root used to locate the ``reports/`` directory.
+    :param bundle: Report bundle providing sweep/final metrics and inclusion flags.
+    :returns: ``None``.
+    """
     output_dir = repo_root / "reports" / "knn" / "additional_features"
     path, lines = start_markdown_report(output_dir, title="Additional Text Features")
     lines.append("")

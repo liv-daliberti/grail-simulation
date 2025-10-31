@@ -258,7 +258,13 @@ class _NextVideoRunState:
         return self.example_cap is None or len(self.predictions) < self.example_cap
 
     def record(self, artefacts: _ExampleArtefacts) -> None:
-        """Append artefacts derived from a single evaluated example."""
+        """
+        Append artefacts derived from a single evaluated example.
+
+        :param artefacts: Bundle of observation, serialized prediction row, and
+            QA log entry created for one evaluated example.
+        :returns: ``None``.
+        """
 
         self.accumulator.observe(artefacts.observation)
         self.predictions.append(artefacts.prediction)

@@ -196,7 +196,13 @@ class StageOverwriteContext:
 
 
 def compose_cli_args(*segments: Sequence[str]) -> List[str]:
-    """Return a flattened list of CLI arguments from multiple segments."""
+    """
+    Return a flattened list of CLI arguments from multiple segments.
+
+    :param segments: One or more argument sequences (or single strings) to be
+        concatenated into a single list suitable for ``subprocess`` or CLIs.
+    :returns: Combined argument vector preserving the order of inputs.
+    """
 
     cli_args: List[str] = []
     for segment in segments:
@@ -347,7 +353,15 @@ def ensure_final_stage_overwrite(
     logger: logging.Logger,
     context_labels: Sequence[Tuple[str, object]] | Tuple[()],
 ) -> bool:
-    """Convenience wrapper for ``ensure_stage_overwrite_flag`` when ``stage='FINAL'``."""
+    """
+    Convenience wrapper for :func:`ensure_stage_overwrite_flag` when stage is ``FINAL``.
+
+    :param cli_args: Mutable list of CLI arguments that may require ``--overwrite``.
+    :param metrics_path: Expected metrics file within the evaluation directory.
+    :param logger: Logger used when emitting informational messages.
+    :param context_labels: Ordered ``(label, value)`` pairs included in log messages.
+    :returns: ``True`` when ``--overwrite`` was appended to ``cli_args``.
+    """
 
     return ensure_stage_overwrite_flag(
         cli_args,

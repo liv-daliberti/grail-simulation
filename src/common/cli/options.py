@@ -140,6 +140,22 @@ def add_eval_arguments(
     - When ``include_llm_args`` is True, adds LLM invocation parameters.
     - When ``include_legacy_aliases`` is True, add back-compat aliases
       (``--eval-max`` and ``--issue``).
+
+    :param parser: Argument parser to extend.
+    :param default_out_dir: Default directory for predictions and metrics when
+        ``--out_dir`` is omitted.
+    :param default_cache_dir: Default Hugging Face datasets cache directory used
+        for ``--cache_dir``.
+    :param include_llm_args: When ``True``, include generation parameters such as
+        ``--temperature``, ``--top_p``, and ``--max_tokens``.
+    :param include_opinion_args: When ``True``, include opinion‑specific flags
+        (e.g., ``--opinion_studies``, ``--opinion_max_participants``).
+    :param include_studies_filter: When ``True``, add the shared ``--studies`` filter.
+    :param dataset_default: Default value used for ``--dataset``.
+    :param issues_default: Default value used for ``--issues``.
+    :param include_legacy_aliases: When ``True``, also register legacy flag aliases
+        for back‑compatibility.
+    :returns: ``None``.
     """
 
     # eval_max with optional legacy alias
@@ -198,15 +214,19 @@ def add_eval_arguments(
             ),
         )
 
-    # Output dirs and cache
+    # Output dirs and cache (accept both underscore and hyphen aliases)
     parser.add_argument(
         "--out_dir",
+        "--out-dir",
+        dest="out_dir",
         default=default_out_dir,
         help="Directory for predictions and metrics.",
     )
     add_overwrite_argument(parser)
     parser.add_argument(
         "--cache_dir",
+        "--cache-dir",
+        dest="cache_dir",
         default=default_cache_dir,
         help="HF datasets cache directory.",
     )

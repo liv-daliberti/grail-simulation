@@ -37,7 +37,15 @@ def generate_reports(
     opinion: OpinionEvaluationResult | None,
     options: ReportOptions | None = None,
 ) -> None:
-    """Materialise Markdown reports for GRPO baselines."""
+    """
+    Materialise Markdown reports for GRPO baselines.
+
+    :param repo_root: Repository root used to resolve report output locations.
+    :param next_video: In-memory next-video evaluation results (or ``None`` when skipped).
+    :param opinion: In-memory opinion evaluation results (or ``None`` when skipped).
+    :param options: Optional report configuration (reports subdir, labels, hints).
+    :returns: ``None``.
+    """
 
     resolved_options = options or ReportOptions(
         "grpo",  # reports_subdir

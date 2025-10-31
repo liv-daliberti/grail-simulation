@@ -296,9 +296,16 @@ def run_cross_study_evaluations(
     """
     Run per-study evaluation sweeps grouped by feature space.
 
-    Historically this stage performed leave-one-study-out (LOSO) checks, but the
-    training split is now restricted to the holdout study to avoid cross-study mixtures.
-    This implementation supports reuse of cached metrics only (sufficient for tests).
+    Historically this performed leave-one-study-out (LOSO) checks, but training
+    is now restricted to the holdout study to avoid cross-study mixtures. This
+    implementation primarily supports reuse of cached metrics (sufficient for tests).
+
+    :param selections: Mapping from feature space to per-study selections that
+        determine which configuration to evaluate.
+    :param studies: Ordered list of study specifications considered in LOSO checks.
+    :param context: Evaluation context providing filesystem roots and flags.
+    :returns: Nested mapping ``{feature_space: {study_key: metrics}}`` with any
+        cached results found (may be empty when unavailable).
     """
 
     if len(studies) <= 1:

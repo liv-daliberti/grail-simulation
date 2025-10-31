@@ -151,7 +151,16 @@ def participant_bootstrap_summary(
     baseline_samples: Sequence[float] | None,
     summary_config: BootstrapSummaryConfig,
 ) -> Dict[str, Any]:
-    """Summarise participant bootstrap samples using the shared helper."""
+    """
+    Summarise participant bootstrap accuracy samples.
+
+    :param model_samples: Bootstrap samples produced for the model accuracy.
+    :param baseline_samples: Optional bootstrap samples for the baseline accuracy
+        (use ``None`` to omit baseline statistics).
+    :param summary_config: Bootstrap configuration describing group count, rows,
+        number of replicates, and RNG seed.
+    :returns: Summary dictionary with means and 95% CIs for model/baseline.
+    """
     return summarise_bootstrap_samples(
         model_samples=model_samples,
         baseline_samples=baseline_samples,
@@ -293,7 +302,15 @@ def summarise_grouped_accuracy(
     model_metric: Callable[[Sequence[_GroupItem]], float],
     baseline_metric: Callable[[Sequence[_GroupItem]], float] | None = None,
 ) -> Dict[str, Any]:
-    """Compose a grouped bootstrap summary from primitive scalar parameters."""
+    """
+    Compose a grouped bootstrap summary from primitive scalar parameters.
+
+    :param grouped: Mapping of group identifiers to sampled records.
+    :param config: Bootstrap configuration providing row count, replicates, and seed.
+    :param model_metric: Callable computing model accuracy from sampled records.
+    :param baseline_metric: Optional callable computing baseline accuracy.
+    :returns: Summary dictionary with model/baseline statistics and metadata.
+    """
 
     summary_config = BootstrapSummaryConfig(
         n_groups=len(grouped),
@@ -320,6 +337,12 @@ def summarise_grouped_accuracy_from_counts(
     Compose a grouped bootstrap summary from common scalar bootstrap arguments.
 
     Avoids repeating boilerplate ``BootstrapSummaryConfig`` construction across modules.
+
+    :param grouped: Mapping of group identifiers to sampled records.
+    :param counts: Scalar bootstrap parameters (rows, replicates, seed).
+    :param model_metric: Callable computing model accuracy from sampled records.
+    :param baseline_metric: Optional callable computing baseline accuracy.
+    :returns: Summary dictionary with model/baseline statistics and metadata.
     """
 
     summary_config = BootstrapSummaryConfig(

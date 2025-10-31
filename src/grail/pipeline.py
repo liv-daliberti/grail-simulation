@@ -51,7 +51,13 @@ def _extract_log_level(argv: Sequence[str]) -> str:
 
 
 def main(argv: Sequence[str] | None = None) -> None:
-    """Entrypoint mirroring :mod:`grpo.pipeline` with GRAIL defaults."""
+    """
+    Entrypoint mirroring :mod:`grpo.pipeline` with GRAIL defaults.
+
+    :param argv: Optional sequence of CLI tokens. When omitted, arguments are
+        read from ``sys.argv[1:]``.
+    :returns: ``None``. Delegates evaluation to :mod:`grpo.pipeline`.
+    """
 
     user_args = list(argv) if argv is not None else sys.argv[1:]
     extra_args: list[str] = []

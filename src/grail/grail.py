@@ -35,6 +35,12 @@ try:  # pragma: no cover - optional dependency
 except Exception:  # pragma: no cover - optional dependency
     # Minimal placeholder used only for type annotations / script entrypoint.
     class ModelConfig:  # type: ignore[no-redef]
+        """Lightweight stub for TRL's ``ModelConfig`` used at import time.
+
+        This placeholder allows modules to be imported in environments where
+        TRL is unavailable (e.g., Sphinx or lint-only runs). It should not be
+        instantiated during real training; the actual class is provided by TRL.
+        """
         pass
 
 try:
@@ -93,6 +99,12 @@ try:  # pragma: no cover - optional dependency re-export
 except Exception as _gail_import_error:  # pragma: no cover - optional dependency
     # Provide minimal shims so importing this module doesn't require transformers.
     class OnlineDiscriminator:  # type: ignore[too-few-public-methods]
+        """Import-time stub that surfaces a helpful error when used.
+
+        The real :class:`OnlineDiscriminator` lives in :mod:`grail.grail_gail`
+        and requires ``transformers``. Attempting to construct this stub raises
+        an :class:`ImportError` with installation guidance.
+        """
         def __init__(self, *_args, **_kwargs) -> None:
             raise ImportError(
                 "GAIL components require transformers. Install it with `pip install transformers`."
@@ -126,6 +138,10 @@ except Exception as _gail_import_error:  # pragma: no cover - optional dependenc
         )
 
     def make_gail_reward_fn(*_args, **_kwargs):  # type: ignore[empty-body]
+        """Stub for the GAIL reward-factory when ``transformers`` is missing.
+
+        :raises ImportError: Always, with instructions to install dependencies.
+        """
         raise ImportError(
             "GAIL components require transformers. Install it with `pip install transformers`."
         )

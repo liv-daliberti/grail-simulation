@@ -151,7 +151,14 @@ def _merge_sweep_outcomes(
     executed: Sequence[SweepOutcome],
 ) -> List[SweepOutcome]:
     """
-    Combine cached and freshly executed sweep outcomes preserving order indices.
+    Combine cached and freshly executed sweep outcomes while preserving order indices.
+
+    :param cached: Previously cached sweep outcomes loaded from disk.
+    :type cached: Sequence[SweepOutcome]
+    :param executed: Newly generated sweep outcomes from the current run.
+    :type executed: Sequence[SweepOutcome]
+    :returns: Ordered list containing the merged sweep outcomes.
+    :rtype: List[SweepOutcome]
     """
 
     return merge_sweep_outcomes(

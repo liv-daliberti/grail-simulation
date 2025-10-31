@@ -17,7 +17,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from dataclasses import replace
 from pathlib import Path
@@ -25,7 +24,6 @@ from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple, cas
 
 from common.opinion.sweep_types import AccuracySummary, MetricsArtifact
 from common.pipeline.executor import execute_indexed_tasks
-from common.pipeline.utils import merge_indexed_outcomes
 
 from ...core.opinion import (
     OpinionEvalRequest,
@@ -41,7 +39,12 @@ from ..context import (
     StudySpec,
     SweepConfig,
 )
-from .common import LOGGER, get_sweeps_attr
+from .common import (
+    LOGGER,
+    ensure_metrics_with_placeholder,
+    get_sweeps_attr,
+    merge_sweep_outcomes,
+)
 
 
 def _opinion_sweep_outcome_from_metrics(
@@ -337,14 +340,23 @@ def _merge_opinion_sweep_outcomes(
     cached: Sequence[OpinionSweepOutcome],
     executed: Sequence[OpinionSweepOutcome],
 ) -> List[OpinionSweepOutcome]:
-    """Merge cached and fresh opinion sweep outcomes preserving order."""
+    """
+    Merge cached and freshly executed opinion sweep outcomes while preserving order.
 
-    return merge_indexed_outcomes(
+    :param cached: Previously cached sweep outcomes loaded from disk.
+    :type cached: Sequence[OpinionSweepOutcome]
+    :param executed: Newly generated sweep outcomes from the current run.
+    :type executed: Sequence[OpinionSweepOutcome]
+    :returns: Ordered list containing the merged sweep outcomes.
+    :rtype: List[OpinionSweepOutcome]
+    """
+
+    return merge_sweep_outcomes(
         cached,
         executed,
-        logger=LOGGER,
-        message="Duplicate opinion sweep outcome for index=%d; replacing cached result.",
-        args_factory=lambda _existing, incoming: (incoming.order_index,),
+        duplicate_message=(
+            "Duplicate opinion sweep outcome for index=%d; replacing cached result."
+        ),
     )
 
 
@@ -376,17 +388,17 @@ def _execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
 
     # Opinion evaluations may be skipped (e.g., no train/eval rows).
     # Tolerate missing metrics by logging and returning a placeholder outcome.
-    metrics = load_metrics_with_log(
-        task.metrics_path,
-        task.study,
-        log_level=logging.WARNING,
-        message=(
-            "[OPINION][SWEEP][MISS] issue=%s study=%s expected metrics at %s; "
-            "recording placeholder outcome."
+    metrics = ensure_metrics_with_placeholder(
+        lambda: load_metrics_with_log(
+            task.metrics_path,
+            task.study,
+            log_level=logging.WARNING,
+            message=(
+                "[OPINION][SWEEP][MISS] issue=%s study=%s expected metrics at %s; "
+                "recording placeholder outcome."
+            ),
         ),
-    )
-    if metrics is None:
-        metrics = {
+        placeholder_factory=lambda: {
             "model": "xgb_opinion",
             "feature_space": task.feature_space,
             "study": task.study.key,
@@ -395,16 +407,10 @@ def _execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
             "metrics": {},
             "baseline": {},
             "skipped": True,
-        }
-        task.metrics_path.parent.mkdir(parents=True, exist_ok=True)
-        try:
-            with open(task.metrics_path, "w", encoding="utf-8") as handle:
-                json.dump(metrics, handle, indent=2)
-        except OSError:  # pragma: no cover - best-effort breadcrumb
-            LOGGER.debug(
-                "[OPINION][SWEEP][MISS] Unable to write placeholder metrics at %s",
-                task.metrics_path,
-            )
+        },
+        metrics_path=task.metrics_path,
+        debug_message="[OPINION][SWEEP][MISS] Unable to write placeholder metrics at %s",
+    )
     return outcome_factory(task, metrics, task.metrics_path)
 
 

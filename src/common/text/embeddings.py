@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import Any, Iterable, Sequence
 
@@ -32,6 +33,8 @@ __all__ = [
     "SentenceTransformerEncoder",
     "sentence_transformer_config_from_args",
 ]
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -84,6 +87,27 @@ class SentenceTransformerEncoder:
         self.config = config
         self._model: SentenceTransformer | None = None  # type: ignore[valid-type]
 
+    @staticmethod
+    def _should_retry_on_cpu(device: str | None, error: Exception) -> bool:
+        """Return True when ``device`` is CUDA-like but unavailable locally."""
+
+        if not device:
+            return False
+        prefix = device.split(":", 1)[0].lower()
+        if prefix not in {"cuda", "gpu"}:
+            return False
+        message = str(error).lower()
+        if not any(token in message for token in ("cuda", "gpu", "nvidia")):
+            return False
+        try:
+            import torch
+        except Exception:  # pragma: no cover - best-effort detection
+            return True
+        try:
+            return not bool(getattr(torch.cuda, "is_available", lambda: False)())
+        except Exception:  # pragma: no cover - best-effort detection
+            return True
+
     def _ensure_model(self) -> SentenceTransformer:
         """
         Return a loaded SentenceTransformer model, initialising it when necessary.
@@ -99,7 +123,18 @@ class SentenceTransformerEncoder:
                 "Install sentence-transformers to use the sentence_transformer feature space."
             )
         if self._model is None:
-            self._model = SentenceTransformer(self.config.model_name, device=self.config.device)
+            device = self.config.device
+            try:
+                self._model = SentenceTransformer(self.config.model_name, device=device)
+            except RuntimeError as error:
+                if self._should_retry_on_cpu(device, error):
+                    LOGGER.warning(
+                        "SentenceTransformer device '%s' unavailable; falling back to CPU.",
+                        device,
+                    )
+                    self._model = SentenceTransformer(self.config.model_name, device="cpu")
+                else:
+                    raise
         return self._model
 
     def encode(self, texts: Sequence[str]) -> np.ndarray:

@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import logging
+from functools import partial
 from pathlib import Path
 from typing import Callable, Dict, List, Mapping, Sequence, Tuple, cast
 
@@ -45,7 +46,18 @@ def _sweep_outcome_from_metrics(
     metrics: Mapping[str, object],
     metrics_path: Path,
 ) -> SweepOutcome:
-    """Convert cached sweep metrics into an outcome instance."""
+    """
+    Convert cached sweep metrics into an outcome instance.
+
+    :param task: Sweep task metadata describing the study/config pair.
+    :type task: SweepTask
+    :param metrics: Metrics payload loaded from ``metrics_path``.
+    :type metrics: Mapping[str, object]
+    :param metrics_path: Filesystem location of the metrics artefact.
+    :type metrics_path: Path
+    :returns: Sweep outcome populated with accuracy, coverage, and support.
+    :rtype: SweepOutcome
+    """
 
     # Prefer eligible-only accuracy when available; fall back to overall.
     acc_value = metrics.get("accuracy_eligible")
@@ -69,7 +81,18 @@ def _iter_sweep_tasks(
     configs: Sequence[SweepConfig],
     context: SweepRunContext,
 ) -> Sequence[SweepTask]:
-    """Yield sweep tasks with deterministic ordering."""
+    """
+    Yield sweep tasks with deterministic ordering.
+
+    :param studies: Participant studies slated for evaluation.
+    :type studies: Sequence[StudySpec]
+    :param configs: Hyper-parameter configurations to explore.
+    :type configs: Sequence[SweepConfig]
+    :param context: Shared sweep execution context.
+    :type context: SweepRunContext
+    :returns: Iterable sequence of sweep tasks sorted by deterministic index.
+    :rtype: Sequence[SweepTask]
+    """
 
     base_cli_tuple = tuple(context.base_cli)
     extra_cli_tuple = tuple(context.extra_cli)
@@ -146,26 +169,23 @@ def _prepare_sweep_tasks(
     return pending, cached
 
 
-def _merge_sweep_outcomes(
-    cached: Sequence[SweepOutcome],
-    executed: Sequence[SweepOutcome],
-) -> List[SweepOutcome]:
-    """
-    Combine cached and freshly executed sweep outcomes while preserving order indices.
-
-    :param cached: Previously cached sweep outcomes loaded from disk.
-    :type cached: Sequence[SweepOutcome]
-    :param executed: Newly generated sweep outcomes from the current run.
-    :type executed: Sequence[SweepOutcome]
-    :returns: Ordered list containing the merged sweep outcomes.
-    :rtype: List[SweepOutcome]
-    """
-
-    return merge_sweep_outcomes(
-        cached,
-        executed,
+_merge_sweep_outcomes = cast(
+    Callable[[Sequence[SweepOutcome], Sequence[SweepOutcome]], List[SweepOutcome]],
+    partial(
+        merge_sweep_outcomes,
         duplicate_message="Duplicate sweep outcome for index=%d; replacing cached result.",
-    )
+    ),
+)
+_merge_sweep_outcomes.__doc__ = """
+Combine cached and freshly executed next-video sweep outcomes while preserving order indices.
+
+:param cached: Previously cached next-video sweep outcomes loaded from disk.
+:type cached: Sequence[SweepOutcome]
+:param executed: Newly generated next-video sweep outcomes from the current run.
+:type executed: Sequence[SweepOutcome]
+:returns: Ordered list containing the merged next-video sweep outcomes.
+:rtype: List[SweepOutcome]
+"""
 
 
 def _execute_sweep_tasks(

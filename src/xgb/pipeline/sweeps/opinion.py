@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import logging
+from functools import partial
 from dataclasses import replace
 from pathlib import Path
 from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple, cast
@@ -144,7 +145,22 @@ def _build_opinion_vectorizer_config(
     study: StudySpec,
     extra_fields: Sequence[str],
 ) -> OpinionVectorizerConfig:
-    """Construct vectoriser settings for a single opinion sweep."""
+    """
+    Construct vectoriser settings for a single opinion sweep.
+
+    :param config: Sweep configuration that determines the feature space.
+    :type config: SweepConfig
+    :param context: Shared opinion sweep execution context.
+    :type context: OpinionSweepRunContext
+    :param run_root: Root directory receiving sweep artefacts for the task.
+    :type run_root: Path
+    :param study: Study metadata used to derive filesystem slugs.
+    :type study: StudySpec
+    :param extra_fields: Prompt document fields appended to the vectoriser inputs.
+    :type extra_fields: Sequence[str]
+    :returns: Serialisable vectoriser configuration consumed by the evaluator.
+    :rtype: OpinionVectorizerConfig
+    """
 
     feature_space = config.text_vectorizer.lower()
     vectorizer_args: Dict[str, object] = {
@@ -278,7 +294,18 @@ def _iter_opinion_sweep_tasks(
     configs: Sequence[SweepConfig],
     context: OpinionSweepRunContext,
 ) -> Sequence[OpinionSweepTask]:
-    """Yield opinion sweep tasks in a deterministic order."""
+    """
+    Yield opinion sweep tasks in a deterministic order.
+
+    :param studies: Participant studies targeted by the opinion sweeps.
+    :type studies: Sequence[StudySpec]
+    :param configs: Hyper-parameter configurations evaluated for each study.
+    :type configs: Sequence[SweepConfig]
+    :param context: Shared opinion sweep execution context.
+    :type context: OpinionSweepRunContext
+    :returns: Iterable sequence of opinion sweep tasks sorted by a stable index.
+    :rtype: Sequence[OpinionSweepTask]
+    """
 
     tasks: List[OpinionSweepTask] = []
     task_index = 0
@@ -336,28 +363,28 @@ def _prepare_opinion_sweep_tasks(
     return pending, cached
 
 
-def _merge_opinion_sweep_outcomes(
-    cached: Sequence[OpinionSweepOutcome],
-    executed: Sequence[OpinionSweepOutcome],
-) -> List[OpinionSweepOutcome]:
-    """
-    Merge cached and freshly executed opinion sweep outcomes while preserving order.
-
-    :param cached: Previously cached sweep outcomes loaded from disk.
-    :type cached: Sequence[OpinionSweepOutcome]
-    :param executed: Newly generated sweep outcomes from the current run.
-    :type executed: Sequence[OpinionSweepOutcome]
-    :returns: Ordered list containing the merged sweep outcomes.
-    :rtype: List[OpinionSweepOutcome]
-    """
-
-    return merge_sweep_outcomes(
-        cached,
-        executed,
+_merge_opinion_sweep_outcomes = cast(
+    Callable[
+        [Sequence[OpinionSweepOutcome], Sequence[OpinionSweepOutcome]],
+        List[OpinionSweepOutcome],
+    ],
+    partial(
+        merge_sweep_outcomes,
         duplicate_message=(
             "Duplicate opinion sweep outcome for index=%d; replacing cached result."
         ),
-    )
+    ),
+)
+_merge_opinion_sweep_outcomes.__doc__ = """
+Merge cached and freshly executed opinion sweep outcomes while preserving order indices.
+
+:param cached: Previously cached opinion sweep outcomes loaded from disk.
+:type cached: Sequence[OpinionSweepOutcome]
+:param executed: Newly generated opinion sweep outcomes from the current run.
+:type executed: Sequence[OpinionSweepOutcome]
+:returns: Ordered list containing the merged opinion sweep outcomes.
+:rtype: List[OpinionSweepOutcome]
+"""
 
 
 def _execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:

@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import replace
-import json
+from functools import partial
 from pathlib import Path
 from typing import Dict, List, Mapping, Sequence, Set
 
@@ -58,6 +58,7 @@ from .sweeps import (
     _load_opinion_from_next_metrics_from_disk,
     _run_xgb_cli,
 )
+from common.pipeline.metrics import ensure_metrics_with_placeholder
 
 
 LOGGER = logging.getLogger("xgb.pipeline.finalize")
@@ -183,31 +184,31 @@ def _run_final_evaluations(
         )
         _run_xgb_cli(cli_args)
         # Tolerate missing metrics (e.g., evaluator skipped due to empty rows)
-        metrics = _load_metrics_with_log(
+        study_spec = selection.study
+        loader = partial(
+            _load_metrics_with_log,
             metrics_path,
-            selection.study,
+            study_spec,
             log_level=logging.WARNING,
             message=(
                 "[FINAL][MISS] issue=%s study=%s missing metrics at %s; "
                 "recording placeholder outcome."
             ),
         )
-        if metrics is None:
-            metrics = make_placeholder_metrics(
-                selection.study.evaluation_slug,
-                [selection.study.key],
-                skip_reason="No metrics written (evaluation skipped)",
-            )
-            metrics_path.parent.mkdir(parents=True, exist_ok=True)
-            try:
-                with open(metrics_path, "w", encoding="utf-8") as handle:
-                    json.dump(metrics, handle, indent=2)
-            except OSError:  # pragma: no cover - best-effort breadcrumb
-                LOGGER.debug(
-                    "[FINAL][MISS] Unable to write placeholder metrics at %s",
-                    metrics_path,
-                )
-        _inject_study_metadata(metrics, selection.study)
+        placeholder_factory = partial(
+            make_placeholder_metrics,
+            study_spec.evaluation_slug,
+            [study_spec.key],
+            skip_reason="No metrics written (evaluation skipped)",
+        )
+        metrics = ensure_metrics_with_placeholder(
+            loader,
+            placeholder_factory=placeholder_factory,
+            metrics_path=metrics_path,
+            debug_message="[FINAL][MISS] Unable to write placeholder metrics at %s",
+            logger=LOGGER,
+        )
+        _inject_study_metadata(metrics, study_spec)
         metrics_by_study[study_key] = metrics
     return metrics_by_study
 

@@ -28,6 +28,11 @@ try:  # pragma: no cover - optional dependency
 except ImportError:  # pragma: no cover - optional dependency
     SentenceTransformer = None  # type: ignore[assignment]
 
+try:  # pragma: no cover - optional dependency
+    import torch  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    torch = None  # type: ignore[assignment]
+
 __all__ = [
     "SentenceTransformerConfig",
     "SentenceTransformerEncoder",
@@ -99,13 +104,17 @@ class SentenceTransformerEncoder:
         message = str(error).lower()
         if not any(token in message for token in ("cuda", "gpu", "nvidia")):
             return False
-        try:
-            import torch
-        except Exception:  # pragma: no cover - best-effort detection
+        if torch is None:
+            return True
+        cuda = getattr(torch, "cuda", None)
+        if cuda is None:
+            return True
+        is_available = getattr(cuda, "is_available", None)
+        if not callable(is_available):
             return True
         try:
-            return not bool(getattr(torch.cuda, "is_available", lambda: False)())
-        except Exception:  # pragma: no cover - best-effort detection
+            return not bool(is_available())
+        except (AssertionError, RuntimeError, TypeError, ValueError):  # pragma: no cover - best-effort detection
             return True
 
     def _ensure_model(self) -> SentenceTransformer:

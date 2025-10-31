@@ -18,11 +18,11 @@
 from __future__ import annotations
 
 import logging
-from functools import partial
 from pathlib import Path
-from typing import Callable, Dict, List, Mapping, Sequence, Tuple, cast
+from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple, cast
 
 from common.pipeline.executor import execute_indexed_tasks
+from common.pipeline.metrics import ensure_metrics_with_placeholder
 from common.pipeline.utils import make_placeholder_metrics
 
 from ..context import (
@@ -35,9 +35,8 @@ from ..context import (
 )
 from .common import (
     LOGGER,
-    ensure_metrics_with_placeholder,
+    build_merge_sweep_outcomes,
     get_sweeps_attr,
-    merge_sweep_outcomes,
 )
 
 
@@ -171,21 +170,10 @@ def _prepare_sweep_tasks(
 
 _merge_sweep_outcomes = cast(
     Callable[[Sequence[SweepOutcome], Sequence[SweepOutcome]], List[SweepOutcome]],
-    partial(
-        merge_sweep_outcomes,
+    build_merge_sweep_outcomes(
         duplicate_message="Duplicate sweep outcome for index=%d; replacing cached result.",
     ),
 )
-_merge_sweep_outcomes.__doc__ = """
-Combine cached and freshly executed next-video sweep outcomes while preserving order indices.
-
-:param cached: Previously cached next-video sweep outcomes loaded from disk.
-:type cached: Sequence[SweepOutcome]
-:param executed: Newly generated next-video sweep outcomes from the current run.
-:type executed: Sequence[SweepOutcome]
-:returns: Ordered list containing the merged next-video sweep outcomes.
-:rtype: List[SweepOutcome]
-"""
 
 
 def _execute_sweep_tasks(
@@ -315,7 +303,7 @@ def _execute_sweep_task(task: SweepTask) -> SweepOutcome:
     # Handle runs that were skipped by the evaluator (e.g., no train/eval rows)
     # by logging and producing a placeholder outcome instead of raising.
     load_metrics_with_log = cast(
-        Callable[..., Dict[str, object] | None],
+        Callable[..., Optional[Dict[str, object]]],
         get_sweeps_attr("_load_metrics_with_log"),
     )
     metrics = ensure_metrics_with_placeholder(
@@ -335,6 +323,7 @@ def _execute_sweep_task(task: SweepTask) -> SweepOutcome:
         ),
         metrics_path=task.metrics_path,
         debug_message="[SWEEP][MISS] Unable to write placeholder metrics at %s",
+        logger=LOGGER,
     )
     return SweepOutcome(
         order_index=task.index,
@@ -401,7 +390,7 @@ def _load_loso_metrics_from_disk(
 
     metrics_by_study: Dict[str, Mapping[str, object]] = {}
     load_metrics_with_log = cast(
-        Callable[..., Dict[str, object] | None],
+        Callable[..., Optional[Dict[str, object]]],
         get_sweeps_attr("_load_metrics_with_log"),
     )
     inject_metadata = cast(

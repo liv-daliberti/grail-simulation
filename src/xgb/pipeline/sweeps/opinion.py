@@ -18,7 +18,6 @@
 from __future__ import annotations
 
 import logging
-from functools import partial
 from dataclasses import replace
 from pathlib import Path
 from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple, cast
@@ -40,12 +39,7 @@ from ..context import (
     StudySpec,
     SweepConfig,
 )
-from .common import (
-    LOGGER,
-    ensure_metrics_with_placeholder,
-    get_sweeps_attr,
-    merge_sweep_outcomes,
-)
+from .common import LOGGER, get_sweeps_attr, merge_sweep_outcomes, persist_metrics_payload
 
 
 def _opinion_sweep_outcome_from_metrics(
@@ -368,8 +362,7 @@ _merge_opinion_sweep_outcomes = cast(
         [Sequence[OpinionSweepOutcome], Sequence[OpinionSweepOutcome]],
         List[OpinionSweepOutcome],
     ],
-    partial(
-        merge_sweep_outcomes,
+    build_merge_sweep_outcomes(
         duplicate_message=(
             "Duplicate opinion sweep outcome for index=%d; replacing cached result."
         ),
@@ -391,7 +384,7 @@ def _execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
     """Execute a single opinion sweep task and return the resulting metrics."""
 
     load_metrics_with_log = cast(
-        Callable[..., Dict[str, object] | None],
+        Callable[..., Optional[Dict[str, object]]],
         get_sweeps_attr("_load_metrics_with_log"),
     )
     outcome_factory = cast(

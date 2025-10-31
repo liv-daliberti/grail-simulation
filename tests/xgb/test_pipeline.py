@@ -17,6 +17,8 @@ from xgb import pipeline_cli as cli
 from xgb import pipeline_evaluate as evaluate
 from xgb import pipeline_reports as reports
 from xgb import pipeline_sweeps as sweeps
+from xgb.pipeline.sweeps import opinion as sweeps_opinion
+from xgb.pipeline.sweeps.common import get_sweeps_attr
 from xgb.pipeline_context import (
     FinalEvalContext,
     OpinionStageConfig,
@@ -53,6 +55,24 @@ def _make_sweep_config(tag: str = "tfidf") -> SweepConfig:
         reg_lambda=1.0,
         reg_alpha=0.0,
         vectorizer_cli=(),
+    )
+
+
+def _make_opinion_run_context(base_dir: Path) -> OpinionSweepRunContext:
+    return OpinionSweepRunContext(
+        dataset="dataset",
+        cache_dir="cache",
+        sweep_dir=base_dir,
+        extra_fields=("extra",),
+        max_participants=42,
+        seed=7,
+        max_features=1024,
+        tree_method="hist",
+        overwrite=True,
+        tfidf_config=TfidfConfig(max_features=2048),
+        word2vec_config=Word2VecVectorizerConfig(),
+        sentence_transformer_config=SentenceTransformerVectorizerConfig(),
+        word2vec_model_base=None,
     )
 
 
@@ -112,6 +132,50 @@ def test_build_sweep_configs_supports_multiple_vectorisers() -> None:
     assert sentence_config.vectorizer_tag.startswith("st_")
     assert "--sentence_transformer_model" in sentence_config.vectorizer_cli
     assert "--sentence_transformer_normalize" in sentence_config.vectorizer_cli
+
+
+def test_get_sweeps_attr_resolves_public_exports(monkeypatch: pytest.MonkeyPatch) -> None:
+    sentinel = object()
+    monkeypatch.setattr(sweeps, "_temporary_helper", sentinel, raising=False)
+    assert get_sweeps_attr("_temporary_helper") is sentinel
+
+
+def test_get_sweeps_attr_raises_for_missing_attribute() -> None:
+    with pytest.raises(AttributeError):
+        get_sweeps_attr("_definitely_missing_helper")
+
+
+def test_build_opinion_task_shapes_request_arguments(tmp_path: Path) -> None:
+    study = _make_study_spec()
+    config = _make_sweep_config()
+    context = _make_opinion_run_context(tmp_path)
+
+    task = sweeps_opinion._build_opinion_task(
+        config=config,
+        study=study,
+        context=context,
+        task_index=3,
+    )
+
+    expected_root = (
+        context.sweep_dir / study.issue_slug / study.study_slug / config.label()
+    )
+    assert task.feature_space == config.text_vectorizer
+    assert task.metrics_path == (
+        expected_root
+        / config.text_vectorizer
+        / study.key
+        / f"opinion_xgb_{study.key}_validation_metrics.json"
+    )
+
+    request_args = task.request_args
+    assert request_args["dataset"] == context.dataset
+    assert request_args["cache_dir"] == context.cache_dir
+    assert request_args["out_dir"] == expected_root
+
+    train_config = request_args["train_config"]
+    assert train_config.max_participants == context.max_participants
+    assert train_config.booster.learning_rate == pytest.approx(config.learning_rate)
 
 
 def test_parse_args_accepts_tasks() -> None:

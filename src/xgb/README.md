@@ -26,7 +26,12 @@ src/xgb/
 │   ├── cli.py                   # Top-level pipeline CLI + default paths
 │   ├── context.py               # Path resolution + execution configuration
 │   ├── evaluate.py              # Finalization + opinion execution
-│   ├── sweeps.py                # Hyper-parameter grids and task partitioning
+│   ├── sweeps/                  # Hyper-parameter grids and task helpers
+│   │   ├── __init__.py          # Public API with backwards-compatible exports
+│   │   ├── common.py            # Shared loaders + CLI execution utilities
+│   │   ├── next_video.py        # Slate sweep execution + selection
+│   │   ├── opinion.py           # Opinion sweep execution + selection
+│   │   └── planning.py          # Human-readable sweep plan helpers
 │   └── reports/                 # Markdown builders for reports/xgb/*
 ├── pipeline_reports/            # Legacy shims forwarding to pipeline/reports/*
 ├── scripts/                     # Backwards-compatible entry points

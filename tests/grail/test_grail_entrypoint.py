@@ -91,6 +91,7 @@ def _stub_grail_modules(monkeypatch: Any, script_dir: Path) -> None:
     grail_mixer_mod = _make_module(
         "grail.grail_mixer",
         {
+            "LearnableRewardCallable": type("LearnableRewardCallable", (), {}),
             "LearnableRewardMixer": type("LearnableRewardMixer", (), {}),
             "MixerSetup": type("MixerSetup", (), {}),
         },

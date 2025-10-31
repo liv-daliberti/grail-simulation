@@ -337,78 +337,108 @@ def build_pipeline_context(args: argparse.Namespace, root: Path) -> PipelineCont
         Word2Vec parameters, SentenceTransformer settings, and task toggles.
     :rtype: ~knn.pipeline.context.PipelineContext
     """
-    # pylint: disable=too-many-locals,too-many-statements
-    dataset = args.dataset or os.environ.get("DATASET") or default_dataset(root)
+    paths = _resolve_paths(args, root)
+    settings = _resolve_settings(args)
+    return _build_context_from(paths, settings)
+
+
+def _resolve_paths(args: argparse.Namespace, root: Path) -> dict:
+    """Resolve dataset and directory paths from CLI and environment."""
     out_dir_value = args.out_dir or os.environ.get("OUT_DIR") or default_out_dir(root)
     out_dir = Path(out_dir_value)
     next_video_dir = out_dir / "next_video"
     opinion_dir = out_dir / "opinions"
-    cache_dir_value = args.cache_dir or os.environ.get("CACHE_DIR") or default_cache_dir(root)
-    sweep_dir = Path(
-        args.sweep_dir or os.environ.get("KNN_SWEEP_DIR") or (next_video_dir / "sweeps")
-    )
-    opinion_sweep_dir = Path(
-        os.environ.get("KNN_OPINION_SWEEP_DIR") or (opinion_dir / "sweeps")
-    )
-    word2vec_model_dir = Path(
-        args.word2vec_model_dir
-        or os.environ.get("WORD2VEC_MODEL_DIR")
-        or (next_video_dir / "word2vec_models")
-    )
-    opinion_word2vec_dir = Path(
-        os.environ.get("KNN_OPINION_WORD2VEC_DIR") or (opinion_dir / "word2vec_models")
-    )
-    k_sweep = (
-        args.k_sweep
-        or os.environ.get("KNN_K_SWEEP")
-        or "1,2,3,4,5,10,15,20,25,50,75,100,125,150"
-    )
+    return {
+        "dataset": args.dataset or os.environ.get("DATASET") or default_dataset(root),
+        "out_dir": out_dir,
+        "cache_dir": args.cache_dir or os.environ.get("CACHE_DIR") or default_cache_dir(root),
+        "sweep_dir": Path(
+            getattr(args, "sweep_dir", None)
+            or os.environ.get("KNN_SWEEP_DIR")
+            or (next_video_dir / "sweeps")
+        ),
+        "opinion_sweep_dir": Path(
+            os.environ.get("KNN_OPINION_SWEEP_DIR") or (opinion_dir / "sweeps")
+        ),
+        "word2vec_model_dir": Path(
+            args.word2vec_model_dir
+            or os.environ.get("WORD2VEC_MODEL_DIR")
+            or (next_video_dir / "word2vec_models")
+        ),
+        "opinion_word2vec_dir": Path(
+            os.environ.get("KNN_OPINION_WORD2VEC_DIR") or (opinion_dir / "word2vec_models")
+        ),
+        "next_video_dir": next_video_dir,
+        "opinion_dir": opinion_dir,
+    }
+
+
+def _resolve_settings(args: argparse.Namespace) -> dict:
+    """Resolve non-path settings and toggles from CLI and environment."""
     run_next_video, run_opinion = _resolve_task_configuration(args)
+    sentence_model, sentence_device, sentence_batch_size, sentence_normalize = _resolve_sentence_settings(
+        args
+    )
     study_tokens = tuple(
         _split_tokens(getattr(args, "studies", ""))
         or _split_tokens(os.environ.get("KNN_STUDIES", ""))
         or _split_tokens(args.issues or "")
         or _split_tokens(os.environ.get("KNN_ISSUES", ""))
     )
-    word2vec_epochs = int(os.environ.get("WORD2VEC_EPOCHS", "10"))
-    word2vec_workers = _default_word2vec_workers()
-    (
-        sentence_model,
-        sentence_device,
-        sentence_batch_size,
-        sentence_normalize,
-    ) = _resolve_sentence_settings(args)
-    resolved_feature_spaces = _resolve_feature_spaces(args)
-    reuse_sweeps = _resolve_reuse_flag(getattr(args, "reuse_sweeps", False), "KNN_REUSE_SWEEPS")
-    reuse_final = _resolve_reuse_flag(getattr(args, "reuse_final", False), "KNN_REUSE_FINAL")
-    jobs = _resolve_jobs(args)
-    allow_incomplete = _resolve_allow_incomplete(args)
+    return {
+        "k_sweep": (
+            getattr(args, "k_sweep", None)
+            or os.environ.get("KNN_K_SWEEP")
+            or "1,2,3,4,5,10,15,20,25,50,75,100,125,150"
+        ),
+        "run_next_video": run_next_video,
+        "run_opinion": run_opinion,
+        "study_tokens": study_tokens,
+        "word2vec_epochs": int(os.environ.get("WORD2VEC_EPOCHS", "10")),
+        "word2vec_workers": _default_word2vec_workers(),
+        "sentence_model": sentence_model,
+        "sentence_device": sentence_device,
+        "sentence_batch_size": sentence_batch_size,
+        "sentence_normalize": sentence_normalize,
+        "feature_spaces": _resolve_feature_spaces(args),
+        "reuse_sweeps": _resolve_reuse_flag(
+            getattr(args, "reuse_sweeps", False), "KNN_REUSE_SWEEPS"
+        ),
+        "reuse_final": _resolve_reuse_flag(
+            getattr(args, "reuse_final", False), "KNN_REUSE_FINAL"
+        ),
+        "jobs": _resolve_jobs(args),
+        "allow_incomplete": _resolve_allow_incomplete(args),
+    }
 
+
+def _build_context_from(paths: dict, settings: dict) -> PipelineContext:
+    """Construct a PipelineContext from resolved paths and settings dictionaries."""
     return PipelineContext(
-        dataset=dataset,
-        out_dir=out_dir,
-        cache_dir=str(cache_dir_value),
-        sweep_dir=sweep_dir,
-        word2vec_model_dir=word2vec_model_dir,
-        next_video_dir=next_video_dir,
-        opinion_dir=opinion_dir,
-        opinion_sweep_dir=opinion_sweep_dir,
-        opinion_word2vec_dir=opinion_word2vec_dir,
-        k_sweep=k_sweep,
-        study_tokens=study_tokens,
-        word2vec_epochs=word2vec_epochs,
-        word2vec_workers=word2vec_workers,
-        sentence_model=sentence_model,
-        sentence_device=sentence_device,
-        sentence_batch_size=sentence_batch_size,
-        sentence_normalize=sentence_normalize,
-        feature_spaces=resolved_feature_spaces,
-        jobs=jobs,
-        reuse_sweeps=reuse_sweeps,
-        reuse_final=reuse_final,
-        allow_incomplete=allow_incomplete,
-        run_next_video=run_next_video,
-        run_opinion=run_opinion,
+        dataset=paths["dataset"],
+        out_dir=paths["out_dir"],
+        cache_dir=str(paths["cache_dir"]),
+        sweep_dir=paths["sweep_dir"],
+        word2vec_model_dir=paths["word2vec_model_dir"],
+        next_video_dir=paths["next_video_dir"],
+        opinion_dir=paths["opinion_dir"],
+        opinion_sweep_dir=paths["opinion_sweep_dir"],
+        opinion_word2vec_dir=paths["opinion_word2vec_dir"],
+        k_sweep=settings["k_sweep"],
+        study_tokens=settings["study_tokens"],
+        word2vec_epochs=settings["word2vec_epochs"],
+        word2vec_workers=settings["word2vec_workers"],
+        sentence_model=settings["sentence_model"],
+        sentence_device=settings["sentence_device"],
+        sentence_batch_size=settings["sentence_batch_size"],
+        sentence_normalize=settings["sentence_normalize"],
+        feature_spaces=settings["feature_spaces"],
+        jobs=settings["jobs"],
+        reuse_sweeps=settings["reuse_sweeps"],
+        reuse_final=settings["reuse_final"],
+        allow_incomplete=settings["allow_incomplete"],
+        run_next_video=settings["run_next_video"],
+        run_opinion=settings["run_opinion"],
     )
 
 def build_base_cli(context: PipelineContext, extra_cli: Sequence[str] | None = None) -> List[str]:

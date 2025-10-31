@@ -225,6 +225,9 @@ class OpinionEvaluationControls:
     max_participants: int
     direction_tolerance: float
     overwrite: bool
+    # Periodic flush interval (participants). When >0, artefacts are persisted
+    # incrementally during evaluation to improve resilience.
+    flush_every: int = 0
 
 
 @dataclass(frozen=True)
@@ -409,6 +412,7 @@ class OpinionStudyContext:
     direction_tolerance: float
     inference: OpinionInferenceContext
     overwrite: bool
+    flush_every: int
 
 
 @dataclass(frozen=True)
@@ -621,6 +625,7 @@ def _evaluate_study(
     else:
         processed = 0
 
+    flush_every = int(getattr(study_context, "flush_every", 0) or 0)
     for idx, example in enumerate(examples, start=1):
         if processed and idx <= processed:
             continue
@@ -674,6 +679,39 @@ def _evaluate_study(
             % (spec.key, idx, before, after, pred, err, str(dir_ok).lower()),
             flush=True,
         )
+        # Periodically persist partial artefacts for resilience and resumability.
+        if flush_every > 0 and (processed + idx) % flush_every == 0:
+            try:
+                # Write current predictions and QA log
+                _write_predictions(files.predictions, accumulator.predictions)
+                write_segmented_markdown_log(
+                    files.qa_log,
+                    title="GRPO Opinion QA Log",
+                    entries=accumulator.qa_entries,
+                )
+                # Update metrics snapshot for visibility (partial metrics)
+                snapshot = compute_opinion_metrics(
+                    truth_after=accumulator.truth_after,
+                    truth_before=accumulator.truth_before,
+                    pred_after=accumulator.pred_after,
+                    direction_tolerance=study_context.direction_tolerance,
+                )
+                baseline = _compute_baseline_metrics(
+                    truth_after=accumulator.truth_after,
+                    truth_before=accumulator.truth_before,
+                )
+                write_metrics_json(files.metrics, {"metrics": snapshot, "baseline": baseline})
+                LOGGER.debug(
+                    "[OPINION] flushed partial artefacts study=%s at %d participants",
+                    spec.key,
+                    processed + idx,
+                )
+            except Exception:
+                LOGGER.warning(
+                    "[OPINION] flush failed at study=%s count=%d; continuing",
+                    spec.key,
+                    processed + idx,
+                )
 
     metrics = compute_opinion_metrics(
         truth_after=accumulator.truth_after,
@@ -858,6 +896,7 @@ def run_opinion_evaluation(
         direction_tolerance=settings.controls.direction_tolerance,
         inference=context,
         overwrite=settings.controls.overwrite,
+        flush_every=int(getattr(settings.controls, "flush_every", 0) or 0),
     )
 
     for spec in _resolve_studies(settings.include_studies):

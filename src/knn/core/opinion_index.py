@@ -18,7 +18,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Sequence, Tuple
+from typing import Any, Sequence, Tuple, Optional
 
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -48,52 +48,75 @@ def _build_tfidf_matrix(documents: Sequence[str]) -> Tuple[TfidfVectorizer, Any]
     return vectorizer, matrix
 
 
-def build_index(  # pylint: disable=too-many-arguments,too-many-locals,too-many-statements
+class OpinionIndexConfig:
+    """
+    Configuration for building an :class:`OpinionIndex`.
+
+    :param feature_space: Feature space identifier (``tfidf``, ``word2vec``,
+        or ``sentence_transformer``).
+    :type feature_space: str
+    :param metric: Distance metric used for neighbour search (``cosine`` or ``l2``).
+    :type metric: str
+    :param seed: Pseudo-random seed used by components that rely on randomness.
+    :type seed: int
+    :param word2vec: Optional Word2Vec configuration for the ``word2vec`` feature space.
+    :type word2vec: Optional[~knn.core.features.Word2VecConfig]
+    :param sentence_transformer: Optional sentence-transformer configuration for the
+        ``sentence_transformer`` feature space.
+    :type sentence_transformer: Optional[~common.text.embeddings.SentenceTransformerConfig]
+    """
+
+    def __init__(
+        self,
+        *,
+        feature_space: str,
+        metric: str,
+        seed: int,
+        word2vec: Optional[Word2VecConfig] = None,
+        sentence_transformer: Optional[SentenceTransformerConfig] = None,
+    ) -> None:
+        self.feature_space = feature_space
+        self.metric = metric
+        self.seed = seed
+        self.word2vec = word2vec
+        self.sentence_transformer = sentence_transformer
+
+
+def build_index(  # pylint: disable=too-many-statements
     *,
     examples: Sequence[OpinionExample],
-    feature_space: str,
     spec: OpinionSpec,
-    seed: int,
-    metric: str,
-    word2vec_config: Word2VecConfig | None = None,
-    sentence_config: SentenceTransformerConfig | None = None,
+    config: OpinionIndexConfig,
 ) -> OpinionIndex:
     """
     Vectorise ``examples`` and construct a neighbour index.
 
     :param examples: Collection of dataset rows used in the evaluation.
     :type examples: Sequence[OpinionExample]
-    :param feature_space: Feature space identifier such as ``tfidf`` or ``word2vec``.
-    :type feature_space: str
+    :param config: Configuration controlling feature space, metric, and encoders.
+    :type config: ~knn.core.opinion_index.OpinionIndexConfig
     :param spec: Opinion study specification containing issue metadata.
     :type spec: OpinionSpec
-    :param seed: Seed used to initialise pseudo-random operations.
-    :type seed: int
-    :param metric: Name of the evaluation metric being inspected.
-    :type metric: str
-    :param word2vec_config: Configuration object carrying Word2Vec hyper-parameters.
-    :type word2vec_config: Optional[Word2VecConfig]
-    :param sentence_config: Sentence-transformer configuration describing encoding details.
-    :type sentence_config: Optional[SentenceTransformerConfig]
     :returns: Configured KNN index ready for inference.
     :rtype: OpinionIndex
     """
-    # pylint: disable=too-many-arguments,too-many-locals
-    np.random.seed(seed)
+    np.random.seed(int(config.seed))
 
     documents = [example.document for example in examples]
-    feature_space = (feature_space or "tfidf").lower()
+    feature_space = (config.feature_space or "tfidf").lower()
 
     if feature_space == "tfidf":
         vectorizer, matrix = _build_tfidf_matrix(documents)
         embeds = None
     elif feature_space == "word2vec":
-        embeds = Word2VecFeatureBuilder(word2vec_config)
+        embeds = Word2VecFeatureBuilder(config.word2vec)
         embeds.train(documents)
         matrix = embeds.transform(documents)
         vectorizer = None
     elif feature_space == "sentence_transformer":
-        encoder = SentenceTransformerEncoder(sentence_config or SentenceTransformerConfig())
+        encoder = SentenceTransformerEncoder(
+            config.sentence_transformer or SentenceTransformerConfig()
+        )
         matrix = encoder.encode(documents).astype(np.float32, copy=False)
         if not hasattr(encoder, "transform"):
             setattr(encoder, "transform", encoder.encode)  # type: ignore[attr-defined]
@@ -132,7 +155,7 @@ def build_index(  # pylint: disable=too-many-arguments,too-many-locals,too-many-
     participant_keys = [(example.participant_id, example.participant_study) for example in examples]
 
     max_neighbors = max(25, len(examples))
-    metric_norm = (metric or "cosine").lower()
+    metric_norm = (config.metric or "cosine").lower()
     if metric_norm not in {"cosine", "l2", "euclidean"}:
         LOGGER.warning("[OPINION] Unsupported metric '%s'; falling back to cosine.", metric)
         metric_norm = "cosine"

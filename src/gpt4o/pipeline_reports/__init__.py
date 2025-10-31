@@ -27,6 +27,7 @@ from ..core.opinion import OpinionEvaluationResult
 from ..pipeline.models import SweepOutcome
 write_markdown_lines = import_module("common.pipeline.io").write_markdown_lines
 start_markdown_report = import_module("common.reports.utils").start_markdown_report
+write_sample_responses_report = import_module("common.reports.samples").write_sample_responses_report
 
 
 @dataclass(frozen=True)
@@ -599,6 +600,29 @@ def generate_reports(
         selected=selected,
         opinion=opinion_result,
         context=context,
+    )
+
+    # Render a small gallery of sample model responses (5 per issue).
+    try:
+        label = selected.config.label()
+    except Exception:
+        label = None
+    next_files: List[Path] = []
+    opinion_files: List[Path] = []
+    if label:
+        nv_path = context.repo_root / "models" / "gpt-4o" / "next_video" / label / "predictions.jsonl"
+        if nv_path.exists():
+            next_files.append(nv_path)
+        op_dir = context.repo_root / "models" / "gpt-4o" / "opinion" / label
+        if op_dir.exists():
+            for p in sorted(op_dir.rglob("predictions.jsonl")):
+                opinion_files.append(p)
+    write_sample_responses_report(
+        reports_root=context.reports_dir,
+        family_label="GPT-4o",
+        next_video_files=next_files,
+        opinion_files=opinion_files,
+        per_issue=5,
     )
 
 

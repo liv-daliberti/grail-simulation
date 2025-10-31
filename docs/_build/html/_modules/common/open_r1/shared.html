@@ -1,0 +1,1169 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../../../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html"><link rel="search" title="Search" href="../../../search.html">
+
+    <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
+        <title>common.open_r1.shared - GRAIL Simulation documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=580074bf" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  --color-brand-primary: #1f4b8e;
+  --color-brand-content: #1f4b8e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #8bbcef;
+  --color-brand-content: #8bbcef;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #8bbcef;
+  --color-brand-content: #8bbcef;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../../index.html"><div class="brand">GRAIL Simulation  documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
+  
+  <span class="sidebar-brand-text">GRAIL Simulation  documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/common.html">Common Utilities API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/clean_data.html">Clean Data Pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/prompt_builder.html">Prompt Builder API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/knn.html">KNN Baseline API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/gpt4o.html">GPT-4o Tools API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/open_r1.html">Open-R1 Training API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/rlhf.html">Shared RLHF Helpers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/grail.html">GRAIL Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/xgb.html">XGBoost Baseline API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/visualization.html">Visualization Utilities</a></li>
+</ul>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../reports/index.html">Reports</a><input aria-label="Toggle navigation of Reports" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reports/prompt_stats.html">Prompt feature report</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reports/grpo.html">GRPO Reports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reports/grail.html">GRAIL Reports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reports/visualized_recommendation_trees.html">Visualized Recommendation Trees</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <h1>Source code for common.open_r1.shared</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># Copyright 2025 The Grail Simulation Contributors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Shared helpers for the Open R1 training and evaluation pipelines.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_model</span>
+
+<span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.utils.callbacks</span><span class="w"> </span><span class="kn">import</span> <span class="n">PushToHubRevisionCallback</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="n">PushToHubRevisionCallback</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
+
+<span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">transformers.trainer_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntervalStrategy</span><span class="p">,</span> <span class="n">get_last_checkpoint</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">IntervalStrategyFallback</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fallback interval strategy constants when transformers is unavailable.&quot;&quot;&quot;</span>
+
+        <span class="n">NO</span> <span class="o">=</span> <span class="s2">&quot;no&quot;</span>
+        <span class="n">STEPS</span> <span class="o">=</span> <span class="s2">&quot;steps&quot;</span>
+
+    <span class="n">IntervalStrategy</span> <span class="o">=</span> <span class="n">IntervalStrategyFallback</span>  <span class="c1"># type: ignore[assignment]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_last_checkpoint</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>  <span class="c1"># type: ignore[override]</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Signal that transformers is required for checkpoint discovery.</span>
+
+<span class="sd">        :returns: Never returns; always raises ``ImportError``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="s2">&quot;transformers must be installed to resolve checkpoints &quot;</span>
+            <span class="s2">&quot;(pip install transformers).&quot;</span>
+        <span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">trl</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrlParser</span><span class="p">,</span> <span class="n">get_peft_config</span>  <span class="c1"># pylint: disable=import-error</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">trl.trainer.grpo_trainer</span><span class="w"> </span><span class="kn">import</span> <span class="n">GRPOTrainer</span>  <span class="c1"># pylint: disable=import-error</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+    <span class="n">TrlParser</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
+    <span class="n">get_peft_config</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
+    <span class="n">GRPOTrainer</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
+
+<span class="c1"># Common prompt and column definitions -----------------------------------------------------------</span>
+
+<span class="n">PASSTHROUGH_FIELDS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;issue&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;session_id&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;step_index&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;display_step&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;display_order_key&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;issue_source&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;issue_detail&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;slate_source&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;next_video_id&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;next_video_title&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;next_video_channel&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;next_video_channel_id&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;urlid&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;topic_id&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">BASE_TRAIN_KEEP_COLUMNS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;prompt&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;answer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;opinion_direction&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gold_index&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gold_id&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;n_options&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;viewer_profile&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;state_text&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;slate_items&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;slate_text&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;watched_detailed_json&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;watched_vids_json&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;current_video_id&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;current_video_title&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;task&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;is_replay&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;accuracy&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;mix_group_id&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;mix_copy_idx&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">collect_passthrough_fields</span><span class="p">(</span><span class="n">example</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a mapping containing the shared passthrough metadata.</span>
+
+<span class="sd">    :param example: Dataset row providing passthrough fields.</span>
+<span class="sd">    :returns: Subset of ``example`` limited to :data:`PASSTHROUGH_FIELDS`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="p">{</span><span class="n">field</span><span class="p">:</span> <span class="n">example</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">PASSTHROUGH_FIELDS</span> <span class="k">if</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">example</span><span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">build_training_example</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-arguments</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">system_prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">user_prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">gold_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">gold_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">n_options</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">viewer_profile</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">slate_items</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+    <span class="n">slate_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">watched_detailed_json</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">watched_vids_json</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">current_video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">current_video_title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">extra_fields</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Assemble the common training example payload used by GRPO variants.</span>
+
+<span class="sd">    :param system_prompt: System prompt inserted as the first message.</span>
+<span class="sd">    :param user_prompt: User prompt forming the main training input.</span>
+<span class="sd">    :param gold_index: 1-based index of the correct answer.</span>
+<span class="sd">    :param gold_id: Identifier corresponding to the correct slate item.</span>
+<span class="sd">    :param n_options: Number of options presented in the slate.</span>
+<span class="sd">    :param viewer_profile: Natural-language description of the viewer.</span>
+<span class="sd">    :param slate_items: Sequence of slate metadata dictionaries.</span>
+<span class="sd">    :param slate_text: Human-readable slate text included in the prompt.</span>
+<span class="sd">    :param watched_detailed_json: Historical watch metadata (detailed).</span>
+<span class="sd">    :param watched_vids_json: Historical watch metadata (video ids).</span>
+<span class="sd">    :param current_video_id: Identifier of the current video.</span>
+<span class="sd">    :param current_video_title: Title of the current video.</span>
+<span class="sd">    :param extra_fields: Optional additional fields to merge into the payload.</span>
+<span class="sd">    :returns: Dictionary representing a GRPO training example.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">example</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;prompt&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;system&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">system_prompt</span><span class="p">},</span>
+            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">user_prompt</span><span class="p">},</span>
+        <span class="p">],</span>
+        <span class="s2">&quot;answer&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">gold_index</span><span class="p">),</span>
+        <span class="s2">&quot;gold_index&quot;</span><span class="p">:</span> <span class="n">gold_index</span><span class="p">,</span>
+        <span class="s2">&quot;gold_id&quot;</span><span class="p">:</span> <span class="n">gold_id</span><span class="p">,</span>
+        <span class="s2">&quot;n_options&quot;</span><span class="p">:</span> <span class="n">n_options</span><span class="p">,</span>
+        <span class="s2">&quot;viewer_profile&quot;</span><span class="p">:</span> <span class="n">viewer_profile</span><span class="p">,</span>
+        <span class="s2">&quot;state_text&quot;</span><span class="p">:</span> <span class="n">user_prompt</span><span class="p">,</span>
+        <span class="s2">&quot;slate_items&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">slate_items</span><span class="p">),</span>
+        <span class="s2">&quot;slate_text&quot;</span><span class="p">:</span> <span class="n">slate_text</span><span class="p">,</span>
+        <span class="s2">&quot;watched_detailed_json&quot;</span><span class="p">:</span> <span class="n">watched_detailed_json</span><span class="p">,</span>
+        <span class="s2">&quot;watched_vids_json&quot;</span><span class="p">:</span> <span class="n">watched_vids_json</span><span class="p">,</span>
+        <span class="s2">&quot;current_video_id&quot;</span><span class="p">:</span> <span class="n">current_video_id</span><span class="p">,</span>
+        <span class="s2">&quot;current_video_title&quot;</span><span class="p">:</span> <span class="n">current_video_title</span><span class="p">,</span>
+        <span class="s2">&quot;task&quot;</span><span class="p">:</span> <span class="s2">&quot;GRAIL&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;is_replay&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="s2">&quot;mix_group_id&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="s2">&quot;mix_copy_idx&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">extra_fields</span><span class="p">:</span>
+        <span class="n">example</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">extra_fields</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">example</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">prepare_eval_dataset</span><span class="p">(</span>
+    <span class="n">dataset</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">script_args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">training_args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">logger</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the evaluation dataset subset when ``do_eval`` is enabled.</span>
+
+<span class="sd">    :param dataset: Dataset dictionary containing train/eval splits.</span>
+<span class="sd">    :param script_args: Script arguments including split names.</span>
+<span class="sd">    :param training_args: Training configuration with evaluation flags.</span>
+<span class="sd">    :param logger: Logger used to emit informational messages.</span>
+<span class="sd">    :param prefix: Prefix added to log messages.</span>
+<span class="sd">    :returns: Prepared evaluation dataset or ``None`` when evaluation is disabled.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;do_eval&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">test_split</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">script_args</span><span class="p">,</span> <span class="s2">&quot;dataset_test_split&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">test_split</span> <span class="ow">and</span> <span class="n">test_split</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;[</span><span class="si">%s</span><span class="s2">] do_eval enabled but test split &#39;</span><span class="si">%s</span><span class="s2">&#39; missing; disabling eval&quot;</span><span class="p">,</span>
+            <span class="n">prefix</span><span class="p">,</span>
+            <span class="n">test_split</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">training_args</span><span class="o">.</span><span class="n">do_eval</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">eval_ds</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="n">test_split</span><span class="p">]</span>
+    <span class="n">max_eval</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;max_eval_samples&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">max_eval</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">max_eval</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">eval_ds</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">eval_ds</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">training_args</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">max_eval</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">eval_ds</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">configure_eval</span><span class="p">(</span>
+    <span class="n">training_args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">eval_ds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">logger</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adjust evaluation scheduling to ensure periodic evaluation runs.</span>
+
+<span class="sd">    :param training_args: Training arguments to update in-place.</span>
+<span class="sd">    :param eval_ds: Evaluation dataset (``None`` disables configuration).</span>
+<span class="sd">    :param logger: Logger used when mutating evaluation fields.</span>
+<span class="sd">    :param prefix: Prefix added to log messages.</span>
+<span class="sd">    :returns: ``None``. Mutates ``training_args`` when evaluation is enabled.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;do_eval&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span> <span class="ow">or</span> <span class="n">eval_ds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">strategy</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;evaluation_strategy&quot;</span><span class="p">,</span> <span class="n">IntervalStrategy</span><span class="o">.</span><span class="n">NO</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">strategy</span> <span class="o">==</span> <span class="n">IntervalStrategy</span><span class="o">.</span><span class="n">NO</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[</span><span class="si">%s</span><span class="s2">] forcing evaluation_strategy=&#39;steps&#39; because do_eval is enabled&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="p">)</span>
+        <span class="n">training_args</span><span class="o">.</span><span class="n">evaluation_strategy</span> <span class="o">=</span> <span class="n">IntervalStrategy</span><span class="o">.</span><span class="n">STEPS</span>
+    <span class="n">eval_steps</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;eval_steps&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">eval_steps</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">int</span><span class="p">(</span><span class="n">eval_steps</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;eval_steps must be &gt; 0 when do_eval is enabled. Set a positive value in the config.&quot;</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_checkpoint</span><span class="p">(</span><span class="n">training_args</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the checkpoint path used to resume GRPO training, if available.</span>
+
+<span class="sd">    :param training_args: Training arguments possibly containing resume information.</span>
+<span class="sd">    :returns: Filesystem path to the latest checkpoint or ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">resume</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;resume_from_checkpoint&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">resume</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">resume</span>
+    <span class="n">output_dir</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;output_dir&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">output_dir</span><span class="p">:</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">fspath</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">path</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">get_last_checkpoint</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="n">EvalFn</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+<span class="n">EvalFnFactory</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="n">EvalFn</span><span class="p">]</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GrpoTrainerSetup</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Immutable bundle describing how to initialise a GRPO trainer.&quot;&quot;&quot;</span>
+
+    <span class="n">trainer_cls</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">training_args</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">reward_funcs</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
+    <span class="n">model_args</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">tokenizer</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">peft_config_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GrpoTrainerDatasets</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Datasets passed to the trainer.&quot;&quot;&quot;</span>
+
+    <span class="n">train_dataset</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">eval_dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GrpoTrainerDataConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dataset mapping and split selections used to build trainer datasets.&quot;&quot;&quot;</span>
+
+    <span class="n">dataset</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="n">train_split</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">eval_dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GrpoPipelineComponents</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Core objects required to build and run the GRPO training pipeline.&quot;&quot;&quot;</span>
+
+    <span class="n">model_builder</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="n">trainer_cls</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">reward_funcs</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
+    <span class="n">tokenizer</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">peft_config_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">evaluate_fn_factory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">EvalFnFactory</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GrpoPipelineContext</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Execution context shared across pipeline stages.&quot;&quot;&quot;</span>
+
+    <span class="n">dataset</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="n">script_args</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">training_args</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">model_args</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">logger</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GrpoComponentFactory</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Factory that constructs :class:`GrpoPipelineComponents` with shared defaults.&quot;&quot;&quot;</span>
+
+    <span class="n">model_builder</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="n">trainer_cls</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">peft_config_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">reward_funcs</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+        <span class="n">tokenizer</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">evaluate_fn_factory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">EvalFnFactory</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GrpoPipelineComponents</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a :class:`GrpoPipelineComponents` instance with cached defaults.</span>
+
+<span class="sd">        :param reward_funcs: Reward functions to include in the pipeline.</span>
+<span class="sd">        :param tokenizer: Tokenizer used by the GRPO trainer.</span>
+<span class="sd">        :param evaluate_fn_factory: Optional factory producing evaluation wrappers.</span>
+<span class="sd">        :returns: Component bundle ready to build and run a trainer.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">GrpoPipelineComponents</span><span class="p">(</span>
+            <span class="n">model_builder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_builder</span><span class="p">,</span>
+            <span class="n">trainer_cls</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">trainer_cls</span><span class="p">,</span>
+            <span class="n">reward_funcs</span><span class="o">=</span><span class="n">reward_funcs</span><span class="p">,</span>
+            <span class="n">tokenizer</span><span class="o">=</span><span class="n">tokenizer</span><span class="p">,</span>
+            <span class="n">peft_config_fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">peft_config_fn</span><span class="p">,</span>
+            <span class="n">evaluate_fn_factory</span><span class="o">=</span><span class="n">evaluate_fn_factory</span><span class="p">,</span>
+        <span class="p">)</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GrpoPipelineRuntime</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Runtime configuration for the GRPO pipeline.</span>
+
+<span class="sd">    :param dataset: Mapping containing train and evaluation splits.</span>
+<span class="sd">    :param script_args: Parsed script arguments for the run.</span>
+<span class="sd">    :param training_args: Training configuration namespace.</span>
+<span class="sd">    :param model_args: Model configuration namespace.</span>
+<span class="sd">    :param logger: Logger used for informational messages.</span>
+<span class="sd">    :param prefix: Logging prefix propagated to downstream helpers.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">dataset</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="n">script_args</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">training_args</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">model_args</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">logger</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GrpoPipelineInputs</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameter bundle forwarded to :func:`execute_grpo_pipeline`.</span>
+
+<span class="sd">    :param component_factory: Factory used to construct pipeline components.</span>
+<span class="sd">    :param reward_funcs: Sequence of reward functions applied during training.</span>
+<span class="sd">    :param tokenizer: Tokenizer instance used by the trainer.</span>
+<span class="sd">    :param runtime: Runtime configuration capturing dataset and argument state.</span>
+<span class="sd">    :param evaluate_fn_factory: Optional factory producing evaluation wrappers.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">component_factory</span><span class="p">:</span> <span class="n">GrpoComponentFactory</span>
+    <span class="n">reward_funcs</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
+    <span class="n">tokenizer</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">runtime</span><span class="p">:</span> <span class="n">GrpoPipelineRuntime</span>
+    <span class="n">evaluate_fn_factory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">EvalFnFactory</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the dataset mapping carried by :class:`GrpoPipelineRuntime`.</span>
+
+<span class="sd">        :returns: Dataset mapping defined by the runtime configuration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">dataset</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">script_args</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return script arguments carried by :class:`GrpoPipelineRuntime`.</span>
+
+<span class="sd">        :returns: Script argument namespace defined by the runtime configuration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">script_args</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">training_args</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return training arguments carried by :class:`GrpoPipelineRuntime`.</span>
+
+<span class="sd">        :returns: Training argument namespace defined by the runtime configuration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">training_args</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">model_args</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return model arguments carried by :class:`GrpoPipelineRuntime`.</span>
+
+<span class="sd">        :returns: Model argument namespace defined by the runtime configuration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">model_args</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">logger</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return logger instance carried by :class:`GrpoPipelineRuntime`.</span>
+
+<span class="sd">        :returns: Logger instance defined by the runtime configuration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">logger</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prefix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return logging prefix carried by :class:`GrpoPipelineRuntime`.</span>
+
+<span class="sd">        :returns: Logging prefix defined by the runtime configuration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">prefix</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">build_default_component_factory</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">GrpoComponentFactory</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the default :class:`GrpoComponentFactory` used by GRPO entrypoints.</span>
+
+<span class="sd">    :returns: Component factory wired to default model builders and trainers.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">GrpoComponentFactory</span><span class="p">(</span>
+        <span class="n">model_builder</span><span class="o">=</span><span class="n">get_model</span><span class="p">,</span>
+        <span class="n">trainer_cls</span><span class="o">=</span><span class="n">GRPOTrainer</span><span class="p">,</span>
+        <span class="n">peft_config_fn</span><span class="o">=</span><span class="n">get_peft_config</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">build_grpo_context</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-arguments</span>
+    <span class="n">dataset</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">script_args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">training_args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">model_args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">logger</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GrpoPipelineContext</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a :class:`GrpoPipelineContext` populated with the supplied arguments.</span>
+
+<span class="sd">    :param dataset: Dataset mapping containing train/eval splits.</span>
+<span class="sd">    :param script_args: Parsed script arguments for the run.</span>
+<span class="sd">    :param training_args: Training configuration namespace.</span>
+<span class="sd">    :param model_args: Model configuration namespace.</span>
+<span class="sd">    :param logger: Logger used for informational messages.</span>
+<span class="sd">    :param prefix: Prefix used for logging statements.</span>
+<span class="sd">    :returns: Context capturing all pipeline state.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">GrpoPipelineContext</span><span class="p">(</span>
+        <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
+        <span class="n">script_args</span><span class="o">=</span><span class="n">script_args</span><span class="p">,</span>
+        <span class="n">training_args</span><span class="o">=</span><span class="n">training_args</span><span class="p">,</span>
+        <span class="n">model_args</span><span class="o">=</span><span class="n">model_args</span><span class="p">,</span>
+        <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
+        <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">build_grpo_trainer</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">setup</span><span class="p">:</span> <span class="n">GrpoTrainerSetup</span><span class="p">,</span> <span class="n">datasets</span><span class="p">:</span> <span class="n">GrpoTrainerDatasets</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Instantiate a GRPO trainer with the shared configuration knobs.</span>
+
+<span class="sd">    :param setup: Trainer setup bundle containing model, args, and reward functions.</span>
+<span class="sd">    :param datasets: Training and evaluation datasets for the trainer.</span>
+<span class="sd">    :returns: Constructed GRPO trainer instance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">peft_config</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">setup</span><span class="o">.</span><span class="n">peft_config_fn</span><span class="p">(</span><span class="n">setup</span><span class="o">.</span><span class="n">model_args</span><span class="p">)</span> <span class="k">if</span> <span class="n">setup</span><span class="o">.</span><span class="n">peft_config_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">setup</span><span class="o">.</span><span class="n">trainer_cls</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">setup</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">args</span><span class="o">=</span><span class="n">setup</span><span class="o">.</span><span class="n">training_args</span><span class="p">,</span>
+        <span class="n">reward_funcs</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">setup</span><span class="o">.</span><span class="n">reward_funcs</span><span class="p">),</span>
+        <span class="n">train_dataset</span><span class="o">=</span><span class="n">datasets</span><span class="o">.</span><span class="n">train_dataset</span><span class="p">,</span>
+        <span class="n">eval_dataset</span><span class="o">=</span><span class="n">datasets</span><span class="o">.</span><span class="n">eval_dataset</span><span class="p">,</span>
+        <span class="n">peft_config</span><span class="o">=</span><span class="n">peft_config</span><span class="p">,</span>
+        <span class="n">processing_class</span><span class="o">=</span><span class="n">setup</span><span class="o">.</span><span class="n">tokenizer</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_attach_trainer_callbacks</span><span class="p">(</span><span class="n">trainer</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">training_args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">model_args</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register optional callbacks (e.g. push-to-hub) on the configured trainer.</span>
+
+<span class="sd">    :param trainer: Trainer instance exposing ``add_callback``.</span>
+<span class="sd">    :param training_args: Training configuration containing callback options.</span>
+<span class="sd">    :param model_args: Model configuration forwarded to callback constructors.</span>
+<span class="sd">    :returns: ``None``. Mutates ``trainer`` by attaching callbacks when required.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">callback_names</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;callbacks&quot;</span><span class="p">,</span> <span class="p">[])</span> <span class="ow">or</span> <span class="p">[])</span>
+    <span class="p">]</span>
+    <span class="n">enable_push_to_hub</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;push_to_hub_revision&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="ow">or</span> <span class="s2">&quot;push_to_hub_revision&quot;</span> <span class="ow">in</span> <span class="n">callback_names</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">enable_push_to_hub</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="n">hub_model_id</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;hub_model_id&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">hub_model_id</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;push_to_hub_revision requires `hub_model_id` to be set on the training configuration.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">PushToHubRevisionCallback</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - exercised in runtime environments</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="s2">&quot;transformers must be installed to attach push-to-hub callbacks &quot;</span>
+            <span class="s2">&quot;(pip install transformers).&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">handler</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">trainer</span><span class="p">,</span> <span class="s2">&quot;callback_handler&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">existing</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">handler</span><span class="p">,</span> <span class="s2">&quot;callbacks&quot;</span><span class="p">,</span> <span class="p">[])</span> <span class="k">if</span> <span class="n">handler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">cb</span><span class="p">,</span> <span class="n">PushToHubRevisionCallback</span><span class="p">)</span> <span class="k">for</span> <span class="n">cb</span> <span class="ow">in</span> <span class="n">existing</span><span class="p">):</span>
+        <span class="k">return</span>
+
+    <span class="n">hub_revision</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;hub_model_revision&quot;</span><span class="p">,</span> <span class="s2">&quot;main&quot;</span><span class="p">)</span>
+    <span class="n">_LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;[callbacks] enabling push_to_hub_revision → repo=</span><span class="si">%s</span><span class="s2"> revision=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">hub_model_id</span><span class="p">,</span>
+        <span class="n">hub_revision</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">trainer</span><span class="o">.</span><span class="n">add_callback</span><span class="p">(</span><span class="n">PushToHubRevisionCallback</span><span class="p">(</span><span class="n">model_args</span><span class="p">))</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">run_trainer_loop</span><span class="p">(</span>
+    <span class="n">trainer</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">training_args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">eval_dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+    <span class="n">evaluate_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Execute the standard GRPO training loop with logging, evaluation, and hub push.</span>
+
+<span class="sd">    :param trainer: Configured GRPO trainer.</span>
+<span class="sd">    :param training_args: Training configuration namespace.</span>
+<span class="sd">    :param dataset_name: Dataset identifier used when pushing to the hub.</span>
+<span class="sd">    :param eval_dataset: Evaluation dataset (presence toggles evaluation).</span>
+<span class="sd">    :param evaluate_fn: Optional callback overriding ``trainer.evaluate``.</span>
+<span class="sd">    :returns: Tuple of the training result and optional evaluation metrics.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">last_ckpt</span> <span class="o">=</span> <span class="n">resolve_checkpoint</span><span class="p">(</span><span class="n">training_args</span><span class="p">)</span>
+    <span class="n">train_result</span> <span class="o">=</span> <span class="n">trainer</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">resume_from_checkpoint</span><span class="o">=</span><span class="n">last_ckpt</span><span class="p">)</span>
+    <span class="n">trainer</span><span class="o">.</span><span class="n">log_metrics</span><span class="p">(</span><span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="n">train_result</span><span class="o">.</span><span class="n">metrics</span><span class="p">)</span>
+    <span class="n">trainer</span><span class="o">.</span><span class="n">save_metrics</span><span class="p">(</span><span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="n">train_result</span><span class="o">.</span><span class="n">metrics</span><span class="p">)</span>
+    <span class="n">trainer</span><span class="o">.</span><span class="n">save_state</span><span class="p">()</span>
+    <span class="n">trainer</span><span class="o">.</span><span class="n">save_model</span><span class="p">(</span><span class="n">training_args</span><span class="o">.</span><span class="n">output_dir</span><span class="p">)</span>
+
+    <span class="n">eval_metrics</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;do_eval&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span> <span class="ow">and</span> <span class="n">eval_dataset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">run_eval</span> <span class="o">=</span> <span class="n">evaluate_fn</span> <span class="ow">or</span> <span class="n">trainer</span><span class="o">.</span><span class="n">evaluate</span>
+        <span class="n">eval_metrics</span> <span class="o">=</span> <span class="n">run_eval</span><span class="p">()</span>
+        <span class="n">trainer</span><span class="o">.</span><span class="n">log_metrics</span><span class="p">(</span><span class="s2">&quot;eval&quot;</span><span class="p">,</span> <span class="n">eval_metrics</span><span class="p">)</span>
+        <span class="n">trainer</span><span class="o">.</span><span class="n">save_metrics</span><span class="p">(</span><span class="s2">&quot;eval&quot;</span><span class="p">,</span> <span class="n">eval_metrics</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">training_args</span><span class="p">,</span> <span class="s2">&quot;push_to_hub&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="n">trainer</span><span class="o">.</span><span class="n">push_to_hub</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;open-r1&quot;</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">train_result</span><span class="p">,</span> <span class="n">eval_metrics</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">run_trainer_with_script_args</span><span class="p">(</span>
+    <span class="n">trainer</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">training_args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">script_args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">eval_dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">evaluate_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Invoke :func:`run_trainer_loop` using attributes from ``script_args``.</span>
+
+<span class="sd">    Centralises the common pattern of pulling ``dataset_name`` from CLI arguments</span>
+<span class="sd">    before running the training loop.</span>
+
+<span class="sd">    :param trainer: Configured GRPO trainer.</span>
+<span class="sd">    :param training_args: Training configuration namespace.</span>
+<span class="sd">    :param script_args: Parsed CLI arguments providing metadata such as dataset name.</span>
+<span class="sd">    :param eval_dataset: Evaluation dataset or ``None``.</span>
+<span class="sd">    :param evaluate_fn: Optional evaluation callable overriding ``trainer.evaluate``.</span>
+<span class="sd">    :returns: Tuple mirroring :func:`run_trainer_loop`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">dataset_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">script_args</span><span class="p">,</span> <span class="s2">&quot;dataset_name&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">run_trainer_loop</span><span class="p">(</span>
+        <span class="n">trainer</span><span class="p">,</span>
+        <span class="n">training_args</span><span class="p">,</span>
+        <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+        <span class="n">eval_dataset</span><span class="o">=</span><span class="n">eval_dataset</span><span class="p">,</span>
+        <span class="n">evaluate_fn</span><span class="o">=</span><span class="n">evaluate_fn</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">configure_and_run_grpo_trainer</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">setup</span><span class="p">:</span> <span class="n">GrpoTrainerSetup</span><span class="p">,</span>
+    <span class="n">data_config</span><span class="p">:</span> <span class="n">GrpoTrainerDataConfig</span><span class="p">,</span>
+    <span class="n">script_args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">evaluate_fn_factory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">EvalFnFactory</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Build a GRPO trainer using shared defaults and execute the training loop.</span>
+
+<span class="sd">    :param setup: Bundle describing how to initialise the trainer.</span>
+<span class="sd">    :param data_config: Dataset mapping and split information.</span>
+<span class="sd">    :param script_args: CLI arguments namespace for logging and metadata.</span>
+<span class="sd">    :param evaluate_fn_factory:</span>
+<span class="sd">        Optional factory returning an evaluation function when provided the</span>
+<span class="sd">        constructed trainer. Enables call-sites to inject custom evaluation</span>
+<span class="sd">        wrappers without repeating boilerplate.</span>
+<span class="sd">    :returns: Tuple of the trainer and the result from ``run_trainer_with_script_args``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">trainer</span> <span class="o">=</span> <span class="n">build_grpo_trainer</span><span class="p">(</span>
+        <span class="n">setup</span><span class="o">=</span><span class="n">setup</span><span class="p">,</span>
+        <span class="n">datasets</span><span class="o">=</span><span class="n">GrpoTrainerDatasets</span><span class="p">(</span>
+            <span class="n">train_dataset</span><span class="o">=</span><span class="n">data_config</span><span class="o">.</span><span class="n">dataset</span><span class="p">[</span><span class="n">data_config</span><span class="o">.</span><span class="n">train_split</span><span class="p">],</span>
+            <span class="n">eval_dataset</span><span class="o">=</span><span class="n">data_config</span><span class="o">.</span><span class="n">eval_dataset</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">_attach_trainer_callbacks</span><span class="p">(</span><span class="n">trainer</span><span class="p">,</span> <span class="n">setup</span><span class="o">.</span><span class="n">training_args</span><span class="p">,</span> <span class="n">setup</span><span class="o">.</span><span class="n">model_args</span><span class="p">)</span>
+    <span class="n">evaluate_fn</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">evaluate_fn_factory</span><span class="p">(</span><span class="n">trainer</span><span class="p">)</span> <span class="k">if</span> <span class="n">evaluate_fn_factory</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">trainer</span><span class="p">,</span> <span class="n">run_trainer_with_script_args</span><span class="p">(</span>
+        <span class="n">trainer</span><span class="p">,</span>
+        <span class="n">setup</span><span class="o">.</span><span class="n">training_args</span><span class="p">,</span>
+        <span class="n">script_args</span><span class="p">,</span>
+        <span class="n">data_config</span><span class="o">.</span><span class="n">eval_dataset</span><span class="p">,</span>
+        <span class="n">evaluate_fn</span><span class="o">=</span><span class="n">evaluate_fn</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">prepare_model_eval_and_run_grpo</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">components</span><span class="p">:</span> <span class="n">GrpoPipelineComponents</span><span class="p">,</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">GrpoPipelineContext</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Build the GRPO model, prepare evaluation state, and run the shared trainer loop.</span>
+
+<span class="sd">    :param components: Core callables and objects required to construct the trainer.</span>
+<span class="sd">    :param context: Dataset, configuration, and logging context.</span>
+<span class="sd">    :returns: Tuple of the trainer and the result from ``run_trainer_with_script_args``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="n">components</span><span class="o">.</span><span class="n">model_builder</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">model_args</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">training_args</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;generation_config&quot;</span><span class="p">):</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">generation_config</span><span class="o">.</span><span class="n">return_dict_in_generate</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;config&quot;</span><span class="p">):</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">return_dict_in_generate</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="n">train_split</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">script_args</span><span class="p">,</span> <span class="s2">&quot;dataset_train_split&quot;</span><span class="p">,</span> <span class="s2">&quot;train&quot;</span><span class="p">)</span>
+    <span class="n">eval_dataset</span> <span class="o">=</span> <span class="n">prepare_eval_dataset</span><span class="p">(</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">script_args</span><span class="p">,</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">training_args</span><span class="p">,</span>
+        <span class="n">logger</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
+        <span class="n">prefix</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">prefix</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">configure_eval</span><span class="p">(</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">training_args</span><span class="p">,</span>
+        <span class="n">eval_dataset</span><span class="p">,</span>
+        <span class="n">logger</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
+        <span class="n">prefix</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">prefix</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">configure_and_run_grpo_trainer</span><span class="p">(</span>
+        <span class="n">setup</span><span class="o">=</span><span class="n">GrpoTrainerSetup</span><span class="p">(</span>
+            <span class="n">trainer_cls</span><span class="o">=</span><span class="n">components</span><span class="o">.</span><span class="n">trainer_cls</span><span class="p">,</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">training_args</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">training_args</span><span class="p">,</span>
+            <span class="n">reward_funcs</span><span class="o">=</span><span class="n">components</span><span class="o">.</span><span class="n">reward_funcs</span><span class="p">,</span>
+            <span class="n">model_args</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">model_args</span><span class="p">,</span>
+            <span class="n">tokenizer</span><span class="o">=</span><span class="n">components</span><span class="o">.</span><span class="n">tokenizer</span><span class="p">,</span>
+            <span class="n">peft_config_fn</span><span class="o">=</span><span class="n">components</span><span class="o">.</span><span class="n">peft_config_fn</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">data_config</span><span class="o">=</span><span class="n">GrpoTrainerDataConfig</span><span class="p">(</span>
+            <span class="n">dataset</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span>
+            <span class="n">train_split</span><span class="o">=</span><span class="n">train_split</span><span class="p">,</span>
+            <span class="n">eval_dataset</span><span class="o">=</span><span class="n">eval_dataset</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">script_args</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">script_args</span><span class="p">,</span>
+        <span class="n">evaluate_fn_factory</span><span class="o">=</span><span class="n">components</span><span class="o">.</span><span class="n">evaluate_fn_factory</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">execute_grpo_pipeline</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">inputs</span><span class="p">:</span> <span class="n">GrpoPipelineInputs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Assemble components via ``inputs.component_factory`` and execute the shared GRPO pipeline.</span>
+
+<span class="sd">    :param inputs: Bundle containing component factory, data, and configuration.</span>
+<span class="sd">    :returns: Tuple mirroring :func:`prepare_model_eval_and_run_grpo`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">components</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">component_factory</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+        <span class="n">reward_funcs</span><span class="o">=</span><span class="n">inputs</span><span class="o">.</span><span class="n">reward_funcs</span><span class="p">,</span>
+        <span class="n">tokenizer</span><span class="o">=</span><span class="n">inputs</span><span class="o">.</span><span class="n">tokenizer</span><span class="p">,</span>
+        <span class="n">evaluate_fn_factory</span><span class="o">=</span><span class="n">inputs</span><span class="o">.</span><span class="n">evaluate_fn_factory</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">context</span> <span class="o">=</span> <span class="n">build_grpo_context</span><span class="p">(</span>
+        <span class="n">inputs</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span>
+        <span class="n">inputs</span><span class="o">.</span><span class="n">script_args</span><span class="p">,</span>
+        <span class="n">inputs</span><span class="o">.</span><span class="n">training_args</span><span class="p">,</span>
+        <span class="n">inputs</span><span class="o">.</span><span class="n">model_args</span><span class="p">,</span>
+        <span class="n">inputs</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
+        <span class="n">prefix</span><span class="o">=</span><span class="n">inputs</span><span class="o">.</span><span class="n">prefix</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">prepare_model_eval_and_run_grpo</span><span class="p">(</span><span class="n">components</span><span class="o">=</span><span class="n">components</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>
+
+
+<span class="n">_GRPO_OPTIONAL_KEYS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;evaluate_fn_factory&quot;</span><span class="p">}</span>
+<span class="n">_GRPO_REQUIRED_KEYS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;component_factory&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;reward_funcs&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;tokenizer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;dataset&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;script_args&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;training_args&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;model_args&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;logger&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">make_grpo_execute_kwargs</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">namespace</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">overrides</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GrpoPipelineInputs</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a :class:`GrpoPipelineInputs` instance for :func:`execute_grpo_pipeline`.</span>
+
+<span class="sd">    Helper used by entrypoints to avoid repeating lengthy keyword lists while</span>
+<span class="sd">    retaining the flexibility to override individual parameters.</span>
+
+<span class="sd">    :param prefix: Logging prefix propagated to downstream helpers.</span>
+<span class="sd">    :param namespace: Mapping used to infer missing pipeline parameters.</span>
+<span class="sd">    :param overrides: Explicit keyword overrides, e.g. ``dataset`` or ``tokenizer``.</span>
+<span class="sd">    :returns: Populated :class:`GrpoPipelineInputs` bundle.</span>
+<span class="sd">    :raises ValueError: If required pipeline parameters are missing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">namespace</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">payload</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">collect_grpo_pipeline_kwargs</span><span class="p">(</span><span class="n">namespace</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">unknown_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">overrides</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">_GRPO_REQUIRED_KEYS</span> <span class="o">|</span> <span class="n">_GRPO_OPTIONAL_KEYS</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">unknown_keys</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported GRPO override keys: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unknown_keys</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">overrides</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">payload</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="n">payload</span><span class="p">[</span><span class="s2">&quot;prefix&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">prefix</span>
+    <span class="k">if</span> <span class="s2">&quot;evaluate_fn_factory&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">payload</span><span class="p">:</span>
+        <span class="n">payload</span><span class="p">[</span><span class="s2">&quot;evaluate_fn_factory&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">key</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">_GRPO_REQUIRED_KEYS</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">payload</span> <span class="ow">or</span> <span class="n">payload</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Missing GRPO pipeline parameters: &quot;</span>
+            <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">missing</span><span class="p">))</span>
+        <span class="p">)</span>
+
+    <span class="n">runtime</span> <span class="o">=</span> <span class="n">GrpoPipelineRuntime</span><span class="p">(</span>
+        <span class="n">dataset</span><span class="o">=</span><span class="n">payload</span><span class="p">[</span><span class="s2">&quot;dataset&quot;</span><span class="p">],</span>
+        <span class="n">script_args</span><span class="o">=</span><span class="n">payload</span><span class="p">[</span><span class="s2">&quot;script_args&quot;</span><span class="p">],</span>
+        <span class="n">training_args</span><span class="o">=</span><span class="n">payload</span><span class="p">[</span><span class="s2">&quot;training_args&quot;</span><span class="p">],</span>
+        <span class="n">model_args</span><span class="o">=</span><span class="n">payload</span><span class="p">[</span><span class="s2">&quot;model_args&quot;</span><span class="p">],</span>
+        <span class="n">logger</span><span class="o">=</span><span class="n">payload</span><span class="p">[</span><span class="s2">&quot;logger&quot;</span><span class="p">],</span>
+        <span class="n">prefix</span><span class="o">=</span><span class="n">payload</span><span class="p">[</span><span class="s2">&quot;prefix&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">GrpoPipelineInputs</span><span class="p">(</span>
+        <span class="n">component_factory</span><span class="o">=</span><span class="n">payload</span><span class="p">[</span><span class="s2">&quot;component_factory&quot;</span><span class="p">],</span>
+        <span class="n">reward_funcs</span><span class="o">=</span><span class="n">payload</span><span class="p">[</span><span class="s2">&quot;reward_funcs&quot;</span><span class="p">],</span>
+        <span class="n">tokenizer</span><span class="o">=</span><span class="n">payload</span><span class="p">[</span><span class="s2">&quot;tokenizer&quot;</span><span class="p">],</span>
+        <span class="n">runtime</span><span class="o">=</span><span class="n">runtime</span><span class="p">,</span>
+        <span class="n">evaluate_fn_factory</span><span class="o">=</span><span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;evaluate_fn_factory&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="n">GRPO_PIPELINE_SCOPE_KEYS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;component_factory&quot;</span><span class="p">:</span> <span class="s2">&quot;COMPONENT_FACTORY&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;reward_funcs&quot;</span><span class="p">:</span> <span class="s2">&quot;reward_fns&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;tokenizer&quot;</span><span class="p">:</span> <span class="s2">&quot;tokenizer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;dataset&quot;</span><span class="p">:</span> <span class="s2">&quot;dataset&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;script_args&quot;</span><span class="p">:</span> <span class="s2">&quot;script_args&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;training_args&quot;</span><span class="p">:</span> <span class="s2">&quot;training_args&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;model_args&quot;</span><span class="p">:</span> <span class="s2">&quot;model_args&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;logger&quot;</span><span class="p">:</span> <span class="s2">&quot;logger&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">collect_grpo_pipeline_kwargs</span><span class="p">(</span><span class="n">namespace</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract shared pipeline keyword arguments from ``namespace``.</span>
+
+<span class="sd">    Expected to be used with a module&#39;s ``locals()`` mapping.</span>
+
+<span class="sd">    :param namespace: Mapping containing module-level variables.</span>
+<span class="sd">    :returns: Dictionary with keyword arguments for :func:`execute_grpo_pipeline`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="n">param</span><span class="p">:</span> <span class="n">namespace</span><span class="p">[</span><span class="n">source</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">GRPO_PIPELINE_SCOPE_KEYS</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="p">}</span>
+
+
+<div class="viewcode-block" id="parse_and_run">
+<a class="viewcode-back" href="../../../api/open_r1.html#grail.grail.parse_and_run">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_and_run</span><span class="p">(</span>
+    <span class="n">main_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="kc">None</span><span class="p">],</span>
+    <span class="n">argument_classes</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="nb">type</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse CLI arguments using ``argument_classes`` and execute ``main_fn``.</span>
+
+<span class="sd">    :param main_fn: Entrypoint accepting parsed argument namespaces.</span>
+<span class="sd">    :param argument_classes: Tuple of dataclass types defining CLI arguments.</span>
+<span class="sd">    :returns: ``None``. Delegates to ``main_fn`` after parsing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">TrlParser</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency guard</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="s2">&quot;trl must be installed to parse Open R1 command-line arguments &quot;</span>
+            <span class="s2">&quot;(pip install trl).&quot;</span>
+        <span class="p">)</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">TrlParser</span><span class="p">(</span><span class="n">argument_classes</span><span class="p">)</span>
+    <span class="n">main_fn</span><span class="p">(</span><span class="o">*</span><span class="n">parser</span><span class="o">.</span><span class="n">parse_args_and_config</span><span class="p">())</span></div>
+
+<span class="n">_LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+</pre></div>
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2025, GRAIL Simulation Team
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

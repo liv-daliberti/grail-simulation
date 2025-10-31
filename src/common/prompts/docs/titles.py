@@ -1,7 +1,8 @@
 """Title resolution utilities for cleaned GRAIL datasets.
 
 This module centralises logic for discovering on-disk title indexes and
-instantiating :class:`common.text.TitleResolver` with sensible defaults.
+instantiating :class:`~common.text.title_index.TitleResolver` with sensible
+defaults.
 """
 
 from __future__ import annotations

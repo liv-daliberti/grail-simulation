@@ -581,6 +581,9 @@ def execute_opinion_sweep_tasks(
 def execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
     """
     Execute a single opinion sweep task using the shared CLI runner.
+
+    :param task: Opinion sweep task describing a single execution unit.
+    :returns: Outcome bundle produced by running the CLI for ``task``.
     """
     return _opinion_sweeps.execute_opinion_sweep_task(task, cli_runner=run_knn_cli)
 

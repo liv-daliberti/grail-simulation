@@ -60,7 +60,78 @@ def _opinion_prediction_paths(base_dir: Path, feature_space: str, study_key: str
         base_dir / feature_space / study_key / filename,
     ]
 
-# pylint: disable=too-many-locals
+def _maybe_word2vec_model_dir(
+    *, feature_space: str, base_dir: Path, study_slug: str
+) -> Path | None:
+    """
+    Return the Word2Vec cache directory for a study when applicable.
+
+    This centralises the conditional logic for building an on-disk cache
+    directory used by ``word2vec`` feature-space evaluations.
+
+    :param feature_space: Feature space identifier (e.g. ``tfidf`` or ``word2vec``).
+    :type feature_space: str
+    :param base_dir: Root directory for Word2Vec caches for the current task.
+    :type base_dir: ~pathlib.Path
+    :param study_slug: Filesystem-friendly study slug.
+    :type study_slug: str
+    :returns: The materialised cache directory when ``feature_space`` is ``word2vec``; otherwise ``None``.
+    :rtype: Optional[~pathlib.Path]
+    """
+
+    if feature_space != "word2vec":
+        return None
+    return ensure_dir(base_dir / study_slug)
+
+def _load_cached_final_metrics(
+    *,
+    root: Path,
+    issue_slug: str,
+    metrics_path: Path,
+    feature_space: str,
+    study_key: str,
+    reuse_existing: bool,
+) -> Mapping[str, object] | None:
+    """
+    Attempt to load cached next-video metrics, logging outcomes consistently.
+
+    :param root: Output directory where per-issue artefacts are written.
+    :type root: ~pathlib.Path
+    :param issue_slug: Normalised issue identifier used for filenames.
+    :type issue_slug: str
+    :param metrics_path: Expected JSON metrics path on disk.
+    :type metrics_path: ~pathlib.Path
+    :param feature_space: Feature space label used for logging.
+    :type feature_space: str
+    :param study_key: Study key used for logging.
+    :type study_key: str
+    :param reuse_existing: Whether cached artefacts should be reused when present.
+    :type reuse_existing: bool
+    :returns: Metrics mapping when successfully loaded; otherwise ``None``.
+    :rtype: Optional[Mapping[str, object]]
+    """
+
+    if not (reuse_existing and metrics_path.exists()):
+        return None
+    try:
+        metrics, _ = load_metrics(root, issue_slug)
+    except FileNotFoundError:
+        LOGGER.warning(
+            (
+                "[FINAL][MISS] feature=%s study=%s expected cached metrics at %s but none found."
+            ),
+            feature_space,
+            study_key,
+            metrics_path,
+        )
+        return None
+    LOGGER.info(
+        "[FINAL][SKIP] feature=%s study=%s (metrics cached).",
+        feature_space,
+        study_key,
+    )
+    return metrics
+
 def run_final_evaluations(
     *,
     selections: Mapping[str, Mapping[str, StudySelection]],
@@ -96,35 +167,30 @@ def run_final_evaluations(
             feature_out_dir = ensure_dir(
                 context.next_video_out_dir / feature_space / study.study_slug
             )
-            model_dir = None
-            if feature_space == "word2vec":
-                model_dir = ensure_dir(context.next_video_word2vec_dir / study.study_slug)
             issue_slug = issue_slug_for_study(study)
             metrics_path = (
                 feature_out_dir / issue_slug / f"knn_eval_{issue_slug}_validation_metrics.json"
             )
-            if context.reuse_existing and metrics_path.exists():
-                try:
-                    metrics, _ = load_metrics(feature_out_dir, issue_slug)
-                except FileNotFoundError:
-                    LOGGER.warning(
-                        "[FINAL][MISS] feature=%s study=%s expected cached metrics at %s "
-                        "but none found.",
-                        feature_space,
-                        study.key,
-                        metrics_path,
-                    )
-                else:
-                    feature_metrics[study.key] = metrics
-                    LOGGER.info(
-                        "[FINAL][SKIP] feature=%s study=%s (metrics cached).",
-                        feature_space,
-                        study.key,
-                    )
-                    continue
-            cli_args = compose_cli_args(
+            cached = _load_cached_final_metrics(
+                root=feature_out_dir,
+                issue_slug=issue_slug,
+                metrics_path=metrics_path,
+                feature_space=feature_space,
+                study_key=study.key,
+                reuse_existing=context.reuse_existing,
+            )
+            if cached is not None:
+                feature_metrics[study.key] = cached
+                continue
+            args = compose_cli_args(
                 context.base_cli,
-                selection.config.cli_args(word2vec_model_dir=model_dir),
+                selection.config.cli_args(
+                    word2vec_model_dir=_maybe_word2vec_model_dir(
+                        feature_space=feature_space,
+                        base_dir=context.next_video_word2vec_dir,
+                        study_slug=study.study_slug,
+                    )
+                ),
                 ["--issues", study.issue],
                 ["--participant-studies", study.key],
                 ["--train-participant-studies", study.key],
@@ -133,20 +199,19 @@ def run_final_evaluations(
                 context.extra_cli,
             )
             ensure_final_stage_overwrite_with_context(
-                cli_args,
+                args,
                 metrics_path,
                 logger=LOGGER,
                 feature=feature_space,
                 study=study.key,
             )
-            run_knn_cli(cli_args)
+            run_knn_cli(args)
             metrics, _ = load_metrics(feature_out_dir, issue_slug)
             feature_metrics[study.key] = metrics
         if feature_metrics:
             metrics_by_feature[feature_space] = feature_metrics
     return metrics_by_feature
 
-# pylint: disable=too-many-locals
 def run_opinion_evaluations(
     *,
     selections: Mapping[str, Mapping[str, OpinionStudySelection]],
@@ -168,18 +233,18 @@ def run_opinion_evaluations(
     metrics: Dict[str, Dict[str, Mapping[str, object]]] = {}
     for feature_space, per_study in selections.items():
         LOGGER.info("[OPINION] feature=%s", feature_space)
-        feature_out_dir = ensure_dir(context.opinion_out_dir)
+        out_dir = ensure_dir(context.opinion_out_dir)
         cached_metrics = (
-            load_opinion_metrics(feature_out_dir, feature_space)
-            if context.reuse_existing
-            else {}
+            load_opinion_metrics(out_dir, feature_space) if context.reuse_existing else {}
         )
         for study in studies:
             selection = per_study.get(study.key)
             if selection is None:
                 continue
-            prediction_paths = _opinion_prediction_paths(feature_out_dir, feature_space, study.key)
-            predictions_cached = any(path.exists() for path in prediction_paths)
+            predictions_cached = any(
+                path.exists()
+                for path in _opinion_prediction_paths(out_dir, feature_space, study.key)
+            )
             if context.reuse_existing and study.key in cached_metrics and predictions_cached:
                 LOGGER.info(
                     "[OPINION][SKIP] feature=%s study=%s (metrics cached).",
@@ -195,22 +260,26 @@ def run_opinion_evaluations(
                     study.key,
                 )
             LOGGER.info("[OPINION] study=%s issue=%s", study.key, study.issue)
-            model_dir = None
-            if feature_space == "word2vec":
-                model_dir = ensure_dir(context.opinion_word2vec_dir / study.study_slug)
-            cli_args: list[str] = []
-            cli_args.extend(context.base_cli)
-            cli_args.extend(selection.config.cli_args(word2vec_model_dir=model_dir))
-            cli_args.extend(["--task", "opinion"])
-            cli_args.extend(["--out-dir", str(feature_out_dir)])
-            cli_args.extend(["--knn-k", str(selection.best_k)])
-            cli_args.extend(["--opinion-studies", study.key])
-            cli_args.extend(context.extra_cli)
-            run_knn_cli(cli_args)
-        metrics[feature_space] = load_opinion_metrics(feature_out_dir, feature_space)
+            run_knn_cli(
+                compose_cli_args(
+                    context.base_cli,
+                    selection.config.cli_args(
+                        word2vec_model_dir=_maybe_word2vec_model_dir(
+                            feature_space=feature_space,
+                            base_dir=context.opinion_word2vec_dir,
+                            study_slug=study.study_slug,
+                        )
+                    ),
+                    ["--task", "opinion"],
+                    ["--out-dir", str(out_dir)],
+                    ["--knn-k", str(selection.best_k)],
+                    ["--opinion-studies", study.key],
+                    context.extra_cli,
+                )
+            )
+        metrics[feature_space] = load_opinion_metrics(out_dir, feature_space)
     return metrics
 
-# pylint: disable=too-many-locals
 def run_opinion_from_next_evaluations(
     *,
     selections: Mapping[str, Mapping[str, StudySelection]],
@@ -239,16 +308,16 @@ def run_opinion_from_next_evaluations(
     for feature_space, per_study in selections.items():
         LOGGER.info("[OPINION][FROM-NEXT] feature=%s", feature_space)
         cached_metrics = (
-            load_opinion_metrics(base_out_dir, feature_space)
-            if context.reuse_existing
-            else {}
+            load_opinion_metrics(base_out_dir, feature_space) if context.reuse_existing else {}
         )
         for study in studies:
             selection = per_study.get(study.key)
             if selection is None:
                 continue
-            prediction_paths = _opinion_prediction_paths(base_out_dir, feature_space, study.key)
-            predictions_cached = any(path.exists() for path in prediction_paths)
+            predictions_cached = any(
+                path.exists()
+                for path in _opinion_prediction_paths(base_out_dir, feature_space, study.key)
+            )
             if context.reuse_existing and study.key in cached_metrics and predictions_cached:
                 LOGGER.info(
                     "[OPINION][FROM-NEXT][SKIP] feature=%s study=%s (metrics cached).",
@@ -268,25 +337,28 @@ def run_opinion_from_next_evaluations(
                 study.key,
                 study.issue,
             )
-            model_dir = None
-            if feature_space == "word2vec":
-                model_path = context.next_video_word2vec_dir / study.study_slug
-                model_dir = ensure_dir(model_path)
-            cli_args: list[str] = []
-            cli_args.extend(context.base_cli)
-            cli_args.extend(selection.config.cli_args(word2vec_model_dir=model_dir))
-            cli_args.extend(["--task", "opinion"])
-            cli_args.extend(["--out-dir", str(base_out_dir)])
-            cli_args.extend(["--knn-k", str(selection.best_k)])
-            cli_args.extend(["--opinion-studies", study.key])
-            cli_args.extend(context.extra_cli)
-            run_knn_cli(cli_args)
+            run_knn_cli(
+                compose_cli_args(
+                    context.base_cli,
+                    selection.config.cli_args(
+                        word2vec_model_dir=_maybe_word2vec_model_dir(
+                            feature_space=feature_space,
+                            base_dir=context.next_video_word2vec_dir,
+                            study_slug=study.study_slug,
+                        )
+                    ),
+                    ["--task", "opinion"],
+                    ["--out-dir", str(base_out_dir)],
+                    ["--knn-k", str(selection.best_k)],
+                    ["--opinion-studies", study.key],
+                    context.extra_cli,
+                )
+            )
         refreshed = load_opinion_metrics(base_out_dir, feature_space)
         if refreshed:
             metrics[feature_space] = refreshed
     return metrics
 
-# pylint: disable=too-many-locals
 def run_cross_study_evaluations(
     *,
     selections: Mapping[str, Mapping[str, StudySelection]],
@@ -341,11 +413,6 @@ def run_cross_study_evaluations(
             loso_root = ensure_dir(
                 context.next_video_out_dir / feature_space / "loso" / holdout.study_slug
             )
-            model_dir = (
-                ensure_dir(context.next_video_word2vec_dir / holdout.study_slug)
-                if feature_space == "word2vec"
-                else None
-            )
             issue_slug = issue_slug_for_study(holdout)
             metrics_path = loso_root / issue_slug / f"knn_eval_{issue_slug}_validation_metrics.json"
             if context.reuse_existing and metrics_path.exists():
@@ -376,17 +443,25 @@ def run_cross_study_evaluations(
                 holdout.issue,
                 int(selection.best_k),
             )
-            cli_args: list[str] = []
-            cli_args.extend(context.base_cli)
-            cli_args.extend(selection.config.cli_args(word2vec_model_dir=model_dir))
-            cli_args.extend(["--issues", holdout.issue])
-            # Evaluate on the holdout only and train on the same cohort.
-            cli_args.extend(["--participant-studies", holdout.key])
-            cli_args.extend(["--train-participant-studies", holdout.key])
-            cli_args.extend(["--out-dir", str(loso_root)])
-            cli_args.extend(["--knn-k", str(selection.best_k)])
-            cli_args.extend(context.extra_cli)
-            run_knn_cli(cli_args)
+            run_knn_cli(
+                compose_cli_args(
+                    context.base_cli,
+                    selection.config.cli_args(
+                        word2vec_model_dir=_maybe_word2vec_model_dir(
+                            feature_space=feature_space,
+                            base_dir=context.next_video_word2vec_dir,
+                            study_slug=holdout.study_slug,
+                        )
+                    ),
+                    ["--issues", holdout.issue],
+                    # Evaluate on the holdout only and train on the same cohort.
+                    ["--participant-studies", holdout.key],
+                    ["--train-participant-studies", holdout.key],
+                    ["--out-dir", str(loso_root)],
+                    ["--knn-k", str(selection.best_k)],
+                    context.extra_cli,
+                )
+            )
             try:
                 metrics, _ = load_metrics(loso_root, issue_slug)
                 per_holdout[holdout.key] = metrics
@@ -407,10 +482,4 @@ __all__ = [
     "run_opinion_from_next_evaluations",
     "run_cross_study_evaluations",
     "load_loso_metrics_from_disk",
-]
-
-__all__ = [
-    "run_cross_study_evaluations",
-    "run_final_evaluations",
-    "run_opinion_evaluations",
 ]

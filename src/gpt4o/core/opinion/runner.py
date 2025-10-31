@@ -29,7 +29,6 @@ from ..config import EVAL_SPLIT, OPINION_SYSTEM_PROMPT
 from ..utils import (
     InvocationParams,
     RetryPolicy,
-    call_gpt4o_with_retries,
     qa_log_path_for,
     try_call_with_policy,
 )
@@ -259,7 +258,12 @@ class OpinionEvaluationRunner:
             attempts=self.runtime.retries,
             delay=self.runtime.retry_delay,
         )
-        result, exc = try_call_with_policy(messages, invocation=invocation, retry=policy, logger=LOGGER)
+        result, exc = try_call_with_policy(
+            messages,
+            invocation=invocation,
+            retry=policy,
+            logger=LOGGER,
+        )
         if result is None:
             return float("nan"), f"(error after {policy.attempts} attempts: {exc})"
         raw_output = result

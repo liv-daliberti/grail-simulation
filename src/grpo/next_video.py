@@ -209,6 +209,9 @@ class NextVideoEvaluationSettings:
     overwrite: bool
     generation: 'GenerationSettings'
     filters: FilterSelection
+    # Periodic flush interval (in examples). When >0, predictions/metrics/QA logs
+    # are written to disk every ``flush_every`` processed examples.
+    flush_every: int = 0
 
 
 @dataclass(frozen=True)
@@ -434,6 +437,8 @@ def _evaluate_examples(
     example_cap: int | None,
     initial_state: _NextVideoRunState | None = None,
     start_from: int = 0,
+    # Optional progress hook called after each processed example.
+    on_progress: 'callable[[int, _NextVideoRunState], None] | None' = None,
 ) -> _NextVideoRunState:
     """Return aggregated evaluation state for the provided examples."""
 
@@ -498,6 +503,13 @@ def _evaluate_examples(
                 state.accumulator.parsed_rate(),
                 state.accumulator.format_rate(),
             )
+        # Periodic flush callback (resilience). Called after each processed example
+        # so the hook can decide to persist artefacts at a chosen cadence.
+        if on_progress is not None:
+            try:
+                on_progress(start_from + idx, state)
+            except Exception:  # pragma: no cover - defensive
+                LOGGER.warning("Progress hook raised; continuing without flush.")
 
     return state
 
@@ -650,6 +662,40 @@ def run_next_video_evaluation(
     if processed_count:
         examples_iter = islice(examples_iter, processed_count, None)
 
+    # Prepare outputs and request up-front for periodic flushing if enabled.
+    outputs = _NextVideoOutputPaths(
+        predictions=run_dir / "predictions.jsonl",
+        metrics=run_dir / "metrics.json",
+        qa_log=_qa_log_path(run_dir),
+    )
+    request = slate_eval.SlateMetricsRequest(
+        model_name=settings.model_label,
+        dataset_name=settings.dataset.name,
+        eval_split=settings.dataset.split,
+        filters=settings.filters.metrics_filters(),
+    )
+
+    flush_every = int(settings.flush_every or 0)
+    def _maybe_flush(processed_abs: int, state: _NextVideoRunState) -> None:
+        if flush_every <= 0:
+            return
+        if processed_abs % flush_every != 0:
+            return
+        # Rewrite predictions/metrics/QA log with current buffers. This supports
+        # resume and enables report generation from partial runs.
+        try:
+            _write_predictions(outputs.predictions, state.predictions)
+            metrics = state.accumulator.metrics_payload(request)
+            write_metrics_json(outputs.metrics, metrics)
+            write_segmented_markdown_log(
+                outputs.qa_log,
+                title="GRPO Next-Video QA Log",
+                entries=state.qa_entries,
+            )
+            LOGGER.debug("[NEXT] flushed artefacts at %d examples", processed_abs)
+        except Exception:
+            LOGGER.warning("[NEXT] flush at %d examples failed; continuing.", processed_abs)
+
     state = _evaluate_examples(
         examples_iter,
         settings=settings,
@@ -658,21 +704,9 @@ def run_next_video_evaluation(
         example_cap=cap,
         initial_state=seeded_state,
         start_from=processed_count,
-    )
-
-    request = slate_eval.SlateMetricsRequest(
-        model_name=settings.model_label,
-        dataset_name=settings.dataset.name,
-        eval_split=settings.dataset.split,
-        filters=settings.filters.metrics_filters(),
+        on_progress=_maybe_flush,
     )
     metrics = state.accumulator.metrics_payload(request)
-
-    outputs = _NextVideoOutputPaths(
-        predictions=run_dir / "predictions.jsonl",
-        metrics=run_dir / "metrics.json",
-        qa_log=_qa_log_path(run_dir),
-    )
     _write_predictions(outputs.predictions, state.predictions)
     write_metrics_json(outputs.metrics, metrics)
     write_segmented_markdown_log(

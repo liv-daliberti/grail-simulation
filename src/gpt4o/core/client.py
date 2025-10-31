@@ -63,7 +63,7 @@ def _cached_client(
     :param api_version: API version string negotiated with the Azure service.
     :type api_version: str
     :returns: Lazily cached Azure OpenAI client.
-    :rtype: AzureOpenAIType
+    :rtype: openai.AzureOpenAI
     """
 
     client_cls = _require_openai()
@@ -78,7 +78,7 @@ def get_client() -> Any:
     """Construct or reuse the singleton Azure OpenAI client.
 
     :returns: Cached client configured with environment or default credentials.
-    :rtype: AzureOpenAIType
+    :rtype: openai.AzureOpenAI
     """
 
     ensure_azure_env()

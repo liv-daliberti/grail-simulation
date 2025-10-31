@@ -31,6 +31,14 @@ title resolution, and safe numerical operations used across the baselines.
    :undoc-members:
    :show-inheritance:
 
+Evaluation Utilities
+--------------------
+
+.. automodule:: common.evaluation.slate_eval
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Prompt Document Utilities
 -------------------------
 
@@ -60,6 +68,22 @@ Prompt Document Utilities
    :show-inheritance:
 
 .. automodule:: common.prompts.docs.trajectory
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Reporting Utilities
+-------------------
+
+.. automodule:: common.reports
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Visualization Defaults
+----------------------
+
+.. automodule:: common.visualization
    :members:
    :undoc-members:
    :show-inheritance:

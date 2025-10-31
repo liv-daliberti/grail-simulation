@@ -43,7 +43,6 @@ def _plot_metric(
     :param output_path: Filesystem path for the generated report or figure.
     :type output_path: Path
     """
-    # pylint: disable=too-many-arguments,too-many-locals
     if plt is None:  # pragma: no cover - optional dependency
         LOGGER.warning("[OPINION] Skipping %s plot (matplotlib not installed).", metric_key)
         return

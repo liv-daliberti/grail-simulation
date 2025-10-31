@@ -159,7 +159,7 @@ class CandidateScorer:
         )
         return _aggregate_scores(score_vector, self.unique_k)
 
-def build_tfidf_index(  # pylint: disable=too-many-locals
+def build_tfidf_index(
     train_ds,
     *,
     max_train: int = 100_000,
@@ -177,17 +177,11 @@ def build_tfidf_index(  # pylint: disable=too-many-locals
     :returns: Dictionary containing the fitted vectoriser, sparse matrix, and
         label metadata.
     """
-    docs, labels_id, labels_title = prepare_training_documents(
-        train_ds,
-        max_train=max_train,
-        seed=seed,
-        extra_fields=extra_fields,
+    docs, labels_id, labels_title = _prepare_docs(
+        train_ds, max_train=max_train, seed=seed, extra_fields=extra_fields
     )
 
-    vectorizer = create_tfidf_vectorizer(max_features=max_features)
-    matrix = vectorizer.fit_transform(docs).astype(np.float32)
-    # Log an embedding summary for the first document
-    log_embedding_previews(vectorizer, docs, matrix[0], logger=LOGGER, tag="[KNN][Embed][TFIDF]")
+    vectorizer, matrix = _fit_tfidf(docs, max_features=max_features)
 
     return {
         "feature_space": "tfidf",
@@ -197,7 +191,7 @@ def build_tfidf_index(  # pylint: disable=too-many-locals
         "labels_title": labels_title,
     }
 
-def build_word2vec_index(  # pylint: disable=too-many-locals
+def build_word2vec_index(
     train_ds,
     *,
     max_train: int = 100_000,
@@ -215,24 +209,11 @@ def build_word2vec_index(  # pylint: disable=too-many-locals
     :returns: Dictionary containing the trained Word2Vec model and embeddings.
     :raises ImportError: If gensim is unavailable.
     """
-    docs, labels_id, labels_title = prepare_training_documents(
-        train_ds,
-        max_train=max_train,
-        seed=seed,
-        extra_fields=extra_fields,
+    docs, labels_id, labels_title = _prepare_docs(
+        train_ds, max_train=max_train, seed=seed, extra_fields=extra_fields
     )
 
-    builder = Word2VecFeatureBuilder(config)
-    try:
-        builder.train(docs)
-    except ImportError as exc:  # pragma: no cover - optional dependency
-        raise ImportError(
-            "Install gensim to enable Word2Vec embeddings (pip install gensim)"
-        ) from exc
-
-    matrix = builder.transform(docs)
-    # Log an embedding summary for the first document
-    log_embedding_previews(builder, docs, matrix[0], logger=LOGGER, tag="[KNN][Embed][W2V]")
+    builder, matrix = _train_word2vec(docs, config)
 
     return {
         "feature_space": "word2vec",
@@ -243,7 +224,7 @@ def build_word2vec_index(  # pylint: disable=too-many-locals
         "word2vec_config": builder.config,
     }
 
-def build_sentence_transformer_index(  # pylint: disable=too-many-locals
+def build_sentence_transformer_index(
     train_ds,
     *,
     max_train: int = 100_000,
@@ -261,28 +242,10 @@ def build_sentence_transformer_index(  # pylint: disable=too-many-locals
     :returns: Dictionary containing the encoder, dense matrix, and label metadata.
     :raises ImportError: If ``sentence_transformers`` is unavailable.
     """
-    docs, labels_id, labels_title = prepare_training_documents(
-        train_ds,
-        max_train=max_train,
-        seed=seed,
-        extra_fields=extra_fields,
+    docs, labels_id, labels_title = _prepare_docs(
+        train_ds, max_train=max_train, seed=seed, extra_fields=extra_fields
     )
-    st_config = config or SentenceTransformerConfig()
-    encoder = SentenceTransformerEncoder(st_config)
-    if not hasattr(encoder, "transform"):
-        setattr(encoder, "transform", encoder.encode)  # type: ignore[attr-defined]
-    matrix = encoder.encode(docs).astype(np.float32, copy=False)
-    # Log an embedding summary for the first document using common helper
-    try:
-        log_embedding_previews(
-            encoder,
-            docs,
-            matrix[0] if len(matrix) else matrix,
-            logger=LOGGER,
-            tag="[KNN][Embed][ST]",
-        )
-    except Exception:  # pylint: disable=broad-except
-        pass
+    encoder, matrix, st_config = _encode_sentence_embeddings(docs, config)
     return {
         "feature_space": "sentence_transformer",
         "vectorizer": encoder,
@@ -291,6 +254,83 @@ def build_sentence_transformer_index(  # pylint: disable=too-many-locals
         "labels_title": labels_title,
         "sentence_transformer_config": st_config,
     }
+
+def _prepare_docs(
+    train_ds,
+    *,
+    max_train: int,
+    seed: int,
+    extra_fields: Sequence[str] | None,
+):
+    """Return training documents and labels from the dataset.
+
+    :param train_ds: Training dataset split.
+    :param max_train: Maximum number of rows to sample.
+    :param seed: Random seed used for subsampling.
+    :param extra_fields: Extra textual columns concatenated into each document.
+    :returns: Tuple ``(docs, labels_id, labels_title)`` used by index builders.
+    """
+    return prepare_training_documents(
+        train_ds,
+        max_train=max_train,
+        seed=seed,
+        extra_fields=extra_fields,
+    )
+
+def _fit_tfidf(docs: Sequence[str], *, max_features: int | None) -> tuple[Any, Any]:
+    """Fit TF-IDF vectoriser and return ``(vectorizer, matrix)``.
+
+    Emits an embedding preview when possible.
+    """
+    vectorizer = create_tfidf_vectorizer(max_features=max_features)
+    matrix = vectorizer.fit_transform(docs).astype(np.float32)
+    log_embedding_previews(vectorizer, docs, matrix[0], logger=LOGGER, tag="[KNN][Embed][TFIDF]")
+    return vectorizer, matrix
+
+def _train_word2vec(
+    docs: Sequence[str],
+    config: Word2VecConfig | None,
+) -> tuple[Word2VecFeatureBuilder, Any]:
+    """Train Word2Vec builder and return ``(builder, matrix)``.
+
+    :raises ImportError: when gensim is missing.
+    """
+    builder = Word2VecFeatureBuilder(config)
+    try:
+        builder.train(docs)
+    except ImportError as exc:  # pragma: no cover - optional dependency
+        raise ImportError(
+            "Install gensim to enable Word2Vec embeddings (pip install gensim)"
+        ) from exc
+    matrix = builder.transform(docs)
+    log_embedding_previews(builder, docs, matrix[0], logger=LOGGER, tag="[KNN][Embed][W2V]")
+    return builder, matrix
+
+def _encode_sentence_embeddings(
+    docs: Sequence[str],
+    config: SentenceTransformerConfig | None,
+) -> tuple[SentenceTransformerEncoder, Any, SentenceTransformerConfig]:
+    """Encode documents using a sentence transformer.
+
+    Returns ``(encoder, matrix, effective_config)`` and logs a preview with narrowed
+    exception handling to avoid broad-except.
+    """
+    st_config = config or SentenceTransformerConfig()
+    encoder = SentenceTransformerEncoder(st_config)
+    if not hasattr(encoder, "transform"):
+        setattr(encoder, "transform", encoder.encode)  # type: ignore[attr-defined]
+    matrix = encoder.encode(docs).astype(np.float32, copy=False)
+    try:
+        log_embedding_previews(
+            encoder,
+            docs,
+            matrix[0] if len(matrix) else matrix,
+            logger=LOGGER,
+            tag="[KNN][Embed][ST]",
+        )
+    except (RuntimeError, ValueError, AttributeError, IndexError, TypeError):
+        pass
+    return encoder, matrix, st_config
 
 def save_tfidf_index(index: Dict[str, Any], out_dir: str) -> None:
     """Persist the TF-IDF index to ``out_dir`` for later reuse.
@@ -713,7 +753,7 @@ def knn_predict_among_slate_multi(
     example: dict,
     k_values: Sequence[int],
     config: Optional[SlateQueryConfig] = None,
-) -> Dict[int, Optional[int]]:  # pylint: disable=too-many-branches
+) -> Dict[int, Optional[int]]:
     """Score each slate option using candidate-aware TF-IDF kNN.
 
     :param knn_index: Dictionary describing the fitted index artifacts.
@@ -727,19 +767,13 @@ def knn_predict_among_slate_multi(
     if config.metric not in (None, "l2", "cosine"):
         raise ValueError(f"Unsupported metric '{config.metric}'")
 
-    unique_k = sorted({int(k) for k in k_values if int(k) > 0})
+    unique_k = _resolve_unique_k(k_values)
     if not unique_k:
         return {}
 
-    candidates = collect_candidate_metadata(example)
+    candidates = _resolve_candidates(example)
     if not candidates:
-        slate_pairs = extract_slate_items(example)
-        if not slate_pairs:
-            return {k: 1 for k in unique_k}
-        candidates = [
-            CandidateMetadata(slot=idx, title=title, video_id=video_id)
-            for idx, (title, video_id) in enumerate(slate_pairs, start=1)
-        ]
+        return {k: 1 for k in unique_k}
 
     base_parts = _build_base_parts(example, candidates, config)
 
@@ -757,11 +791,36 @@ def knn_predict_among_slate_multi(
 
     predictions: Dict[int, Optional[int]] = {}
     for k, scores in scores_by_k.items():
-        if not scores or not any(np.isfinite(scores)):
-            predictions[k] = None
-        else:
-            predictions[k] = int(np.argmax(scores)) + 1
+        predictions[int(k)] = _choose_prediction(scores)
     return predictions
+
+def _resolve_unique_k(k_values: Sequence[int]) -> list[int]:
+    """Return sorted, positive unique ``k`` values."""
+    return sorted({int(k) for k in k_values if int(k) > 0})
+
+def _resolve_candidates(example: dict) -> list[CandidateMetadata]:
+    """
+    Build candidate metadata from the example or fallback to title/video pairs.
+    """
+    candidates = collect_candidate_metadata(example)
+    if candidates:
+        return candidates
+    slate_pairs = extract_slate_items(example)
+    if not slate_pairs:
+        return []
+    return [
+        CandidateMetadata(slot=idx, title=title, video_id=video_id)
+        for idx, (title, video_id) in enumerate(slate_pairs, start=1)
+    ]
+
+def _choose_prediction(scores: np.ndarray | Sequence[float]) -> Optional[int]:
+    """Pick 1-based winning index from a score vector, or ``None`` when invalid."""
+    if scores is None or len(scores) == 0:
+        return None
+    arr = np.asarray(scores, dtype=np.float32)
+    if not any(np.isfinite(arr)):
+        return None
+    return int(np.argmax(arr)) + 1
 
 def _build_index_data(knn_index: Dict[str, Any]) -> Optional[SlateIndexData]:
     """Construct :class:`SlateIndexData` from a raw index dictionary.

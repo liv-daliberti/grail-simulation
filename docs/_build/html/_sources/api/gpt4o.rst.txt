@@ -53,3 +53,8 @@ Pipeline Orchestration
    :members:
    :undoc-members:
    :show-inheritance:
+
+.. automodule:: gpt4o.pipeline_reports
+   :members:
+   :undoc-members:
+   :show-inheritance:

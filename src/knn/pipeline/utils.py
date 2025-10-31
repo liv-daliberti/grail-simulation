@@ -492,10 +492,15 @@ def ensure_selection_coverage(
     options: SelectionValidationOptions,
 ) -> None:
     """
-    Wrapper that reuses :func:`ensure_feature_selections` for common call sites.
+    Validate selection coverage across feature spaces for the given studies.
 
-    Derives the expected study keys from ``studies`` to avoid repeating the same
-    boilerplate whenever we validate sweep selections.
+    Wrapper around :func:`ensure_feature_selections` that derives expected study
+    keys from ``studies`` to avoid duplicating boilerplate.
+
+    :param selections: Mapping from feature space to per-study selections.
+    :param studies: Study specifications providing the expected keys.
+    :param options: Validation options controlling logging and error behaviour.
+    :returns: ``None`` (raises on validation failure when configured).
     """
 
     expected_keys = [study.key for study in studies]
@@ -514,7 +519,16 @@ def ensure_sweep_selection_coverage(
     logger: Any,
     require_selected: bool = True,
 ) -> None:
-    """Validate coverage for the core sweep selections produced by the pipeline."""
+    """
+    Validate coverage for the core sweep selections produced by the pipeline.
+
+    :param selections: Mapping from feature space to per-study selections.
+    :param studies: Study specifications providing expected keys.
+    :param allow_incomplete: When ``True``, emit warnings instead of raising.
+    :param logger: Logger used for warnings/info messages.
+    :param require_selected: When ``True``, require at least one selection globally.
+    :returns: ``None``.
+    """
 
     ensure_selection_coverage(
         selections,
@@ -537,7 +551,16 @@ def ensure_opinion_selection_coverage(
     logger: Any,
     require_selected: bool,
 ) -> None:
-    """Validate coverage for opinion sweep selections with custom descriptors."""
+    """
+    Validate coverage for opinion sweep selections with custom descriptors.
+
+    :param selections: Mapping from feature space to per-study opinion selections.
+    :param studies: Study specifications providing expected keys.
+    :param allow_incomplete: When ``True``, emit warnings instead of raising.
+    :param logger: Logger used for warnings/info messages.
+    :param require_selected: When ``True``, require at least one selection globally.
+    :returns: ``None``.
+    """
 
     ensure_selection_coverage(
         selections,

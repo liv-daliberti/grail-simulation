@@ -470,6 +470,15 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
         help="Maximum number of tokens generated per completion.",
     )
     parser.add_argument(
+        "--flush-interval",
+        type=int,
+        default=25,
+        help=(
+            "Interval (in examples) to flush intermediate artefacts to disk. "
+            "Use 0 to disable periodic flushing."
+        ),
+    )
+    parser.add_argument(
         "--eval-max",
         type=int,
         default=0,
@@ -1008,6 +1017,7 @@ def _run_evaluations(
                 issues=_comma_separated(args.issues),
                 studies=_comma_separated(args.studies),
             ),
+            flush_every=int(args.flush_interval or 0),
         )
         results.next_video = run_next_video_evaluation(
             tokenizer=tokenizer,
@@ -1041,6 +1051,7 @@ def _run_evaluations(
                 max_participants=int(args.opinion_max_participants or 0),
                 direction_tolerance=float(args.direction_tolerance),
                 overwrite=bool(args.overwrite),
+                flush_every=int(args.flush_interval or 0),
             ),
             include_studies=_comma_separated(args.opinion_studies),
         )

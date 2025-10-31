@@ -30,7 +30,7 @@ from .opinion_index import _similarity_from_distances, _transform_documents, _we
 from .opinion_models import OpinionExample, OpinionIndex
 
 
-def predict_post_indices(  # pylint: disable=too-many-locals
+def predict_post_indices(
     *,
     index: OpinionIndex,
     eval_examples: Sequence[OpinionExample],
@@ -51,7 +51,6 @@ def predict_post_indices(  # pylint: disable=too-many-locals
     :returns: Predictions and aggregate metrics keyed by ``k``.
     :rtype: Dict[str, Any]
     """
-    # pylint: disable=too-many-locals
     if not eval_examples:
         return {
             "rows": [],
@@ -87,49 +86,21 @@ def predict_post_indices(  # pylint: disable=too-many-locals
     for row_idx, example in enumerate(eval_examples):
         distances = neighbour_distances[row_idx]
         indices = neighbour_indices[row_idx]
-        similarities = _similarity_from_distances(distances, metric=index.metric)
-
-        filtered_indices: List[int] = []
-        filtered_weights: List[float] = []
-        for candidate_idx, weight in zip(indices, similarities):
-            if exclude_self:
-                participant_key = index.participant_keys[candidate_idx]
-                if (
-                    participant_key[0] == example.participant_id
-                    and participant_key[1] == example.participant_study
-                ):
-                    continue
-            filtered_indices.append(int(candidate_idx))
-            filtered_weights.append(float(weight))
-            if len(filtered_indices) >= max_k:
-                break
-
-        if not filtered_indices:
+        record_after, record_change = _row_predictions(
+            index=index,
+            example=example,
+            distances=distances,
+            indices=indices,
+            unique_k=unique_k,
+            max_k=max_k,
+            exclude_self=exclude_self,
+        )
+        if not record_after:
             continue
-
-        filtered_indices_arr = np.asarray(filtered_indices, dtype=np.int32)
-        filtered_weights_arr = np.asarray(filtered_weights, dtype=np.float32)
-
-        record_after: Dict[int, float] = {}
-        record_change: Dict[int, float] = {}
-        for k in unique_k:
-            if len(filtered_indices_arr) < k:
-                continue
-
-            top_indices = filtered_indices_arr[:k]
-            top_weights = filtered_weights_arr[:k]
-            top_targets_after = index.targets_after[top_indices]
-            top_targets_before = index.targets_before[top_indices]
-            top_changes = top_targets_after - top_targets_before
-
-            predicted_change = _weighted_mean(top_changes, top_weights)
-            anchored_prediction = float(example.before) + predicted_change
-
-            per_k_predictions[k].append(anchored_prediction)
-            per_k_change_predictions[k].append(predicted_change)
-            record_after[k] = float(anchored_prediction)
-            record_change[k] = float(predicted_change)
-
+        for k, pred in record_after.items():
+            per_k_predictions[int(k)].append(float(pred))
+        for k, delta in record_change.items():
+            per_k_change_predictions[int(k)].append(float(delta))
         rows.append(
             {
                 "participant_id": example.participant_id,
@@ -314,12 +285,72 @@ def _summary_metrics(
     :returns: MAE, RMSE, and R^2 metrics for each ``k``.
     :rtype: Dict[int, Dict[str, float]]
     """
-    # pylint: disable=too-many-locals
     if rows:
         metrics = _metrics_from_rows(predictions, rows)
         if metrics:
             return metrics
     return _metrics_from_eval_examples(predictions, eval_examples)
+
+
+def _row_predictions(
+    *,
+    index: OpinionIndex,
+    example: OpinionExample,
+    distances: np.ndarray,
+    indices: np.ndarray,
+    unique_k: Sequence[int],
+    max_k: int,
+    exclude_self: bool,
+) -> Tuple[Dict[int, float], Dict[int, float]]:
+    """
+    Compute per-k predictions for a single ``example``.
+
+    :param index: KNN opinion index containing embeddings and neighbour data.
+    :param example: Evaluation example to score.
+    :param distances: Neighbour distances for the example.
+    :param indices: Neighbour row indices for the example.
+    :param unique_k: Unique, sorted set of ``k`` values to evaluate.
+    :param max_k: Maximum neighbourhood size to consider for the example.
+    :param exclude_self: Whether to exclude the query participant from neighbours.
+    :returns: Tuple of dictionaries for post-study predictions and changes keyed by ``k``.
+    """
+    similarities = _similarity_from_distances(distances, metric=index.metric)
+
+    filtered_indices: List[int] = []
+    filtered_weights: List[float] = []
+    for candidate_idx, weight in zip(indices, similarities):
+        if exclude_self:
+            participant_key = index.participant_keys[candidate_idx]
+            if (
+                participant_key[0] == example.participant_id
+                and participant_key[1] == example.participant_study
+            ):
+                continue
+        filtered_indices.append(int(candidate_idx))
+        filtered_weights.append(float(weight))
+        if len(filtered_indices) >= max_k:
+            break
+
+    if not filtered_indices:
+        return {}, {}
+
+    idx_arr = np.asarray(filtered_indices, dtype=np.int32)
+    wts_arr = np.asarray(filtered_weights, dtype=np.float32)
+
+    record_after: Dict[int, float] = {}
+    record_change: Dict[int, float] = {}
+    for k in unique_k:
+        if len(idx_arr) < k:
+            continue
+        top_indices = idx_arr[:k]
+        top_weights = wts_arr[:k]
+        top_targets_after = index.targets_after[top_indices]
+        top_targets_before = index.targets_before[top_indices]
+        predicted_change = _weighted_mean(top_targets_after - top_targets_before, top_weights)
+        anchored_prediction = float(example.before) + predicted_change
+        record_after[int(k)] = float(anchored_prediction)
+        record_change[int(k)] = float(predicted_change)
+    return record_after, record_change
 
 
 @dataclass

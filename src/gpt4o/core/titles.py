@@ -47,7 +47,10 @@ class TitleResolver(_BaseTitleResolver):
         return defaults
 
     def title_for(self, video_id: str | None):
-        """Convenience wrapper around :meth:`resolve` matching other APIs."""
+        """
+        Convenience wrapper around :meth:`~common.text.title_index.TitleResolver.resolve`
+        matching other APIs.
+        """
         return self.resolve(video_id)
 
     @property

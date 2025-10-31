@@ -47,7 +47,7 @@ from .opinion_data import (
     _resolve_requested_specs,
     collect_examples,
 )
-from .opinion_index import build_index
+from .opinion_index import build_index, OpinionIndexConfig
 from .opinion_models import (
     OpinionEmbeddingConfigs,
     OpinionEvaluationContext,
@@ -286,12 +286,14 @@ def _evaluate_opinion_study(
 
     index = build_index(
         examples=train_examples,
-        feature_space=context.feature_space,
         spec=spec,
-        seed=int(getattr(context.args, "knn_seed", 42)),
-        metric=str(getattr(context.args, "knn_metric", "cosine")),
-        word2vec_config=context.embedding_configs.word2vec,
-        sentence_config=context.embedding_configs.sentence_transformer,
+        config=OpinionIndexConfig(
+            feature_space=context.feature_space,
+            metric=str(getattr(context.args, "knn_metric", "cosine")),
+            seed=int(getattr(context.args, "knn_seed", 42)),
+            word2vec=context.embedding_configs.word2vec,
+            sentence_transformer=context.embedding_configs.sentence_transformer,
+        ),
     )
 
     log_participant_counts(

@@ -42,7 +42,13 @@ def _feature_space_heading(feature_space: str) -> str:
     return f"## {feature_space.replace('_', ' ').title()} Feature Space"
 
 def parse_k_sweep(k_sweep: Union[str, Iterable[int]]) -> Tuple[int, ...]:
-    """Convert the stored ``k`` sweep representation into integers."""
+    """
+    Convert the stored ``k`` sweep representation into integers.
+
+    :param k_sweep: Either a comma- or slash-delimited string of integers or an
+        iterable of integer-like values.
+    :returns: Tuple of parsed ``k`` values with invalid tokens skipped.
+    """
     if isinstance(k_sweep, str):
         tokens = [
             token.strip()

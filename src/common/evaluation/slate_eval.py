@@ -44,7 +44,16 @@ __all__ = [
 
 @dataclass
 class BucketAccumulator:
-    """Accumulate per-bucket evaluation counts."""
+    """
+    Accumulate per-bucket evaluation counts used to compute rates.
+
+    Tracks counts for each bucket key:
+    - ``seen``: Total examples observed.
+    - ``eligible``: Examples considered eligible for accuracy (valid gold/option count).
+    - ``correct``: Eligible examples predicted correctly.
+    - ``parsed``: Model outputs that could be parsed into an index.
+    - ``formatted``: Model outputs that included the expected answer tag.
+    """
 
     seen: Counter[str] = field(default_factory=Counter)
     eligible: Counter[str] = field(default_factory=Counter)

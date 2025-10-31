@@ -22,9 +22,9 @@ import logging
 from pathlib import Path
 from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
-from common.pipeline.executor import execute_indexed_tasks
-from common.pipeline.utils import merge_indexed_outcomes
-from common.opinion.sweep_types import AccuracySummary, MetricsArtifact
+from common.pipeline.executor import execute_indexed_tasks  # pylint: disable=import-error
+from common.pipeline.utils import merge_indexed_outcomes  # pylint: disable=import-error
+from common.opinion.sweep_types import AccuracySummary, MetricsArtifact  # pylint: disable=import-error
 
 from .context import (
     OpinionStudySelection,
@@ -136,7 +136,7 @@ def _build_opinion_task(
         word2vec_model_dir = (
             context.word2vec_model_base / "sweeps_opinion" / study.study_slug / config.label()
         )
-    task = OpinionSweepTask(
+    task = OpinionSweepTask(  # pylint: disable=unexpected-keyword-arg
         index=index,
         study=study,
         config=config,
@@ -309,7 +309,7 @@ def opinion_sweep_outcome_from_metrics(
     if eligible is None:
         eligible = participants
 
-    return OpinionSweepOutcome(
+    return OpinionSweepOutcome(  # pylint: disable=unexpected-keyword-arg
         order_index=task.index,
         study=task.study,
         config=task.config,

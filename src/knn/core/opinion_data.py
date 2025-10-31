@@ -80,8 +80,6 @@ def collect_examples(
     :returns: Participant-level examples combining prompts and opinion values.
     :rtype: List[OpinionExample]
     """
-    # pylint: disable=too-many-locals
-
     # The KNN opinion pipeline accepts ``extra_fields`` for parity with prompt
     # builders but deliberately avoids using them to reduce target leakage.
     del extra_fields
@@ -92,6 +90,34 @@ def collect_examples(
         spec.issue,
         len(dataset),
     )
+    collapsed, sample_doc = _collapse_dataset_split(dataset, spec)
+
+    if sample_doc:
+        LOGGER.info("[OPINION] Example prompt: %r", sample_doc)
+
+    if max_examples and 0 < max_examples < len(collapsed):
+        rng = default_rng(seed)
+        order = rng.permutation(len(collapsed))[:max_examples]
+        collapsed = [collapsed[i] for i in order]
+        LOGGER.info(
+            "[OPINION] Sampled %d participants (max=%d).",
+            len(collapsed),
+            max_examples,
+        )
+
+    return collapsed
+
+
+def _collapse_dataset_split(
+    dataset, spec: OpinionSpec
+) -> Tuple[List[OpinionExample], Optional[str]]:
+    """
+    Collapse the raw dataset rows into per-participant examples for ``spec``.
+
+    :param dataset: Dataset split providing raw participant interactions.
+    :param spec: Opinion study specification describing the target columns.
+    :returns: Tuple of (collapsed_examples, example_prompt).
+    """
     per_participant: Dict[Tuple[str, str], OpinionExample] = {}
     sample_doc: Optional[str] = None
 
@@ -103,39 +129,22 @@ def collect_examples(
         after = float_or_none(example.get(spec.after_column))
         if before is None or after is None:
             continue
-        # Build a sanitised opinion document to avoid target leakage.
-        # For opinion regression, avoid using the full prompt_builder output
-        # since it can include post-study survey fields (e.g., wave-2 indices)
-        # that directly encode the regression target. Instead, restrict the
-        # document to the viewer profile sentence and state text.
-        viewer_profile = viewer_profile_sentence(example)
-        state = str(example.get("state_text") or "").strip()
-        document = " ".join(token for token in (viewer_profile, state) if token).strip()
-        if not document:
-            # Fallback to the generic assembler (still avoids extra_fields that
-            # may include target values) to reduce empty-doc drops if inputs
-            # are unexpectedly sparse.
-            document = assemble_document(example, ("viewer_profile", "state_text"))
+        document = _build_opinion_document(example)
         if not document:
             continue
         if sample_doc is None:
             sample_doc = document
-        try:
-            step_index = int(example.get("step_index") or -1)
-        except (TypeError, ValueError):
-            step_index = -1
+        step_index = _parse_step_index(example.get("step_index"))
         participant_id = str(example.get("participant_id") or "")
         key = (participant_id, spec.key)
         existing = per_participant.get(key)
-        session_id = example.get("session_id")
-        candidate = make_opinion_example_from_values(
-            spec,
-            participant_id,
-            document,
+        candidate = _make_opinion_candidate(
+            spec=spec,
+            example=example,
+            participant_id=participant_id,
+            document=document,
             scores=(before, after),
-            factory=OpinionExample,
             step_index=step_index,
-            session_id=str(session_id) if session_id is not None else None,
         )
         if existing is None or step_index >= existing.step_index:
             per_participant[key] = candidate
@@ -146,16 +155,54 @@ def collect_examples(
         len(collapsed),
         len(dataset),
     )
-    if sample_doc:
-        LOGGER.info("[OPINION] Example prompt: %r", sample_doc)
+    return collapsed, sample_doc
 
-    if max_examples and 0 < max_examples < len(collapsed):
-        rng = default_rng(seed)
-        order = rng.permutation(len(collapsed))[:max_examples]
-        collapsed = [collapsed[i] for i in order]
-        LOGGER.info("[OPINION] Sampled %d participants (max=%d).", len(collapsed), max_examples)
 
-    return collapsed
+def _build_opinion_document(example) -> str:
+    """
+    Build a sanitised opinion document that avoids target leakage.
+
+    Uses only the viewer profile and state text; falls back to
+    :func:`assemble_document` with a restricted field set when inputs are sparse.
+    """
+    viewer_profile = viewer_profile_sentence(example)
+    state = str(example.get("state_text") or "").strip()
+    document = " ".join(token for token in (viewer_profile, state) if token).strip()
+    if document:
+        return document
+    return assemble_document(example, ("viewer_profile", "state_text"))
+
+
+def _parse_step_index(raw) -> int:
+    """Parse a step index value robustly, defaulting to -1 when invalid."""
+    try:
+        return int(raw or -1)
+    except (TypeError, ValueError):
+        return -1
+
+
+def _make_opinion_candidate(
+    *,
+    spec: OpinionSpec,
+    example,
+    participant_id: str,
+    document: str,
+    scores: Tuple[float, float],
+    step_index: int,
+) -> OpinionExample:
+    """
+    Construct an :class:`OpinionExample` from the raw ``example`` and precomputed fields.
+    """
+    session_id = example.get("session_id")
+    return make_opinion_example_from_values(
+        spec,
+        participant_id,
+        document,
+        scores=scores,
+        factory=OpinionExample,
+        step_index=step_index,
+        session_id=str(session_id) if session_id is not None else None,
+    )
 
 
 def _resolve_requested_specs(args) -> List[OpinionSpec]:

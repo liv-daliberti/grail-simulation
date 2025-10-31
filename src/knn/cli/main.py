@@ -21,10 +21,11 @@ import argparse
 import logging
 from pathlib import Path
 
-from common.cli.args import add_comma_separated_argument
-from common.cli.options import add_overwrite_argument, add_eval_arguments
+from common.cli.args import add_comma_separated_argument  # pylint: disable=import-error
+from common.cli.options import add_eval_arguments  # pylint: disable=import-error
 
 from ..core.evaluate import run_eval
+from ..core.opinion import run_opinion_eval
 from ..core.features import Word2VecConfig
 from .utils import add_sentence_transformer_normalize_flags
 
@@ -339,8 +340,6 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.task == "opinion":
-        from ..core.opinion import run_opinion_eval  # pylint: disable=import-outside-toplevel
-
         run_opinion_eval(args)
         return
 

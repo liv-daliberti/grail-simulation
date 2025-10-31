@@ -19,7 +19,6 @@ This module defines the sweep configurations, task descriptors, execution
 contexts, and report bundles shared by the pipeline orchestration code.
 """
 
-# pylint: disable=line-too-long
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -61,13 +60,15 @@ class SweepConfig:  # pylint: disable=too-many-instance-attributes
     :type word2vec_epochs: int | None
     :param word2vec_workers: Worker count for Word2Vec training/encoding.
     :type word2vec_workers: int | None
-    :param sentence_transformer_model: SentenceTransformer model identifier evaluated for this sweep.
+    :param sentence_transformer_model: SentenceTransformer model identifier
+        evaluated for this sweep.
     :type sentence_transformer_model: str | None
     :param sentence_transformer_device: Device override applied when encoding sentence embeddings.
     :type sentence_transformer_device: str | None
     :param sentence_transformer_batch_size: Batch size used when generating sentence embeddings.
     :type sentence_transformer_batch_size: int | None
-    :param sentence_transformer_normalize: Whether embeddings are L2-normalised prior to similarity scoring.
+    :param sentence_transformer_normalize: Whether embeddings are L2-normalised prior
+        to similarity scoring.
     :type sentence_transformer_normalize: bool | None
     """
     feature_space: str
@@ -89,7 +90,8 @@ class SweepConfig:  # pylint: disable=too-many-instance-attributes
 
         :param self: Configuration instance being labelled.
         :type self: ~knn.pipeline.context.SweepConfig
-        :returns: Underscore-delimited label that highlights metric, text fields, and model specifics.
+        :returns: Underscore-delimited label that highlights metric, text
+            fields, and model specifics.
         :rtype: str
         """
         text_label = "none"
@@ -113,7 +115,10 @@ class SweepConfig:  # pylint: disable=too-many-instance-attributes
             if self.word2vec_workers is not None:
                 parts.append(f"workers{self.word2vec_workers}")
         if self.feature_space == "sentence_transformer" and self.sentence_transformer_model:
-            model_name = Path(self.sentence_transformer_model).name or self.sentence_transformer_model
+            model_name = (
+                Path(self.sentence_transformer_model).name
+                or self.sentence_transformer_model
+            )
             cleaned = _sanitize_token(model_name)
             parts.append(f"model-{cleaned or 'st'}")
             if self.sentence_transformer_device:
@@ -130,7 +135,8 @@ class SweepConfig:  # pylint: disable=too-many-instance-attributes
 
         :param word2vec_model_dir: Directory housing cached Word2Vec models to reuse during sweeps.
         :type word2vec_model_dir: Path | None
-        :returns: Argument vector providing the minimal overrides required to reproduce the configuration.
+        :returns: Argument vector providing the minimal overrides required to
+            reproduce the configuration.
         :rtype: list[str]
         :raises ValueError: If mandatory Word2Vec parameters are omitted for a Word2Vec sweep.
         """
@@ -183,7 +189,8 @@ class SweepConfig:  # pylint: disable=too-many-instance-attributes
         return args
 
 @dataclass
-class SweepOutcome(BasePipelineSweepOutcome[SweepConfig]):  # pylint: disable=too-many-instance-attributes
+# pylint: disable-next=too-many-instance-attributes
+class SweepOutcome(BasePipelineSweepOutcome[SweepConfig]):
     """
     Persisted metrics for evaluating a configuration against a single study.
 
@@ -228,7 +235,8 @@ class SweepTask(  # pylint: disable=too-many-instance-attributes
     train_participant_studies: Tuple[str, ...] = field(default_factory=tuple)
 
 @dataclass
-class StudySelection(BaseStudySelection[SweepOutcome]):  # pylint: disable=too-many-instance-attributes
+# pylint: disable-next=too-many-instance-attributes
+class StudySelection(BaseStudySelection[SweepOutcome]):
     """
     Selected configuration for a specific study within a feature space.
 
@@ -721,7 +729,8 @@ class ReportBundle:  # pylint: disable=too-many-instance-attributes
     :param sweep_outcomes: Chronological list of all slate sweep outcomes.
     :type sweep_outcomes: Sequence[~knn.pipeline.context.SweepOutcome]
     :param opinion_selections: Winning opinion selections keyed by feature space and study slug.
-    :type opinion_selections: Mapping[str, Mapping[str, ~knn.pipeline.context.OpinionStudySelection]]
+    :type opinion_selections: Mapping[str,
+        Mapping[str, ~knn.pipeline.context.OpinionStudySelection]]
     :param opinion_sweep_outcomes: Chronological list of all opinion sweep outcomes.
     :type opinion_sweep_outcomes: Sequence[~knn.pipeline.context.OpinionSweepOutcome]
     :param studies: Study descriptors used when rendering friendly labels.
@@ -855,7 +864,8 @@ class OpinionSummary(OpinionCalibrationMetrics):  # pylint: disable=too-many-ins
     :type dataset: Optional[str]
     :param split: Dataset split powering the evaluation (e.g. ``train``, ``validation``).
     :type split: Optional[str]
-    :note: Baseline and calibration deltas are documented in :class:`common.opinion.OpinionCalibrationMetrics`.
+    :note: Baseline and calibration deltas are documented in
+        :class:`common.opinion.OpinionCalibrationMetrics`.
     """
     mae: Optional[float] = None
     rmse: Optional[float] = None

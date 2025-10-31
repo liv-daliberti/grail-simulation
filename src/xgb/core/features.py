@@ -49,7 +49,13 @@ extract_slate_items = _PROMPT_DOC_BUILDER.extract_slate_items
 
 
 def assemble_document(example: dict, extra_fields):  # type: ignore[override]
-    """Assemble a prompt document from ``example`` using shared defaults."""
+    """
+    Assemble a prompt document from ``example`` using shared defaults.
+
+    :param example: Dataset row containing viewer history and metadata.
+    :param extra_fields: Optional extra text fields to include in the document.
+    :returns: Prompt document mapping suitable for feature extraction.
+    """
 
     return _PROMPT_DOC_BUILDER.assemble_document(example, extra_fields)
 
@@ -60,7 +66,15 @@ def prepare_training_documents(
     seed: int,
     extra_fields=None,
 ):  # type: ignore[override]
-    """Prepare training documents and labels from ``train_ds``."""
+    """
+    Prepare training documents and labels from ``train_ds``.
+
+    :param train_ds: Training split used to build documents and labels.
+    :param max_train: Optional cap on the number of training examples.
+    :param seed: RNG seed used when sub-sampling training rows.
+    :param extra_fields: Optional extra text fields to include in each document.
+    :returns: Tuple of documents and labels as produced by the builder.
+    """
 
     return _PROMPT_DOC_BUILDER.prepare_training_documents(
         train_ds,
@@ -76,7 +90,15 @@ def prepare_prompt_documents(
     seed: int,
     extra_fields=None,
 ):  # type: ignore[override]
-    """Prepare selection-aware documents using the prompt-selection helper."""
+    """
+    Prepare selection-aware documents using the prompt-selection helper.
+
+    :param train_ds: Training split used to build documents and labels.
+    :param max_train: Optional cap on the number of training examples.
+    :param seed: RNG seed used when sub-sampling training rows.
+    :param extra_fields: Optional extra text fields to include in each document.
+    :returns: Tuple of documents and labels as produced by the selector.
+    """
 
     # Use selection-aware document assembly to mirror KNN behaviour.
     return _PROMPT_SELECTOR.prepare_training_documents(

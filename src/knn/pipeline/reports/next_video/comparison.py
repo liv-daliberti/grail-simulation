@@ -95,7 +95,7 @@ def _best_knn_summary_for_study(
     return best
 
 
-def _knn_vs_xgb_section(  # pylint: disable=too-many-locals
+def _knn_vs_xgb_section(
     *,
     xgb_next_video_dir: Path,
     metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]],
@@ -128,17 +128,7 @@ def _knn_vs_xgb_section(  # pylint: disable=too-many-locals
         if best_knn is None:
             continue
         space, knn_summary = best_knn
-        knn_elig = knn_summary.accuracy
-        knn_all = getattr(knn_summary, "accuracy_all_rows", None)
-        xgb_elig = xgb_metrics.get("accuracy_eligible")
-        xgb_overall = xgb_metrics.get("accuracy")
-        rows.append(
-            (
-                f"| {spec.label} | {format_optional_float(knn_elig)} "
-                f"({_format_feature_inline(space)}) | {format_optional_float(xgb_elig)} | "
-                f"{format_optional_float(knn_all)} | {format_optional_float(xgb_overall)} |"
-            )
-        )
+        rows.append(_format_comparison_row(spec, space, knn_summary, xgb_metrics))
     if not rows:
         return []
     lines: list[str] = ["## KNN vs XGB (Matched Studies)", ""]
@@ -152,6 +142,24 @@ def _knn_vs_xgb_section(  # pylint: disable=too-many-locals
     lines.extend(rows)
     lines.append("")
     return lines
+
+
+def _format_comparison_row(
+    spec: StudySpec,
+    feature_space: str,
+    knn_summary: "MetricSummary",
+    xgb_metrics: Mapping[str, object],
+) -> str:
+    """Return a single Markdown table row for a study comparison."""
+    knn_elig = knn_summary.accuracy
+    knn_all = getattr(knn_summary, "accuracy_all_rows", None)
+    xgb_elig = xgb_metrics.get("accuracy_eligible")
+    xgb_overall = xgb_metrics.get("accuracy")
+    return (
+        f"| {spec.label} | {format_optional_float(knn_elig)} "
+        f"({_format_feature_inline(feature_space)}) | {format_optional_float(xgb_elig)} | "
+        f"{format_optional_float(knn_all)} | {format_optional_float(xgb_overall)} |"
+    )
 
 
 __all__ = [

@@ -19,7 +19,6 @@ The module coordinates hyper-parameter sweeps, final evaluations, and
 Markdown report generation for the slate-ranking and opinion-regression
 KNN workflows used throughout the project."""
 
-# pylint: disable=line-too-long
 from __future__ import annotations
 
 import logging
@@ -297,7 +296,10 @@ def main(argv: Sequence[str] | None = None) -> None:
             )
         if context.run_opinion:
             summary_bits.append(
-                f"opinion sweeps={len(planned_opinion_tasks)} (cached={len(cached_planned_opinion)})"
+                (
+                    f"opinion sweeps={len(planned_opinion_tasks)} "
+                    f"(cached={len(cached_planned_opinion)})"
+                )
             )
         LOGGER.info(
             "Planned sweep tasks: %s.",
@@ -350,7 +352,12 @@ def main(argv: Sequence[str] | None = None) -> None:
             reuse_existing=reuse_cached_metrics,
             opinion_prefix="[OPINION]",
         )
-        dispatch_cli_partitions(partitions, args=args, logger=LOGGER, prepare=prepare_sweep_execution)
+        dispatch_cli_partitions(
+            partitions,
+            args=args,
+            logger=LOGGER,
+            prepare=prepare_sweep_execution,
+        )
         return
 
     reuse_for_stage = context.reuse_sweeps
@@ -394,7 +401,9 @@ def main(argv: Sequence[str] | None = None) -> None:
         missing = ", ".join(
             _format_opinion_sweep_task_descriptor(task) for task in pending_opinion_tasks[:5]
         )
-        more = "" if len(pending_opinion_tasks) <= 5 else f", … ({len(pending_opinion_tasks)} total)"
+        more = (
+            "" if len(pending_opinion_tasks) <= 5 else f", … ({len(pending_opinion_tasks)} total)"
+        )
         base_message = (
             "Opinion sweep metrics missing for the following tasks: "
             f"{missing}{more}."
@@ -425,9 +434,15 @@ def main(argv: Sequence[str] | None = None) -> None:
         if not sweep_outcomes:
             if context.allow_incomplete:
                 LOGGER.warning(
-                    "No sweep outcomes available for next-video; continuing because allow-incomplete mode is enabled.")
+                    (
+                        "No sweep outcomes available for next-video; continuing because "
+                        "allow-incomplete mode is enabled."
+                    )
+                )
             else:
-                raise RuntimeError("No sweep outcomes available for next-video; ensure sweeps have completed.")
+                raise RuntimeError(
+                    "No sweep outcomes available for next-video; ensure sweeps have completed."
+                )
         else:
             selections = _select_best_configs(
                 outcomes=sweep_outcomes,
@@ -445,9 +460,15 @@ def main(argv: Sequence[str] | None = None) -> None:
         if not opinion_sweep_outcomes:
             if context.allow_incomplete:
                 LOGGER.warning(
-                    "No sweep outcomes available for opinion regression; continuing because allow-incomplete mode is enabled.")
+                    (
+                        "No sweep outcomes available for opinion regression; continuing "
+                        "because allow-incomplete mode is enabled."
+                    )
+                )
             else:
-                raise RuntimeError("No opinion sweep outcomes available; ensure opinion sweeps have completed.")
+                raise RuntimeError(
+                    "No opinion sweep outcomes available; ensure opinion sweeps have completed."
+                )
         else:
             opinion_selections = _select_best_opinion_configs(
                 outcomes=opinion_sweep_outcomes,
@@ -470,7 +491,10 @@ def main(argv: Sequence[str] | None = None) -> None:
                     "Run --stage=finalize before generating reports."
                 )
                 if context.allow_incomplete:
-                    LOGGER.warning("%s Continuing because allow-incomplete mode is enabled.", message)
+                    LOGGER.warning(
+                        "%s Continuing because allow-incomplete mode is enabled.",
+                        message,
+                    )
                 else:
                     raise RuntimeError(message)
             loso_metrics = _load_loso_metrics_from_disk(
@@ -504,7 +528,9 @@ def main(argv: Sequence[str] | None = None) -> None:
             loso_metrics=loso_metrics,
             feature_spaces=context.feature_spaces,
             sentence_model=(
-                context.sentence_model if "sentence_transformer" in context.feature_spaces else None
+                context.sentence_model
+                if "sentence_transformer" in context.feature_spaces
+                else None
             ),
             allow_incomplete=context.allow_incomplete,
             include_next_video=context.run_next_video,
@@ -582,7 +608,11 @@ def main(argv: Sequence[str] | None = None) -> None:
         k_sweep=context.k_sweep,
         loso_metrics=loso_metrics,
         feature_spaces=context.feature_spaces,
-        sentence_model=context.sentence_model if "sentence_transformer" in context.feature_spaces else None,
+        sentence_model=(
+            context.sentence_model
+            if "sentence_transformer" in context.feature_spaces
+            else None
+        ),
         allow_incomplete=context.allow_incomplete,
         include_next_video=context.run_next_video,
         include_opinion=context.run_opinion,

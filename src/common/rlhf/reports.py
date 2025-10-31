@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Iterable, Mapping
 
 from common.pipeline.io import write_markdown_lines
+from common.reports.samples import write_sample_responses_report
 
 from grpo.next_video import NextVideoEvaluationResult
 from grpo.opinion import OpinionEvaluationResult
@@ -297,3 +298,14 @@ def generate_reports(
         _write_next_video_report(reports_root, next_video, opts.baseline_label)
     if opinion is not None:
         _write_opinion_report(reports_root, opinion, opts.baseline_label)
+
+    # Always attempt to render a small sample gallery from available artefacts.
+    nv_files = [next_video.predictions_path] if next_video is not None else []
+    op_files = [s.artifacts.predictions for s in (opinion.studies if opinion else [])]
+    write_sample_responses_report(
+        reports_root=reports_root,
+        family_label=opts.baseline_label,
+        next_video_files=nv_files,
+        opinion_files=op_files,
+        per_issue=5,
+    )

@@ -27,7 +27,11 @@ try:
     from common.opinion import float_or_none
 except ImportError:  # pragma: no cover - optional dependency for linting environments
     def float_or_none(value: Any) -> Optional[float]:
-        """Best-effort local fallback mirroring the upstream helper."""
+        """Best-effort local fallback mirroring the upstream helper.
+
+        :param value: Input that may represent a floating-point number.
+        :returns: Parsed ``float`` when possible, otherwise ``None``.
+        """
 
         try:
             return float(value)
@@ -36,7 +40,12 @@ except ImportError:  # pragma: no cover - optional dependency for linting enviro
 
 
 def _wrap_text(text: str, width: Optional[int]) -> str:
-    """Wrap ``text`` to the specified ``width`` using newline separators."""
+    """Wrap text to the specified width using newline separators.
+
+    :param text: Input string to wrap.
+    :param width: Maximum characters per line; set ``None`` or ``<= 0`` to disable.
+    :returns: Wrapped text with newlines inserted between lines.
+    """
 
     if not width or width <= 0:
         return text
@@ -47,14 +56,24 @@ _QUOTE_RUN_RE = re.compile(r'"{2,}')
 
 
 def _clean_repeated_quotes(text: str) -> str:
-    """Collapse repeated double-quote runs to a single character."""
+    """Collapse repeated double-quote runs to a single character.
+
+    :param text: Raw text that may contain repeated double quotes.
+    :returns: Text with consecutive double quotes replaced by a single quote.
+    """
 
     return _QUOTE_RUN_RE.sub('"', text)
 
 
 @dataclass
 class TreeEdge:
-    """Directed edge connecting two nodes in the recommendation tree."""
+    """Directed edge connecting two nodes in the recommendation tree.
+
+    Attributes:
+        parent: Identifier of the parent node.
+        child: Identifier of the child node.
+        rank: Optional recommendation rank for the edge.
+    """
 
     parent: str
     child: str
@@ -63,7 +82,13 @@ class TreeEdge:
 
 @dataclass
 class TreeData:
-    """Container holding recommendation tree nodes and edges."""
+    """Container holding recommendation tree nodes and edges.
+
+    Attributes:
+        root: Identifier of the inferred root node.
+        nodes: Mapping from node id to node attribute mappings.
+        edges: List of directed edges connecting nodes.
+    """
 
     root: str
     nodes: Dict[str, Mapping[str, object]]
@@ -72,7 +97,13 @@ class TreeData:
 
 @dataclass(frozen=True)
 class OpinionFieldSpec:
-    """Specification describing opinion score columns used by a viewer cohort."""
+    """Specification describing opinion score columns used by a viewer cohort.
+
+    Attributes:
+        before_keys: Ordered keys that may contain the initial opinion value.
+        after_keys: Ordered keys that may contain the final opinion value.
+        label: Human-friendly label for the opinion dimension.
+    """
 
     before_keys: Tuple[str, ...]
     after_keys: Tuple[str, ...]
@@ -81,7 +112,14 @@ class OpinionFieldSpec:
 
 @dataclass
 class OpinionAnnotation:
-    """Resolved opinion values ready for annotation on a session graph."""
+    """Resolved opinion values ready for annotation on a session graph.
+
+    Attributes:
+        issue: Normalised issue identifier (e.g. ``minimum_wage``).
+        before_value: Initial opinion score, if available.
+        after_value: Final opinion score, if available.
+        label: Human-friendly label for the opinion dimension.
+    """
 
     issue: str
     before_value: Optional[float]
@@ -91,7 +129,14 @@ class OpinionAnnotation:
 
 @dataclass(frozen=True)
 class LabelRenderOptions:
-    """Configuration controlling how node labels are rendered."""
+    """Configuration controlling how node labels are rendered.
+
+    Attributes:
+        metadata: External per-node metadata keyed by identifier.
+        template: Python ``str.format`` template string for labels.
+        wrap_width: Optional maximum characters per line for wrapping.
+        append_id_if_missing: Whether to append the node id if the template omits it.
+    """
 
     metadata: Mapping[str, Mapping[str, object]]
     template: str
@@ -103,6 +148,12 @@ class SafeDict(dict):
     """Dictionary that returns placeholder values for missing template keys."""
 
     def __missing__(self, key: str) -> str:
+        """Provide a default empty string for missing keys.
+
+        :param key: Missing mapping key requested by the formatter.
+        :returns: Empty string used as a safe placeholder.
+        """
+
         return ""
 
 
@@ -126,15 +177,27 @@ _OPINION_FIELD_MAP: Dict[str, OpinionFieldSpec] = {
 
 
 def _natural_sort_key(value: str) -> Tuple[int, str, str]:
-    """Return a tuple suitable for natural sorting of identifiers with numerics."""
+    """Return a tuple suitable for natural sorting of identifiers with numerics.
+
+    :param value: Identifier to split into numeric and non-numeric components.
+    :returns: Tuple ``(numeric_component_or_inf, alpha_prefix, original)`` used for sorting.
+    """
 
     prefix = "".join(ch for ch in value if not ch.isdigit())
     digits = "".join(ch for ch in value if ch.isdigit())
     return (int(digits) if digits else math.inf, prefix, value)
 
 
-def _first_numeric(sources: Sequence[Mapping[str, object]], keys: Sequence[str]) -> Optional[float]:
-    """Return the first numeric value located across ``keys`` and ``sources``."""
+def _first_numeric(
+    sources: Sequence[Mapping[str, object]],
+    keys: Sequence[str],
+) -> Optional[float]:
+    """Return the first numeric value located across keys and sources.
+
+    :param sources: Sequence of mapping-like objects to probe for values.
+    :param keys: Ordered keys to try across each mapping in ``sources``.
+    :returns: First successfully parsed float value, otherwise ``None``.
+    """
 
     for key in keys:
         for source in sources:
@@ -148,7 +211,11 @@ def _first_numeric(sources: Sequence[Mapping[str, object]], keys: Sequence[str])
 
 
 def _format_decimal(value: float) -> str:
-    """Format ``value`` with up to two decimal places, trimming trailing zeros."""
+    """Format a float with up to two decimal places, trimming trailing zeros.
+
+    :param value: Numeric value to format.
+    :returns: String representation with at most two decimal places.
+    """
 
     formatted = f"{value:.2f}"
     if "." in formatted:
@@ -163,7 +230,14 @@ def _opinion_label(
     *,
     delta: Optional[float] = None,
 ) -> Optional[str]:
-    """Construct a human-readable label for an opinion score stage."""
+    """Construct a human-readable label for an opinion score stage.
+
+    :param base_label: Base label describing the opinion dimension (e.g. policy area).
+    :param stage: Stage descriptor (e.g. ``"Initial"`` or ``"Final"``).
+    :param value: Opinion score at the given stage.
+    :param delta: Optional change between final and initial values.
+    :returns: Rendered label string or ``None`` when no value is available.
+    """
 
     if value is None:
         return None
@@ -177,7 +251,11 @@ def _opinion_label(
 def _extract_opinion_annotation(
     rows: Sequence[Mapping[str, object]],
 ) -> Optional[OpinionAnnotation]:
-    """Resolve opinion indices for the viewer represented by ``rows``."""
+    """Resolve opinion indices for the viewer represented by the provided rows.
+
+    :param rows: Ordered or unordered session records containing opinion fields.
+    :returns: :class:`OpinionAnnotation` with resolved values or ``None`` if unavailable.
+    """
 
     if not rows:
         return None
@@ -222,7 +300,13 @@ def format_node_label(
     node_data: Mapping[str, object],
     options: LabelRenderOptions,
 ) -> str:
-    """Render a node label based on the configured template."""
+    """Render a node label based on the configured template.
+
+    :param node_id: Identifier of the node being labeled.
+    :param node_data: Mapping of node attributes available to the template.
+    :param options: Label rendering options, including metadata and template string.
+    :returns: Final label string suitable for Graphviz node attributes.
+    """
 
     context = SafeDict({"id": node_id, **options.metadata.get(node_id, {}), **node_data})
     try:

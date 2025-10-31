@@ -21,6 +21,7 @@ import argparse
 import faulthandler
 import json
 import logging
+import math
 import time
 import warnings
 from dataclasses import dataclass
@@ -68,6 +69,14 @@ from .reports import generate_reports
 
 LOGGER = logging.getLogger("grpo.pipeline")
 
+
+def _status(message: str, *args) -> None:
+    """Log ``message`` at INFO level and mirror it to stdout immediately."""
+
+    text = message % args if args else message
+    LOGGER.info(text)
+    print(f"[grpo.pipeline] {text}", flush=True)
+
 DEFAULT_REGENERATE_HINT = (
     "Regenerate via `python -m grpo.pipeline --stage full` after producing "
     "updated evaluation artifacts under `models/grpo/`."
@@ -98,6 +107,166 @@ def configure_logging(log_level: str | int) -> None:
         LOGGER.debug("faulthandler already enabled")
     LOGGER.debug(
         "Logging configured at level %s", logging.getLevelName(numeric_level)
+    )
+
+
+def _safe_float(value: object) -> float | None:
+    """Return ``value`` coerced to ``float`` when possible."""
+
+    try:
+        result = float(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+    if math.isnan(result):
+        return None
+    return result
+
+
+def _safe_int(value: object) -> int | None:
+    """Return ``value`` coerced to ``int`` when possible."""
+
+    try:
+        return int(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+
+
+def _fmt_rate(value: float | None, digits: int = 3) -> str:
+    """Return a formatted rate or an em dash when ``value`` is missing."""
+
+    return f"{value:.{digits}f}" if value is not None else "—"
+
+
+def _fmt_count(value: int | None) -> str:
+    """Return an integer with thousands separators or an em dash."""
+
+    return f"{value:,}" if value is not None else "—"
+
+
+def _extract_next_video_metrics(payload: Mapping[str, object] | None) -> Mapping[str, object]:
+    """Normalise next-video metrics payloads that may wrap values under ``metrics``."""
+
+    if not isinstance(payload, Mapping):
+        return {}
+    if "accuracy_overall" in payload:
+        return payload
+    nested = payload.get("metrics")
+    if isinstance(nested, Mapping):
+        return nested
+    return payload
+
+
+def _log_next_video_summary(result: NextVideoEvaluationResult | None) -> None:
+    """Emit INFO-level summary metrics for ``result``."""
+
+    if result is None:
+        LOGGER.info("Next-video metrics unavailable; skipping summary log.")
+        return
+
+    metrics = _extract_next_video_metrics(result.metrics)
+    if not metrics:
+        LOGGER.info("Next-video metrics payload empty; skipping summary log.")
+        return
+
+    accuracy = _safe_float(metrics.get("accuracy_overall"))
+    parsed_rate = _safe_float(metrics.get("parsed_rate"))
+    format_rate = _safe_float(metrics.get("format_rate"))
+    eligible = _safe_int(metrics.get("n_eligible"))
+    total = _safe_int(metrics.get("n_total"))
+    baseline_block = metrics.get("baseline_most_frequent_gold_index")
+    baseline_accuracy = _safe_float(baseline_block.get("accuracy")) if isinstance(
+        baseline_block, Mapping
+    ) else None
+    random_accuracy = _safe_float(metrics.get("random_baseline_expected_accuracy"))
+    delta_accuracy = (
+        accuracy - baseline_accuracy
+        if accuracy is not None and baseline_accuracy is not None
+        else None
+    )
+
+    LOGGER.info(
+        "Next-video metrics | accuracy=%s | baseline=%s | Δ=%s | random=%s | parsed=%s | format=%s | eligible=%s/%s",
+        _fmt_rate(accuracy),
+        _fmt_rate(baseline_accuracy),
+        _fmt_rate(delta_accuracy),
+        _fmt_rate(random_accuracy),
+        _fmt_rate(parsed_rate),
+        _fmt_rate(format_rate),
+        _fmt_count(eligible),
+        _fmt_count(total),
+    )
+
+    if isinstance(baseline_block, Mapping):
+        top_index = baseline_block.get("top_index")
+        baseline_count = _safe_int(baseline_block.get("count"))
+        LOGGER.debug(
+            "Baseline (most frequent gold index): index=%s count=%s",
+            top_index if top_index is not None else "—",
+            _fmt_count(baseline_count),
+        )
+
+
+def _weighted_baseline_direction(result: OpinionEvaluationResult | None) -> float | None:
+    """Return an eligible-weighted baseline directional accuracy for ``result``."""
+
+    if result is None:
+        return None
+    numerator = 0.0
+    denominator = 0
+    for study in result.studies:
+        baseline = getattr(study, "baseline", None)
+        eligible = getattr(study, "eligible", None)
+        baseline_direction = (
+            _safe_float(baseline.get("direction_accuracy"))
+            if isinstance(baseline, Mapping)
+            else None
+        )
+        if baseline_direction is None or not eligible:
+            continue
+        denominator += int(eligible)
+        numerator += baseline_direction * int(eligible)
+    if denominator:
+        return numerator / denominator
+    return None
+
+
+def _log_opinion_summary(result: OpinionEvaluationResult | None) -> None:
+    """Emit INFO-level summary metrics for aggregated opinion results."""
+
+    if result is None:
+        LOGGER.info("Opinion metrics unavailable; skipping summary log.")
+        return
+
+    combined = result.combined_metrics if isinstance(result.combined_metrics, Mapping) else {}
+    if not combined:
+        LOGGER.info("Opinion combined metrics payload empty; skipping summary log.")
+        return
+
+    direction_accuracy = _safe_float(combined.get("direction_accuracy"))
+    mae_after = _safe_float(combined.get("mae_after"))
+    rmse_after = _safe_float(combined.get("rmse_after"))
+    mae_change = _safe_float(combined.get("mae_change"))
+    rmse_change = _safe_float(combined.get("rmse_change"))
+    eligible = _safe_int(combined.get("eligible"))
+    baseline_direction = _weighted_baseline_direction(result)
+    delta_direction = (
+        direction_accuracy - baseline_direction
+        if direction_accuracy is not None and baseline_direction is not None
+        else None
+    )
+    participants = sum(int(getattr(study, "participants", 0)) for study in result.studies)
+
+    LOGGER.info(
+        "Opinion metrics | direction=%s | baseline=%s | Δ=%s | mae_after=%s | rmse_after=%s | mae_change=%s | rmse_change=%s | eligible=%s | participants=%s",
+        _fmt_rate(direction_accuracy),
+        _fmt_rate(baseline_direction),
+        _fmt_rate(delta_direction),
+        _fmt_rate(mae_after),
+        _fmt_rate(rmse_after),
+        _fmt_rate(mae_change),
+        _fmt_rate(rmse_change),
+        _fmt_count(eligible),
+        _fmt_count(participants),
     )
 
 
@@ -571,7 +740,7 @@ def _run_evaluations(
     :returns: Dataclass containing evaluation results and cached metrics.
     :rtype: PipelineResults
     """
-    LOGGER.info(
+    _status(
         "Beginning evaluation run label=%s stage=%s next_video=%s opinion=%s",
         context.label,
         selection.stage,
@@ -586,7 +755,7 @@ def _run_evaluations(
     )
 
     load_start = time.perf_counter()
-    LOGGER.info(
+    _status(
         "Loading tokenizer/model from %s (revision=%s, dtype=%s)",
         args.model,
         args.revision or "default",
@@ -609,7 +778,7 @@ def _run_evaluations(
     model_dtype = getattr(getattr(model, "dtype", None), "name", None) or getattr(
         model, "dtype", "unknown"
     )
-    LOGGER.info(
+    _status(
         "Model ready in %.2fs • tokenizer=%s model=%s device=%s dtype=%s",
         load_elapsed,
         type(tokenizer).__name__,
@@ -620,7 +789,7 @@ def _run_evaluations(
 
     if selection.run_next_video:
         stage_start = time.perf_counter()
-        LOGGER.info("Running next-video evaluation for %s.", context.label)
+        _status("Running next-video evaluation for %s.", context.label)
         context.next_video_root.mkdir(parents=True, exist_ok=True)
         next_settings = NextVideoEvaluationSettings(
             model_label=context.label,
@@ -649,14 +818,15 @@ def _run_evaluations(
             config_label=context.label,
             out_dir=context.next_video_root,
         )
-        LOGGER.info(
+        _status(
             "Next-video evaluation finished in %.2fs",
             time.perf_counter() - stage_start,
         )
+        _log_next_video_summary(results.next_video)
 
     if selection.run_opinion:
         stage_start = time.perf_counter()
-        LOGGER.info("Running opinion evaluation.")
+        _status("Running opinion evaluation.")
         opinion_settings = OpinionEvaluationSettings(
             dataset=OpinionDatasetSpec(
                 name=args.dataset,
@@ -687,10 +857,11 @@ def _run_evaluations(
             settings=opinion_settings,
             out_dir=opinion_dir,
         )
-        LOGGER.info(
+        _status(
             "Opinion evaluation finished in %.2fs",
             time.perf_counter() - stage_start,
         )
+        _log_opinion_summary(results.opinion)
 
     return results
 
@@ -712,10 +883,21 @@ def _generate_reports_if_needed(
     next_result = results.next_video
     if selection.run_next_video and next_result is None:
         next_result = _load_next_video_from_disk(context.next_video_run_dir)
+        if next_result is not None:
+            LOGGER.info(
+                "Loaded cached next-video metrics from %s", next_result.metrics_path
+            )
+            _log_next_video_summary(next_result)
 
     opinion_result = results.opinion
     if selection.run_opinion and opinion_result is None:
         opinion_result = _load_opinion_from_disk(context.opinion_run_dir)
+        if opinion_result is not None:
+            LOGGER.info(
+                "Loaded cached opinion metrics from %s",
+                context.opinion_run_dir / "combined_metrics.json",
+            )
+            _log_opinion_summary(opinion_result)
 
     generate_reports(
         repo_root=context.repo_root,
@@ -727,7 +909,7 @@ def _generate_reports_if_needed(
             args.regenerate_hint or None,
         ),
     )
-    LOGGER.info(
+    _status(
         "Reports written under %s.",
         context.repo_root / "reports" / args.reports_subdir,
     )
@@ -746,7 +928,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     selection = _resolve_stage_selection(args)
     context = _build_context(args)
     prompts = _load_prompts(args)
-    LOGGER.info(
+    _status(
         "Stage selection: stage=%s run_evaluations=%s next_video=%s opinion=%s run_reports=%s",
         selection.stage,
         selection.run_evaluations,
@@ -754,7 +936,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         selection.run_opinion,
         selection.run_reports,
     )
-    LOGGER.info(
+    _status(
         "Pipeline context: repo_root=%s out_dir=%s label=%s model=%s dataset=%s split=%s",
         context.repo_root,
         context.out_dir,
@@ -774,7 +956,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     if selection.run_reports:
         _generate_reports_if_needed(selection, context, results, args)
 
-    LOGGER.info("Pipeline finished in %.2fs", time.perf_counter() - run_start)
+    _status("Pipeline finished in %.2fs", time.perf_counter() - run_start)
 
 
 if __name__ == "__main__":  # pragma: no cover

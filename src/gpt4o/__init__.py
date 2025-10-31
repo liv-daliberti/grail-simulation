@@ -13,17 +13,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Public exports for the GPT-4o baseline package."""
+"""Public exports for the GPT-4o baseline package.
+
+Names are loaded lazily on first access to avoid import-time side effects.
+"""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from .core.evaluate import run_eval  # noqa: F401
-from .pipeline import main as pipeline_main  # noqa: F401
+import importlib
+
+__all__ = ["run_eval", "pipeline_main"]
 
 _CORE_PATH = Path(__file__).resolve().parent / "core"
 if str(_CORE_PATH) not in __path__:
     __path__.append(str(_CORE_PATH))
 
-__all__ = ["run_eval", "pipeline_main"]
+
+def __getattr__(name: str):  # pragma: no cover - thin import proxy
+    if name == "run_eval":
+        return importlib.import_module("gpt4o.core.evaluate").run_eval
+    if name == "pipeline_main":
+        return importlib.import_module("gpt4o.pipeline").main
+    raise AttributeError(name)

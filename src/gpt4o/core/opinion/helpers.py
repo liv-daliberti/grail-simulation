@@ -26,7 +26,17 @@ from common.opinion import compute_opinion_metrics, float_or_none
 
 
 def document_from_example(example: Mapping[str, object]) -> str:
-    """Assemble the viewer profile/state text bundle used for opinion prompts."""
+    """Assemble the viewer profile/state text bundle used for opinion prompts.
+
+    :param example: Row from the opinion dataset containing viewer context
+        fields such as ``viewer_profile`` and ``state_text`` plus optional
+        ``current_video_title``/``next_video_title`` hints.
+    :returns: Multi-section string that includes a "Viewer profile", optional
+        "Context" block, and "Currently watching"/"Next video shown" lines when
+        available. Empty sections are omitted and surrounding whitespace is
+        trimmed.
+    :rtype: str
+    """
     profile_source = (
         example.get("viewer_profile")
         or example.get("viewer_profile_sentence")
@@ -53,7 +63,14 @@ def document_from_example(example: Mapping[str, object]) -> str:
 
 @dataclass(frozen=True)
 class CollectExampleHooks:
-    """Dependency injection hooks used while collecting opinion examples."""
+    """Dependency injection hooks used while collecting opinion examples.
+
+    These hooks allow tests or callers to override parsing/formatting behaviour
+    without modifying the core logic.
+
+    - ``float_parser`` converts raw values into ``float`` or ``None``.
+    - ``document_builder`` assembles the viewer context string.
+    """
 
     float_parser: Callable[[object], float | None] = float_or_none
     document_builder: Callable[[Mapping[str, object]], str] = document_from_example
@@ -61,7 +78,13 @@ class CollectExampleHooks:
 
 @dataclass(frozen=True)
 class CollectExamplesConfig:
-    """Configuration controlling opinion example collection and filtering."""
+    """Configuration controlling opinion example collection and filtering.
+
+    :param allows: Predicate receiving ``(issue, study)`` and returning whether
+        the example should be included.
+    :param eval_max: Optional cap on retained participants (0 keeps all).
+    :param hooks: Pluggable hooks for parsing floats and building documents.
+    """
 
     allows: Callable[[str, str], bool]
     eval_max: int
@@ -69,14 +92,33 @@ class CollectExamplesConfig:
 
 
 def clip_prediction(value: float) -> float:
-    """Clamp predictions to the 1–7 opinion index range."""
+    """Clamp predictions to the 1–7 opinion index range.
+
+    :param value: Raw predicted post-study opinion index.
+    :returns: ``value`` clipped to ``[1.0, 7.0]``.
+    :rtype: float
+    """
     return max(1.0, min(7.0, float(value)))
 
 
 def baseline_metrics(
     truth_before: Sequence[float], truth_after: Sequence[float]
 ) -> Dict[str, object]:
-    """Compute baseline metrics mirroring the KNN/XGB implementations."""
+    """Compute baseline metrics mirroring the KNN/XGB implementations.
+
+    The baselines cover two simple predictors:
+    - Global mean of ``truth_after`` for MAE/RMSE.
+    - No-change model using ``truth_before`` as the prediction for direction and
+      calibration baselines.
+
+    :param truth_before: Ground-truth pre-study opinion indices per participant.
+    :param truth_after: Ground-truth post-study opinion indices per participant.
+    :returns: Mapping with keys such as ``global_mean_after``, ``mae_global_mean_after``,
+        ``rmse_global_mean_after``, and derivatives from the no-change baseline
+        (``mae_using_before``, ``rmse_using_before``, ``direction_accuracy``,
+        ``calibration_*``, ``kl_divergence_change_zero``).
+    :rtype: dict[str, object]
+    """
     after_arr = np.asarray(truth_after, dtype=np.float32)
     before_arr = np.asarray(truth_before, dtype=np.float32)
     if after_arr.size == 0:
@@ -117,7 +159,15 @@ def baseline_metrics(
 def load_materialised_split(
     dataset: object, preferred_split: str
 ) -> Tuple[str, Iterable[Mapping[str, object]]]:
-    """Return the evaluation split from either a DatasetDict or single dataset."""
+    """Return the evaluation split from either a DatasetDict or single dataset.
+
+    :param dataset: Hugging Face ``DatasetDict`` or a single split-like dataset.
+    :param preferred_split: Preferred split name (e.g. ``"validation"``).
+    :returns: Tuple of ``(resolved_split_name, iterable_rows)``. Falls back to a
+        sensible existing split when the preferred one is missing.
+    :rtype: tuple[str, Iterable[Mapping[str, object]]]
+    :raises RuntimeError: If ``dataset`` is ``None``.
+    """
     if dataset is None:
         raise RuntimeError("Expected dataset to be materialised before opinion evaluation.")
 
@@ -149,7 +199,17 @@ def _normalise_example_entry(
     study: str,
     hooks: CollectExampleHooks,
 ) -> Mapping[str, object] | None:
-    """Return a participant payload when ``entry`` satisfies the study spec."""
+    """Return a participant payload when ``entry`` satisfies the study spec.
+
+    :param entry: Raw dataset row for an individual participant/time step.
+    :param spec: :class:`~common.opinion.OpinionSpec` with column definitions.
+    :param issue: Issue label associated with the row.
+    :param study: Participant study key associated with the row.
+    :param hooks: Parsing/formatting hooks used to coerce inputs.
+    :returns: Canonical participant payload or ``None`` if the row is
+        incomplete (missing ids, numeric fields, or empty document).
+    :rtype: dict[str, object] | None
+    """
 
     before = hooks.float_parser(entry.get(spec.before_column))
     after = hooks.float_parser(entry.get(spec.after_column))
@@ -182,7 +242,19 @@ def collect_examples(
     spec,
     config: CollectExamplesConfig,
 ) -> Tuple[List[Mapping[str, object]], int]:
-    """Return filtered participant examples for the provided study spec."""
+    """Return filtered participant examples for the provided study spec.
+
+    Deduplicates by ``participant_id`` keeping the last time step, applies
+    filters, and optionally caps the number of retained participants.
+
+    :param rows: Materialised dataset rows for the evaluation split.
+    :param spec: :class:`~common.opinion.OpinionSpec` describing column names.
+    :param config: Collection and filtering options including hooks.
+    :returns: Tuple of ``(retained_examples, original_count)`` where
+        ``original_count`` reflects the number of unique participants prior to
+        ``eval_max`` truncation.
+    :rtype: tuple[list[Mapping[str, object]], int]
+    """
     per_participant: MutableMapping[str, Tuple[int, Mapping[str, object]]] = {}
 
     for entry in rows:

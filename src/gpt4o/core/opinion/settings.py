@@ -26,7 +26,13 @@ from .models import OpinionFilters, OpinionLimits, OpinionRuntime, OpinionSettin
 
 
 def parse_tokens(raw: str | None) -> Tuple[List[str], set[str]]:
-    """Return the requested token list and a lowercase set for fast membership tests."""
+    """Return tokens and a lowercase set for fast membership tests.
+
+    :param raw: Comma-separated token list (e.g. ``"gun,wage"``) or ``None``.
+    :returns: Tuple of ``(ordered_tokens, lowercase_set)`` where specifying
+        ``all`` clears the set to indicate no filtering.
+    :rtype: tuple[list[str], set[str]]
+    """
     tokens: List[str] = []
     for segment in (raw or "").split(","):
         candidate = segment.strip()
@@ -39,7 +45,13 @@ def parse_tokens(raw: str | None) -> Tuple[List[str], set[str]]:
 
 
 def resolve_spec_keys(raw: str | None) -> List[str]:
-    """Return the ordered opinion study keys to evaluate."""
+    """Return the ordered opinion study keys to evaluate.
+
+    :param raw: Comma-separated list of keys or ``None`` for all defaults.
+    :returns: Ordered list of valid study keys derived from ``DEFAULT_SPECS``
+        when ``raw`` is empty or normalised tokens otherwise.
+    :rtype: list[str]
+    """
     if not raw:
         return [spec.key for spec in DEFAULT_SPECS]
     tokens = [token.strip() for token in raw.split(",") if token.strip()]
@@ -49,7 +61,17 @@ def resolve_spec_keys(raw: str | None) -> List[str]:
 
 
 def build_settings(args) -> OpinionSettings:
-    """Construct :class:`OpinionSettings` from CLI or programmatic arguments."""
+    """Construct :class:`OpinionSettings` from CLI or programmatic arguments.
+
+    :param args: Namespace or object exposing attributes such as ``dataset``,
+        ``cache_dir``, ``issues``, ``studies``, ``opinion_studies``,
+        ``opinion_max_participants``, ``opinion_direction_tolerance``,
+        ``temperature``, ``max_tokens``, ``top_p``, ``deployment``,
+        ``request_retries``, and ``request_retry_delay``.
+    :returns: Fully populated :class:`OpinionSettings` instance combining filters,
+        limits, runtime invocation parameters, and dataset/cache paths.
+    :rtype: OpinionSettings
+    """
     dataset_name = str(getattr(args, "dataset", "") or DATASET_NAME)
     cache_dir = getattr(args, "cache_dir", None)
 

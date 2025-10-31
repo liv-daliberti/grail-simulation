@@ -15,17 +15,15 @@
 
 """Prompt construction utilities for GPT-4o slate evaluations."""
 
-# pylint: disable=too-many-return-statements,too-many-branches,too-many-locals
-# pylint: disable=too-many-statements,too-many-nested-blocks,broad-exception-caught
-
 from __future__ import annotations
 
 import json
 import logging
 import os
 import re
+from contextlib import suppress
 from importlib import import_module
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from common.prompts.docs import (
     PromptDocumentBuilder,
@@ -82,6 +80,99 @@ _RACE_MAP = {
 }
 
 
+def _gender_label(example: dict) -> Optional[str]:
+    """Return a gender label inferred from binary survey signals.
+
+    :param example: Dataset row containing boolean gender indicators.
+    :returns: Canonical gender string or ``None`` when unspecified.
+    """
+
+    female = truthy(example.get("female"))
+    male = truthy(example.get("male"))
+    if female and not male:
+        return "woman"
+    if male and not female:
+        return "man"
+    return None
+
+
+def _party_from_text(lowered: str, original: str) -> Optional[str]:
+    """Return a normalised party label based on ``lowered`` text.
+
+    :param lowered: Lower-cased party descriptor.
+    :param original: Original string prior to normalisation.
+    :returns: Canonical party description when recognised.
+    """
+
+    mapping = {
+        "democrat": "Democratic",
+        "dem": "Democratic",
+        "republican": "Republican",
+        "rep": "Republican",
+        "gop": "Republican",
+        "independent": "Independent",
+        "libertarian": "Libertarian",
+        "green": "Green",
+    }
+    for token, label in mapping.items():
+        if token in lowered:
+            return label
+    if "closer to the democratic" in lowered:
+        return "Democratic-leaning"
+    if "closer to the republican" in lowered:
+        return "Republican-leaning"
+    return original.strip() if original.strip() else None
+
+
+def _numeric_ideology_label(value: str) -> Optional[str]:
+    """Return a canonical ideology label derived from numeric encodings.
+
+    :param value: Raw string value representing the ideology indicator.
+    :returns: Canonical ideology label or ``None`` when parsing fails.
+    """
+
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return None
+    thresholds = (
+        (1.5, "Extremely liberal"),
+        (2.5, "Liberal"),
+        (3.5, "Slightly liberal"),
+        (4.5, "Moderate"),
+        (5.5, "Slightly conservative"),
+        (6.5, "Conservative"),
+    )
+    selected = "Extremely conservative"
+    for limit, label in thresholds:
+        if numeric <= limit:
+            selected = label
+            break
+    return selected
+
+
+def _textual_ideology_label(value: str) -> Optional[str]:
+    """Return a canonical ideology label derived from textual descriptors.
+
+    :param value: Raw string description of ideology.
+    :returns: Canonical ideology label or ``None`` when unrecognised.
+    """
+
+    lowered = value.lower()
+    mapping = (
+        ("extreme", "lib", "Extremely liberal"),
+        ("lib", None, "Liberal"),
+        ("moderate", None, "Moderate"),
+        ("centrist", None, "Moderate"),
+        ("conservative", "extreme", "Extremely conservative"),
+        ("conservative", None, "Conservative"),
+    )
+    for token, qualifier, label in mapping:
+        if token in lowered and (qualifier is None or qualifier in lowered):
+            return label
+    return value.strip() or None
+
+
 def pick_case_insensitive(record: dict, *candidates: str) -> Optional[str]:
     """Return the first matching candidate value from ``record``.
 
@@ -114,12 +205,10 @@ def extract_income(example: dict) -> Optional[str]:
             stripped = value.strip()
             if _INCOME_PATTERN.search(stripped) or "income" in stripped.lower():
                 return stripped
-    try:
+    if isinstance(example, dict):
         for key, value in example.items():
             if isinstance(value, str) and not is_nan_like(value) and _INCOME_PATTERN.search(value):
                 return value.strip()
-    except Exception:
-        pass
     if "income_gt50k" in example:
         high_income = bool(example.get("income_gt50k"))
         return ">$50k household income" if high_income else "≤$50k household income"
@@ -136,30 +225,16 @@ def extract_party(example: dict) -> Optional[str]:
     pid_text = example.get("pid")
     if isinstance(pid_text, str) and not is_nan_like(pid_text):
         lowered = pid_text.strip().lower()
-        if "dem" in lowered:
-            return "Democratic"
-        if "rep" in lowered or "gop" in lowered:
-            return "Republican"
-        if "independent" in lowered:
-            return "Independent"
-        if "libertarian" in lowered:
-            return "Libertarian"
-        if "green" in lowered:
-            return "Green"
-        if "closer to the democratic" in lowered:
-            return "Democratic-leaning"
-        if "closer to the republican" in lowered:
-            return "Republican-leaning"
-        return pid_text.strip()
+        candidate = _party_from_text(lowered, pid_text)
+        if candidate:
+            return candidate
 
     values: list[float] = []
     for key in ("pid1", "pid2", "pid3", "pid4"):
-        try:
-            value = example.get(key)
-            if value is not None and str(value).strip() != "":
+        value = example.get(key)
+        if value is not None and str(value).strip() != "":
+            with suppress(TypeError, ValueError):
                 values.append(float(value))
-        except Exception:
-            continue
     if values:
         mean_value = sum(values) / len(values)
         if mean_value <= 3.0:
@@ -182,35 +257,13 @@ def format_ideology(raw: Any) -> Optional[str]:
     value = str(raw).strip()
     if is_nan_like(value):
         return None
-    try:
-        numeric = float(value)
-        if numeric <= 1.5:
-            return "Extremely liberal"
-        if numeric <= 2.5:
-            return "Liberal"
-        if numeric <= 3.5:
-            return "Slightly liberal"
-        if numeric <= 4.5:
-            return "Moderate"
-        if numeric <= 5.5:
-            return "Slightly conservative"
-        if numeric <= 6.5:
-            return "Conservative"
-        return "Extremely conservative"
-    except Exception:
-        pass
-    lowered = value.lower()
-    if "extreme" in lowered and "lib" in lowered:
-        return "Extremely liberal"
-    if "lib" in lowered:
-        return "Liberal"
-    if "moderate" in lowered or "centrist" in lowered:
-        return "Moderate"
-    if "conservative" in lowered and "extreme" in lowered:
-        return "Extremely conservative"
-    if "conservative" in lowered:
-        return "Conservative"
-    return value
+
+    numeric_label = _numeric_ideology_label(value)
+    if numeric_label is not None:
+        return numeric_label
+
+    textual_label = _textual_ideology_label(value)
+    return textual_label
 
 
 def extract_marital_status(example: dict) -> Optional[str]:
@@ -220,24 +273,27 @@ def extract_marital_status(example: dict) -> Optional[str]:
     :returns: Normalised marital descriptor or ``None`` if unknown.
     """
 
+    synonyms = (
+        (("married",), "Married"),
+        (("partner", "cohabit"), "Living with partner"),
+        (("single",), "Single"),
+        (("divorced",), "Divorced"),
+        (("widow",), "Widowed"),
+        (("separated",), "Separated"),
+    )
+    result: Optional[str] = None
     for key in _MARITAL_KEYS:
         value = example.get(key)
         if isinstance(value, str) and not is_nan_like(value):
             lowered = value.strip().lower()
-            if "married" in lowered:
-                return "Married"
-            if "partner" in lowered or "cohabit" in lowered:
-                return "Living with partner"
-            if "single" in lowered:
-                return "Single"
-            if "divorced" in lowered:
-                return "Divorced"
-            if "widow" in lowered:
-                return "Widowed"
-            if "separated" in lowered:
-                return "Separated"
-            return value
-    return None
+            for tokens, label in synonyms:
+                if any(token in lowered for token in tokens):
+                    result = label
+                    break
+            if result is None and value.strip():
+                result = value.strip()
+            break
+    return result
 
 
 def _normalise_race_token(raw: str) -> Optional[str]:
@@ -257,6 +313,96 @@ def _normalise_race_token(raw: str) -> Optional[str]:
     return raw.strip()
 
 
+def _demographic_fragments(example: dict) -> list[str]:
+    """Return demographic fragments used in the profile sentence.
+
+    :param example: Dataset row containing demographic indicators
+        (e.g. ``female``, ``male``, race fields, marital status).
+    :returns: List of short phrases that describe the viewer's demographics.
+    :rtype: list[str]
+    """
+
+    fragments: list[str] = []
+    race = extract_race(example)
+    gender = _gender_label(example)
+
+    if race and gender:
+        fragments.append(f"{race} {gender}")
+    else:
+        fragments.extend([frag for frag in (gender, race) if frag])
+
+    marital = extract_marital_status(example)
+    if marital and not is_nan_like(marital):
+        fragments.append(marital.lower() if marital in {"Married", "Single", "Divorced", "Widowed", "Separated"} else marital)
+
+    return fragments
+
+
+def _political_fragments(example: dict) -> list[str]:
+    """Return political fragments for the viewer profile.
+
+    :param example: Dataset row with partisan/ideology and income signals.
+    :returns: List of phrases capturing party/ideology and income when present.
+    :rtype: list[str]
+    """
+
+    fragments: list[str] = []
+    party = extract_party(example)
+    ideology = format_ideology(example.get("ideo"))
+    if party and ideology:
+        fragments.append(f"{party.lower()} {ideology.lower()}")
+    elif party:
+        fragments.append(party)
+    elif ideology:
+        fragments.append(ideology.lower())
+
+    income = extract_income(example)
+    if income and not is_nan_like(income):
+        fragments.append(income)
+    return fragments
+
+
+def _education_fragments(example: dict) -> list[str]:
+    """Return education-related fragments for the profile.
+
+    :param example: Dataset row with a ``college`` boolean flag.
+    :returns: List containing a single education phrase when applicable.
+    :rtype: list[str]
+    """
+
+    if truthy(example.get("college")):
+        return ["college-educated"]
+    return []
+
+
+def _viewing_fragments(example: dict) -> list[str]:
+    """Return viewing-habit fragments for the profile.
+
+    :param example: Dataset row with ``freq_youtube`` frequency values.
+    :returns: List containing a single viewing-habit phrase when recognised.
+    :rtype: list[str]
+    """
+
+    youtube_freq = str(example.get("freq_youtube", "")).strip()
+    if youtube_freq in YT_FREQ_MAP:
+        viewing_phrase = YT_FREQ_MAP.get(youtube_freq, "regularly")
+        return [f"watches YouTube {viewing_phrase}"]
+    return []
+
+
+def _age_fragments(example: dict) -> list[str]:
+    """Return age-based fragments for the viewer profile.
+
+    :param example: Dataset row containing age metadata.
+    :returns: List containing a single age descriptor when available.
+    """
+
+    age = example.get("age")
+    if isinstance(age, (int, float)) and age > 0:
+        return [f"{int(age)}-year-old"]
+    return []
+
+
 def extract_race(example: dict) -> Optional[str]:
     """Extract race information following the GRPO baseline rules.
 
@@ -264,15 +410,12 @@ def extract_race(example: dict) -> Optional[str]:
     :returns: Canonical race label or ``None`` when no signal is found.
     """
 
-    try:
-        if truthy(example.get("white")) and truthy(example.get("black")):
-            return "Multiracial"
-        if truthy(example.get("white")):
-            return "White"
-        if truthy(example.get("black")):
-            return "Black"
-    except Exception:
-        pass
+    if truthy(example.get("white")) and truthy(example.get("black")):
+        return "Multiracial"
+    if truthy(example.get("white")):
+        return "White"
+    if truthy(example.get("black")):
+        return "Black"
 
     for field in _RACE_TEXT_FIELDS:
         value = example.get(field)
@@ -291,52 +434,11 @@ def humanise_profile(example: dict) -> str:
     """
 
     fragments: list[str] = []
-    age = example.get("age")
-    if isinstance(age, (int, float)) and age > 0:
-        fragments.append(f"{int(age)}-year-old")
-
-    race = extract_race(example)
-    female = truthy(example.get("female"))
-    male = truthy(example.get("male"))
-    gender = "woman" if (female and not male) else ("man" if (male and not female) else None)
-
-    if race and gender:
-        fragments.append(f"{race} {gender}")
-    else:
-        if gender:
-            fragments.append(gender)
-        if race and not gender:
-            fragments.append(race)
-
-    marital = extract_marital_status(example)
-    if marital and not is_nan_like(marital):
-        if marital in {"Married", "Single", "Divorced", "Widowed", "Separated"}:
-            fragments.append(marital.lower())
-        else:
-            fragments.append(marital)
-
-    party = extract_party(example)
-    ideology = format_ideology(example.get("ideo"))
-    if party and ideology:
-        fragments.append(f"{party.lower()} {ideology.lower()}")
-    elif party:
-        fragments.append(party)
-    elif ideology:
-        fragments.append(ideology.lower())
-
-    income = extract_income(example)
-    if income and not is_nan_like(income):
-        fragments.append(income)
-
-    if truthy(example.get("college")) and not any(
-        "degree" in (income or "").lower() for _ in [0]
-    ):
-        fragments.append("college-educated")
-
-    youtube_freq = str(example.get("freq_youtube", "")).strip()
-    if youtube_freq in YT_FREQ_MAP:
-        viewing_phrase = YT_FREQ_MAP.get(youtube_freq, "regularly")
-        fragments.append(f"watches YouTube {viewing_phrase}")
+    fragments.extend(_age_fragments(example))
+    fragments.extend(_demographic_fragments(example))
+    fragments.extend(_political_fragments(example))
+    fragments.extend(_education_fragments(example))
+    fragments.extend(_viewing_fragments(example))
 
     sentence_parts = [
         fragment for fragment in fragments if fragment and not is_nan_like(fragment)
@@ -454,7 +556,7 @@ def _extract_now_watching(example: dict) -> Tuple[str, str] | None:
                         title = _PROMPT_DOC_BUILDER.title_for(video_id) or ""
                     if title or video_id:
                         return (title or "(untitled)"), (video_id or "")
-        except Exception:
+        except (json.JSONDecodeError, TypeError, AttributeError):
             pass
     return None
 
@@ -470,7 +572,7 @@ def _get_history_pointer(example: dict) -> Tuple[int | None, float | None]:
         return None, None
     try:
         data = json.loads(trajectory_json)
-    except Exception:
+    except (json.JSONDecodeError, TypeError):
         return None, None
     pointer = data.get("current_index")
     if pointer is None:
@@ -478,14 +580,12 @@ def _get_history_pointer(example: dict) -> Tuple[int | None, float | None]:
     end_ms = data.get("current_end_ms")
     if end_ms is None:
         end_ms = data.get("currentEndMs")
-    try:
+    pointer_int = None
+    with suppress(TypeError, ValueError):
         pointer_int = int(pointer) if pointer is not None else None
-    except Exception:
-        pointer_int = None
-    try:
+    end_float = None
+    with suppress(TypeError, ValueError):
         end_float = float(end_ms) if end_ms is not None else None
-    except Exception:
-        end_float = None
     return pointer_int, end_float
 
 
@@ -509,7 +609,7 @@ def _extract_history(
         return []
     try:
         data = json.loads(trajectory_json)
-    except Exception:
+    except (json.JSONDecodeError, TypeError):
         return []
     rows = data.get("order") or data.get("videos") or data.get("history")
     if not isinstance(rows, list):
@@ -564,11 +664,9 @@ def _extract_history(
         idx_val = entry.get("idx")
         if isinstance(idx_val, int):
             return (0, idx_val)
-        try:
-            end = float(entry.get("end_ms") or -1)
-        except Exception:
-            end = -1.0
-        return (1, end)
+        with suppress(TypeError, ValueError):
+            return (1, float(entry.get("end_ms") or -1))
+        return (1, -1.0)
 
     extracted.sort(key=_hist_key)
     if up_to_idx is not None:
@@ -579,7 +677,7 @@ def _extract_history(
             or (row["idx"] < up_to_idx or (include_current and row["idx"] == up_to_idx))
         ]
     elif up_to_end_ms is not None:
-        try:
+        with suppress(TypeError, ValueError):
             threshold = float(up_to_end_ms)
             extracted = [
                 row
@@ -590,8 +688,6 @@ def _extract_history(
                     or (include_current and float(row["end_ms"]) <= threshold)
                 )
             ]
-        except Exception:
-            pass
     return extracted
 
 
@@ -618,7 +714,7 @@ def _extract_slate_items(example: dict) -> List[Tuple[str, str]]:
                 items.append((surface, ""))
 
     if not items:
-        try:
+        with suppress(json.JSONDecodeError, TypeError, AttributeError):
             for element in load_trajectory_entries(example.get("trajectory_json")):
                 raw_id = str(
                     pick_case_insensitive(
@@ -643,8 +739,6 @@ def _extract_slate_items(example: dict) -> List[Tuple[str, str]]:
                     title = _PROMPT_DOC_BUILDER.title_for(raw_id) or ""
                 if raw_id or title:
                     items.append((title or "(untitled)", raw_id))
-        except Exception:
-            pass
 
     seen: set[str] = set()
     deduped: list[Tuple[str, str]] = []
@@ -668,10 +762,9 @@ def _format_history_lines(sequence: List[dict]) -> List[str]:
         :param value: Raw seconds or timing value to convert.
         :returns: Human-readable suffix string (e.g. ``10s`` or ``?``).
         """
-        try:
+        with suppress(TypeError, ValueError):
             return f"{int(round(float(value)))}s"
-        except Exception:
-            return "?"
+        return "?"
 
     lines: list[str] = []
     for row in sequence:
@@ -689,11 +782,10 @@ def _format_history_lines(sequence: List[dict]) -> List[str]:
     return lines
 
 
-def make_conversation_record(example: dict) -> Dict[str, Any]:
-    """Transform a dataset row into the prompt payload consumed by GPT-4o.
+def _history_builder_size() -> int:
+    """Return the max history size configured for prompt construction.
 
-    :param example: Dataset row containing slate options and viewer metadata.
-    :returns: Dictionary with prompt messages and evaluation metadata.
+    :returns: Integer describing the history depth for the prompt builder.
     """
 
     max_history = int(os.environ.get("GRAIL_MAX_HISTORY", "8"))
@@ -704,96 +796,160 @@ def make_conversation_record(example: dict) -> Dict[str, Any]:
         or history_full_mode in {"1", "true", "t", "yes", "y"}
         or max_history <= 0
     )
+    return 0 if show_full else max_history
 
-    builder_history = 0 if show_full else max_history
-    _PROMPT_DOC_BUILDER.max_history = builder_history
+
+def _sanitise_context(example: dict) -> str:
+    """Return the raw prompt context stripped of NaN-like placeholders.
+
+    :param example: Dataset row containing prompt metadata.
+    :returns: Stripped context string or an empty fallback.
+    """
 
     raw_context = str(example.get(PROMPT_COLUMN, "") or "").strip()
-    if is_nan_like(raw_context):
-        raw_context = ""
+    return "" if is_nan_like(raw_context) else raw_context
 
-    base_prompt = _PROMPT_DOC_BUILDER.prompt_from_builder(example)
-    if not base_prompt and raw_context:
-        base_prompt = raw_context
+
+def _compose_user_message(base_prompt: str) -> str:
+    """Compose the user message including the instruction tail.
+
+    :param base_prompt: Viewer context built by the prompt builder.
+    :returns: Full user message dispatched to GPT-4o.
+    """
 
     instruction_tail = (
         "\n\nAfter thinking in <think>, choose exactly one candidate from OPTIONS and"
         " return ONLY its NUMBER in <answer>."
     )
-    user_message = (
-        f"{base_prompt}{instruction_tail}" if base_prompt else instruction_tail.lstrip()
+    return f"{base_prompt}{instruction_tail}" if base_prompt else instruction_tail.lstrip()
+
+
+def _resolve_gold_index(example: dict, slate_pairs: Sequence[Tuple[str, str]]) -> int:
+    """Determine the gold option index associated with ``example``.
+
+    :param example: Dataset row containing answer metadata.
+    :param slate_pairs: Ordered slate entries presented to the model.
+    :returns: 1-based gold index or ``-1`` when unavailable.
+    """
+
+    gold_raw = _preferred_answer(example)
+    matched = _match_gold_to_slate(gold_raw, slate_pairs)
+    if matched > 0:
+        return matched
+
+    limit = len(slate_pairs) if slate_pairs else None
+    dataset_index = _bounded_index(example.get("gold_index"), limit)
+    if dataset_index is not None:
+        return dataset_index
+    answer_index = _bounded_index(example.get("answer"), limit)
+    return answer_index if answer_index is not None else -1
+
+
+def _now_playing_line(example: dict) -> str:
+    """Return the formatted now-playing metadata line.
+
+    :param example: Dataset row containing now-playing metadata.
+    :returns: Human-readable description of the current video.
+    """
+
+    now_watching = _PROMPT_DOC_BUILDER.extract_now_watching(example)
+    if not now_watching:
+        return "(none)"
+    title, video_id = now_watching
+    return f"{title or '(untitled)'}{(' — id: ' + video_id) if video_id else ''}"
+
+
+def _position_index(example: dict) -> int:
+    """Return the integer position index for ``example``.
+
+    :param example: Dataset row containing ``video_index`` metadata.
+    :returns: Zero-based position index or ``-1`` by default.
+    """
+
+    with suppress(TypeError, ValueError):
+        raw = example.get("video_index")
+        if raw is not None:
+            return int(raw)
+    return -1
+
+
+def _preferred_answer(example: dict) -> str:
+    """Return the canonical answer string extracted from the dataset row.
+
+    :param example: Dataset row containing potential answer keys.
+    :returns: Preferred answer string or an empty string when absent.
+    """
+
+    candidate_keys = (
+        SOLUTION_COLUMN if isinstance(SOLUTION_COLUMN, str) else "",
+        "gold_id",
+        "next_video_id",
     )
-
-    slate_pairs = _PROMPT_DOC_BUILDER.extract_slate_items(example)
-
-    def _coerce_positive_index(value: object) -> int:
-        """Return a strictly positive integer parsed from ``value``."""
-
-        try:
-            candidate = int(value)
-        except (TypeError, ValueError):
-            return -1
-        return candidate if candidate > 0 else -1
-
-    candidate_keys: tuple[str, ...] = tuple(
-        key
-        for key in (
-            SOLUTION_COLUMN if isinstance(SOLUTION_COLUMN, str) else "",
-            "gold_id",
-            "next_video_id",
-        )
-        if key
-    )
-    gold_index = -1
-    gold_raw = ""
     for key in candidate_keys:
         if not key:
             continue
         value = example.get(key)
-        if not isinstance(value, str):
-            continue
-        cleaned = value.strip()
-        if not cleaned:
-            continue
-        gold_raw = cleaned
-        break
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
 
-    if gold_raw and slate_pairs:
-        gold_id_canon = canon_video_id(gold_raw)
-        gold_title_canon = canon_text(gold_raw)
-        for idx, (title, video_id) in enumerate(slate_pairs, start=1):
-            vid_canon = canon_video_id(video_id)
-            title_canon = canon_text(title)
-            if (
-                gold_raw == video_id
-                or (gold_id_canon and vid_canon == gold_id_canon)
-                or (gold_title_canon and title_canon == gold_title_canon)
-            ):
-                gold_index = idx
-                break
-    if gold_index <= 0:
-        dataset_index = _coerce_positive_index(example.get("gold_index"))
-        if dataset_index > 0 and (not slate_pairs or dataset_index <= len(slate_pairs)):
-            gold_index = dataset_index
-    if gold_index <= 0:
-        answer_index = _coerce_positive_index(example.get("answer"))
-        if answer_index > 0 and (not slate_pairs or answer_index <= len(slate_pairs)):
-            gold_index = answer_index
 
-    now_watching = _PROMPT_DOC_BUILDER.extract_now_watching(example)
-    if now_watching:
-        now_title, now_id = now_watching
-        now_line_state = f"{now_title or '(untitled)'}{(' — id: ' + now_id) if now_id else ''}"
-    else:
-        now_line_state = "(none)"
+def _match_gold_to_slate(gold_raw: str, slate_pairs: Sequence[Tuple[str, str]]) -> int:
+    """Return the 1-based slate index matching ``gold_raw`` if available.
 
+    :param gold_raw: Answer string extracted from the dataset.
+    :param slate_pairs: Ordered slate entries presented to the model.
+    :returns: 1-based index when a match is found; ``-1`` otherwise.
+    """
+
+    if not gold_raw or not slate_pairs:
+        return -1
+    gold_id_canon = canon_video_id(gold_raw)
+    gold_title_canon = canon_text(gold_raw)
+    for idx, (title, video_id) in enumerate(slate_pairs, start=1):
+        vid_canon = canon_video_id(video_id)
+        title_canon = canon_text(title)
+        if (
+            gold_raw == video_id
+            or (gold_id_canon and vid_canon == gold_id_canon)
+            or (gold_title_canon and title_canon == gold_title_canon)
+        ):
+            return idx
+    return -1
+
+
+def _bounded_index(value: object, limit: Optional[int]) -> Optional[int]:
+    """Return a positive index when within ``limit``; otherwise ``None``.
+
+    :param value: Raw candidate index to coerce.
+    :param limit: Optional inclusive upper bound for valid indices.
+    :returns: Positive integer index or ``None`` when out of bounds.
+    """
+
+    with suppress(TypeError, ValueError):
+        candidate = int(value)
+        if candidate > 0 and (limit is None or candidate <= limit):
+            return candidate
+    return None
+
+
+def make_conversation_record(example: dict) -> Dict[str, Any]:
+    """Transform a dataset row into the prompt payload consumed by GPT-4o.
+
+    :param example: Dataset row containing slate options and viewer metadata.
+    :returns: Dictionary with prompt messages and evaluation metadata.
+    """
+    _PROMPT_DOC_BUILDER.max_history = _history_builder_size()
+
+    base_prompt = _PROMPT_DOC_BUILDER.prompt_from_builder(example)
+    if not base_prompt:
+        base_prompt = _sanitise_context(example)
+    user_message = _compose_user_message(base_prompt)
+
+    slate_pairs = _extract_slate_items(example)
+    gold_index = _resolve_gold_index(example, slate_pairs)
+    now_line_state = _now_playing_line(example)
     profile_block = build_profile_block(example)
-
-    position_index = example.get("video_index")
-    try:
-        position_index = int(position_index) if position_index is not None else -1
-    except Exception:
-        position_index = -1
 
     return {
         "prompt": [
@@ -802,7 +958,7 @@ def make_conversation_record(example: dict) -> Dict[str, Any]:
         ],
         "gold_index": gold_index,
         "n_options": len(slate_pairs),
-        "position_index": position_index,
+        "position_index": _position_index(example),
         "metadata": {
             "now_playing": now_line_state,
             "profile_block": profile_block,

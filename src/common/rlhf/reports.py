@@ -154,7 +154,17 @@ def _write_next_video_report(
         ]
     )
     by_study = metrics.get("group_metrics", {}).get("by_participant_study", {})
-    for group, stats in by_study.items():
+    # Ensure stable, human-friendly ordering for study keys (study1, study2, ...).
+    def _study_sort_key(k: str) -> tuple[int, str]:
+        if k.startswith("study"):
+            suffix = k[5:]
+            try:
+                return (0, f"{int(suffix):03d}")
+            except (TypeError, ValueError):
+                return (1, k)
+        return (1, k)
+    for group in sorted(by_study.keys(), key=_study_sort_key):
+        stats = by_study[group]
         lines.append(
             f"| {group} | {_format_int(stats.get('n_seen'))} | "
             f"{_format_int(stats.get('n_eligible'))} | "

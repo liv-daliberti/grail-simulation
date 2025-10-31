@@ -61,7 +61,7 @@ def _parse_index_from_output(raw: str) -> int | None:
         if numeric:
             try:
                 return int(numeric.group(1))
-            except Exception:
+            except (TypeError, ValueError):
                 return None
     tail = "\n".join(raw.strip().splitlines()[-4:])
     for line in reversed(tail.splitlines()):
@@ -69,7 +69,7 @@ def _parse_index_from_output(raw: str) -> int | None:
         if numeric:
             try:
                 return int(numeric.group(1))
-            except Exception:
+            except (TypeError, ValueError):
                 return None
     return None
 
@@ -211,7 +211,11 @@ class RecordMetrics:
 
     @classmethod
     def from_record(cls, record: dict[str, object]) -> "RecordMetrics":
-        """Create metrics from a conversation record."""
+        """Create metrics from a conversation record.
+
+        :param record: Conversation record produced by ``conversation.make_conversation_record``.
+        :returns: Populated :class:`RecordMetrics` instance.
+        """
 
         messages = list(record.get("prompt", []))
         return cls(
@@ -251,7 +255,12 @@ class ModelAnalysis:
 
     @classmethod
     def from_output(cls, raw_output: str, metrics: RecordMetrics) -> "ModelAnalysis":
-        """Analyse model output relative to the record metrics."""
+        """Analyse model output relative to the record metrics.
+
+        :param raw_output: Raw GPT-4o completion text.
+        :param metrics: Structured record metrics describing the example.
+        :returns: :class:`ModelAnalysis` describing parsed scores.
+        """
 
         parsed_index = _parse_index_from_output(raw_output)
         is_formatted = bool(_utils.ANS_TAG.search(raw_output))
@@ -268,7 +277,13 @@ class ModelAnalysis:
         )
 
     def observation(self, labels: ExampleLabels, metrics: RecordMetrics) -> slate_eval.Observation:
-        """Return the observation payload required by the accumulator."""
+        """Return the observation payload required by the accumulator.
+
+        :param labels: Normalised issue/study labels.
+        :param metrics: Metrics describing the evaluation example.
+        :returns: Observation compatible with
+            :class:`~common.evaluation.slate_eval.EvaluationAccumulator`.
+        """
 
         return slate_eval.Observation(
             issue_label=labels.issue_label,
@@ -284,7 +299,12 @@ class ModelAnalysis:
         )
 
     def payload(self, labels: ExampleLabels, metrics: RecordMetrics) -> dict[str, object]:
-        """Serialise the per-example payload written to the predictions log."""
+        """Serialise the per-example payload written to the predictions log.
+
+        :param labels: Normalised issue/study labels.
+        :param metrics: Metrics describing the evaluation example.
+        :returns: Dictionary representation persisted to ``predictions.jsonl``.
+        """
 
         return {
             "messages": metrics.messages,
@@ -310,7 +330,11 @@ class EvaluationOutcome:
 
 
 def _extract_system_prompt(messages: list[dict[str, object]]) -> str:
-    """Return the first system message from ``messages``."""
+    """Return the first system message from ``messages``.
+
+    :param messages: Ordered chat message payloads.
+    :returns: Stripped system prompt content or an empty string.
+    """
 
     for message in messages:
         if (
@@ -323,7 +347,11 @@ def _extract_system_prompt(messages: list[dict[str, object]]) -> str:
 
 
 def _extract_user_question(messages: list[dict[str, object]]) -> str:
-    """Return the most recent user message from ``messages``."""
+    """Return the most recent user message from ``messages``.
+
+    :param messages: Ordered chat message payloads.
+    :returns: Stripped user content or an empty string when missing.
+    """
 
     for message in reversed(messages):
         if isinstance(message, dict) and message.get("role") == "user":
@@ -332,8 +360,11 @@ def _extract_user_question(messages: list[dict[str, object]]) -> str:
 
 
 def _serialise_prediction(payload: dict[str, object]) -> str:
-    """Return the JSON serialisation for ``payload``."""
+    """Return the JSON serialisation for ``payload``.
 
+    :param payload: Per-example payload dictionary.
+    :returns: JSON lines serialisation used for ``predictions.jsonl``.
+    """
     return json.dumps(payload, ensure_ascii=False)
 
 
@@ -342,7 +373,13 @@ def _write_qa_entry(
     index: int,
     payload: dict[str, object],
 ) -> None:
-    """Write a QA entry to ``handle`` using the provided payload."""
+    """Write a QA entry to ``handle`` using the provided payload.
+
+    :param handle: Open writable handle pointing to the QA log file.
+    :param index: 1-based example index used for headings.
+    :param payload: Rendered payload dictionary for the example.
+    :returns: ``None``.
+    """
 
     messages = payload.get("messages", [])
     system_prompt = _extract_system_prompt(messages if isinstance(messages, list) else [])
@@ -660,7 +697,11 @@ class EvaluationRunner:
     def _iter_outcomes(
         self, data_iter: t.Iterable[dict[str, object]]
     ) -> t.Iterator[EvaluationOutcome]:
-        """Yield evaluation outcomes for each example in ``data_iter``."""
+        """Yield evaluation outcomes for each example in ``data_iter``.
+
+        :param data_iter: Iterable delivering evaluation examples.
+        :returns: Iterator over :class:`EvaluationOutcome` objects.
+        """
 
         for example in data_iter:
             outcome = self._evaluate_example(example)

@@ -91,6 +91,7 @@ def _load_dataset_from_path(path: Path):
     if LOAD_FROM_DISK is None:  # pragma: no cover - defensive
         raise RuntimeError("datasets.load_from_disk is unavailable.")
     LOGGER.info("[DATASET] loading local dataset from %s", path)
+    print(f"[grpo.dataset] loading local dataset from {path}", flush=True)
     return LOAD_FROM_DISK(str(path))
 
 
@@ -117,6 +118,10 @@ def _load_dataset_from_hub(
         dataset_id,
         revision or "default",
         cache_dir or "<default>",
+    )
+    print(
+        f"[grpo.dataset] fetching hub dataset id={dataset_id} revision={revision or 'default'} cache_dir={cache_dir or '<default>'}",
+        flush=True,
     )
     return LOAD_DATASET(  # type: ignore[misc]
         dataset_id,
@@ -160,16 +165,30 @@ def load_dataset_split(
                     source_repr,
                     len(rows),
                 )
+                print(
+                    f"[grpo.dataset] using split={candidate} from {source_repr} rows={len(rows)}",
+                    flush=True,
+                )
                 return rows
         raise RuntimeError(
             f"Unable to locate evaluation split '{split}' in dataset '{dataset_name}'."
         )
     if hasattr(dataset, "split"):
         rows = list(dataset)  # type: ignore[arg-type]
-        LOGGER.info("[DATASET] using iterable dataset from %s (rows=%d)", source_repr, len(rows))
+        LOGGER.info(
+            "[DATASET] using iterable dataset from %s (rows=%d)", source_repr, len(rows)
+        )
+        print(
+            f"[grpo.dataset] using iterable dataset from {source_repr} rows={len(rows)}",
+            flush=True,
+        )
         return rows
     rows = list(dataset)
     LOGGER.info("[DATASET] materialised dataset from %s (rows=%d)", source_repr, len(rows))
+    print(
+        f"[grpo.dataset] materialised dataset from {source_repr} rows={len(rows)}",
+        flush=True,
+    )
     return rows
 
 

@@ -153,7 +153,10 @@ class SessionGraphState:
     )
 
     def ordered_steps(self) -> List[int]:
-        """Return the step indices observed across the session in order."""
+        """Return the step indices observed across the session in order.
+
+        :returns: Sorted list of step indices present in the session state.
+        """
 
         return sorted(self.current_nodes.keys())
 
@@ -381,6 +384,7 @@ def _add_tree_nodes(graph: Digraph, tree: TreeData, context: NodeRenderContext) 
     :param graph: Graphviz graph being constructed.
     :param tree: Tree data describing nodes and edges.
     :param context: Rendering context describing styling and filters.
+    :returns: ``None``.
     """
 
     for node_id, node_data in tree.nodes.items():
@@ -405,6 +409,7 @@ def _add_tree_edges(graph: Digraph, tree: TreeData, context: EdgeRenderContext) 
     :param graph: Graphviz graph being constructed.
     :param tree: Tree data describing parent-child relationships.
     :param context: Rendering context describing styling and filters.
+    :returns: ``None``.
     """
 
     for edge in tree.edges:
@@ -742,6 +747,7 @@ def _link_session_steps(graph: Digraph, state: SessionGraphState) -> None:
 
     :param graph: Graphviz graph being constructed.
     :param state: Mutable state describing current/selected nodes per step.
+    :returns: ``None``.
     """
 
     ordered_steps = state.ordered_steps()
@@ -773,6 +779,7 @@ def _attach_opinion_edges(
     :param opinion_nodes: Created opinion annotation node identifiers.
     :param state: Mutable state describing session node layout.
     :param config: Rendering configuration shared across helpers.
+    :returns: ``None``.
     """
 
     ordered_steps = state.ordered_steps()

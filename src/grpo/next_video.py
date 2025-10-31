@@ -24,7 +24,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, List, Mapping, Sequence
 
 from common.evaluation import slate_eval
-from common.pipeline.io import write_metrics_json, write_segmented_markdown_log
+from common.pipeline.io import (
+    load_metrics_json,
+    write_metrics_json,
+    write_segmented_markdown_log,
+)
 from gpt4o.core import utils as gpt4o_utils
 
 from .dataset import PreparedExample, load_dataset_split, prepare_examples
@@ -427,6 +431,17 @@ def run_next_video_evaluation(
         ",".join(settings.filters.studies) or "<any>",
         settings.overwrite,
     )
+    print(
+        "[grpo.next_video] dataset=%s split=%s issues=%s studies=%s overwrite=%s"
+        % (
+            settings.dataset.name,
+            settings.dataset.split,
+            ",".join(settings.filters.issues) or "<any>",
+            ",".join(settings.filters.studies) or "<any>",
+            settings.overwrite,
+        ),
+        flush=True,
+    )
 
     rows = load_dataset_split(
         settings.dataset.name,
@@ -434,6 +449,7 @@ def run_next_video_evaluation(
         cache_dir=settings.dataset.cache_dir,
     )
     LOGGER.info("[NEXT] loaded %d raw rows for evaluation", len(rows))
+    print(f"[grpo.next_video] loaded {len(rows)} raw rows", flush=True)
     examples_iter = prepare_examples(
         rows,
         system_prompt=settings.prompts.system_prompt,
@@ -441,11 +457,32 @@ def run_next_video_evaluation(
         max_history=settings.prompts.max_history,
     )
     run_dir = out_dir / config_label
-    _ensure_output_dir(run_dir, settings.overwrite)
+    try:
+        _ensure_output_dir(run_dir, settings.overwrite)
+    except FileExistsError as exc:
+        metrics_path = run_dir / "metrics.json"
+        predictions_path = run_dir / "predictions.jsonl"
+        qa_log = _qa_log_path(run_dir)
+        if not metrics_path.exists():
+            raise
+        LOGGER.info(
+            "[NEXT] found cached artefacts at %s; skipping re-evaluation.", run_dir
+        )
+        cached_payload = load_metrics_json(metrics_path)
+        metrics = cached_payload.get("metrics", cached_payload)
+        return NextVideoEvaluationResult(
+            run_dir=run_dir,
+            metrics_path=metrics_path,
+            predictions_path=predictions_path,
+            qa_log_path=qa_log,
+            metrics=metrics,
+        )
     example_cap = settings.limits.example_cap()
     if example_cap is not None:
         LOGGER.info("[NEXT] limiting evaluation to %d examples", example_cap)
+        print(f"[grpo.next_video] limiting to {example_cap} examples", flush=True)
     LOGGER.info("[NEXT] writing artefacts to %s", run_dir)
+    print(f"[grpo.next_video] writing artefacts to {run_dir}", flush=True)
 
     state = _evaluate_examples(
         examples_iter,
@@ -483,6 +520,17 @@ def run_next_video_evaluation(
         state.accumulator.format_rate(),
         state.accumulator.eligible_overall,
         state.accumulator.total_seen,
+    )
+    print(
+        "[grpo.next_video] complete accuracy=%.3f parsed=%.3f formatted=%.3f eligible=%d/%d"
+        % (
+            state.accumulator.accuracy(),
+            state.accumulator.parsed_rate(),
+            state.accumulator.format_rate(),
+            state.accumulator.eligible_overall,
+            state.accumulator.total_seen,
+        ),
+        flush=True,
     )
     return NextVideoEvaluationResult(
         run_dir=run_dir,

@@ -26,17 +26,17 @@ export ROOT_DIR
 
 LOG_DIR=${LOG_DIR_OVERRIDE:-${LOG_DIR:-"$ROOT_DIR/logs/grpo_eval/wage"}}
 export LOG_DIR
-RUN_LABEL=${RUN_LABEL:-grpo-wage-checkpoint-120}
-MODEL_PATH=${MODEL_PATH:-"$ROOT_DIR/models/grpo/wage/checkpoint-120"}
+RUN_LABEL=${RUN_LABEL:-grpo-wage-checkpoint-50}
+MODEL_PATH=${MODEL_PATH:-"$ROOT_DIR/models/grpo/wage/checkpoint-50"}
 DATASET=${DATASET:-"$ROOT_DIR/data/cleaned_grail"}
 SPLIT=${SPLIT:-validation}
-OUT_DIR=${OUT_DIR:-"$ROOT_DIR/models/grpo"}
+OUT_DIR=${OUT_DIR:-"$MODEL_PATH"}
 STAGE=${STAGE:-evaluate}
 LOG_LEVEL=${LOG_LEVEL:-INFO}
 ISSUES=${ISSUES:-minimum_wage}
 
-export STAGE=reports 
-export RUN_LABEL=grail-gun-checkpoint-120 
+# Do not force stage/label here; override via environment when needed, e.g.:
+#   STAGE=full RUN_LABEL=grpo-wage-checkpoint-50 scripts/evaluate-grpo-wage.sh
 mkdir -p "$LOG_DIR"
 
 export PYTHONUNBUFFERED=${PYTHONUNBUFFERED:-1}

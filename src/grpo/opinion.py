@@ -24,6 +24,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Mapping, MutableMapping, Sequence
 
+import numpy as np
+
 from common.opinion import (
     DEFAULT_SPECS,
     OpinionArtifacts,
@@ -55,6 +57,48 @@ def _clip_prediction(value: float) -> float:
     """
 
     return min(7.0, max(1.0, value))
+
+
+def _compute_baseline_metrics(
+    *, truth_before: Sequence[float], truth_after: Sequence[float]
+) -> Mapping[str, object]:
+    """Return baseline opinion metrics matching the GPT-4o implementation."""
+
+    after_arr = np.asarray(truth_after, dtype=np.float32)
+    before_arr = np.asarray(truth_before, dtype=np.float32)
+    if after_arr.size == 0:
+        return {}
+
+    mean_after = float(after_arr.mean())
+    mean_predictions = np.full_like(after_arr, mean_after)
+    mae_mean = float(np.mean(np.abs(mean_predictions - after_arr)))
+    rmse_mean = float(np.sqrt(np.mean((mean_predictions - after_arr) ** 2)))
+
+    no_change = compute_opinion_metrics(
+        truth_after=after_arr,
+        truth_before=before_arr,
+        pred_after=before_arr,
+    )
+    direction_accuracy = no_change.get("direction_accuracy")
+    direction_accuracy = (
+        float(direction_accuracy) if isinstance(direction_accuracy, (int, float)) else None
+    )
+
+    return {
+        "global_mean_after": mean_after,
+        "mae_global_mean_after": mae_mean,
+        "rmse_global_mean_after": rmse_mean,
+        "mae_using_before": float(no_change.get("mae_after", float("nan"))),
+        "rmse_using_before": float(no_change.get("rmse_after", float("nan"))),
+        "mae_change_zero": float(no_change.get("mae_change", float("nan"))),
+        "rmse_change_zero": float(no_change.get("rmse_change", float("nan"))),
+        "calibration_slope_change_zero": no_change.get("calibration_slope"),
+        "calibration_intercept_change_zero": no_change.get("calibration_intercept"),
+        "calibration_ece_change_zero": no_change.get("calibration_ece"),
+        "calibration_bins_change_zero": no_change.get("calibration_bins"),
+        "kl_divergence_change_zero": no_change.get("kl_divergence_change"),
+        "direction_accuracy": direction_accuracy,
+    }
 
 
 def _parse_prediction(raw_output: str) -> float:
@@ -497,11 +541,9 @@ def _evaluate_study(
         pred_after=accumulator.pred_after,
         direction_tolerance=study_context.direction_tolerance,
     )
-    baseline = compute_opinion_metrics(
+    baseline = _compute_baseline_metrics(
         truth_after=accumulator.truth_after,
         truth_before=accumulator.truth_before,
-        pred_after=accumulator.truth_before,
-        direction_tolerance=study_context.direction_tolerance,
     )
 
     _persist_study_outputs(
@@ -521,6 +563,17 @@ def _evaluate_study(
         study=spec,
         files=files,
         summary=summary,
+    )
+    direction = metrics.get("direction_accuracy")
+    mae_after = metrics.get("mae_after")
+    LOGGER.info(
+        "[OPINION] study=%s issue=%s participants=%d eligible=%d direction=%s mae_after=%s",
+        spec.key,
+        spec.issue,
+        summary.participants,
+        summary.eligible,
+        f"{float(direction):.3f}" if isinstance(direction, (int, float)) else "nan",
+        f"{float(mae_after):.3f}" if isinstance(mae_after, (int, float)) else "nan",
     )
     return result, accumulator
 
@@ -639,6 +692,17 @@ def run_opinion_evaluation(
         settings.controls.max_participants or "<no-cap>",
         settings.controls.overwrite,
     )
+    print(
+        "[grpo.opinion] dataset=%s split=%s include_studies=%s max_participants=%s overwrite=%s"
+        % (
+            settings.dataset.name,
+            settings.dataset.split,
+            ",".join(settings.include_studies or ()) or "<all>",
+            settings.controls.max_participants or "<no-cap>",
+            settings.controls.overwrite,
+        ),
+        flush=True,
+    )
 
     dataset_rows = load_dataset_split(
         settings.dataset.name,
@@ -646,6 +710,7 @@ def run_opinion_evaluation(
         cache_dir=settings.dataset.cache_dir,
     )
     LOGGER.info("[OPINION] loaded %d rows for opinion evaluation", len(dataset_rows))
+    print(f"[grpo.opinion] loaded {len(dataset_rows)} rows", flush=True)
     combined = _CombinedVectors()
     results: List[OpinionStudyResult] = []
     study_context = OpinionStudyContext(
@@ -664,6 +729,10 @@ def run_opinion_evaluation(
             "[OPINION] evaluating study=%s participants=%d",
             spec.key,
             len(examples),
+        )
+        print(
+            f"[grpo.opinion] evaluating study={spec.key} participants={len(examples)}",
+            flush=True,
         )
         study_result, accumulator = _evaluate_study(
             spec=spec,

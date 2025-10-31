@@ -270,3 +270,6 @@ _nitpick_targets = {
 nitpick_ignore: list[tuple[str, str]] = []
 for domain, targets in _nitpick_targets.items():
     nitpick_ignore.extend((domain, target) for target in targets)
+
+# Enable Sphinx "nitpicky" mode when requested (used in CI to fail on warnings).
+nitpicky = os.environ.get("SPHINX_NITPICKY", "").lower() in {"1", "true", "yes"}

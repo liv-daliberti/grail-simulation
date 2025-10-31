@@ -68,7 +68,11 @@ _NUMBER_PATTERN = re.compile(r"[-+]?\d+(?:\.\d+)?")
 
 
 class OpinionEvaluationRunner:
-    """Stateful helper running GPT-4o opinion evaluations."""
+    """Stateful helper running GPT-4o opinion evaluations.
+
+    Orchestrates dataset loading, participant filtering, GPT-4o inference,
+    artefact writing, and per-study/combined metric computation.
+    """
 
     def __init__(
         self,
@@ -77,7 +81,13 @@ class OpinionEvaluationRunner:
         config_label: str,
         out_dir: Path,
     ) -> None:
-        """Initialise the runner with CLI arguments and derived configuration."""
+        """Initialise the runner with CLI arguments and derived configuration.
+
+        :param args: CLI namespace or argument container controlling evaluation.
+        :param config_label: Human-readable key for the selected configuration.
+        :param out_dir: Root directory where artefacts will be written.
+        :returns: ``None``.
+        """
         self._config_label = config_label
         self._out_dir = out_dir
         self._out_dir.mkdir(parents=True, exist_ok=True)
@@ -85,30 +95,54 @@ class OpinionEvaluationRunner:
 
     @property
     def settings(self) -> OpinionSettings:
-        """Return the resolved evaluation settings."""
+        """Return the resolved evaluation settings.
+
+        :returns: Immutable :class:`OpinionSettings` shared by the run.
+        :rtype: OpinionSettings
+        """
         return self._settings
 
     @property
     def runtime(self):
-        """Return the runtime invocation parameters."""
+        """Return the runtime invocation parameters.
+
+        :returns: :class:`OpinionRuntime` describing temperature, tokens, etc.
+        """
         return self._settings.runtime
 
     @property
     def limits(self):
-        """Return the execution limits associated with the run."""
+        """Return the execution limits associated with the run.
+
+        :returns: :class:`OpinionLimits` instance including eval caps and flags.
+        """
         return self._settings.limits
 
     @property
     def out_dir(self) -> Path:
-        """Return the root output directory for evaluation artefacts."""
+        """Return the root output directory for evaluation artefacts.
+
+        :returns: Filesystem path for per-study outputs and QA logs.
+        :rtype: pathlib.Path
+        """
         return self._out_dir
 
     def _allows(self, issue: str, study: str) -> bool:
-        """Return ``True`` when the current filters allow the example."""
+        """Return ``True`` when the current filters allow the example.
+
+        :param issue: Issue label for the dataset row.
+        :param study: Participant study key for the dataset row.
+        :returns: ``True`` if both fields pass the active filters.
+        :rtype: bool
+        """
         return self.settings.filters.allows(issue, study)
 
     def _load_dataset(self) -> List[Mapping[str, object]]:
-        """Load the opinion dataset from disk or the Hugging Face hub."""
+        """Load the opinion dataset from disk or the Hugging Face hub.
+
+        :returns: Materialised rows for the evaluation split.
+        :rtype: list[Mapping[str, object]]
+        """
         dataset_path = Path(self.settings.dataset_name)
         dataset = None
 
@@ -139,7 +173,13 @@ class OpinionEvaluationRunner:
         rows: Sequence[Mapping[str, object]],
         spec: OpinionSpec,
     ) -> List[Mapping[str, object]]:
-        """Return filtered participant examples for the provided study spec."""
+        """Return filtered participant examples for the provided study spec.
+
+        :param rows: Materialised dataset rows for the evaluation split.
+        :param spec: :class:`~common.opinion.OpinionSpec` defining the study.
+        :returns: Canonical participant payloads after filtering/deduplication.
+        :rtype: list[Mapping[str, object]]
+        """
         config = CollectExamplesConfig(
             allows=self._allows,
             eval_max=self.limits.eval_max,
@@ -163,7 +203,13 @@ class OpinionEvaluationRunner:
         spec: OpinionSpec,
         example: Mapping[str, object],
     ) -> List[Mapping[str, str]]:
-        """Construct the system/user messages for a single participant example."""
+        """Construct the system/user messages for a single participant example.
+
+        :param spec: Study specification providing ``issue`` and label.
+        :param example: Canonical participant payload from :func:`collect_examples`.
+        :returns: Sequence with one system and one user message.
+        :rtype: list[Mapping[str, str]]
+        """
         before = example["before"]
         issue_label = spec.issue.replace("_", " ").title()
         document = example["document"]
@@ -187,7 +233,14 @@ class OpinionEvaluationRunner:
         ]
 
     def _infer_prediction(self, messages: List[Mapping[str, str]]) -> Tuple[float, str]:
-        """Call GPT-4o and parse the predicted opinion index."""
+        """Call GPT-4o and parse the predicted opinion index.
+
+        :param messages: Chat completion payload to send to GPT-4o.
+        :returns: Tuple of ``(predicted_after, raw_output)`` where
+            ``predicted_after`` is clipped to the 1–7 range or ``NaN`` on
+            failure, and ``raw_output`` contains the model response.
+        :rtype: tuple[float, str]
+        """
         invocation = InvocationParams(
             max_tokens=self.runtime.max_tokens,
             temperature=self.runtime.temperature,
@@ -229,7 +282,12 @@ class OpinionEvaluationRunner:
 
     @staticmethod
     def _extract_log_messages(messages: Sequence[Mapping[str, str]]) -> Tuple[str, str]:
-        """Return the system prompt and latest user message for QA logging."""
+        """Return the system prompt and latest user message for QA logging.
+
+        :param messages: Chat message sequence used for inference.
+        :returns: Tuple of ``(system_prompt, user_prompt)`` strings (may be empty).
+        :rtype: tuple[str, str]
+        """
         system_prompt = ""
         for message in messages:
             if (
@@ -251,7 +309,12 @@ class OpinionEvaluationRunner:
         return system_prompt, user_prompt
 
     def _artifacts_for_spec(self, spec: OpinionSpec) -> OpinionArtifacts:
-        """Return the artefact paths associated with ``spec``."""
+        """Return the artefact paths associated with ``spec``.
+
+        :param spec: Opinion study under evaluation.
+        :returns: Paths for metrics, predictions, and QA log files.
+        :rtype: OpinionArtifacts
+        """
         study_dir = self.out_dir / spec.key
         study_dir.mkdir(parents=True, exist_ok=True)
         return OpinionArtifacts(
@@ -265,7 +328,12 @@ class OpinionEvaluationRunner:
         artifacts: OpinionArtifacts,
         predictions: Sequence[Mapping[str, object]],
     ) -> None:
-        """Persist predictions to disk."""
+        """Persist predictions to disk.
+
+        :param artifacts: Destination artefact paths for the study.
+        :param predictions: Serialised per-participant payloads.
+        :returns: ``None``.
+        """
         with artifacts.predictions.open("w", encoding="utf-8") as handle:
             for payload in predictions:
                 handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
@@ -278,7 +346,15 @@ class OpinionEvaluationRunner:
         default_label: str,
         default_issue: str,
     ) -> CachedStudyPayload | None:
-        """Return cached study metrics when available and well-formed."""
+        """Return cached study metrics when available and well-formed.
+
+        :param metrics_path: Path to the saved ``metrics.json``.
+        :param study_key: Study identifier used for logging.
+        :param default_label: Fallback study label when missing in the payload.
+        :param default_issue: Fallback issue label when missing in the payload.
+        :returns: Parsed :class:`CachedStudyPayload` or ``None`` if unreadable.
+        :rtype: CachedStudyPayload | None
+        """
         try:
             with metrics_path.open("r", encoding="utf-8") as handle:
                 cached_payload = json.load(handle)
@@ -308,7 +384,14 @@ class OpinionEvaluationRunner:
         *,
         study_key: str,
     ) -> CachedPredictionVectors | None:
-        """Return cached prediction vectors when available and well-formed."""
+        """Return cached prediction vectors when available and well-formed.
+
+        :param predictions_path: Path to the saved ``predictions.jsonl`` file.
+        :param study_key: Study identifier used for logging.
+        :returns: Parsed :class:`CachedPredictionVectors` or ``None`` if
+            predictions cannot be read.
+        :rtype: CachedPredictionVectors | None
+        """
         truth_before: List[float] = []
         truth_after: List[float] = []
         pred_after: List[float] = []
@@ -343,7 +426,13 @@ class OpinionEvaluationRunner:
         artifacts: OpinionArtifacts,
         payload: StudyMetricsPayload,
     ) -> None:
-        """Write the metrics JSON payload for ``spec``."""
+        """Write the metrics JSON payload for ``spec``.
+
+        :param spec: Study specification providing labels for the payload.
+        :param artifacts: Output paths for metrics/predictions files.
+        :param payload: Aggregated metrics and participant counts.
+        :returns: ``None``.
+        """
         content = {
             "study": spec.key,
             "issue": spec.issue,
@@ -366,7 +455,13 @@ class OpinionEvaluationRunner:
         artifacts: OpinionArtifacts,
         accumulator: CombinedAccumulator,
     ) -> OpinionStudyResult | None:
-        """Load cached artefacts when reuse is permitted."""
+        """Load cached artefacts when reuse is permitted.
+
+        :param spec: Study specification identifying cached directories.
+        :param artifacts: Expected artefact paths for the study.
+        :param accumulator: Combined accumulator to extend with cached vectors.
+        :returns: :class:`OpinionStudyResult` reconstructed from disk or ``None``.
+        """
         if not artifacts.metrics.exists() or not artifacts.predictions.exists():
             return None
         metrics_payload = self._load_cached_metrics_payload(
@@ -405,7 +500,12 @@ class OpinionEvaluationRunner:
         )
 
     def _write_qa_log_entry(self, qa_log, entry: QALogEntry) -> None:
-        """Write a single QA log entry for the participant."""
+        """Write a single QA log entry for the participant.
+
+        :param qa_log: Open file handle for the QA log.
+        :param entry: :class:`QALogEntry` containing prompts and model output.
+        :returns: ``None``.
+        """
         system_prompt, question = self._extract_log_messages(entry.messages)
         qa_log.write(f"### Participant {entry.idx}\n")
         qa_log.write(f"Study: {entry.spec.key} | Issue: {entry.spec.issue}\n")
@@ -425,7 +525,14 @@ class OpinionEvaluationRunner:
         idx: int,
         context: ExampleProcessingContext,
     ) -> None:
-        """Run inference for a single participant example and update artefacts."""
+        """Run inference for a single participant example and update artefacts.
+
+        :param spec: Study specification providing labels and issue.
+        :param example: Canonical participant payload with ``before``/``after``.
+        :param idx: 1-based participant index used in QA logs.
+        :param context: Shared batch/logging resources.
+        :returns: ``None``.
+        """
         messages = self._build_messages(spec, example)
         prediction, raw_output = self._infer_prediction(messages)
         if math.isnan(prediction):
@@ -489,7 +596,13 @@ class OpinionEvaluationRunner:
         dataset_rows: Sequence[Mapping[str, object]],
         accumulator: CombinedAccumulator,
     ) -> OpinionStudyResult | None:
-        """Evaluate ``spec`` and update the combined accumulator."""
+        """Evaluate ``spec`` and update the combined accumulator.
+
+        :param spec: Opinion study specification to evaluate.
+        :param dataset_rows: Materialised dataset rows for the split.
+        :param accumulator: Combined accumulator updated with vectors.
+        :returns: :class:`OpinionStudyResult` when examples exist, else ``None``.
+        """
         examples = self._collect_examples(dataset_rows, spec)
         if not examples:
             LOGGER.warning("[OPINION] No eligible participants for study=%s.", spec.key)
@@ -535,7 +648,12 @@ class OpinionEvaluationRunner:
         )
 
     def run(self) -> OpinionEvaluationResult:
-        """Execute the opinion evaluation for the configured studies."""
+        """Execute the opinion evaluation for the configured studies.
+
+        :returns: Aggregated :class:`OpinionEvaluationResult` including per-study
+            results and combined metrics.
+        :rtype: OpinionEvaluationResult
+        """
         dataset_rows = self._load_dataset()
         specs_by_key: Dict[str, OpinionSpec] = {spec.key.lower(): spec for spec in DEFAULT_SPECS}
         accumulator = CombinedAccumulator([], [], [])
@@ -572,7 +690,14 @@ def run_opinion_evaluations(
     config_label: str,
     out_dir: Path,
 ) -> OpinionEvaluationResult:
-    """Execute GPT-4o opinion evaluations for the requested studies."""
+    """Execute GPT-4o opinion evaluations for the requested studies.
+
+    :param args: CLI namespace or object used to build runtime/settings.
+    :param config_label: Label describing the selected GPT-4o configuration.
+    :param out_dir: Root directory for opinion artefacts.
+    :returns: Final :class:`OpinionEvaluationResult` payload.
+    :rtype: OpinionEvaluationResult
+    """
     runner = OpinionEvaluationRunner(args, config_label=config_label, out_dir=out_dir)
     return runner.run()
 

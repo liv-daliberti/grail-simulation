@@ -13,14 +13,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Compatibility shim re-exporting GPT-4o pipeline models from ``common``."""
+"""Compatibility shim re-exporting GPT-4o pipeline models from ``common``.
 
-from common.pipeline.gpt4o_models import (  # noqa: F401
-    PipelinePaths,
-    SweepConfig,
-    SweepOutcome,
-    coerce_float,
-    parse_config_label,
-)
+Implements lazy attribute loading to avoid unused-import suppressions while
+preserving the public surface.
+"""
 
-__all__ = ["SweepConfig", "SweepOutcome", "PipelinePaths", "coerce_float", "parse_config_label"]
+from __future__ import annotations
+
+import importlib
+from typing import Any, List
+
+__all__: List[str] = [
+    "SweepConfig",
+    "SweepOutcome",
+    "PipelinePaths",
+    "coerce_float",
+    "parse_config_label",
+]
+
+
+def __getattr__(name: str) -> Any:  # pragma: no cover - thin re-export
+    if name not in __all__:
+        raise AttributeError(name)
+    module = importlib.import_module("common.pipeline.gpt4o_models")
+    return getattr(module, name)
+
+
+def __dir__() -> List[str]:  # pragma: no cover
+    return sorted(list(globals().keys()) + __all__)

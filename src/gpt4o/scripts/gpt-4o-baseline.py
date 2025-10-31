@@ -22,7 +22,10 @@ from pathlib import Path
 
 
 def _ensure_repo_on_path() -> None:
-    """Inject the repository root into ``sys.path`` when executed as a script."""
+    """Inject the repository root into ``sys.path`` when executed as a script.
+
+    :returns: ``None``. The repository root is inserted when missing.
+    """
 
     if __package__ not in {None, ""}:
         return

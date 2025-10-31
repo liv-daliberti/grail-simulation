@@ -30,7 +30,14 @@ from .models import DEFAULT_LABEL_TEMPLATE, SESSION_DEFAULT_LABEL_TEMPLATE
 
 @dataclass(frozen=True)
 class BatchRenderSettings:
-    """Rendering preferences shared across batch session exports."""
+    """Rendering preferences shared across batch session exports.
+
+    Attributes:
+        session_options: Options controlling session graph rendering.
+        output_format: Graphviz output format for batch artifacts (e.g. ``svg``).
+        batch_prefix: Filename prefix for emitted batch visualisations.
+        max_steps: Optional cap on the number of steps per session.
+    """
 
     session_options: render.SessionGraphOptions
     output_format: str
@@ -40,7 +47,15 @@ class BatchRenderSettings:
 
 @dataclass(frozen=True)
 class BatchContext:
-    """Configuration for batch session rendering."""
+    """Configuration for batch session rendering.
+
+    Attributes:
+        dataset: Loaded cleaned dataset object.
+        issue_targets: Mapping of issue names to the number of sessions to render.
+        output_dir: Destination directory for batch outputs.
+        split: Optional dataset split name when selecting rows.
+        settings: Shared rendering configuration and preferences.
+    """
 
     dataset: object
     issue_targets: Mapping[str, int]
@@ -200,6 +215,7 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
     """Entry point for the recommendation tree visualiser.
 
     :param argv: Optional CLI argument list; defaults to ``sys.argv``.
+    :returns: ``None``. Exits the process on invalid arguments.
     """
 
     args = parse_args(argv)
@@ -383,6 +399,7 @@ def _render_batch_sessions(
     :param args: Parsed CLI arguments.
     :param dataset: Loaded cleaned dataset object.
     :param highlight_path: Sequence of identifiers to highlight.
+    :returns: ``None``. Raises :class:`SystemExit` when no sessions are emitted.
     """
 
     context = _prepare_batch_context(args, dataset, highlight_path)

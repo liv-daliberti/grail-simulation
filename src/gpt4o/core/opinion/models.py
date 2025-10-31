@@ -37,7 +37,14 @@ class OpinionFilters:
     studies: set[str]
 
     def allows(self, issue: str, study: str) -> bool:
-        """Return ``True`` when ``issue``/``study`` pass the configured filters."""
+        """Return ``True`` when ``issue``/``study`` pass the configured filters.
+
+        :param issue: Issue label for the current row.
+        :param study: Participant study key for the current row.
+        :returns: ``True`` if both fields match the active filter sets (or when
+            the corresponding filter is empty).
+        :rtype: bool
+        """
         issue_key = issue.lower().strip() if issue else ""
         study_key = study.lower().strip() if study else ""
         if self.issues and issue_key not in self.issues:
@@ -94,13 +101,25 @@ class CombinedAccumulator:
         truth_after: Sequence[float],
         pred_after: Sequence[float],
     ) -> None:
-        """Extend the accumulator with additional study-level vectors."""
+        """Extend the accumulator with additional study-level vectors.
+
+        :param truth_before: Pre-study opinion indices appended in-order.
+        :param truth_after: Post-study opinion indices appended in-order.
+        :param pred_after: Model-predicted post-study opinion indices.
+        :returns: ``None``.
+        """
         self.truth_before.extend(truth_before)
         self.truth_after.extend(truth_after)
         self.pred_after.extend(pred_after)
 
     def compute_metrics(self, direction_tolerance: float) -> Mapping[str, object]:
-        """Return combined metrics using the accumulated vectors."""
+        """Return combined metrics using the accumulated vectors.
+
+        :param direction_tolerance: Absolute delta treated as no change when
+            computing direction accuracy.
+        :returns: Metrics mapping matching :func:`common.opinion.compute_opinion_metrics`.
+        :rtype: Mapping[str, object]
+        """
         if not self.truth_after:
             return {}
         return compute_opinion_metrics(

@@ -43,7 +43,7 @@ RUN_LABEL=${RUN_LABEL:-grail-gun-checkpoint-50}
 MODEL_PATH=${MODEL_PATH:-"$ROOT_DIR/models/grail/gun/checkpoint-50"}
 DATASET=${DATASET:-"$ROOT_DIR/data/cleaned_grail/gun_control"}
 SPLIT=${SPLIT:-validation}
-OUT_DIR=${OUT_DIR:-"$ROOT_DIR/models/grail"}
+OUT_DIR=${OUT_DIR:-"$MODEL_PATH"}
 STAGE=${STAGE:-evaluate}
 LOG_LEVEL=${LOG_LEVEL:-INFO}
 

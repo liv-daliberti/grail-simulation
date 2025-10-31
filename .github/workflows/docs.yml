@@ -1,4 +1,4 @@
-name: Lint
+name: Docs
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   pull_request:
 
 jobs:
-  lint:
+  build-docs:
     runs-on: ubuntu-latest
 
     steps:
@@ -26,8 +26,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r development/requirements-dev.txt
 
-      - name: Run pylint
-        run: scripts/run-lint.sh
-
       - name: Docstring consistency check (src/visualization)
         run: python scripts/check_docstrings.py src/visualization
+
+      - name: Build Sphinx docs (nitpicky, warnings as errors)
+        env:
+          SPHINX_NITPICKY: "1"
+          SPHINX_ENABLE_INTERSPHINX: "0"
+        run: |
+          python -m sphinx -W -b html docs docs/_build/html
+
+      - name: Upload docs HTML
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-html
+          path: docs/_build/html
+          if-no-files-found: warn
+

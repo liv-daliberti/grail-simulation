@@ -85,5 +85,16 @@ def main(argv: Sequence[str] | None = None) -> None:
         LOGGER.info("All CLI overrides supplied; no defaults applied.")
     LOGGER.debug("Forwarding arguments: %s", extra_args + user_args)
     LOGGER.info("Delegating execution to grpo.pipeline...")
+    print(
+        f"[grail.pipeline] defaults={defaults_log or ['<none>']}", flush=True
+    )
+    print(
+        f"[grail.pipeline] argv={extra_args + user_args}",
+        flush=True,
+    )
 
     _grpo_main(extra_args + user_args)
+
+
+if __name__ == "__main__":  # pragma: no cover
+    main()

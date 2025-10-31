@@ -199,6 +199,9 @@ def generate_chat_completion(
             pad_token_id=tokenizer.pad_token_id,
         )
 
-    generated = output_ids[:, input_ids.shape[-1]:]
+    sequences = getattr(output_ids, "sequences", output_ids)
+    if isinstance(sequences, tuple):
+        sequences = sequences[0]
+    generated = sequences[:, input_ids.shape[-1]:]
     text = tokenizer.decode(generated[0], skip_special_tokens=True)
     return text

@@ -251,6 +251,7 @@ def _prepare_opinion_sweep_tasks(
 
     pending: List[OpinionSweepTask] = []
     cached: List[OpinionSweepOutcome] = []
+    api = _api()
     for task in _iter_opinion_sweep_tasks(
         studies=studies,
         configs=configs,
@@ -265,8 +266,10 @@ def _prepare_opinion_sweep_tasks(
                 task.feature_space,
                 task.config.label(),
             )
-            metrics = _load_metrics(metrics_path)
-            cached.append(_opinion_sweep_outcome_from_metrics(task, metrics, metrics_path))
+            metrics = api._load_metrics(metrics_path)
+            cached.append(
+                api._opinion_sweep_outcome_from_metrics(task, metrics, metrics_path)
+            )
             continue
         pending.append(task)
     return pending, cached
@@ -290,6 +293,7 @@ def _merge_opinion_sweep_outcomes(
 def _execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
     """Execute a single opinion sweep task and return the resulting metrics."""
 
+    api = _api()
     args = dict(task.request_args)
     out_dir = Path(args["out_dir"])
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -307,7 +311,7 @@ def _execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
 
     # Opinion evaluations may be skipped (e.g., no train/eval rows).
     # Tolerate missing metrics by logging and returning a placeholder outcome.
-    metrics = _load_metrics_with_log(
+    metrics = api._load_metrics_with_log(
         task.metrics_path,
         task.study,
         log_level=logging.WARNING,
@@ -337,7 +341,7 @@ def _execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
                 "[OPINION][SWEEP][MISS] Unable to write placeholder metrics at %s",
                 task.metrics_path,
             )
-    return _opinion_sweep_outcome_from_metrics(task, metrics, task.metrics_path)
+    return api._opinion_sweep_outcome_from_metrics(task, metrics, task.metrics_path)
 
 
 def _execute_opinion_sweep_tasks(
@@ -377,6 +381,7 @@ def _load_opinion_metrics_from_disk(
     """
 
     results: Dict[str, Dict[str, object]] = {}
+    api = _api()
     filename_template = "opinion_xgb_{study}_validation_metrics.json"
     for spec in studies:
         filename = filename_template.format(study=spec.key)
@@ -395,7 +400,7 @@ def _load_opinion_metrics_from_disk(
                 break
         if metrics_path is None:
             continue
-        metrics = dict(_load_metrics(metrics_path))
+        metrics = dict(api._load_metrics(metrics_path))
         results[spec.key] = metrics
     return results
 
@@ -417,6 +422,7 @@ def _load_opinion_from_next_metrics_from_disk(
     """
 
     results: Dict[str, Dict[str, object]] = {}
+    api = _api()
     feature_spaces = ("tfidf", "word2vec", "sentence_transformer")
     base_dirs = [opinion_dir / "from_next" / space for space in feature_spaces]
     base_dirs.append(opinion_dir / "from_next")
@@ -432,7 +438,7 @@ def _load_opinion_from_next_metrics_from_disk(
         if metrics_path is None:
             continue
         try:
-            metrics = dict(_load_metrics(metrics_path))
+            metrics = dict(api._load_metrics(metrics_path))
         except FileNotFoundError:
             LOGGER.debug(
                 "[OPINION-NEXT][MISS] study=%s expected metrics at %s but none found.",

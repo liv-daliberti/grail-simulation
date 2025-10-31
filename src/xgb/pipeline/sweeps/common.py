@@ -18,7 +18,9 @@
 from __future__ import annotations
 
 import logging
+import sys
 from pathlib import Path
+from types import ModuleType
 from typing import Callable, Dict, Mapping, Sequence
 
 from common.pipeline.io import load_metrics_json
@@ -83,9 +85,12 @@ def _gpu_tree_method_supported() -> bool:
     :rtype: bool
     """
 
-    if xgboost is None:
+    sweeps_module: ModuleType | None = sys.modules.get("xgb.pipeline.sweeps")
+    xgb_module = getattr(sweeps_module, "xgboost", xgboost) if sweeps_module else xgboost
+
+    if xgb_module is None:
         return False
-    core = xgboost.core  # type: ignore[attr-defined]
+    core = xgb_module.core  # type: ignore[attr-defined]
 
     # Prefer the helper exposed in newer releases.
     maybe_has_cuda = getattr(core, "_has_cuda_support", None)

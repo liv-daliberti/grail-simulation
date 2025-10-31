@@ -1388,8 +1388,168 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 </dl>
 </dd></dl>
 
-<section id="pipeline-orchestration">
-<h2>Pipeline Orchestration<a class="headerlink" href="#pipeline-orchestration" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.utils.try_call_with_policy">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.utils.</span></span><span class="sig-name descname"><span class="pre">try_call_with_policy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">messages</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">invocation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">retry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/utils.html#try_call_with_policy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.utils.try_call_with_policy" title="Link to this definition">¶</a></dt>
+<dd><p>Attempt a GPT call and capture common error handling.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>messages</strong> – Chat messages payload forwarded to the model.</p></li>
+<li><p><strong>invocation</strong> (<a class="reference internal" href="#gpt4o.utils.InvocationParams" title="gpt4o.utils.InvocationParams"><em>gpt4o.utils.InvocationParams</em></a>) – Invocation parameters (temperature, tokens, etc.).</p></li>
+<li><p><strong>retry</strong> (<a class="reference internal" href="#gpt4o.utils.RetryPolicy" title="gpt4o.utils.RetryPolicy"><em>gpt4o.utils.RetryPolicy</em></a>) – Retry policy to apply.</p></li>
+<li><p><strong>logger</strong> (<em>logging.Logger</em>) – Logger used for diagnostics.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple of <code class="docutils literal notranslate"><span class="pre">(result_or_none,</span> <span class="pre">exc_or_none)</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<section id="module-gpt4o.pipeline">
+<span id="pipeline-orchestration"></span><h2>Pipeline Orchestration<a class="headerlink" href="#module-gpt4o.pipeline" title="Link to this heading">¶</a></h2>
+<p>Convenience re-export for the GPT-4o pipeline entry point.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="gpt4o.pipeline.PipelinePaths">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">PipelinePaths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline/models.html#PipelinePaths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Callable wrapper that forwards to common.pipeline.gpt4o_models.PipelinePaths.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> (<em>object</em>)</p></li>
+<li><p><strong>kwargs</strong> (<em>object</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Any</p>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="gpt4o.pipeline.PipelinePaths.cache_dir">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">cache_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths.cache_dir" title="Link to this definition">¶</a></dt>
+<dd><p>HF cache directory path (shim property).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="gpt4o.pipeline.PipelinePaths.final_out_dir">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">final_out_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths.final_out_dir" title="Link to this definition">¶</a></dt>
+<dd><p>Final next-video output directory (shim property).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="gpt4o.pipeline.PipelinePaths.opinion_dir">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">opinion_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths.opinion_dir" title="Link to this definition">¶</a></dt>
+<dd><p>Opinion outputs directory (shim property).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="gpt4o.pipeline.PipelinePaths.out_dir">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">out_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths.out_dir" title="Link to this definition">¶</a></dt>
+<dd><p>Output root directory path (shim property for linting).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="gpt4o.pipeline.PipelinePaths.reports_dir">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">reports_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths.reports_dir" title="Link to this definition">¶</a></dt>
+<dd><p>Reports directory path (shim property).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gpt4o.pipeline.PipelinePaths.resolve">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">resolve</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline/models.html#PipelinePaths.resolve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths.resolve" title="Link to this definition">¶</a></dt>
+<dd><p>Return the real PipelinePaths class from the common module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Any</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="gpt4o.pipeline.PipelinePaths.sweep_dir">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sweep_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><a class="headerlink" href="#gpt4o.pipeline.PipelinePaths.sweep_dir" title="Link to this definition">¶</a></dt>
+<dd><p>Sweep outputs directory (shim property).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gpt4o.pipeline.SweepConfig">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">SweepConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline/models.html#SweepConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepConfig" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Callable wrapper that forwards to common.pipeline.gpt4o_models.SweepConfig.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> (<em>object</em>)</p></li>
+<li><p><strong>kwargs</strong> (<em>object</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Any</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="gpt4o.pipeline.SweepConfig.resolve">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">resolve</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline/models.html#SweepConfig.resolve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepConfig.resolve" title="Link to this definition">¶</a></dt>
+<dd><p>Return the real SweepConfig class from the common module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Any</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gpt4o.pipeline.SweepOutcome">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">SweepOutcome</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline/models.html#SweepOutcome"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepOutcome" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Callable wrapper that forwards to common.pipeline.gpt4o_models.SweepOutcome.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> (<em>object</em>)</p></li>
+<li><p><strong>kwargs</strong> (<em>object</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Any</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="gpt4o.pipeline.SweepOutcome.resolve">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">resolve</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline/models.html#SweepOutcome.resolve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.SweepOutcome.resolve" title="Link to this definition">¶</a></dt>
+<dd><p>Return the real SweepOutcome class from the common module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Any</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gpt4o.pipeline.main">
+<span class="sig-prename descclassname"><span class="pre">gpt4o.pipeline.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">argv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpt4o/pipeline/main.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gpt4o.pipeline.main" title="Link to this definition">¶</a></dt>
+<dd><p>Entry point that orchestrates sweep execution and report generation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>argv</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Optional CLI argument sequence supplied by callers.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 
@@ -1569,7 +1729,29 @@ responses, and aggregates accuracy and formatting metrics for reporting.</p>
 <li><a class="reference internal" href="#gpt4o.utils.resolve_paths_from_env"><code class="docutils literal notranslate"><span class="pre">resolve_paths_from_env()</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.utils.split_env_list"><code class="docutils literal notranslate"><span class="pre">split_env_list()</span></code></a></li>
 <li><a class="reference internal" href="#gpt4o.utils.truthy"><code class="docutils literal notranslate"><span class="pre">truthy()</span></code></a></li>
-<li><a class="reference internal" href="#pipeline-orchestration">Pipeline Orchestration</a></li>
+<li><a class="reference internal" href="#gpt4o.utils.try_call_with_policy"><code class="docutils literal notranslate"><span class="pre">try_call_with_policy()</span></code></a></li>
+<li><a class="reference internal" href="#module-gpt4o.pipeline">Pipeline Orchestration</a><ul>
+<li><a class="reference internal" href="#gpt4o.pipeline.PipelinePaths"><code class="docutils literal notranslate"><span class="pre">PipelinePaths</span></code></a><ul>
+<li><a class="reference internal" href="#gpt4o.pipeline.PipelinePaths.cache_dir"><code class="docutils literal notranslate"><span class="pre">PipelinePaths.cache_dir</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.pipeline.PipelinePaths.final_out_dir"><code class="docutils literal notranslate"><span class="pre">PipelinePaths.final_out_dir</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.pipeline.PipelinePaths.opinion_dir"><code class="docutils literal notranslate"><span class="pre">PipelinePaths.opinion_dir</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.pipeline.PipelinePaths.out_dir"><code class="docutils literal notranslate"><span class="pre">PipelinePaths.out_dir</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.pipeline.PipelinePaths.reports_dir"><code class="docutils literal notranslate"><span class="pre">PipelinePaths.reports_dir</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.pipeline.PipelinePaths.resolve"><code class="docutils literal notranslate"><span class="pre">PipelinePaths.resolve()</span></code></a></li>
+<li><a class="reference internal" href="#gpt4o.pipeline.PipelinePaths.sweep_dir"><code class="docutils literal notranslate"><span class="pre">PipelinePaths.sweep_dir</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#gpt4o.pipeline.SweepConfig"><code class="docutils literal notranslate"><span class="pre">SweepConfig</span></code></a><ul>
+<li><a class="reference internal" href="#gpt4o.pipeline.SweepConfig.resolve"><code class="docutils literal notranslate"><span class="pre">SweepConfig.resolve()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#gpt4o.pipeline.SweepOutcome"><code class="docutils literal notranslate"><span class="pre">SweepOutcome</span></code></a><ul>
+<li><a class="reference internal" href="#gpt4o.pipeline.SweepOutcome.resolve"><code class="docutils literal notranslate"><span class="pre">SweepOutcome.resolve()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#gpt4o.pipeline.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

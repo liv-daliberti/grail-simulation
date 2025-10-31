@@ -22,11 +22,17 @@ import logging
 import math
 import re
 from pathlib import Path
-from typing import Dict, List, Mapping, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Mapping, Sequence, Tuple, cast
 
 from importlib import import_module
 from ..config import EVAL_SPLIT, OPINION_SYSTEM_PROMPT
-from ..utils import InvocationParams, RetryPolicy, call_gpt4o_with_retries, qa_log_path_for
+from ..utils import (
+    InvocationParams,
+    RetryPolicy,
+    call_gpt4o_with_retries,
+    qa_log_path_for,
+    try_call_with_policy,
+)
 from .helpers import (
     baseline_metrics,
     clip_prediction,
@@ -58,9 +64,8 @@ format_opinion_user_prompt = _common_opinion.format_opinion_user_prompt
 
 LOGGER = logging.getLogger("gpt4o.opinion")
 
-from typing import Any, Callable, Tuple
 DOWNLOAD_CONFIG_CLS, LOAD_DATASET, LOAD_FROM_DISK = (
-    cast(Tuple[Any, Callable[..., Any], Callable[[str], Any]], _hf_datasets.get_dataset_loaders())
+    cast(tuple[Any, Callable[..., Any], Callable[[str], Any]], _hf_datasets.get_dataset_loaders())
 )
 
 _ANSWER_PATTERN = re.compile(
@@ -254,20 +259,10 @@ class OpinionEvaluationRunner:
             attempts=self.runtime.retries,
             delay=self.runtime.retry_delay,
         )
-        try:
-            raw_output = call_gpt4o_with_retries(
-                messages,
-                invocation=invocation,
-                retry=policy,
-                logger=LOGGER,
-            )
-        except (RuntimeError, ConnectionError, ValueError) as exc:
-            LOGGER.exception(
-                "Opinion evaluation call failed after %d attempts: %s",
-                policy.attempts,
-                exc,
-            )
+        result, exc = try_call_with_policy(messages, invocation=invocation, retry=policy, logger=LOGGER)
+        if result is None:
             return float("nan"), f"(error after {policy.attempts} attempts: {exc})"
+        raw_output = result
 
         match = _ANSWER_PATTERN.search(raw_output)
         if match:

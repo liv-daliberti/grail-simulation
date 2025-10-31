@@ -1000,20 +1000,12 @@
             <span class="n">deployment</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;deployment&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="n">policy</span> <span class="o">=</span> <span class="n">_utils</span><span class="o">.</span><span class="n">RetryPolicy</span><span class="p">(</span><span class="n">attempts</span><span class="o">=</span><span class="n">retries</span><span class="p">,</span> <span class="n">delay</span><span class="o">=</span><span class="n">delay</span><span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">_utils</span><span class="o">.</span><span class="n">call_gpt4o_with_retries</span><span class="p">(</span>
-                <span class="n">messages</span><span class="p">,</span>
-                <span class="n">invocation</span><span class="o">=</span><span class="n">invocation</span><span class="p">,</span>
-                <span class="n">retry</span><span class="o">=</span><span class="n">policy</span><span class="p">,</span>
-                <span class="n">logger</span><span class="o">=</span><span class="n">LOGGER</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="k">except</span> <span class="p">(</span><span class="ne">RuntimeError</span><span class="p">,</span> <span class="ne">ConnectionError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-            <span class="n">LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-                <span class="s2">&quot;GPT-4o call failed after </span><span class="si">%d</span><span class="s2"> attempts; returning error stub: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="n">policy</span><span class="o">.</span><span class="n">attempts</span><span class="p">,</span>
-                <span class="n">exc</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;(error after </span><span class="si">{</span><span class="n">policy</span><span class="o">.</span><span class="n">attempts</span><span class="si">}</span><span class="s2"> attempts: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="n">result</span><span class="p">,</span> <span class="n">exc</span> <span class="o">=</span> <span class="n">_utils</span><span class="o">.</span><span class="n">try_call_with_policy</span><span class="p">(</span>
+            <span class="n">messages</span><span class="p">,</span> <span class="n">invocation</span><span class="o">=</span><span class="n">invocation</span><span class="p">,</span> <span class="n">retry</span><span class="o">=</span><span class="n">policy</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">LOGGER</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">result</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;(error after </span><span class="si">{</span><span class="n">policy</span><span class="o">.</span><span class="n">attempts</span><span class="si">}</span><span class="s2"> attempts: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">)&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_evaluate_example</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">example</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span>

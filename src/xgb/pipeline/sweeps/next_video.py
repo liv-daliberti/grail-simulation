@@ -22,7 +22,6 @@ from pathlib import Path
 from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple, cast
 
 from common.pipeline.executor import execute_indexed_tasks
-from common.pipeline.metrics import ensure_metrics_with_placeholder
 from common.pipeline.utils import make_placeholder_metrics
 
 from ..context import (
@@ -33,7 +32,13 @@ from ..context import (
     SweepRunContext,
     SweepTask,
 )
-from .common import LOGGER, get_sweeps_attr, merge_sweep_outcomes
+from .common import (
+    LOGGER,
+    MissingMetricsLogConfig,
+    build_merge_sweep_outcomes,
+    get_sweeps_attr,
+    load_metrics_with_placeholder,
+)
 
 
 def _sweep_outcome_from_metrics(
@@ -164,26 +169,15 @@ def _prepare_sweep_tasks(
     return pending, cached
 
 
-def _merge_sweep_outcomes(
-    cached: Sequence[SweepOutcome],
-    executed: Sequence[SweepOutcome],
-) -> List[SweepOutcome]:
-    """
-    Combine cached and freshly executed sweep outcomes while preserving order indices.
-
-    :param cached: Previously cached sweep outcomes loaded from disk.
-    :type cached: Sequence[SweepOutcome]
-    :param executed: Newly generated sweep outcomes from the current run.
-    :type executed: Sequence[SweepOutcome]
-    :returns: Ordered list containing the merged sweep outcomes.
-    :rtype: List[SweepOutcome]
-    """
-
-    return merge_sweep_outcomes(
-        cached,
-        executed,
-        duplicate_message="Duplicate sweep outcome for index=%d; replacing cached result.",
-    )
+_merge_sweep_outcomes: Callable[
+    [Sequence[SweepOutcome], Sequence[SweepOutcome]], List[SweepOutcome]
+] = build_merge_sweep_outcomes(
+    duplicate_message="Duplicate sweep outcome for index=%d; replacing cached result.",
+    docstring=(
+        "Combine cached and freshly executed next-video sweep outcomes while preserving "
+        "order indices."
+    ),
+)
 
 
 def _execute_sweep_tasks(
@@ -313,27 +307,26 @@ def _execute_sweep_task(task: SweepTask) -> SweepOutcome:
     # Handle runs that were skipped by the evaluator (e.g., no train/eval rows)
     # by logging and producing a placeholder outcome instead of raising.
     load_metrics_with_log = cast(
-        Callable[..., Optional[Dict[str, object]]],
+        Callable[[Path, StudySpec, int, str], Optional[Dict[str, object]]],
         get_sweeps_attr("_load_metrics_with_log"),
     )
-    metrics = ensure_metrics_with_placeholder(
-        lambda: load_metrics_with_log(
-            task.metrics_path,
-            task.study,
-            log_level=logging.WARNING,
-            message=(
-                "[SWEEP][MISS] issue=%s study=%s missing metrics at %s; "
-                "recording placeholder outcome."
-            ),
-        ),
+    metrics = load_metrics_with_placeholder(
+        metrics_path=task.metrics_path,
+        study=task.study,
+        loader=load_metrics_with_log,
         placeholder_factory=lambda: make_placeholder_metrics(
             task.study.evaluation_slug,
             [task.study.key],
             extra_fields=[],
         ),
-        metrics_path=task.metrics_path,
-        debug_message="[SWEEP][MISS] Unable to write placeholder metrics at %s",
-        logger=LOGGER,
+        log_config=MissingMetricsLogConfig(
+            message=(
+                "[SWEEP][MISS] issue=%s study=%s missing metrics at %s; "
+                "recording placeholder outcome."
+            ),
+            debug_message="[SWEEP][MISS] Unable to write placeholder metrics at %s",
+            logger=LOGGER,
+        ),
     )
     return SweepOutcome(
         order_index=task.index,

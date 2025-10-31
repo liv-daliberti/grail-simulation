@@ -116,7 +116,7 @@ def _opinion_vectorizer_config(
 def _run_final_evaluations(
     *,
     selections: Mapping[str, StudySelection],
-    studies: Sequence[StudySpec],  # pylint: disable=unused-argument
+    _studies: Sequence[StudySpec],
     context: FinalEvalContext,
 ) -> Dict[str, Mapping[str, object]]:
     """
@@ -124,8 +124,8 @@ def _run_final_evaluations(
 
     :param selections: Mapping from study key to selected configuration.
     :type selections: Mapping[str, StudySelection]
-    :param studies: Ordered list of study specifications available for training.
-    :type studies: Sequence[~common.pipeline.types.StudySpec]
+    :param _studies: Ordered list of study specifications available for training.
+    :type _studies: Sequence[~common.pipeline.types.StudySpec]
     :param context: Runtime configuration describing CLI arguments and output paths.
     :type context: FinalEvalContext
     :returns: Mapping from study key to the loaded metrics payload.

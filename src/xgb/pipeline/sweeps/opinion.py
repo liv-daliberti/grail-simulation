@@ -17,7 +17,6 @@
 
 from __future__ import annotations
 
-import logging
 from dataclasses import replace
 from pathlib import Path
 from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple, cast
@@ -39,7 +38,13 @@ from ..context import (
     StudySpec,
     SweepConfig,
 )
-from .common import LOGGER, get_sweeps_attr, merge_sweep_outcomes, persist_metrics_payload
+from .common import (
+    LOGGER,
+    MissingMetricsLogConfig,
+    build_merge_sweep_outcomes,
+    get_sweeps_attr,
+    load_metrics_with_placeholder,
+)
 
 
 def _opinion_sweep_outcome_from_metrics(
@@ -357,34 +362,33 @@ def _prepare_opinion_sweep_tasks(
     return pending, cached
 
 
-_merge_opinion_sweep_outcomes = cast(
-    Callable[
-        [Sequence[OpinionSweepOutcome], Sequence[OpinionSweepOutcome]],
-        List[OpinionSweepOutcome],
-    ],
-    build_merge_sweep_outcomes(
-        duplicate_message=(
-            "Duplicate opinion sweep outcome for index=%d; replacing cached result."
-        ),
+_merge_opinion_sweep_outcomes: Callable[
+    [Sequence[OpinionSweepOutcome], Sequence[OpinionSweepOutcome]],
+    List[OpinionSweepOutcome],
+] = build_merge_sweep_outcomes(
+    duplicate_message=(
+        "Duplicate opinion sweep outcome for index=%d; replacing cached result."
+    ),
+    docstring=(
+        "Merge cached and freshly executed opinion sweep outcomes while preserving "
+        "order indices."
     ),
 )
-_merge_opinion_sweep_outcomes.__doc__ = """
-Merge cached and freshly executed opinion sweep outcomes while preserving order indices.
-
-:param cached: Previously cached opinion sweep outcomes loaded from disk.
-:type cached: Sequence[OpinionSweepOutcome]
-:param executed: Newly generated opinion sweep outcomes from the current run.
-:type executed: Sequence[OpinionSweepOutcome]
-:returns: Ordered list containing the merged opinion sweep outcomes.
-:rtype: List[OpinionSweepOutcome]
-"""
 
 
 def _execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
-    """Execute a single opinion sweep task and return the resulting metrics."""
+    """
+    Execute a single opinion sweep task and return the resulting metrics.
+
+    :param task: Opinion sweep task carrying configuration, study, and paths.
+    :type task: OpinionSweepTask
+    :returns: Opinion sweep outcome populated from persisted metrics.
+    :rtype: OpinionSweepOutcome
+    :raises RuntimeError: Propagates evaluation errors raised by ``run_opinion_eval``.
+    """
 
     load_metrics_with_log = cast(
-        Callable[..., Optional[Dict[str, object]]],
+        Callable[[Path, StudySpec, int, str], Optional[Dict[str, object]]],
         get_sweeps_attr("_load_metrics_with_log"),
     )
     outcome_factory = cast(
@@ -408,17 +412,11 @@ def _execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
 
     # Opinion evaluations may be skipped (e.g., no train/eval rows).
     # Tolerate missing metrics by logging and returning a placeholder outcome.
-    metrics = load_metrics_with_log(
-        task.metrics_path,
-        task.study,
-        log_level=logging.WARNING,
-        message=(
-            "[OPINION][SWEEP][MISS] issue=%s study=%s expected metrics at %s; "
-            "recording placeholder outcome."
-        ),
-    )
-    if metrics is None:
-        metrics = {
+    metrics = load_metrics_with_placeholder(
+        metrics_path=task.metrics_path,
+        study=task.study,
+        loader=load_metrics_with_log,
+        placeholder_factory=lambda: {
             "model": "xgb_opinion",
             "feature_space": task.feature_space,
             "study": task.study.key,
@@ -427,12 +425,18 @@ def _execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
             "metrics": {},
             "baseline": {},
             "skipped": True,
-        }
-        persist_metrics_payload(
-            task.metrics_path,
-            metrics,
-            debug_message="[OPINION][SWEEP][MISS] Unable to write placeholder metrics at %s",
-        )
+        },
+        log_config=MissingMetricsLogConfig(
+            message=(
+                "[OPINION][SWEEP][MISS] issue=%s study=%s expected metrics at %s; "
+                "recording placeholder outcome."
+            ),
+            debug_message=(
+                "[OPINION][SWEEP][MISS] Unable to write placeholder metrics at %s"
+            ),
+            logger=LOGGER,
+        ),
+    )
     return outcome_factory(task, metrics, task.metrics_path)
 
 
@@ -441,7 +445,16 @@ def _execute_opinion_sweep_tasks(
     *,
     jobs: int,
 ) -> List[OpinionSweepOutcome]:
-    """Execute opinion sweep tasks, optionally in parallel."""
+    """
+    Execute opinion sweep tasks, optionally in parallel.
+
+    :param tasks: Opinion sweep tasks scheduled for execution.
+    :type tasks: Sequence[OpinionSweepTask]
+    :param jobs: Maximum number of concurrent worker processes.
+    :type jobs: int
+    :returns: Opinion sweep outcomes computed for each task.
+    :rtype: List[OpinionSweepOutcome]
+    """
 
     return execute_indexed_tasks(
         tasks,

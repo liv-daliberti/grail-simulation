@@ -673,7 +673,7 @@ def test_xgb_pipeline_finalize_writes_reports(monkeypatch: pytest.MonkeyPatch, t
         lambda *, selections, config: {study.key: {"mae_after": 0.34}},
     )
 
-    def fake_write_reports(reports_dir, **kwargs) -> None:  # pylint: disable=unused-argument
+    def fake_write_reports(reports_dir, **kwargs) -> None:
         captured_reports["dir"] = reports_dir
         captured_reports["kwargs"] = kwargs
 

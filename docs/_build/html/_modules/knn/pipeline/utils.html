@@ -415,6 +415,14 @@
     <span class="k">if</span> <span class="n">cache_path_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">default_cache_path</span><span class="p">(</span><span class="n">task</span><span class="p">:</span> <span class="n">TaskT</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Resolve the filesystem location backing a cached task outcome.</span>
+
+<span class="sd">            :param task: Sweep task that provides a ``metrics_path`` attribute.</span>
+<span class="sd">            :type task: TaskT</span>
+<span class="sd">            :returns: ``Path`` pointing to the cached metrics artefact.</span>
+<span class="sd">            :rtype: Path</span>
+<span class="sd">            &quot;&quot;&quot;</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">path</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="s2">&quot;metrics_path&quot;</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">AttributeError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># pragma: no cover - defensive only</span>
@@ -645,9 +653,29 @@
         <span class="n">baseline_metrics</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">metric</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract a floating-point metric from the given mapping.</span>
+
+<span class="sd">        :param source: Metric container to query.</span>
+<span class="sd">        :type source: Mapping[str, Any]</span>
+<span class="sd">        :param key: Metric key expected inside ``source``.</span>
+<span class="sd">        :type key: str</span>
+<span class="sd">        :returns: Normalised metric value or ``None`` when unavailable.</span>
+<span class="sd">        :rtype: Optional[float]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">safe_float</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">difference</span><span class="p">(</span><span class="n">lhs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">rhs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the difference between two optional floating-point metrics.</span>
+
+<span class="sd">        :param lhs: Left-hand operand.</span>
+<span class="sd">        :type lhs: Optional[float]</span>
+<span class="sd">        :param rhs: Right-hand operand.</span>
+<span class="sd">        :type rhs: Optional[float]</span>
+<span class="sd">        :returns: ``lhs - rhs`` when both operands are present; otherwise ``None``.</span>
+<span class="sd">        :rtype: Optional[float]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">lhs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">rhs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="n">lhs</span> <span class="o">-</span> <span class="n">rhs</span>

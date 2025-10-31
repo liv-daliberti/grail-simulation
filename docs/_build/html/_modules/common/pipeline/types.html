@@ -371,7 +371,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">narrow_opinion_selection</span><span class="p">(</span>
-    <span class="n">outcome_type</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">OutcomeT</span><span class="p">],</span>  <span class="c1"># pylint: disable=unused-argument</span>
+    <span class="n">_outcome_type</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">OutcomeT</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="s2">&quot;OpinionStudySelection[OutcomeT]&quot;</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Return the :class:`OpinionStudySelection` specialised for ``OutcomeT``.</span>
@@ -379,8 +379,8 @@
 <span class="sd">    Static type checkers understand the specialised generic returned from this helper,</span>
 <span class="sd">    while at runtime the underlying class is reused without instantiating the generic.</span>
 
-<span class="sd">    :param outcome_type: Outcome type used purely for static analysis narrowing.</span>
-<span class="sd">    :type outcome_type: Type[OutcomeT]</span>
+<span class="sd">    :param _outcome_type: Outcome type used purely for static analysis narrowing.</span>
+<span class="sd">    :type _outcome_type: Type[OutcomeT]</span>
 <span class="sd">    :returns: Opinion study selection type parameterised by ``OutcomeT``.</span>
 <span class="sd">    :rtype: type[OpinionStudySelection[OutcomeT]]</span>
 <span class="sd">    &quot;&quot;&quot;</span>

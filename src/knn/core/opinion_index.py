@@ -48,7 +48,7 @@ def _build_tfidf_matrix(documents: Sequence[str]) -> Tuple[TfidfVectorizer, Any]
     return vectorizer, matrix
 
 
-def build_index(  # pylint: disable=too-many-arguments,too-many-locals,unused-argument,too-many-statements
+def build_index(  # pylint: disable=too-many-arguments,too-many-locals,too-many-statements
     *,
     examples: Sequence[OpinionExample],
     feature_space: str,
@@ -78,8 +78,8 @@ def build_index(  # pylint: disable=too-many-arguments,too-many-locals,unused-ar
     :returns: Configured KNN index ready for inference.
     :rtype: OpinionIndex
     """
-    # pylint: disable=too-many-arguments,too-many-locals,unused-argument
-    del seed  # seed currently unused but part of the public signature
+    # pylint: disable=too-many-arguments,too-many-locals
+    np.random.seed(seed)
 
     documents = [example.document for example in examples]
     feature_space = (feature_space or "tfidf").lower()

@@ -18,19 +18,29 @@
 from __future__ import annotations
 
 from knn.core import data as knn_data_module
-# Re-export shared dataset utilities from the canonical KNN package location.
-from knn.core.data import (  # pylint: disable=unused-import
-    DEFAULT_DATASET_SOURCE,
-    EVAL_SPLIT,
-    PROMPT_COLUMN,
-    PROMPT_MAX_HISTORY,
-    SOLUTION_COLUMN,
-    TRAIN_SPLIT,
-    filter_dataset_for_issue,
-    filter_dataset_for_participant_studies,
-    filter_split_for_participant_studies,
-    issues_in_dataset,
-    load_dataset_source,
-)
 
-__all__ = list(knn_data_module.__all__)
+DEFAULT_DATASET_SOURCE = knn_data_module.DEFAULT_DATASET_SOURCE
+EVAL_SPLIT = knn_data_module.EVAL_SPLIT
+PROMPT_COLUMN = knn_data_module.PROMPT_COLUMN
+PROMPT_MAX_HISTORY = knn_data_module.PROMPT_MAX_HISTORY
+SOLUTION_COLUMN = knn_data_module.SOLUTION_COLUMN
+TRAIN_SPLIT = knn_data_module.TRAIN_SPLIT
+filter_dataset_for_issue = knn_data_module.filter_dataset_for_issue
+filter_dataset_for_participant_studies = knn_data_module.filter_dataset_for_participant_studies
+filter_split_for_participant_studies = knn_data_module.filter_split_for_participant_studies
+issues_in_dataset = knn_data_module.issues_in_dataset
+load_dataset_source = knn_data_module.load_dataset_source
+
+__all__ = [
+    "DEFAULT_DATASET_SOURCE",
+    "EVAL_SPLIT",
+    "PROMPT_COLUMN",
+    "PROMPT_MAX_HISTORY",
+    "SOLUTION_COLUMN",
+    "TRAIN_SPLIT",
+    "filter_dataset_for_issue",
+    "filter_dataset_for_participant_studies",
+    "filter_split_for_participant_studies",
+    "issues_in_dataset",
+    "load_dataset_source",
+]

@@ -108,7 +108,7 @@ class OpinionStudySelection(Generic[OutcomeT]):
 
 
 def narrow_opinion_selection(
-    outcome_type: Type[OutcomeT],  # pylint: disable=unused-argument
+    _outcome_type: Type[OutcomeT],
 ) -> type["OpinionStudySelection[OutcomeT]"]:
     """
     Return the :class:`OpinionStudySelection` specialised for ``OutcomeT``.
@@ -116,8 +116,8 @@ def narrow_opinion_selection(
     Static type checkers understand the specialised generic returned from this helper,
     while at runtime the underlying class is reused without instantiating the generic.
 
-    :param outcome_type: Outcome type used purely for static analysis narrowing.
-    :type outcome_type: Type[OutcomeT]
+    :param _outcome_type: Outcome type used purely for static analysis narrowing.
+    :type _outcome_type: Type[OutcomeT]
     :returns: Opinion study selection type parameterised by ``OutcomeT``.
     :rtype: type[OpinionStudySelection[OutcomeT]]
     """

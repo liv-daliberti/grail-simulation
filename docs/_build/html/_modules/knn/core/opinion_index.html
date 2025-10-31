@@ -310,12 +310,12 @@
 
 <div class="viewcode-block" id="build_index">
 <a class="viewcode-back" href="../../../api/knn.html#knn.core.opinion_index.build_index">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">build_index</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-arguments,too-many-locals,unused-argument,too-many-statements</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_index</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-arguments,too-many-locals,too-many-statements</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">examples</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">OpinionExample</span><span class="p">],</span>
     <span class="n">feature_space</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">spec</span><span class="p">:</span> <span class="n">OpinionSpec</span><span class="p">,</span>
-    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">_seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">metric</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">word2vec_config</span><span class="p">:</span> <span class="n">Word2VecConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sentence_config</span><span class="p">:</span> <span class="n">SentenceTransformerConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -329,8 +329,8 @@
 <span class="sd">    :type feature_space: str</span>
 <span class="sd">    :param spec: Opinion study specification containing issue metadata.</span>
 <span class="sd">    :type spec: OpinionSpec</span>
-<span class="sd">    :param seed: Seed used to initialise pseudo-random operations.</span>
-<span class="sd">    :type seed: int</span>
+<span class="sd">    :param _seed: Seed used to initialise pseudo-random operations.</span>
+<span class="sd">    :type _seed: int</span>
 <span class="sd">    :param metric: Name of the evaluation metric being inspected.</span>
 <span class="sd">    :type metric: str</span>
 <span class="sd">    :param word2vec_config: Configuration object carrying Word2Vec hyper-parameters.</span>
@@ -340,8 +340,7 @@
 <span class="sd">    :returns: Configured KNN index ready for inference.</span>
 <span class="sd">    :rtype: OpinionIndex</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># pylint: disable=too-many-arguments,too-many-locals,unused-argument</span>
-    <span class="k">del</span> <span class="n">seed</span>  <span class="c1"># seed currently unused but part of the public signature</span>
+    <span class="c1"># pylint: disable=too-many-arguments,too-many-locals</span>
 
     <span class="n">documents</span> <span class="o">=</span> <span class="p">[</span><span class="n">example</span><span class="o">.</span><span class="n">document</span> <span class="k">for</span> <span class="n">example</span> <span class="ow">in</span> <span class="n">examples</span><span class="p">]</span>
     <span class="n">feature_space</span> <span class="o">=</span> <span class="p">(</span><span class="n">feature_space</span> <span class="ow">or</span> <span class="s2">&quot;tfidf&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>

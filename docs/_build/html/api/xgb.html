@@ -2896,12 +2896,15 @@ public entry points here to ease the transition to the reorganised package.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>tasks</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="#xgb.pipeline_context.OpinionSweepTask" title="xgb.pipeline.context.OpinionSweepTask"><em>xgb.pipeline.context.OpinionSweepTask</em></a><em>]</em>)</p></li>
-<li><p><strong>jobs</strong> (<em>int</em>)</p></li>
+<li><p><strong>tasks</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="knn.html#knn.pipeline.context.OpinionSweepTask" title="knn.pipeline.context.OpinionSweepTask"><em>OpinionSweepTask</em></a><em>]</em>) – Opinion sweep tasks scheduled for execution.</p></li>
+<li><p><strong>jobs</strong> (<em>int</em>) – Maximum number of concurrent worker processes.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>List</em>[<a class="reference internal" href="#xgb.pipeline_context.OpinionSweepOutcome" title="xgb.pipeline.context.OpinionSweepOutcome">xgb.pipeline.context.OpinionSweepOutcome</a>]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Opinion sweep outcomes computed for each task.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[<a class="reference internal" href="knn.html#knn.pipeline.context.OpinionSweepOutcome" title="knn.pipeline.context.OpinionSweepOutcome">OpinionSweepOutcome</a>]</p>
 </dd>
 </dl>
 </dd></dl>

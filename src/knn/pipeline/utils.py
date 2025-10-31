@@ -144,6 +144,14 @@ def prepare_task_grid(
     if cache_path_fn is None:
 
         def default_cache_path(task: TaskT) -> Path:
+            """
+            Resolve the filesystem location backing a cached task outcome.
+
+            :param task: Sweep task that provides a ``metrics_path`` attribute.
+            :type task: TaskT
+            :returns: ``Path`` pointing to the cached metrics artefact.
+            :rtype: Path
+            """
             try:
                 path = getattr(task, "metrics_path")
             except AttributeError as exc:  # pragma: no cover - defensive only
@@ -341,9 +349,29 @@ def extract_opinion_summary(data: Mapping[str, object]) -> OpinionSummary:
         baseline_metrics = {}
 
     def metric(source: Mapping[str, Any], key: str) -> Optional[float]:
+        """
+        Extract a floating-point metric from the given mapping.
+
+        :param source: Metric container to query.
+        :type source: Mapping[str, Any]
+        :param key: Metric key expected inside ``source``.
+        :type key: str
+        :returns: Normalised metric value or ``None`` when unavailable.
+        :rtype: Optional[float]
+        """
         return safe_float(source.get(key))
 
     def difference(lhs: Optional[float], rhs: Optional[float]) -> Optional[float]:
+        """
+        Compute the difference between two optional floating-point metrics.
+
+        :param lhs: Left-hand operand.
+        :type lhs: Optional[float]
+        :param rhs: Right-hand operand.
+        :type rhs: Optional[float]
+        :returns: ``lhs - rhs`` when both operands are present; otherwise ``None``.
+        :rtype: Optional[float]
+        """
         if lhs is None or rhs is None:
             return None
         return lhs - rhs

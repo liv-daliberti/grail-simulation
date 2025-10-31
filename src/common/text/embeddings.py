@@ -94,28 +94,44 @@ class SentenceTransformerEncoder:
 
     @staticmethod
     def _should_retry_on_cpu(device: str | None, error: Exception) -> bool:
-        """Return True when ``device`` is CUDA-like but unavailable locally."""
+        """
+        Return ``True`` when a CUDA-capable device string should be retried on CPU.
+
+        :param device: Device identifier requested for SentenceTransformer inference.
+        :type device: str | None
+        :param error: Exception raised during model initialisation on ``device``.
+        :type error: Exception
+        :returns: ``True`` when the error suggests retrying on CPU, ``False`` otherwise.
+        :rtype: bool
+        """
 
         if not device:
             return False
+
         prefix = device.split(":", 1)[0].lower()
-        if prefix not in {"cuda", "gpu"}:
-            return False
         message = str(error).lower()
-        if not any(token in message for token in ("cuda", "gpu", "nvidia")):
+        if prefix not in {"cuda", "gpu"} or not any(
+            token in message for token in ("cuda", "gpu", "nvidia")
+        ):
             return False
-        if torch is None:
-            return True
-        cuda = getattr(torch, "cuda", None)
-        if cuda is None:
-            return True
-        is_available = getattr(cuda, "is_available", None)
-        if not callable(is_available):
-            return True
-        try:
-            return not bool(is_available())
-        except (AssertionError, RuntimeError, TypeError, ValueError):  # pragma: no cover - best-effort detection
-            return True
+
+        should_retry = True
+        if torch is not None:
+            cuda = getattr(torch, "cuda", None)
+            if cuda is not None:
+                is_available = getattr(cuda, "is_available", None)
+                if callable(is_available):
+                    try:
+                        should_retry = not bool(is_available())
+                    except (
+                        AssertionError,
+                        RuntimeError,
+                        TypeError,
+                        ValueError,
+                    ):
+                        # pragma: no cover - best-effort detection
+                        should_retry = True
+        return should_retry
 
     def _ensure_model(self) -> SentenceTransformer:
         """

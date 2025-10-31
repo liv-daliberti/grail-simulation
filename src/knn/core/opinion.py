@@ -131,7 +131,7 @@ def _training_curve_metrics(
     :param index: Fitted opinion KNN index.
     :type index: OpinionIndex
     :param train_examples: Training split used to build the index.
-    :type train_examples: Sequence[OpinionExample]
+    :type train_examples: Sequence[~knn.core.opinion_models.OpinionExample]
     :param k_values: Sequence of ``k`` values evaluated for the report.
     :type k_values: Sequence[int]
     :returns: Optional curve payload summarising the training split.
@@ -164,7 +164,7 @@ def _evaluation_predictions(
     :param index: Fitted opinion KNN index.
     :type index: OpinionIndex
     :param eval_examples: Evaluation participants to score.
-    :type eval_examples: Sequence[OpinionExample]
+    :type eval_examples: Sequence[~knn.core.opinion_models.OpinionExample]
     :param k_values: Sequence of ``k`` values evaluated for the report.
     :type k_values: Sequence[int]
     :returns: Row-level predictions paired with aggregate metrics.
@@ -195,7 +195,7 @@ def _curve_metrics_bundle(
     :param metrics_by_k: Mapping from each ``k`` to opinion metrics.
     :type metrics_by_k: Dict[int, Dict[str, float]]
     :param eval_examples: Evaluation examples referenced by the metrics.
-    :type eval_examples: Sequence[OpinionExample]
+    :type eval_examples: Sequence[~knn.core.opinion_models.OpinionExample]
     :param train_curve_metrics: Optional bundle derived from the training split.
     :type train_curve_metrics: Optional[Dict[str, Any]]
     :returns: Curve payload containing evaluation (and optional training) metrics.
@@ -246,7 +246,7 @@ def _evaluate_opinion_study(
     Run the full evaluation pipeline for a single opinion study.
 
     :param spec: Opinion study specification to evaluate.
-    :type spec: OpinionSpec
+    :type spec: ~common.opinion.OpinionSpec
     :param context: Shared evaluation context derived from CLI arguments.
     :type context: OpinionEvaluationContext
     """

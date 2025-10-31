@@ -28,7 +28,10 @@ import joblib
 import numpy as np
 from scipy import sparse
 
-from common.text.embeddings import SentenceTransformerConfig, SentenceTransformerEncoder
+from common.text.embeddings import (
+    SentenceTransformerConfig,
+    SentenceTransformerEncoder,
+)
 from common.evaluation.matrix_summary import log_embedding_previews
 from common.text.vectorizers import create_tfidf_vectorizer
 

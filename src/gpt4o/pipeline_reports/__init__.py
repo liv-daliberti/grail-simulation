@@ -25,9 +25,12 @@ from typing import Dict, List, Mapping, Sequence, Tuple, cast
 from importlib import import_module
 from ..core.opinion import OpinionEvaluationResult
 from ..pipeline.models import SweepOutcome
-write_markdown_lines = import_module("common.pipeline.io").write_markdown_lines
-start_markdown_report = import_module("common.reports.utils").start_markdown_report
-write_sample_responses_report = import_module("common.reports.samples").write_sample_responses_report
+_io_mod = import_module("common.pipeline.io")
+write_markdown_lines = _io_mod.write_markdown_lines
+_reports_utils = import_module("common.reports.utils")
+start_markdown_report = _reports_utils.start_markdown_report
+_samples_mod = import_module("common.reports.samples")
+write_sample_responses_report = _samples_mod.write_sample_responses_report
 
 
 @dataclass(frozen=True)
@@ -154,6 +157,9 @@ def _write_catalog_report(reports_dir: Path) -> None:
         "",
         "- `next_video/` – summary metrics and fairness cuts for the selected configuration.",
         "- `opinion/` – opinion-shift regression metrics across participant studies.",
+        "- `sample_generative_responses/README.md` – curated examples with the exact",
+        "  question prompts and the model's <think>/<answer> (and <opinion>) outputs,",
+        "  plus per-example notes.",
         "- `hyperparameter_tuning/` – sweep results across temperature and max token settings.",
         "",
         "Model predictions and metrics JSON files live under `models/gpt-4o/`.",
@@ -605,18 +611,25 @@ def generate_reports(
     # Render a small gallery of sample model responses (5 per issue).
     try:
         label = selected.config.label()
-    except Exception:
+    except AttributeError:
         label = None
     next_files: List[Path] = []
     opinion_files: List[Path] = []
     if label:
-        nv_path = context.repo_root / "models" / "gpt-4o" / "next_video" / label / "predictions.jsonl"
+        nv_path = (
+            context.repo_root
+            / "models"
+            / "gpt-4o"
+            / "next_video"
+            / label
+            / "predictions.jsonl"
+        )
         if nv_path.exists():
             next_files.append(nv_path)
         op_dir = context.repo_root / "models" / "gpt-4o" / "opinion" / label
         if op_dir.exists():
-            for p in sorted(op_dir.rglob("predictions.jsonl")):
-                opinion_files.append(p)
+            for predictions_path in sorted(op_dir.rglob("predictions.jsonl")):
+                opinion_files.append(predictions_path)
     write_sample_responses_report(
         reports_root=context.reports_dir,
         family_label="GPT-4o",

@@ -19,3 +19,10 @@ python -m grpo.pipeline \
 The helper script `reports/build-reports.sh` can re-run the reporting stage once
 `models/grpo/<label>/` contains the cached evaluation artefacts. Set
 `GRPO_REPORT_LABEL=<label>` to override the auto-detected run.
+
+```{toctree}
+:maxdepth: 1
+:caption: GRPO Examples
+
+grpo_sample_generative_responses
+```

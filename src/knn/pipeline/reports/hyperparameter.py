@@ -42,6 +42,44 @@ from .opinion import _OpinionPortfolioStats
 from .shared import _feature_space_heading, _format_shell_command
 
 
+def _parse_int(value: object) -> Optional[int]:
+    """Coerce common scalar types to int, returning None on failure."""
+    try:
+        return int(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+
+
+def _selection_best_k(selection: StudySelection) -> int:
+    """Return the best-k for a selection, tolerating base selections without property.
+
+    Some call paths may provide a generic StudySelection that lacks a ``best_k``
+    attribute. In those cases, fall back to the outcome attribute or the metrics
+    payload if available.
+    """
+    # Preferred: property on the selection (present on KNN-specific subclass)
+    sel_best = getattr(selection, "best_k", None)  # type: ignore[attr-defined]
+    parsed = _parse_int(sel_best)
+    if parsed is not None:
+        return parsed
+
+    # Fallback: outcome.best_k
+    outcome = getattr(selection, "outcome", None)
+    if outcome is not None:
+        out_best = getattr(outcome, "best_k", None)
+        parsed = _parse_int(out_best)
+        if parsed is not None:
+            return parsed
+        # Final fallback: metrics["best_k"]
+        metrics = getattr(outcome, "metrics", {}) or {}
+        value = metrics.get("best_k") if isinstance(metrics, dict) else None
+        parsed = _parse_int(value)
+        if parsed is not None:
+            return parsed
+    # Unknown: use zero as a sentinel; downstream formatters handle it.
+    return 0
+
+
 @dataclass(frozen=True)
 class HyperparameterCommonContext:
     """Shared context used across hyper-parameter report sections."""
@@ -122,6 +160,7 @@ def _knn_next_video_command(
     config = selection.config
     text_fields_value = ",".join(config.text_fields) if config.text_fields else ""
 
+    best_k = _selection_best_k(selection)
     command: List[str] = [
         "python",
         "-m",
@@ -139,9 +178,9 @@ def _knn_next_video_command(
         "--knn-metric",
         config.metric,
         "--knn-k",
-        str(selection.best_k),
+        str(best_k),
         "--knn-k-sweep",
-        str(selection.best_k),
+        str(best_k),
         "--out-dir",
         "<run_dir>",
     ]
@@ -387,7 +426,7 @@ def _format_hyperparameter_row(
     row = (
         f"| **{study.label}** | {metric} | {text_info or '—'} | "
         f"{format_optional_float(accuracy_value)} | {format_optional_float(baseline_value)} | "
-        f"{format_delta(delta_value)} | {format_k(selection.best_k)} | "
+        f"{format_delta(delta_value)} | {format_k(_selection_best_k(selection))} | "
         f"{format_count(eligible)} |"
     )
     if command:
@@ -565,7 +604,7 @@ def _build_observation_entry(
         f"{selection.study.label}: accuracy {format_optional_float(accuracy_value)} "
         f"(baseline {format_optional_float(baseline_value)}, "
         f"Δ {format_delta(delta_value)}, "
-        f"k={format_k(summary.get('best_k') or selection.best_k)}) "
+        f"k={format_k(summary.get('best_k') or _selection_best_k(selection))}) "
         f"using {config_bits}"
     )
     return detail, _knn_next_video_command(feature_space, selection)

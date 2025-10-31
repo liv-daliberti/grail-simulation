@@ -22,7 +22,10 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Mapping, MutableMapping, Optional, Sequence, Tuple
 
-from common.evaluation.utils import group_key_for_example, safe_div
+from common.evaluation.utils import (
+    group_key_for_example,
+    safe_div,
+)
 
 from ..data import SOLUTION_COLUMN
 from ..features import extract_slate_items

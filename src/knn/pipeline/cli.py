@@ -327,7 +327,8 @@ def _resolve_allow_incomplete(args: argparse.Namespace) -> bool:
 
 def build_pipeline_context(args: argparse.Namespace, root: Path) -> PipelineContext:
     """
-    Normalise CLI flags and environment overrides into a :class:`PipelineContext`.
+    Normalise CLI flags and environment overrides into a
+    :class:`~knn.pipeline.context.PipelineContext`.
 
     :param args: Parsed pipeline arguments that may omit optional values.
     :type args: argparse.Namespace
@@ -376,9 +377,12 @@ def _resolve_paths(args: argparse.Namespace, root: Path) -> dict:
 def _resolve_settings(args: argparse.Namespace) -> dict:
     """Resolve non-path settings and toggles from CLI and environment."""
     run_next_video, run_opinion = _resolve_task_configuration(args)
-    sentence_model, sentence_device, sentence_batch_size, sentence_normalize = _resolve_sentence_settings(
-        args
-    )
+    (
+        sentence_model,
+        sentence_device,
+        sentence_batch_size,
+        sentence_normalize,
+    ) = _resolve_sentence_settings(args)
     study_tokens = tuple(
         _split_tokens(getattr(args, "studies", ""))
         or _split_tokens(os.environ.get("KNN_STUDIES", ""))
@@ -414,32 +418,7 @@ def _resolve_settings(args: argparse.Namespace) -> dict:
 
 def _build_context_from(paths: dict, settings: dict) -> PipelineContext:
     """Construct a PipelineContext from resolved paths and settings dictionaries."""
-    return PipelineContext(
-        dataset=paths["dataset"],
-        out_dir=paths["out_dir"],
-        cache_dir=str(paths["cache_dir"]),
-        sweep_dir=paths["sweep_dir"],
-        word2vec_model_dir=paths["word2vec_model_dir"],
-        next_video_dir=paths["next_video_dir"],
-        opinion_dir=paths["opinion_dir"],
-        opinion_sweep_dir=paths["opinion_sweep_dir"],
-        opinion_word2vec_dir=paths["opinion_word2vec_dir"],
-        k_sweep=settings["k_sweep"],
-        study_tokens=settings["study_tokens"],
-        word2vec_epochs=settings["word2vec_epochs"],
-        word2vec_workers=settings["word2vec_workers"],
-        sentence_model=settings["sentence_model"],
-        sentence_device=settings["sentence_device"],
-        sentence_batch_size=settings["sentence_batch_size"],
-        sentence_normalize=settings["sentence_normalize"],
-        feature_spaces=settings["feature_spaces"],
-        jobs=settings["jobs"],
-        reuse_sweeps=settings["reuse_sweeps"],
-        reuse_final=settings["reuse_final"],
-        allow_incomplete=settings["allow_incomplete"],
-        run_next_video=settings["run_next_video"],
-        run_opinion=settings["run_opinion"],
-    )
+    return PipelineContext.from_mappings(paths=paths, settings=settings)
 
 def build_base_cli(context: PipelineContext, extra_cli: Sequence[str] | None = None) -> List[str]:
     """
@@ -520,7 +499,7 @@ def log_dry_run(configs: Sequence["SweepConfig"]) -> None:
 
     :param configs: Planned sweep configuration objects assembled during a dry run.
     :type configs: Sequence[~knn.pipeline.context.SweepConfig]
-    :returns: ``None``. The function reports the count via :mod:`logging`.
+    :returns: ``None``. The function reports the count via ``logging``.
     :rtype: None
     """
     LOGGER.info("[DRY RUN] Planned %d sweep configurations.", len(configs))

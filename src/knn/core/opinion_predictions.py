@@ -30,6 +30,103 @@ from .opinion_index import _similarity_from_distances, _transform_documents, _we
 from .opinion_models import OpinionExample, OpinionIndex
 
 
+@dataclass(frozen=True)
+class _EvalPlan:
+    """Precomputed neighbour arrays and k settings for evaluation."""
+
+    neighbour_distances: np.ndarray
+    neighbour_indices: np.ndarray
+    unique_k: List[int]
+    max_k: int
+
+
+@dataclass(frozen=True)
+class _RowEnv:
+    """Environment for per-row evaluation and accumulation."""
+
+    index: OpinionIndex
+    plan: _EvalPlan
+    exclude_self: bool
+
+
+@dataclass
+class _Accumulators:
+    """Mutable per-k accumulators updated while iterating rows."""
+
+    per_k_predictions: Dict[int, List[float]]
+    per_k_change_predictions: Dict[int, List[float]]
+
+
+def _plan_evaluation(
+    *,
+    index: OpinionIndex,
+    eval_examples: Sequence[OpinionExample],
+    k_values: Sequence[int],
+    exclude_self: bool,
+) -> _EvalPlan | None:
+    """Prepare neighbour arrays and k settings; return ``None`` when invalid."""
+    requested_k = [int(k) for k in k_values if int(k) > 0]
+    if not requested_k:
+        return None
+    max_available = len(index.targets.participant_keys) - (1 if exclude_self else 0)
+    max_available = max(1, max_available)
+    unique_k = sorted({k for k in requested_k if k <= max_available})
+    if not unique_k:
+        unique_k = [min(max_available, max(requested_k))]
+    max_k = max(unique_k)
+
+    documents = [example.document for example in eval_examples]
+    matrix_eval = _transform_documents(index=index, documents=documents)
+    neighbour_distances, neighbour_indices = index.neighbors.kneighbors(
+        matrix_eval, n_neighbors=max_k
+    )
+    return _EvalPlan(
+        neighbour_distances=neighbour_distances,
+        neighbour_indices=neighbour_indices,
+        unique_k=unique_k,
+        max_k=max_k,
+    )
+
+
+def _accumulate_row(
+    *,
+    env: _RowEnv,
+    acc: _Accumulators,
+    example: OpinionExample,
+    row_idx: int,
+) -> Dict[str, Any] | None:
+    """Compute predictions for a single row and update accumulators."""
+    distances = env.plan.neighbour_distances[row_idx]
+    indices = env.plan.neighbour_indices[row_idx]
+    record_after, record_change = _row_predictions(
+        index=env.index,
+        example=example,
+        distances=distances,
+        indices=indices,
+        params=_RowPredParams(
+            unique_k=env.plan.unique_k,
+            max_k=env.plan.max_k,
+            exclude_self=env.exclude_self,
+        ),
+    )
+    if not record_after:
+        return None
+    for k, pred in record_after.items():
+        acc.per_k_predictions[int(k)].append(float(pred))
+    for k, delta in record_change.items():
+        acc.per_k_change_predictions[int(k)].append(float(delta))
+    return {
+        "participant_id": example.participant_id,
+        "participant_study": example.participant_study,
+        "issue": example.issue,
+        "session_id": example.session_id,
+        "before_index": example.before,
+        "after_index": example.after,
+        "predictions_by_k": record_after,
+        "predicted_change_by_k": record_change,
+    }
+
+
 def predict_post_indices(
     *,
     index: OpinionIndex,
@@ -43,7 +140,7 @@ def predict_post_indices(
     :param index: KNN index object or registry being manipulated.
     :type index: OpinionIndex
     :param eval_examples: Iterable of evaluation examples to score with the index.
-    :type eval_examples: Sequence[OpinionExample]
+    :type eval_examples: Sequence[~knn.core.opinion_models.OpinionExample]
     :param k_values: Iterable of ``k`` values to evaluate or report.
     :type k_values: Sequence[int]
     :param exclude_self: Whether to drop the query point when collecting nearest neighbours.
@@ -57,62 +154,29 @@ def predict_post_indices(
             "per_k_predictions": {int(k): [] for k in k_values},
         }
 
-    requested_k = [int(k) for k in k_values if int(k) > 0]
-    if not requested_k:
+    plan = _plan_evaluation(
+        index=index, eval_examples=eval_examples, k_values=k_values, exclude_self=exclude_self
+    )
+    if plan is None:
         return {
             "rows": [],
             "per_k_predictions": {},
             "per_k_change_predictions": {},
         }
-    max_available = len(index.participant_keys) - (1 if exclude_self else 0)
-    max_available = max(1, max_available)
-    unique_k = sorted({k for k in requested_k if k <= max_available})
-    if not unique_k:
-        unique_k = [min(max_available, max(requested_k))]
-    max_k = max(unique_k)
 
-    documents = [example.document for example in eval_examples]
-    matrix_eval = _transform_documents(index=index, documents=documents)
-
-    neighbour_distances, neighbour_indices = index.neighbors.kneighbors(
-        matrix_eval,
-        n_neighbors=max_k,
+    per_k_predictions: Dict[int, List[float]] = {k: [] for k in plan.unique_k}
+    per_k_change_predictions: Dict[int, List[float]] = {k: [] for k in plan.unique_k}
+    env = _RowEnv(index=index, plan=plan, exclude_self=exclude_self)
+    acc = _Accumulators(
+        per_k_predictions=per_k_predictions,
+        per_k_change_predictions=per_k_change_predictions,
     )
-
-    per_k_predictions: Dict[int, List[float]] = {k: [] for k in unique_k}
-    per_k_change_predictions: Dict[int, List[float]] = {k: [] for k in unique_k}
     rows: List[Dict[str, Any]] = []
 
     for row_idx, example in enumerate(eval_examples):
-        distances = neighbour_distances[row_idx]
-        indices = neighbour_indices[row_idx]
-        record_after, record_change = _row_predictions(
-            index=index,
-            example=example,
-            distances=distances,
-            indices=indices,
-            unique_k=unique_k,
-            max_k=max_k,
-            exclude_self=exclude_self,
-        )
-        if not record_after:
-            continue
-        for k, pred in record_after.items():
-            per_k_predictions[int(k)].append(float(pred))
-        for k, delta in record_change.items():
-            per_k_change_predictions[int(k)].append(float(delta))
-        rows.append(
-            {
-                "participant_id": example.participant_id,
-                "participant_study": example.participant_study,
-                "issue": example.issue,
-                "session_id": example.session_id,
-                "before_index": example.before,
-                "after_index": example.after,
-                "predictions_by_k": record_after,
-                "predicted_change_by_k": record_change,
-            }
-        )
+        row = _accumulate_row(env=env, acc=acc, example=example, row_idx=row_idx)
+        if row is not None:
+            rows.append(row)
 
     return {
         "rows": rows,
@@ -245,7 +309,7 @@ def _metrics_from_eval_examples(
     :param predictions: Mapping of k values to prediction lists.
     :type predictions: Dict[int, List[float]]
     :param eval_examples: Iterable of evaluation examples to score with the index.
-    :type eval_examples: Sequence[OpinionExample]
+    :type eval_examples: Sequence[~knn.core.opinion_models.OpinionExample]
     :returns: Mapping of k values to computed metric bundles.
     :rtype: Dict[int, Dict[str, float]]
     """
@@ -277,7 +341,7 @@ def _summary_metrics(
     :param predictions: Sequence of KNN prediction records emitted during evaluation.
     :type predictions: Dict[int, List[float]]
     :param eval_examples: Iterable of evaluation examples to score with the index.
-    :type eval_examples: Sequence[OpinionExample]
+    :type eval_examples: Sequence[~knn.core.opinion_models.OpinionExample]
     :param rows: Optional iterable of per-example prediction rows. When provided,
         metrics are computed only over examples that produced predictions for the
         given ``k``.
@@ -292,15 +356,81 @@ def _summary_metrics(
     return _metrics_from_eval_examples(predictions, eval_examples)
 
 
+@dataclass(frozen=True)
+class _FilterParams:
+    """Neighbour filtering parameters."""
+
+    exclude_self: bool
+    max_k: int
+    self_key: Tuple[str, str]
+
+
+def _filter_neighbors(
+    *,
+    index: OpinionIndex,
+    indices: np.ndarray,
+    similarities: np.ndarray,
+    params: _FilterParams,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Return filtered neighbour indices/weights as compact numpy arrays."""
+    filtered_indices: List[int] = []
+    filtered_weights: List[float] = []
+    for candidate_idx, weight in zip(indices, similarities):
+        if params.exclude_self:
+            participant_key = index.targets.participant_keys[int(candidate_idx)]
+            if participant_key == params.self_key:
+                continue
+        filtered_indices.append(int(candidate_idx))
+        filtered_weights.append(float(weight))
+        if len(filtered_indices) >= params.max_k:
+            break
+    return (
+        np.asarray(filtered_indices, dtype=np.int32),
+        np.asarray(filtered_weights, dtype=np.float32),
+    )
+
+
+def _records_for_k(
+    *,
+    index: OpinionIndex,
+    example_before: float,
+    idx_arr: np.ndarray,
+    wts_arr: np.ndarray,
+    unique_k: Sequence[int],
+) -> Tuple[Dict[int, float], Dict[int, float]]:
+    """Build per-k prediction and change dictionaries from neighbours."""
+    record_after: Dict[int, float] = {}
+    record_change: Dict[int, float] = {}
+    for k in unique_k:
+        if len(idx_arr) < k:
+            continue
+        top_indices = idx_arr[:k]
+        top_weights = wts_arr[:k]
+        top_targets_after = index.targets.after[top_indices]
+        top_targets_before = index.targets.before[top_indices]
+        predicted_change = _weighted_mean(top_targets_after - top_targets_before, top_weights)
+        anchored_prediction = float(example_before) + predicted_change
+        record_after[int(k)] = float(anchored_prediction)
+        record_change[int(k)] = float(predicted_change)
+    return record_after, record_change
+
+
+@dataclass(frozen=True)
+class _RowPredParams:
+    """Neighbour selection and per-k evaluation parameters."""
+
+    unique_k: Sequence[int]
+    max_k: int
+    exclude_self: bool
+
+
 def _row_predictions(
     *,
     index: OpinionIndex,
     example: OpinionExample,
     distances: np.ndarray,
     indices: np.ndarray,
-    unique_k: Sequence[int],
-    max_k: int,
-    exclude_self: bool,
+    params: _RowPredParams,
 ) -> Tuple[Dict[int, float], Dict[int, float]]:
     """
     Compute per-k predictions for a single ``example``.
@@ -315,42 +445,25 @@ def _row_predictions(
     :returns: Tuple of dictionaries for post-study predictions and changes keyed by ``k``.
     """
     similarities = _similarity_from_distances(distances, metric=index.metric)
-
-    filtered_indices: List[int] = []
-    filtered_weights: List[float] = []
-    for candidate_idx, weight in zip(indices, similarities):
-        if exclude_self:
-            participant_key = index.participant_keys[candidate_idx]
-            if (
-                participant_key[0] == example.participant_id
-                and participant_key[1] == example.participant_study
-            ):
-                continue
-        filtered_indices.append(int(candidate_idx))
-        filtered_weights.append(float(weight))
-        if len(filtered_indices) >= max_k:
-            break
-
-    if not filtered_indices:
+    idx_arr, wts_arr = _filter_neighbors(
+        index=index,
+        indices=indices,
+        similarities=similarities,
+        params=_FilterParams(
+            exclude_self=params.exclude_self,
+            max_k=params.max_k,
+            self_key=(example.participant_id, example.participant_study),
+        ),
+    )
+    if idx_arr.size == 0:
         return {}, {}
-
-    idx_arr = np.asarray(filtered_indices, dtype=np.int32)
-    wts_arr = np.asarray(filtered_weights, dtype=np.float32)
-
-    record_after: Dict[int, float] = {}
-    record_change: Dict[int, float] = {}
-    for k in unique_k:
-        if len(idx_arr) < k:
-            continue
-        top_indices = idx_arr[:k]
-        top_weights = wts_arr[:k]
-        top_targets_after = index.targets_after[top_indices]
-        top_targets_before = index.targets_before[top_indices]
-        predicted_change = _weighted_mean(top_targets_after - top_targets_before, top_weights)
-        anchored_prediction = float(example.before) + predicted_change
-        record_after[int(k)] = float(anchored_prediction)
-        record_change[int(k)] = float(predicted_change)
-    return record_after, record_change
+    return _records_for_k(
+        index=index,
+        example_before=float(example.before),
+        idx_arr=idx_arr,
+        wts_arr=wts_arr,
+        unique_k=params.unique_k,
+    )
 
 
 @dataclass
@@ -455,7 +568,7 @@ def _baseline_metrics(eval_examples: Sequence[OpinionExample]) -> Dict[str, floa
     Return baseline error metrics for opinion prediction.
 
     :param eval_examples: Iterable of evaluation examples to score with the index.
-    :type eval_examples: Sequence[OpinionExample]
+    :type eval_examples: Sequence[~knn.core.opinion_models.OpinionExample]
     :returns: Baseline error metrics for opinion prediction.
     :rtype: Dict[str, float]
     """

@@ -25,23 +25,24 @@ from typing import Any, Callable, Mapping
 
 try:  # pragma: no cover - optional dependency
     from transformers import set_seed  # pylint: disable=import-error
-except Exception:  # pragma: no cover - optional dependency
-    # Avoid failing import-time when transformers has indirect import issues
-    # (e.g. due to partial stubs injected into sys.modules by tests).
-    set_seed = None  # type: ignore[assignment]
+except ImportError:  # pragma: no cover - optional dependency
+    # Avoid failing import-time when transformers is not installed. Provide a
+    # no-op fallback matching the real API to satisfy type-checkers and callers.
+    def set_seed(_seed: int) -> None:  # type: ignore[override]
+        """No-op fallback for transformers.set_seed when unavailable."""
+        return None
 
 try:  # pragma: no cover - optional dependency
     from trl import ModelConfig  # pylint: disable=import-error
-except Exception:  # pragma: no cover - optional dependency
+except ImportError:  # pragma: no cover - optional dependency
     # Minimal placeholder used only for type annotations / script entrypoint.
-    class ModelConfig:  # type: ignore[no-redef]
+    class ModelConfig:  # pylint: disable=too-few-public-methods
         """Lightweight stub for TRL's ``ModelConfig`` used at import time.
 
         This placeholder allows modules to be imported in environments where
         TRL is unavailable (e.g., Sphinx or lint-only runs). It should not be
         instantiated during real training; the actual class is provided by TRL.
         """
-        pass
 
 try:
     from common.open_r1.configs import GRPOConfig, GRPOScriptArguments
@@ -96,9 +97,9 @@ try:  # pragma: no cover - optional dependency re-export
         _train_discriminator_from_contexts,
         make_gail_reward_fn,
     )
-except Exception as _gail_import_error:  # pragma: no cover - optional dependency
+except ImportError as _gail_import_error:  # pragma: no cover - optional dependency
     # Provide minimal shims so importing this module doesn't require transformers.
-    class OnlineDiscriminator:  # type: ignore[too-few-public-methods]
+    class OnlineDiscriminator:  # pylint: disable=too-few-public-methods
         """Import-time stub that surfaces a helpful error when used.
 
         The real :class:`OnlineDiscriminator` lives in :mod:`grail.grail_gail`
@@ -110,7 +111,8 @@ except Exception as _gail_import_error:  # pragma: no cover - optional dependenc
                 "GAIL components require transformers. Install it with `pip install transformers`."
             ) from _gail_import_error
 
-    RewardContext = None  # type: ignore[assignment]
+    class RewardContext:  # pylint: disable=too-few-public-methods
+        """Placeholder for the discriminator reward context type."""
 
     def _build_reward_contexts(*_args, **_kwargs):  # type: ignore[empty-body]
         raise ImportError(

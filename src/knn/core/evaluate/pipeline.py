@@ -21,7 +21,11 @@ import logging
 from dataclasses import dataclass, replace
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 
-from common.evaluation.utils import compose_issue_slug, prepare_dataset, safe_div
+from common.evaluation.utils import (
+    compose_issue_slug,
+    prepare_dataset,
+    safe_div,
+)
 from common.prompts.docs import merge_default_extra_fields
 
 from ..data import (

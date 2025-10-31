@@ -23,3 +23,12 @@ python -m grail.pipeline \
 Set `GRAIL_REPORT_LABEL=<label>` before running `reports/build-reports.sh` to
 refresh a specific evaluation run. The script automatically skips missing
 artefacts when `REPORTS_ALLOW_INCOMPLETE=1`.
+
+```{toctree}
+:maxdepth: 1
+:caption: GRAIL Baselines
+
+grail_next_video
+grail_opinion
+grail_sample_generative_responses
+```

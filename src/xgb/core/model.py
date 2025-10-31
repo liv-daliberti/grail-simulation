@@ -152,46 +152,242 @@ class XGBoostSlateModel:
     training_history: Optional[Dict[str, Any]] = None
 
 
-# pylint: disable=too-many-instance-attributes
-@dataclass
-class XGBoostBoosterParams:
-    """
-    XGBoost-specific hyper-parameters used when instantiating the booster.
-
-    :ivar learning_rate: Gradient boosting learning rate.
-    :vartype learning_rate: float
-    :ivar max_depth: Maximum tree depth.
-    :vartype max_depth: int
-    :ivar n_estimators: Number of boosting rounds.
-    :vartype n_estimators: int
-    :ivar subsample: Row subsampling ratio applied per boosting round.
-    :vartype subsample: float
-    :ivar colsample_bytree: Column subsampling ratio applied per tree.
-    :vartype colsample_bytree: float
-    :ivar tree_method: Tree construction algorithm name.
-    :vartype tree_method: str
-    :ivar reg_lambda: L2 regularisation weight.
-    :vartype reg_lambda: float
-    :ivar reg_alpha: L1 regularisation weight.
-    :vartype reg_alpha: float
-    :ivar extra_kwargs: Additional keyword arguments forwarded to
-        :class:`xgboost.XGBClassifier`.
-    :vartype extra_kwargs: Dict[str, Any] | None
-    """
-
+@dataclass(frozen=True)
+class _BoosterCore:
     learning_rate: float = 0.1
     max_depth: int = 6
     n_estimators: int = 300
+    tree_method: str = "hist"
+
+
+@dataclass(frozen=True)
+class _BoosterSampling:
     subsample: float = 0.8
     colsample_bytree: float = 0.8
-    tree_method: str = "hist"
+
+
+@dataclass(frozen=True)
+class _BoosterRegularization:
     reg_lambda: float = 1.0
     reg_alpha: float = 0.0
+
+
+@dataclass(init=False)
+class XGBoostBoosterParams:
+    """
+    XGBoost-specific hyper-parameters grouped into sub-configs.
+
+    Backwards-compatible properties expose the original flat attribute names.
+    """
+
+    core: _BoosterCore = field(default_factory=_BoosterCore)
+    sampling: _BoosterSampling = field(default_factory=_BoosterSampling)
+    regularization: _BoosterRegularization = field(default_factory=_BoosterRegularization)
     extra_kwargs: Dict[str, Any] | None = None
 
+    def __init__(
+        self,
+        *,
+        learning_rate: float = 0.1,
+        max_depth: int = 6,
+        n_estimators: int = 300,
+        subsample: float = 0.8,
+        colsample_bytree: float = 0.8,
+        tree_method: str = "hist",
+        reg_lambda: float = 1.0,
+        reg_alpha: float = 0.0,
+        extra_kwargs: Dict[str, Any] | None = None,
+        # New-style grouped overrides (optional)
+        core: _BoosterCore | None = None,
+        sampling: _BoosterSampling | None = None,
+        regularization: _BoosterRegularization | None = None,
+    ) -> None:
+        self.core = core or _BoosterCore(
+            learning_rate=learning_rate,
+            max_depth=max_depth,
+            n_estimators=n_estimators,
+            tree_method=tree_method,
+        )
+        self.sampling = sampling or _BoosterSampling(
+            subsample=subsample,
+            colsample_bytree=colsample_bytree,
+        )
+        self.regularization = regularization or _BoosterRegularization(
+            reg_lambda=reg_lambda,
+            reg_alpha=reg_alpha,
+        )
+        self.extra_kwargs = extra_kwargs
 
-# pylint: disable=too-many-instance-attributes
+    # Compatibility accessors
+    @property
+    def learning_rate(self) -> float:  # pragma: no cover - simple forwarding
+        """
+        Learning rate (``eta``) applied at each boosting step.
+
+        This is a compatibility accessor that forwards to
+        :attr:`core.learning_rate`.
+
+        :returns: The step size shrinkage used in updates.
+        :rtype: float
+        """
+        return self.core.learning_rate
+
+    @property
+    def max_depth(self) -> int:  # pragma: no cover
+        """
+        Maximum depth of individual trees in the ensemble.
+
+        Compatibility accessor forwarding to :attr:`core.max_depth`.
+
+        :returns: The maximum number of nodes from root to any leaf.
+        :rtype: int
+        """
+        return self.core.max_depth
+
+    @property
+    def n_estimators(self) -> int:  # pragma: no cover
+        """
+        Number of boosting rounds (trees) to fit.
+
+        Compatibility accessor forwarding to :attr:`core.n_estimators`.
+
+        :returns: The number of trees in the model.
+        :rtype: int
+        """
+        return self.core.n_estimators
+
+    @property
+    def tree_method(self) -> str:  # pragma: no cover
+        """
+        Tree construction algorithm used by XGBoost.
+
+        Typical values include ``hist``, ``gpu_hist``, and ``approx``.
+        Forwards to :attr:`core.tree_method`.
+
+        :returns: The tree building strategy.
+        :rtype: str
+        """
+        return self.core.tree_method
+
+    @property
+    def subsample(self) -> float:  # pragma: no cover
+        """
+        Row subsampling ratio used per tree.
+
+        Compatibility accessor forwarding to :attr:`sampling.subsample`.
+
+        :returns: Fraction of training instances sampled for each tree.
+        :rtype: float
+        """
+        return self.sampling.subsample
+
+    @property
+    def colsample_bytree(self) -> float:  # pragma: no cover
+        """
+        Column subsampling ratio used per tree.
+
+        Compatibility accessor forwarding to :attr:`sampling.colsample_bytree`.
+
+        :returns: Fraction of features sampled for each tree.
+        :rtype: float
+        """
+        return self.sampling.colsample_bytree
+
+    @property
+    def reg_lambda(self) -> float:  # pragma: no cover
+        """
+        L2 regularization strength on weights.
+
+        Compatibility accessor forwarding to :attr:`regularization.reg_lambda`.
+
+        :returns: The L2 penalty term (``lambda``).
+        :rtype: float
+        """
+        return self.regularization.reg_lambda
+
+    @property
+    def reg_alpha(self) -> float:  # pragma: no cover
+        """
+        L1 regularization strength on weights.
+
+        Compatibility accessor forwarding to :attr:`regularization.reg_alpha`.
+
+        :returns: The L1 penalty term (``alpha``).
+        :rtype: float
+        """
+        return self.regularization.reg_alpha
+
+    @classmethod
+    def create(
+        cls,
+        *,
+        learning_rate: float = 0.1,
+        max_depth: int = 6,
+        n_estimators: int = 300,
+        subsample: float = 0.8,
+        colsample_bytree: float = 0.8,
+        tree_method: str = "hist",
+        reg_lambda: float = 1.0,
+        reg_alpha: float = 0.0,
+        extra_kwargs: Dict[str, Any] | None = None,
+    ) -> "XGBoostBoosterParams":
+        """
+        Convenience constructor for :class:`XGBoostBoosterParams` using flat args.
+
+        Builds the grouped core, sampling, and regularization sub-configs
+        from the provided keyword arguments.
+
+        :param learning_rate: Boosting step size (``eta``).
+        :type learning_rate: float
+        :param max_depth: Maximum tree depth.
+        :type max_depth: int
+        :param n_estimators: Number of boosting rounds.
+        :type n_estimators: int
+        :param subsample: Row subsampling ratio per tree.
+        :type subsample: float
+        :param colsample_bytree: Column subsampling ratio per tree.
+        :type colsample_bytree: float
+        :param tree_method: Tree construction algorithm (e.g. ``hist``, ``gpu_hist``).
+        :type tree_method: str
+        :param reg_lambda: L2 regularization strength.
+        :type reg_lambda: float
+        :param reg_alpha: L1 regularization strength.
+        :type reg_alpha: float
+        :param extra_kwargs: Additional parameters forwarded to the underlying
+            :class:`xgboost.XGBClassifier` when training.
+        :type extra_kwargs: Dict[str, Any] | None
+        :returns: A populated booster parameter bundle.
+        :rtype: XGBoostBoosterParams
+        """
+        return cls(
+            core=_BoosterCore(
+                learning_rate=learning_rate,
+                max_depth=max_depth,
+                n_estimators=n_estimators,
+                tree_method=tree_method,
+            ),
+            sampling=_BoosterSampling(
+                subsample=subsample,
+                colsample_bytree=colsample_bytree,
+            ),
+            regularization=_BoosterRegularization(
+                reg_lambda=reg_lambda,
+                reg_alpha=reg_alpha,
+            ),
+            extra_kwargs=extra_kwargs,
+        )
+
+
 @dataclass
+class _TrainVectorizers:
+    tfidf: TfidfConfig = field(default_factory=TfidfConfig)
+    word2vec: Word2VecVectorizerConfig = field(default_factory=Word2VecVectorizerConfig)
+    sentence_transformer: SentenceTransformerVectorizerConfig = field(
+        default_factory=SentenceTransformerVectorizerConfig
+    )
+
+
+@dataclass(init=False)
 class XGBoostTrainConfig:
     """
     Configuration options controlling training behaviour.
@@ -213,12 +409,134 @@ class XGBoostTrainConfig:
     seed: int = 42
     max_features: Optional[int] = 200_000
     vectorizer_kind: str = "tfidf"
-    tfidf: TfidfConfig = field(default_factory=TfidfConfig)
-    word2vec: Word2VecVectorizerConfig = field(default_factory=Word2VecVectorizerConfig)
-    sentence_transformer: SentenceTransformerVectorizerConfig = field(
-        default_factory=SentenceTransformerVectorizerConfig
-    )
+    vectorizers: _TrainVectorizers = field(default_factory=_TrainVectorizers)
     booster: XGBoostBoosterParams = field(default_factory=XGBoostBoosterParams)
+
+    def __init__(
+        self,
+        *,
+        max_train: int = 200_000,
+        seed: int = 42,
+        max_features: Optional[int] = 200_000,
+        vectorizer_kind: str = "tfidf",
+        tfidf: TfidfConfig | None = None,
+        word2vec: Word2VecVectorizerConfig | None = None,
+        sentence_transformer: SentenceTransformerVectorizerConfig | None = None,
+        booster: XGBoostBoosterParams | None = None,
+        vectorizers: _TrainVectorizers | None = None,
+    ) -> None:
+        self.max_train = max_train
+        self.seed = seed
+        self.max_features = max_features
+        self.vectorizer_kind = vectorizer_kind
+        self.vectorizers = vectorizers or _TrainVectorizers(
+            tfidf=tfidf or TfidfConfig(),
+            word2vec=word2vec or Word2VecVectorizerConfig(),
+            sentence_transformer=sentence_transformer or SentenceTransformerVectorizerConfig(),
+        )
+        self.booster = booster or XGBoostBoosterParams()
+
+    # Backwards-compatible accessors for vectorizer configs
+    @property
+    def tfidf(self) -> TfidfConfig:  # pragma: no cover - simple forwarding
+        """
+        TF-IDF vectoriser configuration used for text features.
+
+        Compatibility accessor forwarding to :attr:`vectorizers.tfidf`.
+
+        :returns: TF-IDF configuration.
+        :rtype: TfidfConfig
+        """
+        return self.vectorizers.tfidf
+
+    @tfidf.setter
+    def tfidf(self, value: TfidfConfig) -> None:  # pragma: no cover - simple forwarding
+        self.vectorizers.tfidf = value
+
+    @property
+    def word2vec(self) -> Word2VecVectorizerConfig:  # pragma: no cover
+        """
+        Word2Vec vectoriser configuration used for text features.
+
+        Compatibility accessor forwarding to :attr:`vectorizers.word2vec`.
+
+        :returns: Word2Vec configuration.
+        :rtype: Word2VecVectorizerConfig
+        """
+        return self.vectorizers.word2vec
+
+    @word2vec.setter
+    def word2vec(self, value: Word2VecVectorizerConfig) -> None:  # pragma: no cover
+        self.vectorizers.word2vec = value
+
+    @property
+    def sentence_transformer(self) -> SentenceTransformerVectorizerConfig:  # pragma: no cover
+        """
+        Sentence-Transformer vectoriser configuration used for text embeddings.
+
+        Compatibility accessor forwarding to
+        :attr:`vectorizers.sentence_transformer`.
+
+        :returns: Sentence-Transformer configuration.
+        :rtype: SentenceTransformerVectorizerConfig
+        """
+        return self.vectorizers.sentence_transformer
+
+    @sentence_transformer.setter
+    def sentence_transformer(self, value: SentenceTransformerVectorizerConfig) -> None:  # pragma: no cover
+        self.vectorizers.sentence_transformer = value
+
+    @classmethod
+    def create(
+        cls,
+        *,
+        max_train: int = 200_000,
+        seed: int = 42,
+        max_features: Optional[int] = 200_000,
+        vectorizer_kind: str = "tfidf",
+        tfidf: TfidfConfig | None = None,
+        word2vec: Word2VecVectorizerConfig | None = None,
+        sentence_transformer: SentenceTransformerVectorizerConfig | None = None,
+        booster: XGBoostBoosterParams | None = None,
+    ) -> "XGBoostTrainConfig":
+        """
+        Convenience constructor for :class:`XGBoostTrainConfig`.
+
+        Creates a training configuration with optional vectoriser overrides
+        and booster hyper-parameters.
+
+        :param max_train: Maximum number of training rows to sample (``0`` keeps all).
+        :type max_train: int
+        :param seed: Random seed for subsampling and model components.
+        :type seed: int
+        :param max_features: Cap for TF-IDF features (``None`` disables capping).
+        :type max_features: int | None
+        :param vectorizer_kind: Default vectoriser to use (``tfidf``, ``word2vec``,
+            or ``sentence_transformer``).
+        :type vectorizer_kind: str
+        :param tfidf: Optional TF-IDF configuration override.
+        :type tfidf: TfidfConfig | None
+        :param word2vec: Optional Word2Vec configuration override.
+        :type word2vec: Word2VecVectorizerConfig | None
+        :param sentence_transformer: Optional Sentence-Transformer configuration override.
+        :type sentence_transformer: SentenceTransformerVectorizerConfig | None
+        :param booster: Booster hyper-parameters; when omitted sensible defaults are used.
+        :type booster: XGBoostBoosterParams | None
+        :returns: Initialised training configuration.
+        :rtype: XGBoostTrainConfig
+        """
+        return cls(
+            max_train=max_train,
+            seed=seed,
+            max_features=max_features,
+            vectorizer_kind=vectorizer_kind,
+            vectorizers=_TrainVectorizers(
+                tfidf=tfidf or TfidfConfig(),
+                word2vec=word2vec or Word2VecVectorizerConfig(),
+                sentence_transformer=sentence_transformer or SentenceTransformerVectorizerConfig(),
+            ),
+            booster=booster or XGBoostBoosterParams(),
+        )
 
 
 def fit_xgboost_model(
@@ -473,19 +791,16 @@ def _build_fit_kwargs(collect_history: bool, batch: TrainingBatch) -> Dict[str, 
     # fallback to the legacy ``early_stopping_rounds`` kwarg is handled in
     # ``_train_booster`` to keep compatibility with multiple XGBoost versions.
     # Attach logging and EarlyStopping via shared helpers when available.
-    try:
-        callbacks = build_fit_callbacks(
-            objective="classification",
-            logger=LOGGER,
-            prefix="[XGB][Train]",
-            has_eval=batch.evaluation is not None,
-            interval=25,
-            early_stopping_metric="mlogloss",
-        )
-        if callbacks:
-            fit_kwargs["callbacks"] = callbacks
-    except Exception:  # pylint: disable=broad-except  # pragma: no cover - optional dependency or API mismatch
-        pass
+    callbacks = build_fit_callbacks(
+        objective="classification",
+        logger=LOGGER,
+        prefix="[XGB][Train]",
+        has_eval=batch.evaluation is not None,
+        interval=25,
+        early_stopping_metric="mlogloss",
+    )
+    if callbacks:
+        fit_kwargs["callbacks"] = callbacks
     return fit_kwargs
 
 
@@ -693,21 +1008,46 @@ def _prepare_eval_artifacts(
     return eval_matrix, context.encoder.transform(filtered_labels)
 
 
-def _prepare_training_dataset(  # pylint: disable=too-many-locals
+def _prepare_training_dataset(
     train_ds,
     train_config: XGBoostTrainConfig,
     extra_fields: Sequence[str] | None,
 ) -> Tuple[BaseTextVectorizer, LabelEncoder, EncodedDataset]:
     """Vectorise ``train_ds`` and return the encoded dataset alongside the encoder."""
+    docs, labels_id = _extract_training_docs(
+        train_ds, max_train=train_config.max_train, seed=train_config.seed, extra_fields=extra_fields
+    )
+    vectorizer, matrix = _fit_training_vectorizer(docs, train_config)
+    # Emit a concise embedding summary for the first training document to aid debugging.
+    log_embedding_previews(vectorizer, docs, matrix[0], logger=LOGGER, tag="[XGB][Embed]")
+    encoder, encoded_labels = _encode_labels(labels_id)
+    return vectorizer, encoder, EncodedDataset(matrix=matrix, labels=encoded_labels)
+
+
+def _extract_training_docs(
+    train_ds,
+    *,
+    max_train: int,
+    seed: int,
+    extra_fields: Sequence[str] | None,
+) -> Tuple[Sequence[str], Sequence[str]]:
+    """Extract training documents and aligned label IDs from ``train_ds``."""
     docs, labels_id, _ = feature_utils.prepare_prompt_documents(
         train_ds,
-        max_train=train_config.max_train,
-        seed=train_config.seed,
+        max_train=max_train,
+        seed=seed,
         extra_fields=extra_fields,
     )
     if not docs:
         raise RuntimeError("No training documents were produced for XGBoost fitting.")
+    return docs, labels_id
 
+
+def _fit_training_vectorizer(
+    docs: Sequence[str],
+    train_config: XGBoostTrainConfig,
+) -> Tuple[BaseTextVectorizer, Any]:
+    """Initialise and fit the text vectorizer for training documents."""
     vectorizer = create_vectorizer(
         train_config.vectorizer_kind,
         tfidf=train_config.tfidf,
@@ -715,11 +1055,7 @@ def _prepare_training_dataset(  # pylint: disable=too-many-locals
         sentence_transformer=train_config.sentence_transformer,
     )
     matrix = _ensure_float32(vectorizer.fit_transform(docs))
-    # Emit a concise embedding summary for the first training document to aid debugging.
-    log_embedding_previews(vectorizer, docs, matrix[0], logger=LOGGER, tag="[XGB][Embed]")
-    encoder, encoded_labels = _encode_labels(labels_id)
-    train_split = EncodedDataset(matrix=matrix, labels=encoded_labels)
-    return vectorizer, encoder, train_split
+    return vectorizer, matrix
 
 
 def _prepare_evaluation_dataset(

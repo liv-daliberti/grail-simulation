@@ -1,0 +1,7 @@
+[MASTER]
+# Ensure Pylint can import packages under src/ without inline suppressions.
+init-hook='import sys, os; sys.path.insert(0, os.path.abspath("src"))'
+
+[FORMAT]
+max-line-length=100
+

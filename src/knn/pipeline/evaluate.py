@@ -22,6 +22,7 @@ pipeline's caching semantics.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import logging
 from pathlib import Path
 from typing import Dict, Mapping, Sequence, List
@@ -75,7 +76,8 @@ def _maybe_word2vec_model_dir(
     :type base_dir: ~pathlib.Path
     :param study_slug: Filesystem-friendly study slug.
     :type study_slug: str
-    :returns: The materialised cache directory when ``feature_space`` is ``word2vec``; otherwise ``None``.
+    :returns: The materialised cache directory when ``feature_space`` is
+        ``word2vec``; otherwise ``None``.
     :rtype: Optional[~pathlib.Path]
     """
 
@@ -83,15 +85,19 @@ def _maybe_word2vec_model_dir(
         return None
     return ensure_dir(base_dir / study_slug)
 
-def _load_cached_final_metrics(
-    *,
-    root: Path,
-    issue_slug: str,
-    metrics_path: Path,
-    feature_space: str,
-    study_key: str,
-    reuse_existing: bool,
-) -> Mapping[str, object] | None:
+@dataclass(frozen=True)
+class _FinalCacheProbe:
+    """Parameters required to probe for cached final metrics."""
+
+    root: Path
+    issue_slug: str
+    metrics_path: Path
+    feature_space: str
+    study_key: str
+    reuse_existing: bool
+
+
+def _load_cached_final_metrics(probe: _FinalCacheProbe) -> Mapping[str, object] | None:
     """
     Attempt to load cached next-video metrics, logging outcomes consistently.
 
@@ -111,7 +117,10 @@ def _load_cached_final_metrics(
     :rtype: Optional[Mapping[str, object]]
     """
 
-    if not (reuse_existing and metrics_path.exists()):
+    root = probe.root
+    issue_slug = probe.issue_slug
+    metrics_path = probe.metrics_path
+    if not (probe.reuse_existing and metrics_path.exists()):
         return None
     try:
         metrics, _ = load_metrics(root, issue_slug)
@@ -120,15 +129,15 @@ def _load_cached_final_metrics(
             (
                 "[FINAL][MISS] feature=%s study=%s expected cached metrics at %s but none found."
             ),
-            feature_space,
-            study_key,
+            probe.feature_space,
+            probe.study_key,
             metrics_path,
         )
         return None
     LOGGER.info(
         "[FINAL][SKIP] feature=%s study=%s (metrics cached).",
-        feature_space,
-        study_key,
+        probe.feature_space,
+        probe.study_key,
     )
     return metrics
 
@@ -171,13 +180,22 @@ def run_final_evaluations(
             metrics_path = (
                 feature_out_dir / issue_slug / f"knn_eval_{issue_slug}_validation_metrics.json"
             )
-            cached = _load_cached_final_metrics(
-                root=feature_out_dir,
-                issue_slug=issue_slug,
-                metrics_path=metrics_path,
+            # Ensure the per-study Word2Vec cache directory exists even when
+            # reusing cached metrics so downstream tooling can rely on it.
+            _maybe_word2vec_model_dir(
                 feature_space=feature_space,
-                study_key=study.key,
-                reuse_existing=context.reuse_existing,
+                base_dir=context.next_video_word2vec_dir,
+                study_slug=study.study_slug,
+            )
+            cached = _load_cached_final_metrics(
+                _FinalCacheProbe(
+                    root=feature_out_dir,
+                    issue_slug=issue_slug,
+                    metrics_path=metrics_path,
+                    feature_space=feature_space,
+                    study_key=study.key,
+                    reuse_existing=context.reuse_existing,
+                )
             )
             if cached is not None:
                 feature_metrics[study.key] = cached

@@ -26,8 +26,8 @@ export ROOT_DIR
 
 LOG_DIR=${LOG_DIR_OVERRIDE:-${LOG_DIR:-"$ROOT_DIR/logs/grail_eval/wage"}}
 export LOG_DIR
-RUN_LABEL=${RUN_LABEL:-grail-wage-checkpoint-120}
-MODEL_PATH=${MODEL_PATH:-"$ROOT_DIR/models/grail/wage/checkpoint-120"}
+RUN_LABEL=${RUN_LABEL:-grail-wage-checkpoint-50}
+MODEL_PATH=${MODEL_PATH:-"$ROOT_DIR/models/grail/wage/checkpoint-50"}
 DATASET=${DATASET:-"$ROOT_DIR/data/cleaned_grail/minimum_wage"}
 SPLIT=${SPLIT:-validation}
 OUT_DIR=${OUT_DIR:-"$MODEL_PATH"}

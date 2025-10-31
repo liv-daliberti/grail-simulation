@@ -47,7 +47,7 @@ class OpinionSpec:
         :param document: Prompt document presented to the participant.
         :param before: Pre-study opinion value.
         :param after: Post-study opinion value.
-        :returns: Dictionary of keyword arguments suitable for :func:`opinion_example_kwargs`.
+        :returns: Dictionary of keyword arguments suitable for :func:`~common.opinion.opinion_example_kwargs`.
         """
 
         return opinion_example_kwargs(
@@ -89,7 +89,7 @@ def make_opinion_inputs(
     after: float,
 ) -> OpinionExampleInputs:
     """
-    Return a normalised :class:`OpinionExampleInputs` bundle.
+    Return a normalised :class:`~common.opinion.OpinionExampleInputs` bundle.
 
     Creating the dataclass via a helper keeps pipeline implementations concise
     while ensuring duplicate code detected by pylint's similarity checker is
@@ -144,11 +144,11 @@ def build_opinion_example(
     Construct an opinion example instance using the provided factory callable.
 
     :param spec: Opinion specification describing the study identifiers.
-    :type spec: OpinionSpec
+    :type spec: ~common.opinion.OpinionSpec
     :param factory: Callable (usually a dataclass) used to instantiate the example.
     :type factory: Callable[..., ExampleT]
     :param inputs: Structured collection of participant identifiers and values.
-    :type inputs: OpinionExampleInputs
+    :type inputs: ~common.opinion.OpinionExampleInputs
     :param extra_fields: Additional keyword arguments forwarded to ``factory``.
     :type extra_fields: object
     :returns: Instance created by ``factory`` populated with shared fields.
@@ -172,13 +172,13 @@ def make_opinion_example(
     **extra_fields: object,
 ) -> ExampleT:
     """
-    Convenience wrapper around :func:`build_opinion_example`.
+    Convenience wrapper around :func:`~common.opinion.models.build_opinion_example`.
 
     Provides a lightweight helper so pipelines can override the output factory
     while reusing the standardised opinion inputs bundle.
 
     :param spec: Opinion specification describing the study identifiers.
-    :param inputs: Normalised participant inputs produced by :func:`make_opinion_inputs`.
+    :param inputs: Normalised participant inputs produced by :func:`~common.opinion.models.make_opinion_inputs`.
     :param factory: Callable constructing the final example instance.
     :param extra_fields: Additional keyword arguments forwarded to ``factory``.
     :returns: Instance created by ``factory`` populated with shared fields.
@@ -286,7 +286,7 @@ def ensure_train_examples(
 
     :param train_examples: Training examples collected for the study.
     :param logger: Logger used for emitting warning messages.
-    :param message: Log message template passed to :func:`logging.Logger.warning`.
+    :param message: Log message template passed to ``logging.Logger.warning``.
     :param args: Optional sequence of arguments interpolated into ``message``.
     :returns: ``True`` if ``train_examples`` contains elements, otherwise ``False``.
     """
@@ -436,6 +436,7 @@ __all__ = [
     "OpinionCalibrationMetrics",
     "OpinionSpec",
     "build_opinion_example",
+    "make_opinion_inputs",
     "make_opinion_example",
     "float_or_none",
     "opinion_example_kwargs",

@@ -167,6 +167,12 @@ Core Utilities
 Pipeline Modules
 ----------------
 
+.. automodule:: knn.pipeline.context
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: StudySpec
+
 .. automodule:: knn.pipeline
    :members:
    :undoc-members:
@@ -179,11 +185,6 @@ Pipeline Modules
    :show-inheritance:
 
 .. automodule:: knn.pipeline.cli
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. automodule:: knn.pipeline.context
    :members:
    :undoc-members:
    :show-inheritance:

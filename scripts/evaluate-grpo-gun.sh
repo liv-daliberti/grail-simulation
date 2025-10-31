@@ -26,8 +26,8 @@ export ROOT_DIR
 
 LOG_DIR=${LOG_DIR_OVERRIDE:-${LOG_DIR:-"$ROOT_DIR/logs/grpo_eval/gun"}}
 export LOG_DIR
-RUN_LABEL=${RUN_LABEL:-grpo-gun-checkpoint-120}
-MODEL_PATH=${MODEL_PATH:-"$ROOT_DIR/models/grpo/gun/checkpoint-120"}
+RUN_LABEL=${RUN_LABEL:-grpo-gun-checkpoint-50}
+MODEL_PATH=${MODEL_PATH:-"$ROOT_DIR/models/grpo/gun/checkpoint-50"}
 DATASET=${DATASET:-"$ROOT_DIR/data/cleaned_grail"}
 SPLIT=${SPLIT:-validation}
 OUT_DIR=${OUT_DIR:-"$MODEL_PATH"}

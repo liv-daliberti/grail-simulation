@@ -44,6 +44,9 @@ from .context import (
     OpinionSweepOutcome,
     OpinionSweepRunContext,
     OpinionSweepTask,
+    OpinionDataSettings,
+    OpinionVectorizerSettings,
+    OpinionXgbSettings,
     StudySelection,
     SweepOutcome,
     SweepRunContext,
@@ -401,19 +404,25 @@ def main(argv: Sequence[str] | None = None) -> None:
     opinion_sweep_context: OpinionSweepRunContext | None = None
     if run_opinion:
         opinion_sweep_context = OpinionSweepRunContext(
-            dataset=dataset,
-            cache_dir=cache_dir,
             sweep_dir=opinion_sweep_dir,
-            extra_fields=extra_fields_tuple,
-            max_participants=args.opinion_max_participants,
-            seed=args.seed,
-            max_features=max_features_value,
-            tree_method=args.tree_method,
-            overwrite=args.overwrite,
-            tfidf_config=tfidf_config,
-            word2vec_config=word2vec_config,
-            sentence_transformer_config=sentence_transformer_config,
-            word2vec_model_base=word2vec_model_base,
+            data=OpinionDataSettings(
+                dataset=dataset,
+                cache_dir=cache_dir,
+                extra_fields=extra_fields_tuple,
+                max_participants=args.opinion_max_participants,
+                seed=args.seed,
+                max_features=max_features_value,
+            ),
+            vectorizers=OpinionVectorizerSettings(
+                tfidf_config=tfidf_config,
+                word2vec_config=word2vec_config,
+                sentence_transformer_config=sentence_transformer_config,
+                word2vec_model_base=word2vec_model_base,
+            ),
+            xgb=OpinionXgbSettings(
+                tree_method=args.tree_method,
+                overwrite=args.overwrite,
+            ),
         )
         opinion_sweep_context.sweep_dir.mkdir(parents=True, exist_ok=True)
 

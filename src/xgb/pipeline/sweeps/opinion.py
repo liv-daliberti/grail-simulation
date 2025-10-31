@@ -21,7 +21,11 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple, cast
 
-from common.opinion.sweep_types import AccuracySummary, MetricsArtifact
+from common.opinion.sweep_types import (
+    AccuracySummary,
+    MetricsArtifact,
+    BaseOpinionSweepOutcome,
+)
 from common.pipeline.executor import execute_indexed_tasks
 
 from ...core.opinion import (
@@ -119,13 +123,12 @@ def _opinion_sweep_outcome_from_metrics(
     eligible_value = _optional_int(metrics.get("eligible"))
     if eligible_value is None:
         eligible_value = _optional_int(metrics_block.get("eligible"))
-    return OpinionSweepOutcome(
+    base = BaseOpinionSweepOutcome(
         order_index=task.index,
         study=task.study,
         config=task.config,
         mae=_safe_float(metrics_block.get("mae_after")),
         rmse=_safe_float(metrics_block.get("rmse_after")),
-        r_squared=_safe_float(metrics_block.get("r2_after")),
         artifact=MetricsArtifact(path=metrics_path, payload=metrics),
         accuracy_summary=AccuracySummary(
             value=accuracy_value,
@@ -134,6 +137,7 @@ def _opinion_sweep_outcome_from_metrics(
             eligible=eligible_value,
         ),
     )
+    return OpinionSweepOutcome(base=base, r_squared=_safe_float(metrics_block.get("r2_after")))
 
 
 def _build_opinion_vectorizer_config(

@@ -1,25 +1,47 @@
 GRAIL Simulation Documentation
 ==============================
 
-This reference is generated directly from the project's source code.  The
-API section below walks through the ``clean_data`` package alongside the
-training and evaluation utilities that live under ``src/``.
+This reference is generated from the source tree and organised to mirror the
+code layout for easier navigation.
 
-API Reference
--------------
+Clean Data Pipeline
+-------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   api/clean_data
+
+Model APIs
+----------
+
+.. toctree::
+   :maxdepth: 2
+
+   api/knn
+   api/xgb
+   api/gpt4o
+   api/grail
+
+Common & Training
+-----------------
+
+Utilities shared across models, including the Open‑R1 training helpers.
 
 .. toctree::
    :maxdepth: 2
 
    api/common
-   api/clean_data
    api/prompt_builder
-   api/knn
-   api/gpt4o
    api/open_r1
    api/rlhf
-   api/grail
-   api/xgb
+
+Visualization Utilities
+-----------------------
+
+.. toctree::
+   :maxdepth: 2
+
    api/visualization
 
 Reports

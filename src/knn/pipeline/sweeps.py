@@ -15,12 +15,10 @@
 
 """Sweep orchestration helpers for the Grail Simulation KNN pipeline.
 
-Builds hyper-parameter grids, prepares CLI invocations, executes sweep
-tasks for next-video and opinion runs, and merges cached metrics so later
-stages can select the best configurations.
+Builds hyper-parameter grids, prepares CLI invocations, executes sweep tasks
+for next-video and opinion runs, and merges cached metrics so later stages can
+select the best configurations.
 """
-
-# pylint: disable=line-too-long
 from __future__ import annotations
 
 import logging
@@ -29,9 +27,11 @@ import json
 import re
 from itertools import product
 from pathlib import Path
-from typing import Dict, List, Mapping, Optional, Sequence, Tuple
+from dataclasses import dataclass
+from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from common.pipeline.executor import execute_indexed_tasks
+from common.pipeline.types import BasePipelineSweepOutcome
 from common.pipeline.utils import merge_indexed_outcomes
 from common.prompts.docs import merge_default_extra_fields
 
@@ -51,6 +51,7 @@ from .context import (
     SweepTask,
     SweepTaskContext,
 )
+from .context_sweeps import _KnnSweepStats
 from .data import issue_slug_for_study
 from .io import load_metrics
 from .utils import (
@@ -368,38 +369,43 @@ def build_sweep_configs(context: PipelineContext) -> List[SweepConfig]:
         )
     return configs
 
-def _build_sweep_task(  # pylint: disable=too-many-arguments
-    *,
-    index: int,
-    config: SweepConfig,
-    study: StudySpec,
-    context: SweepTaskContext,
-    cli_args: Tuple[Tuple[str, ...], Tuple[str, ...]],
-    train_study_keys: Tuple[str, ...],
+@dataclass(frozen=True)
+class _TaskBuildExtras:
+    """Bundle of shared inputs used when constructing sweep tasks."""
+
+    context: SweepTaskContext
+    base_cli: Tuple[str, ...]
+    extra_cli: Tuple[str, ...]
+    train_keys_func: Callable[[str], Tuple[str, ...]]
+
+
+def _build_sweep_task(
+    *, index: int, config: SweepConfig, study: StudySpec, extras: _TaskBuildExtras
 ) -> SweepTask:
     """Construct a sweep task for the next-video pipeline."""
 
-    base_cli, extra_cli = cli_args
     issue_slug = issue_slug_for_study(study)
-    run_root = context.sweep_dir / config.feature_space / study.study_slug / config.label()
+    run_root = (
+        extras.context.sweep_dir / config.feature_space / study.study_slug / config.label()
+    )
     metrics_path = run_root / issue_slug / f"knn_eval_{issue_slug}_validation_metrics.json"
     word2vec_model_dir = None
     if config.feature_space == "word2vec":
         word2vec_model_dir = (
-            context.word2vec_model_base / "sweeps" / study.study_slug / config.label()
+            extras.context.word2vec_model_base / "sweeps" / study.study_slug / config.label()
         )
     return SweepTask(
         index=index,
         study=study,
         config=config,
-        base_cli=base_cli,
-        extra_cli=extra_cli,
+        base_cli=extras.base_cli,
+        extra_cli=extras.extra_cli,
         run_root=run_root,
         word2vec_model_dir=word2vec_model_dir,
         issue=study.issue,
         issue_slug=issue_slug,
         metrics_path=metrics_path,
-        train_participant_studies=train_study_keys,
+        train_participant_studies=extras.train_keys_func(study.key),
     )
 
 
@@ -460,17 +466,19 @@ def prepare_sweep_tasks(
         _ = _study_key  # satisfy lint; the value is implicit via participant-studies
         return tuple()
 
+    extras = _TaskBuildExtras(
+        context=context,
+        base_cli=base_cli_tuple,
+        extra_cli=extra_cli_tuple,
+        train_keys_func=_train_keys_for,
+    )
+
     return prepare_task_grid(
         configs,
         studies,
         reuse_existing=reuse_existing,
         build_task=lambda task_index, config, study: _build_sweep_task(
-            index=task_index,
-            config=config,
-            study=study,
-            context=context,
-            cli_args=(base_cli_tuple, extra_cli_tuple),
-            train_study_keys=_train_keys_for(study.key),
+            index=task_index, config=config, study=study, extras=extras
         ),
         cache=TaskCacheStrategy(load_cached=_load_cached_outcome),
     )
@@ -502,19 +510,31 @@ def sweep_outcome_from_metrics(
 
     """
     summary = extract_metric_summary(metrics)
-    eligible = summary.n_eligible if summary.n_eligible is not None else int(metrics.get("n_eligible", 0))
+    eligible = (
+        summary.n_eligible
+        if summary.n_eligible is not None
+        else int(metrics.get("n_eligible", 0))
+    )
     best_k = summary.best_k if summary.best_k is not None else int(metrics.get("best_k", 0))
-    accuracy = summary.accuracy if summary.accuracy is not None else float(metrics.get("accuracy_overall", 0.0))
+    accuracy = (
+        summary.accuracy
+        if summary.accuracy is not None
+        else float(metrics.get("accuracy_overall", 0.0))
+    )
     return SweepOutcome(
-        order_index=task.index,
-        study=task.study,
-        feature_space=task.config.feature_space,
-        config=task.config,
-        accuracy=accuracy,
-        best_k=best_k,
-        eligible=eligible,
-        metrics_path=metrics_path,
-        metrics=metrics,
+        base=BasePipelineSweepOutcome(
+            order_index=task.index,
+            study=task.study,
+            config=task.config,
+            metrics_path=metrics_path,
+            metrics=metrics,
+        ),
+        knn=_KnnSweepStats(
+            feature_space=task.config.feature_space,
+            accuracy=accuracy,
+            best_k=best_k,
+            eligible=eligible,
+        ),
     )
 
 prepare_opinion_sweep_tasks = _opinion_sweeps.prepare_opinion_sweep_tasks
@@ -666,7 +686,10 @@ def execute_sweep_task(task: SweepTask) -> SweepOutcome:
         # emit a metrics file. Fall back to a zeroed-out metrics payload so the sweep can
         # proceed and downstream selection logic can operate in allow-incomplete mode.
         LOGGER.warning(
-            "[SWEEP][SKIP] feature=%s study=%s label=%s (no metrics written; likely skipped by filters)",
+            (
+                "[SWEEP][SKIP] feature=%s study=%s label=%s "
+                "(no metrics written; likely skipped by filters)"
+            ),
             task.config.feature_space,
             task.study.key,
             task.config.label(),

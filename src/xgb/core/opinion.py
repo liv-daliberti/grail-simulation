@@ -165,7 +165,6 @@ def _vectorizer_available() -> None:
         raise ImportError("Install xgboost to train the opinion regressor.")
 
 
-# pylint: disable=too-many-locals, too-many-branches, too-many-statements
 def collect_examples(
     dataset,
     *,
@@ -197,9 +196,30 @@ def collect_examples(
         spec.issue,
         len(dataset),
     )
+    collapsed, sample_doc = _collapse_latest_examples(
+        dataset, spec=spec, extra_fields=extra_fields
+    )
+    LOGGER.info("[OPINION] Retained %d unique participants.", len(collapsed))
+    if sample_doc:
+        LOGGER.info("[OPINION] Example prompt: %r", sample_doc)
+
+    if max_participants and len(collapsed) > max_participants:
+        rng = np.random.default_rng(seed)
+        order = rng.permutation(len(collapsed))[:max_participants]
+        collapsed = [collapsed[i] for i in order]
+        LOGGER.info("[OPINION] Sampled %d participants.", len(collapsed))
+    return collapsed
+
+
+def _collapse_latest_examples(
+    dataset,
+    *,
+    spec: OpinionSpec,
+    extra_fields: Sequence[str],
+) -> Tuple[List[OpinionExample], Optional[str]]:
+    """Return latest-step examples per participant and one sample document."""
     per_participant: Dict[str, Tuple[OpinionExample, int]] = {}
     sample_doc: Optional[str] = None
-
     for raw in dataset:
         if raw.get("issue") != spec.issue or raw.get("participant_study") != spec.key:
             continue
@@ -207,11 +227,6 @@ def collect_examples(
         after = float_or_none(raw.get(spec.after_column))
         if before is None or after is None:
             continue
-        # Assemble the participant document using the shared prompt builder.
-        # Honour the provided ``extra_fields`` so tests and configuration can
-        # control which text columns are included in the document. This also
-        # allows monkeypatching ``assemble_document`` in tests to return stub
-        # content (e.g., the latest step's ``doc`` field).
         document = assemble_document(raw, extra_fields)
         if not document:
             continue
@@ -228,21 +243,10 @@ def collect_examples(
             document,
             scores=(before, after),
         )
-        existing = per_participant.get(participant_id)
-        if existing is None or step_index >= existing[1]:
+        keep = per_participant.get(participant_id)
+        if keep is None or step_index >= keep[1]:
             per_participant[participant_id] = (example, step_index)
-
-    collapsed = [example for example, _ in per_participant.values()]
-    LOGGER.info("[OPINION] Retained %d unique participants.", len(collapsed))
-    if sample_doc:
-        LOGGER.info("[OPINION] Example prompt: %r", sample_doc)
-
-    if max_participants and len(collapsed) > max_participants:
-        rng = np.random.default_rng(seed)
-        order = rng.permutation(len(collapsed))[:max_participants]
-        collapsed = [collapsed[i] for i in order]
-        LOGGER.info("[OPINION] Sampled %d participants.", len(collapsed))
-    return collapsed
+    return [ex for ex, _ in per_participant.values()], sample_doc
 
 
 def _train_regressor(
@@ -472,6 +476,167 @@ def _curve_metrics_from_history(eval_history: Mapping[str, Any]) -> Optional[Dic
     return curve_metrics
 
 
+def _make_vectorizer(
+    *,
+    feature_space: str,
+    request: OpinionEvalRequest,
+    base_dir: Path,
+    spec: OpinionSpec,
+):
+    """Construct a vectorizer for the requested feature space.
+
+    Returns a pair of (resolved_feature_space, vectorizer).
+    """
+
+    fs = feature_space.lower()
+    if fs == "word2vec":
+        base_word2vec_config = request.word2vec_config or Word2VecVectorizerConfig()
+        model_dir = base_word2vec_config.model_dir
+        if not model_dir:
+            model_dir = str((base_dir / spec.key / "word2vec_model").resolve())
+        word2vec_config = replace(
+            base_word2vec_config,
+            model_dir=model_dir,
+            seed=request.train_config.seed,
+        )
+        return fs, create_vectorizer("word2vec", word2vec=word2vec_config)
+    if fs == "sentence_transformer":
+        sentence_config = (
+            request.sentence_transformer_config or SentenceTransformerVectorizerConfig()
+        )
+        return fs, create_vectorizer(
+            "sentence_transformer",
+            sentence_transformer=sentence_config,
+        )
+    # Default to TF-IDF
+    tfidf_config = request.tfidf_config or TfidfConfig(
+        max_features=request.train_config.max_features,
+    )
+    return "tfidf", create_vectorizer("tfidf", tfidf=tfidf_config)
+
+
+def _append_before_feature(
+    train_features,
+    eval_features,
+    *,
+    train_before: np.ndarray,
+    eval_before: np.ndarray,
+):
+    """Append the numeric pre-study opinion index as an additional feature column.
+
+    Handles both dense and sparse matrices defensively.
+    """
+
+    train_before_col = train_before.reshape(-1, 1)
+    eval_before_col = eval_before.reshape(-1, 1)
+    try:
+        if SP is not None and hasattr(train_features, "shape"):
+            if hasattr(SP, "issparse") and SP.issparse(train_features):  # type: ignore[attr-defined]
+                train_features = SP.hstack(  # type: ignore[attr-defined]
+                    [train_features, SP.csr_matrix(train_before_col)]
+                )
+            else:
+                train_features = np.hstack([np.asarray(train_features), train_before_col])
+            if hasattr(SP, "issparse") and SP.issparse(eval_features):  # type: ignore[attr-defined]
+                eval_features = SP.hstack(  # type: ignore[attr-defined]
+                    [eval_features, SP.csr_matrix(eval_before_col)]
+                )
+            else:
+                eval_features = np.hstack([np.asarray(eval_features), eval_before_col])
+        else:
+            train_features = np.hstack([np.asarray(train_features), train_before_col])
+            eval_features = np.hstack([np.asarray(eval_features), eval_before_col])
+    except (TypeError, ValueError, AttributeError):  # pragma: no cover - defensive
+        train_features = np.hstack([np.asarray(train_features), train_before_col])
+        eval_features = np.hstack([np.asarray(eval_features), eval_before_col])
+    return train_features, eval_features
+
+
+def _prepare_study_dir(study_dir: Path, *, overwrite: bool) -> None:
+    """Create/validate the study output directory respecting overwrite semantics."""
+    if study_dir.exists() and not overwrite:
+        raise FileExistsError(
+            f"{study_dir} already exists. Use overwrite=True to replace outputs."
+        )
+    study_dir.mkdir(parents=True, exist_ok=True)
+
+
+def _write_study_outputs(
+    *,
+    study_dir: Path,
+    spec: OpinionSpec,
+    dataset_source: str,
+    feature_space: str,
+    eval_examples: Sequence[OpinionExample],
+    train_examples: Sequence[OpinionExample],
+    predictions_after: np.ndarray,
+    metrics: Mapping[str, Any],
+    baseline: Mapping[str, Any],
+    curve_metrics: Optional[Mapping[str, Any]],
+    train_config: OpinionTrainConfig,
+) -> Dict[str, Any]:
+    """Serialise metrics and predictions for a single study and return the payload."""
+
+    payload: Dict[str, Any] = {
+        "model": "xgb_opinion",
+        "feature_space": feature_space,
+        "dataset": dataset_source,
+        "study": spec.key,
+        "issue": spec.issue,
+        "label": spec.label,
+        "split": "validation",
+        "n_participants": len(eval_examples),
+        "train_participants": len(train_examples),
+        "metrics": dict(metrics),
+        "baseline": dict(baseline),
+        "config": {
+            "max_participants": train_config.max_participants,
+            "max_features": train_config.max_features,
+            "learning_rate": train_config.booster.learning_rate,
+            "max_depth": train_config.booster.max_depth,
+            "n_estimators": train_config.booster.n_estimators,
+            "subsample": train_config.booster.subsample,
+            "colsample_bytree": train_config.booster.colsample_bytree,
+            "reg_lambda": train_config.booster.reg_lambda,
+            "reg_alpha": train_config.booster.reg_alpha,
+            "tree_method": train_config.booster.tree_method,
+            "predict_change": train_config.predict_change,
+            "include_before_feature": train_config.include_before_feature,
+        },
+    }
+    if curve_metrics:
+        payload["curve_metrics"] = dict(curve_metrics)
+    eligible = metrics.get("eligible") if isinstance(metrics, Mapping) else None
+    if eligible is not None:
+        payload["eligible"] = int(eligible)
+
+    metrics_path = study_dir / f"opinion_xgb_{spec.key}_validation_metrics.json"
+    with open(metrics_path, "w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2)
+
+    predictions_path = study_dir / f"opinion_xgb_{spec.key}_validation_predictions.jsonl"
+    with open(predictions_path, "w", encoding="utf-8") as handle:
+        for idx, example in enumerate(eval_examples):
+            pred_after = float(predictions_after[idx])
+            pred_change = float(pred_after - example.before)
+            handle.write(
+                json.dumps(
+                    {
+                        "participant_id": example.participant_id,
+                        "study": spec.key,
+                        "issue": spec.issue,
+                        "before": example.before,
+                        "after": example.after,
+                        "prediction": pred_after,
+                        "prediction_change": pred_change,
+                        "error": float(abs(pred_after - example.after)),
+                    }
+                )
+                + "\n"
+            )
+    return payload
+
+
 def _evaluate_spec(  # pylint: disable=too-many-locals,too-many-statements
     *,
     dataset,
@@ -546,31 +711,9 @@ def _evaluate_spec(  # pylint: disable=too-many-locals,too-many-statements
     train_docs = [example.document for example in train_examples]
     eval_docs = [example.document for example in eval_examples]
 
-    if feature_space == "word2vec":
-        base_word2vec_config = request.word2vec_config or Word2VecVectorizerConfig()
-        model_dir = base_word2vec_config.model_dir
-        if not model_dir:
-            model_dir = str((base_dir / spec.key / "word2vec_model").resolve())
-        word2vec_config = replace(
-            base_word2vec_config,
-            model_dir=model_dir,
-            seed=request.train_config.seed,
-        )
-        vectorizer = create_vectorizer("word2vec", word2vec=word2vec_config)
-    elif feature_space == "sentence_transformer":
-        sentence_config = (
-            request.sentence_transformer_config or SentenceTransformerVectorizerConfig()
-        )
-        vectorizer = create_vectorizer(
-            "sentence_transformer",
-            sentence_transformer=sentence_config,
-        )
-    else:
-        feature_space = "tfidf"
-        tfidf_config = request.tfidf_config or TfidfConfig(
-            max_features=request.train_config.max_features,
-        )
-        vectorizer = create_vectorizer("tfidf", tfidf=tfidf_config)
+    feature_space, vectorizer = _make_vectorizer(
+        feature_space=feature_space, request=request, base_dir=base_dir, spec=spec
+    )
 
     train_features = vectorizer.fit_transform(train_docs)
     eval_features = vectorizer.transform(eval_docs)
@@ -586,36 +729,12 @@ def _evaluate_spec(  # pylint: disable=too-many-locals,too-many-statements
     eval_before = np.array([ex.before for ex in eval_examples], dtype=float)
 
     if request.train_config.include_before_feature:
-        train_before_col = train_before.reshape(-1, 1)
-        eval_before_col = eval_before.reshape(-1, 1)
-        try:
-            if SP is not None and hasattr(train_features, "shape"):
-                if hasattr(SP, "issparse") and SP.issparse(
-                    train_features
-                ):  # type: ignore[attr-defined]
-                    train_features = SP.hstack(  # type: ignore[attr-defined]
-                        [train_features, SP.csr_matrix(train_before_col)]
-                    )
-                else:
-                    train_features = np.hstack(
-                        [np.asarray(train_features), train_before_col]
-                    )
-                if hasattr(SP, "issparse") and SP.issparse(
-                    eval_features
-                ):  # type: ignore[attr-defined]
-                    eval_features = SP.hstack(  # type: ignore[attr-defined]
-                        [eval_features, SP.csr_matrix(eval_before_col)]
-                    )
-                else:
-                    eval_features = np.hstack(
-                        [np.asarray(eval_features), eval_before_col]
-                    )
-            else:
-                train_features = np.hstack([np.asarray(train_features), train_before_col])
-                eval_features = np.hstack([np.asarray(eval_features), eval_before_col])
-        except (TypeError, ValueError, AttributeError):  # pragma: no cover - defensive
-            train_features = np.hstack([np.asarray(train_features), train_before_col])
-            eval_features = np.hstack([np.asarray(eval_features), eval_before_col])
+        train_features, eval_features = _append_before_feature(
+            train_features,
+            eval_features,
+            train_before=train_before,
+            eval_before=eval_before,
+        )
 
     if request.train_config.predict_change:
         train_targets = train_after - train_before
@@ -643,73 +762,22 @@ def _evaluate_spec(  # pylint: disable=too-many-locals,too-many-statements
     )
 
     study_dir = base_dir / spec.key
-    if study_dir.exists() and not request.overwrite:
-        raise FileExistsError(
-            f"{study_dir} already exists. Use overwrite=True to replace outputs."
-        )
-    study_dir.mkdir(parents=True, exist_ok=True)
+    _prepare_study_dir(study_dir, overwrite=request.overwrite)
 
     curve_metrics = _curve_metrics_from_history(eval_history)
-
-    payload: Dict[str, Any] = {
-        "model": "xgb_opinion",
-        "feature_space": feature_space,
-        "dataset": dataset_source,
-        "study": spec.key,
-        "issue": spec.issue,
-        "label": spec.label,
-        "split": "validation",
-        "n_participants": len(eval_examples),
-        "train_participants": len(train_examples),
-        "metrics": metrics,
-        "baseline": baseline,
-        "config": {
-            "max_participants": request.train_config.max_participants,
-            "max_features": request.train_config.max_features,
-            "learning_rate": request.train_config.booster.learning_rate,
-            "max_depth": request.train_config.booster.max_depth,
-            "n_estimators": request.train_config.booster.n_estimators,
-            "subsample": request.train_config.booster.subsample,
-            "colsample_bytree": request.train_config.booster.colsample_bytree,
-            "reg_lambda": request.train_config.booster.reg_lambda,
-            "reg_alpha": request.train_config.booster.reg_alpha,
-            "tree_method": request.train_config.booster.tree_method,
-            "predict_change": request.train_config.predict_change,
-            "include_before_feature": request.train_config.include_before_feature,
-        },
-    }
-    if curve_metrics:
-        payload["curve_metrics"] = curve_metrics
-    eligible = metrics.get("eligible")
-    if eligible is not None:
-        payload["eligible"] = int(eligible)
-
-    metrics_path = study_dir / f"opinion_xgb_{spec.key}_validation_metrics.json"
-    with open(metrics_path, "w", encoding="utf-8") as handle:
-        json.dump(payload, handle, indent=2)
-
-    predictions_path = study_dir / f"opinion_xgb_{spec.key}_validation_predictions.jsonl"
-    with open(predictions_path, "w", encoding="utf-8") as handle:
-        for idx, example in enumerate(eval_examples):
-            pred_after = float(predictions_after[idx])
-            pred_change = float(pred_after - example.before)
-            handle.write(
-                json.dumps(
-                    {
-                        "participant_id": example.participant_id,
-                        "study": spec.key,
-                        "issue": spec.issue,
-                        "before": example.before,
-                        "after": example.after,
-                        "prediction": pred_after,
-                        "prediction_change": pred_change,
-                        "error": float(abs(pred_after - example.after)),
-                    }
-                )
-                + "\n"
-            )
-
-    return payload
+    return _write_study_outputs(
+        study_dir=study_dir,
+        spec=spec,
+        dataset_source=dataset_source,
+        feature_space=feature_space,
+        eval_examples=eval_examples,
+        train_examples=train_examples,
+        predictions_after=predictions_after,
+        metrics=metrics,
+        baseline=baseline,
+        curve_metrics=curve_metrics,
+        train_config=request.train_config,
+    )
 
 
 def run_opinion_eval(

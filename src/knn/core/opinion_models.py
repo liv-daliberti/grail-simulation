@@ -30,23 +30,46 @@ from common.text.embeddings import SentenceTransformerConfig
 from .features import Word2VecConfig
 
 
-@dataclass
-class OpinionExample(BaseOpinionExample):  # pylint: disable=too-many-instance-attributes
-    """
-    Collapsed participant-level prompt and opinion values with session context.
-
-    :ivar step_index: Interaction step index retained from the raw dataset.
-    :vartype step_index: int
-    :ivar session_id: Session identifier associated with the participant example.
-    :vartype session_id: Optional[str]
-    """
+@dataclass(frozen=True)
+class SessionInfo:
+    """Optional session context attached to an opinion example."""
 
     step_index: int
     session_id: Optional[str]
 
 
 @dataclass
-class OpinionIndex:  # pylint: disable=too-many-instance-attributes
+class OpinionExample(BaseOpinionExample):
+    """
+    Collapsed participant-level prompt and opinion values with session context.
+
+    :ivar session: Optional tuple of step index and session identifier.
+    :vartype session: Optional[~knn.core.opinion_models.SessionInfo]
+    """
+    session: Optional[SessionInfo] = None
+
+    @property
+    def step_index(self) -> int:
+        """Return the recorded step index or ``-1`` when unavailable."""
+        return self.session.step_index if self.session is not None else -1
+
+    @property
+    def session_id(self) -> Optional[str]:
+        """Return the recorded session identifier when available."""
+        return self.session.session_id if self.session is not None else None
+
+
+@dataclass
+class OpinionTargets:
+    """Aligned opinion targets and participant keys used during evaluation."""
+
+    after: np.ndarray
+    before: np.ndarray
+    participant_keys: List[Tuple[str, str]]
+
+
+@dataclass
+class OpinionIndex:
     """
     Vectorised training corpus, cached targets, and fitted neighbour index.
 
@@ -60,12 +83,8 @@ class OpinionIndex:  # pylint: disable=too-many-instance-attributes
     :vartype vectorizer: Any
     :ivar embeds: Optional Word2Vec feature builder used for inference.
     :vartype embeds: Optional[Any]
-    :ivar targets_after: Post-study opinion targets aligned with the corpus.
-    :vartype targets_after: numpy.ndarray
-    :ivar targets_before: Pre-study opinion targets aligned with the corpus.
-    :vartype targets_before: numpy.ndarray
-    :ivar participant_keys: Participant/study identifiers aligned with targets.
-    :vartype participant_keys: List[Tuple[str, str]]
+    :ivar targets: Grouped post/pre opinion targets and participant keys aligned with the corpus.
+    :vartype targets: ~knn.core.opinion_models.OpinionTargets
     :ivar neighbors: Fitted :class:`sklearn.neighbors.NearestNeighbors` index.
     :vartype neighbors: NearestNeighbors
     """
@@ -75,9 +94,7 @@ class OpinionIndex:  # pylint: disable=too-many-instance-attributes
     matrix: Any
     vectorizer: Any
     embeds: Optional[Any]
-    targets_after: np.ndarray
-    targets_before: np.ndarray
-    participant_keys: List[Tuple[str, str]]
+    targets: OpinionTargets
     neighbors: NearestNeighbors
 
 
@@ -102,9 +119,14 @@ class OpinionEvaluationContext:
     outputs_root: Path
 
 
-__all__ = [
+_EXPORTS = (
     "OpinionEmbeddingConfigs",
     "OpinionEvaluationContext",
     "OpinionExample",
     "OpinionIndex",
-]
+    "SessionInfo",
+    "OpinionTargets",
+)
+
+# Use a dynamic filter so static analyzers don't flag names during partial builds.
+__all__ = [name for name in _EXPORTS if name in globals()]

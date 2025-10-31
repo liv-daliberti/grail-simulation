@@ -20,7 +20,7 @@ from __future__ import annotations
 from argparse import ArgumentParser
 from typing import Iterable
 
-from common.cli.args import add_sentence_transformer_normalise_flags  # pylint: disable=import-error
+from common.cli.args import add_sentence_transformer_normalise_flags
 
 def add_sentence_transformer_normalize_flags(
     parser: ArgumentParser,

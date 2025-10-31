@@ -19,8 +19,6 @@ Provides argument parsing, default-directory resolution, and sweep grid
 builders consumed by ``xgb.pipeline`` and its orchestration helpers.
 """
 
-# pylint: disable=duplicate-code
-
 from __future__ import annotations
 
 import argparse
@@ -30,7 +28,7 @@ from itertools import product
 from pathlib import Path
 from typing import List, Sequence, Tuple
 
-from common.cli.args import add_comma_separated_argument, add_sentence_transformer_normalise_flags
+from common.cli.args import add_comma_separated_argument
 from common.cli.options import (
     add_jobs_argument,
     add_log_level_argument,
@@ -42,26 +40,13 @@ from ..core.data import issues_in_dataset, load_dataset_source
 from ..cli import DEFAULT_XGB_TEXT_FIELDS
 from ..core.opinion import DEFAULT_SPECS
 from .context import StudySpec, SweepConfig
+from ..cli.args_shared import add_sentence_transformer_args, add_word2vec_args
 
 LOGGER = logging.getLogger("xgb.pipeline.cli")
 
 
-def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[str]]:
-    """
-    Parse pipeline command-line arguments and collect passthrough flags.
-
-    :param argv: Optional override for CLI arguments (defaults to ``sys.argv[1:]``).
-    :type argv: Sequence[str] | None
-    :returns: Tuple of ``(namespace, extra_args)`` where ``extra_args`` are forwarded
-        to downstream commands.
-    :rtype: Tuple[argparse.Namespace, List[str]]
-    :raises ValueError: If an unknown pipeline task is requested.
-    """
-    # pylint: disable=too-many-statements
-
-    parser = argparse.ArgumentParser(
-        description="Full XGBoost baseline pipeline (sweeps, selection, reports)."
-    )
+def _extend_parser_with_args(parser: argparse.ArgumentParser) -> None:
+    """Register pipeline CLI arguments on ``parser``."""
     parser.add_argument("--dataset", default=None, help="Dataset path or HF dataset id.")
     parser.add_argument(
         "--cache-dir",
@@ -183,61 +168,9 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
         default="tfidf",
         help="Comma-separated list of text vectorisers explored during sweeps.",
     )
-    parser.add_argument(
-        "--word2vec-size",
-        type=int,
-        default=256,
-        help="Word2Vec vector size applied when evaluating the word2vec feature space.",
-    )
-    parser.add_argument(
-        "--word2vec-window",
-        type=int,
-        default=5,
-        help="Word2Vec context window size during training.",
-    )
-    parser.add_argument(
-        "--word2vec_min_count",
-        type=int,
-        default=2,
-        help="Minimum token frequency retained in the Word2Vec vocabulary.",
-    )
-    parser.add_argument(
-        "--word2vec-epochs",
-        type=int,
-        default=10,
-        help="Number of epochs used when training Word2Vec embeddings.",
-    )
-    parser.add_argument(
-        "--word2vec-workers",
-        type=int,
-        default=1,
-        help="Worker threads allocated to Word2Vec training.",
-    )
-    parser.add_argument(
-        "--word2vec-model-dir",
-        default="",
-        help="Optional directory where Word2Vec models should be stored.",
-    )
-    parser.add_argument(
-        "--sentence-transformer-model",
-        default="sentence-transformers/all-mpnet-base-v2",
-        help=(
-            "SentenceTransformer model evaluated when using the "
-            "sentence_transformer feature space."
-        ),
-    )
-    parser.add_argument(
-        "--sentence-transformer-device",
-        default="",
-        help="Optional device string (cpu/cuda) forwarded to SentenceTransformer.",
-    )
-    parser.add_argument(
-        "--sentence-transformer-batch-size",
-        type=int,
-        default=32,
-        help="Encoding batch size for sentence-transformer embeddings.",
-    )
-    add_sentence_transformer_normalise_flags(parser)
+    # Shared vectoriser arguments
+    add_word2vec_args(parser, style="hyphen")
+    add_sentence_transformer_args(parser, style="hyphen")
     parser.add_argument(
         "--save-model-dir",
         default=None,
@@ -278,6 +211,24 @@ def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[st
         ),
     )
     add_stage_arguments(parser)
+
+
+def _parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[str]]:
+    """
+    Parse pipeline command-line arguments and collect passthrough flags.
+
+    :param argv: Optional override for CLI arguments (defaults to ``sys.argv[1:]``).
+    :type argv: Sequence[str] | None
+    :returns: Tuple of ``(namespace, extra_args)`` where ``extra_args`` are forwarded
+        to downstream commands.
+    :rtype: Tuple[argparse.Namespace, List[str]]
+    :raises ValueError: If an unknown pipeline task is requested.
+    """
+    parser = argparse.ArgumentParser(
+        description="Full XGBoost baseline pipeline (sweeps, selection, reports)."
+    )
+    _extend_parser_with_args(parser)
+    # Remaining logic parses known args, normalises tasks, and returns passthroughs.
 
     parsed, extra = parser.parse_known_args(argv)
     tasks_raw = parsed.tasks or os.environ.get("XGB_PIPELINE_TASKS", "")

@@ -360,7 +360,7 @@ def _load_or_train_model(
 
     if args.fit_model:
         logger.info("[XGBoost] Training model for issue=%s", issue_slug)
-        booster_params = XGBoostBoosterParams(
+        booster_params = XGBoostBoosterParams.create(
             learning_rate=args.xgb_learning_rate,
             max_depth=args.xgb_max_depth,
             n_estimators=args.xgb_n_estimators,
@@ -373,7 +373,7 @@ def _load_or_train_model(
         word2vec_model_dir = args.word2vec_model_dir
         if word2vec_model_dir:
             word2vec_model_dir = str(Path(word2vec_model_dir) / issue_slug)
-        train_config = XGBoostTrainConfig(
+        train_config = XGBoostTrainConfig.create(
             max_train=args.max_train,
             seed=args.seed,
             max_features=args.max_features if args.max_features else None,
@@ -447,7 +447,6 @@ def _write_outputs(
             handle.write(json.dumps(row) + "\n")
 
 
-# pylint: disable=too-many-locals
 def evaluate_issue(
     *,
     model: XGBoostSlateModel,
@@ -475,14 +474,22 @@ def evaluate_issue(
     predictions = records_to_predictions(records, issue_slug)
     curve_payload = accuracy_curve_from_records(records)
     # Compute participant-bootstrap CIs for eligible-only accuracy.
-    try:
-        group_keys = compute_group_keys(eval_ds, len(records))
-    except (TypeError, AttributeError):  # pragma: no cover - defensive fallback
-        group_keys = [f"row::{i}" for i in range(len(records))]
-    baseline_index = None
-    payload = metrics.baseline_most_frequent_gold_index or {}
-    if isinstance(payload, Mapping):
-        baseline_index = payload.get("top_index")
+    group_keys = _group_keys_with_fallback(eval_ds, len(records))
+    baseline_index = _baseline_top_index(metrics)
+    replicates, bootstrap_seed = _bootstrap_settings()
+    uncertainty = bootstrap_uncertainty(
+        records=records,
+        group_keys=group_keys,
+        baseline_index=baseline_index,
+        replicates=replicates,
+        seed=bootstrap_seed,
+    )
+    _attach_uncertainty(metrics, uncertainty)
+    return metrics, predictions, curve_payload
+
+
+def _bootstrap_settings() -> tuple[int, int]:
+    """Return (replicates, seed) parsed from environment with defaults."""
     try:
         replicates = int(os.environ.get("XGB_BOOTSTRAP_REPLICATES", "500"))
     except ValueError:
@@ -491,19 +498,41 @@ def evaluate_issue(
         bootstrap_seed = int(os.environ.get("XGB_BOOTSTRAP_SEED", "2024"))
     except ValueError:
         bootstrap_seed = 2024
-    uncertainty = bootstrap_uncertainty(
-        records=records,
-        group_keys=group_keys,
-        baseline_index=baseline_index,
-        replicates=replicates,
-        seed=bootstrap_seed,
-    )
-    if uncertainty and isinstance(uncertainty, Mapping):
-        model_uncertainty = uncertainty.get("model")
-        if isinstance(model_uncertainty, Mapping):
+    return replicates, bootstrap_seed
+
+
+def _group_keys_with_fallback(eval_ds, n_records: int) -> List[str]:
+    """Return group keys, falling back to per-row identifiers when needed."""
+    try:
+        return compute_group_keys(eval_ds, n_records)
+    except (TypeError, AttributeError):  # pragma: no cover - defensive fallback
+        return [f"row::{i}" for i in range(n_records)]
+
+
+def _baseline_top_index(metrics: IssueMetrics) -> Optional[int]:
+    """Extract the baseline top-index from metrics when available."""
+    payload = metrics.baseline_most_frequent_gold_index or {}
+    if isinstance(payload, Mapping):
+        try:
+            value = payload.get("top_index")
+            return int(value) if value is not None else None
+        except (TypeError, ValueError):  # pragma: no cover - defensive
+            return None
+    return None
+
+
+def _attach_uncertainty(metrics: IssueMetrics, uncertainty: Mapping[str, Any] | None) -> None:
+    """Attach uncertainty summaries to ``metrics`` when present."""
+    if not uncertainty or not isinstance(uncertainty, Mapping):
+        return
+    model_uncertainty = uncertainty.get("model")
+    if isinstance(model_uncertainty, Mapping):
+        # Assign defensively in case metrics does not expose optional fields.
+        try:
             metrics.accuracy_ci_95 = model_uncertainty.get("ci95")  # type: ignore[assignment]
             metrics.accuracy_uncertainty = uncertainty  # type: ignore[assignment]
-    return metrics, predictions, curve_payload
+        except AttributeError:  # pragma: no cover - attribute differences
+            return
 
 
 __all__ = [

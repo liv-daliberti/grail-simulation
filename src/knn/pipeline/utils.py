@@ -39,7 +39,7 @@ from typing import (
 
 from common.pipeline.formatters import safe_float, safe_int
 
-from .context import MetricSummary, OpinionSummary, StudySpec
+from .context import MetricSummary, OpinionSummary, StudySpec, OpinionSummaryInputs
 
 TaskT = TypeVar("TaskT")
 OutcomeT = TypeVar("OutcomeT")
@@ -401,7 +401,7 @@ def extract_opinion_summary(data: Mapping[str, object]) -> OpinionSummary:
         else None
     )
 
-    return OpinionSummary(
+    inputs = OpinionSummaryInputs(
         mae=mae_value,
         rmse=metric(best_metrics, "rmse_after"),
         r2_score=metric(best_metrics, "r2_after"),
@@ -435,6 +435,7 @@ def extract_opinion_summary(data: Mapping[str, object]) -> OpinionSummary:
         dataset=str(data.get("dataset")) if data.get("dataset") else None,
         split=str(data.get("split")) if data.get("split") else None,
     )
+    return OpinionSummary(inputs=inputs)
 
 
 @dataclass(frozen=True)

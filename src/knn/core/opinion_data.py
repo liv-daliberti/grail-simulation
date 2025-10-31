@@ -31,19 +31,19 @@ from common.opinion import (
 from common.prompts.docs import merge_default_extra_fields
 
 from .features import assemble_document, viewer_profile_sentence
-from .opinion_models import OpinionExample
+from .opinion_models import OpinionExample, SessionInfo
 
 LOGGER = logging.getLogger("knn.opinion")
 
 
 def find_spec(key: str) -> OpinionSpec:
     """
-    Return the :class:`OpinionSpec` matching ``key``.
+    Return the :class:`~common.opinion.OpinionSpec` matching ``key``.
 
     :param key: Dictionary key identifying the current record.
     :type key: str
     :returns: Matching opinion specification.
-    :rtype: OpinionSpec
+    :rtype: ~common.opinion.OpinionSpec
     :raises KeyError: If ``key`` does not correspond to a known spec.
     """
     normalised = key.strip().lower()
@@ -70,7 +70,7 @@ def collect_examples(
     :param dataset: Dataset split providing raw participant interactions.
     :type dataset: datasets.Dataset | Sequence[Mapping[str, Any]]
     :param spec: Opinion study specification describing the target columns.
-    :type spec: OpinionSpec
+    :type spec: ~common.opinion.OpinionSpec
     :param extra_fields: Additional prompt columns appended to each document.
     :type extra_fields: Sequence[str]
     :param max_examples: Optional cap on participants retained from the split.
@@ -78,7 +78,7 @@ def collect_examples(
     :param seed: Random seed applied when subsampling participants.
     :type seed: int
     :returns: Participant-level examples combining prompts and opinion values.
-    :rtype: List[OpinionExample]
+    :rtype: List[~knn.core.opinion_models.OpinionExample]
     """
     # The KNN opinion pipeline accepts ``extra_fields`` for parity with prompt
     # builders but deliberately avoids using them to reduce target leakage.
@@ -191,7 +191,8 @@ def _make_opinion_candidate(
     step_index: int,
 ) -> OpinionExample:
     """
-    Construct an :class:`OpinionExample` from the raw ``example`` and precomputed fields.
+    Construct an :class:`~knn.core.opinion_models.OpinionExample` from the
+    raw ``example`` and precomputed fields.
     """
     session_id = example.get("session_id")
     return make_opinion_example_from_values(
@@ -200,8 +201,10 @@ def _make_opinion_candidate(
         document,
         scores=scores,
         factory=OpinionExample,
-        step_index=step_index,
-        session_id=str(session_id) if session_id is not None else None,
+        session=SessionInfo(
+            step_index=step_index,
+            session_id=str(session_id) if session_id is not None else None,
+        ),
     )
 
 
@@ -212,7 +215,7 @@ def _resolve_requested_specs(args) -> List[OpinionSpec]:
     :param args: Parsed CLI arguments.
     :type args: Any
     :returns: Sequence of opinion specifications to evaluate.
-    :rtype: List[OpinionSpec]
+    :rtype: List[~common.opinion.OpinionSpec]
     """
     raw = getattr(args, "opinion_studies", "") or ""
     if raw:

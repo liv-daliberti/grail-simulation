@@ -103,7 +103,7 @@ def _extract_opinion_summary(data: Mapping[str, object]) -> OpinionSummary:
     summary_kwargs["mae_delta"] = mae_delta
     summary_kwargs["accuracy_delta"] = accuracy_delta
 
-    return OpinionSummary(**summary_kwargs)
+    return OpinionSummary.from_kwargs(**summary_kwargs)
 
 
 def _dataset_and_split(

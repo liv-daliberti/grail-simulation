@@ -6,7 +6,6 @@
 #SBATCH --mem=256G
 #SBATCH --time=05:00:00
 #SBATCH --output=logs/grail_wage/slurm_%j.out
-#SBATCH --account=mltheory
 
 set -euo pipefail
 

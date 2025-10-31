@@ -10,10 +10,10 @@ from common.open_r1.rewards import get_reward_funcs
 try:  # pragma: no cover - optional dependency
     from .grail_gail import OnlineDiscriminator, make_gail_reward_fn, _select_disc_device
     _GAIL_AVAILABLE = True
-except Exception as _gail_import_error:  # pragma: no cover - optional dependency
+except ImportError as _gail_import_error:  # pragma: no cover - optional dependency
     _GAIL_AVAILABLE = False
 
-    class OnlineDiscriminator:  # type: ignore[too-few-public-methods]
+    class OnlineDiscriminator:  # pylint: disable=too-few-public-methods
         """Import-time stub that instructs users to install ``transformers``.
 
         The operational discriminator lives in :mod:`grail.grail_gail` and is

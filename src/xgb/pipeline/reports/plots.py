@@ -358,22 +358,12 @@ def _plot_xgb_curve(
     if series is None:
         return None
 
-    curves_dir = directory / "curves"
-    curves_dir.mkdir(parents=True, exist_ok=True)
-    slug = _slugify_label(series.label, fallback="study")
-    plot_path = curves_dir / f"{slug}.png"
-
-    fig, axis = plt.subplots(figsize=(6, 3.5))  # type: ignore[attr-defined]
-    _plot_curve_on_axis(axis, series)
-    # Overlay eligible-only series when available
-    _plot_eligible_overlay(axis, payload)
-    fig.tight_layout()
-    fig.savefig(plot_path, dpi=120)  # type: ignore[attr-defined]
-    plt.close(fig)  # type: ignore[attr-defined]
-    try:
-        return plot_path.relative_to(directory).as_posix()
-    except ValueError:
-        return plot_path.as_posix()
+    return _render_single_curve_plot(
+        directory=directory,
+        series=series,
+        filename="{slug}.png",
+        overlay_payload=payload,
+    )
 
 
 def _plot_xgb_curve_overview(
@@ -433,7 +423,7 @@ def _plot_xgb_curve_overview(
         return overview_path.as_posix()
 
 
-def _plot_opinion_curve(  # pylint: disable=too-many-locals,too-many-return-statements
+def _plot_opinion_curve(
     *,
     directory: Path,
     study_label: str,
@@ -462,13 +452,41 @@ def _plot_opinion_curve(  # pylint: disable=too-many-locals,too-many-return-stat
     if series is None:
         return None
 
+    return _render_single_curve_plot(
+        directory=directory,
+        series=series,
+        filename="{slug}_mae.png",
+    )
+
+
+def _render_single_curve_plot(
+    *,
+    directory: Path,
+    series: _CurveSeries,
+    filename: str,
+    overlay_payload: Mapping[str, object] | None = None,
+) -> Optional[str]:
+    """Render and save a single curve plot and return a relative path.
+
+    :param directory: Report directory where plots are stored.
+    :param series: Curve data to render on the plot.
+    :param filename: Filename template with a ``{slug}`` placeholder.
+    :param overlay_payload: Optional payload for eligible-only overlays.
+    :returns: Relative path string or absolute path string when outside ``directory``.
+    """
+
+    if plt is None:  # pragma: no cover - optional dependency
+        return None
+
     curves_dir = directory / "curves"
     curves_dir.mkdir(parents=True, exist_ok=True)
     slug = _slugify_label(series.label, fallback="study")
-    plot_path = curves_dir / f"{slug}_mae.png"
+    plot_path = curves_dir / filename.format(slug=slug)
 
     fig, axis = plt.subplots(figsize=(6, 3.5))  # type: ignore[attr-defined]
     _plot_curve_on_axis(axis, series)
+    if overlay_payload is not None:
+        _plot_eligible_overlay(axis, overlay_payload)
     fig.tight_layout()
     fig.savefig(plot_path, dpi=120)  # type: ignore[attr-defined]
     plt.close(fig)  # type: ignore[attr-defined]

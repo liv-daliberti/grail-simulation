@@ -1,5 +1,7 @@
 """Torch dependency management helpers for the GRAIL pipeline."""
 
+# pylint: disable=invalid-name
+
 from __future__ import annotations
 
 import inspect
@@ -53,6 +55,6 @@ def resolve_torch_modules() -> Tuple[object, object, object]:
     return torch, nn, optim
 
 
-torch, nn, optim = resolve_torch_modules()  # pylint: disable=invalid-name
+torch, nn, optim = resolve_torch_modules()  # resolved at import time for consumers
 
 __all__ = ["torch", "nn", "optim", "resolve_torch_modules"]

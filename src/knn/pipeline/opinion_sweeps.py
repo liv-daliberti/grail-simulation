@@ -22,9 +22,9 @@ import logging
 from pathlib import Path
 from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
-from common.pipeline.executor import execute_indexed_tasks  # pylint: disable=import-error
-from common.pipeline.utils import merge_indexed_outcomes  # pylint: disable=import-error
-from common.opinion.sweep_types import AccuracySummary, MetricsArtifact  # pylint: disable=import-error
+from common.pipeline.executor import execute_indexed_tasks
+from common.pipeline.utils import merge_indexed_outcomes
+from common.opinion.sweep_types import AccuracySummary, MetricsArtifact, BaseOpinionSweepOutcome
 
 from .context import (
     OpinionStudySelection,
@@ -34,6 +34,7 @@ from .context import (
     SweepConfig,
     SweepTaskContext,
 )
+from .context_sweeps import _KnnOpinionExtras
 from .utils import (
     ensure_dir,
     ensure_opinion_selection_coverage,
@@ -136,7 +137,7 @@ def _build_opinion_task(
         word2vec_model_dir = (
             context.word2vec_model_base / "sweeps_opinion" / study.study_slug / config.label()
         )
-    task = OpinionSweepTask(  # pylint: disable=unexpected-keyword-arg
+    task = OpinionSweepTask(
         index=index,
         study=study,
         config=config,
@@ -309,38 +310,42 @@ def opinion_sweep_outcome_from_metrics(
     if eligible is None:
         eligible = participants
 
-    return OpinionSweepOutcome(  # pylint: disable=unexpected-keyword-arg
-        order_index=task.index,
-        study=task.study,
-        config=task.config,
-        feature_space=task.config.feature_space,
-        mae=float(mae),
-        rmse=float(
-            summary.rmse
-            if summary.rmse is not None
-            else _coerce_optional_float(
-                metrics.get("best_metrics", {}).get("rmse_after"),
-                default=0.0,
-            )
+    return OpinionSweepOutcome(
+        base=BaseOpinionSweepOutcome(
+            order_index=task.index,
+            study=task.study,
+            config=task.config,
+            mae=float(mae),
+            rmse=float(
+                summary.rmse
+                if summary.rmse is not None
+                else _coerce_optional_float(
+                    metrics.get("best_metrics", {}).get("rmse_after"),
+                    default=0.0,
+                )
+            ),
+            artifact=MetricsArtifact(path=metrics_path, payload=metrics),
+            accuracy_summary=AccuracySummary(
+                value=accuracy,
+                baseline=baseline_accuracy,
+                delta=accuracy_delta,
+                eligible=eligible,
+            ),
         ),
-        r2_score=float(
-            summary.r2_score
-            if summary.r2_score is not None
-            else _coerce_optional_float(
-                metrics.get("best_metrics", {}).get("r2_after"),
-                default=0.0,
-            )
-        ),
-        baseline_mae=baseline_mae,
-        mae_delta=mae_delta,
-        best_k=best_k,
-        participants=participants,
-        artifact=MetricsArtifact(path=metrics_path, payload=metrics),
-        accuracy_summary=AccuracySummary(
-            value=accuracy,
-            baseline=baseline_accuracy,
-            delta=accuracy_delta,
-            eligible=eligible,
+        knn=_KnnOpinionExtras(
+            feature_space=task.config.feature_space,
+            r2_score=float(
+                summary.r2_score
+                if summary.r2_score is not None
+                else _coerce_optional_float(
+                    metrics.get("best_metrics", {}).get("r2_after"),
+                    default=0.0,
+                )
+            ),
+            baseline_mae=baseline_mae,
+            mae_delta=mae_delta,
+            best_k=best_k,
+            participants=participants,
         ),
     )
 

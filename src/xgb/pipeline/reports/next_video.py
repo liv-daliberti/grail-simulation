@@ -277,7 +277,7 @@ def _extract_next_video_summary(data: Mapping[str, object]) -> NextVideoMetricSu
     evaluated = _safe_int(data.get("evaluated"))
     known_total = _safe_int(data.get("known_candidate_total"))
     known_hits = _safe_int(data.get("known_candidate_hits"))
-    return NextVideoMetricSummary(
+    return NextVideoMetricSummary.create(
         accuracy=_safe_float(data.get("accuracy")),
         coverage=_safe_float(data.get("coverage")),
         accuracy_eligible=_safe_float(data.get("accuracy_eligible")),

@@ -22,8 +22,8 @@ from __future__ import annotations
 
 # Attempt to import shared helpers; fall back to no-ops in lint-only contexts.
 try:
-    from common.import_utils import install_package_aliases  # type: ignore  # pylint: disable=import-error
-    from common.package_baseline import BASELINE_PUBLIC_API, build_alias_map  # type: ignore  # pylint: disable=import-error
+    from common.import_utils import install_package_aliases  # type: ignore
+    from common.package_baseline import BASELINE_PUBLIC_API, build_alias_map  # type: ignore
 except ImportError:  # pragma: no cover - fallback for environments without src on sys.path
     # Provide lightweight fallbacks so static analysis doesn't fail on imports.
     def install_package_aliases(*_args, **_kwargs):  # type: ignore

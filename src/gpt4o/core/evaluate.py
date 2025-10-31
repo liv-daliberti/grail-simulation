@@ -281,12 +281,12 @@ class ModelAnalysis:
         )
 
     def observation(self, labels: ExampleLabels, metrics: RecordMetrics) -> slate_eval.Observation:
-        """Return the observation payload required by the accumulator.
+        """
+        Return the :class:`~common.evaluation.slate_eval.Observation` for this example.
 
         :param labels: Normalised issue/study labels.
         :param metrics: Metrics describing the evaluation example.
-        :returns: Observation compatible with
-            :class:`~common.evaluation.slate_eval.EvaluationAccumulator`.
+        :returns: Observation object used by the accumulator to compute metrics.
         """
 
         return slate_eval.Observation(

@@ -21,8 +21,8 @@ import argparse
 import logging
 from pathlib import Path
 
-from common.cli.args import add_comma_separated_argument  # pylint: disable=import-error
-from common.cli.options import add_eval_arguments  # pylint: disable=import-error
+from common.cli.args import add_comma_separated_argument
+from common.cli.options import add_eval_arguments
 
 from ..core.evaluate import run_eval
 from ..core.opinion import run_opinion_eval

@@ -105,7 +105,7 @@ class SweepConfig:
 
     def booster_params(self, tree_method: str) -> XGBoostBoosterParams:
         """
-        Convert the sweep configuration into :class:`XGBoostBoosterParams`.
+        Convert the sweep configuration into :class:`~xgb.core.model.XGBoostBoosterParams`.
 
         :param tree_method: Tree construction algorithm passed to XGBoost.
         :type tree_method: str
@@ -113,7 +113,7 @@ class SweepConfig:
         :rtype: XGBoostBoosterParams
         """
 
-        return XGBoostBoosterParams(
+        return XGBoostBoosterParams.create(
             learning_rate=self.learning_rate,
             max_depth=self.max_depth,
             n_estimators=self.n_estimators,
@@ -314,19 +314,151 @@ class OpinionStageConfig:
     reuse_existing: bool
 
 
-@dataclass
-class OpinionSweepOutcome(  # pylint: disable=too-many-instance-attributes
-    BaseOpinionSweepOutcome[SweepConfig]
-):
+@dataclass(frozen=True, init=False)
+class OpinionSweepOutcome:
     """
-    Extend :class:`common.opinion.sweep_types.BaseOpinionSweepOutcome` with
-    the XGBoost-specific :attr:`r_squared` metric.
+    Compose the common sweep outcome with the XGBoost-specific R² metric.
 
-    :param r_squared: Coefficient of determination achieved by the configuration.
-    :type r_squared: float
+    Composition keeps instance attributes low while exposing a familiar
+    attribute interface via properties that forward to ``base``.
     """
 
+    base: BaseOpinionSweepOutcome[SweepConfig]
     r_squared: float
+
+    def __init__(
+        self,
+        base: BaseOpinionSweepOutcome[SweepConfig] | None = None,
+        r_squared: float | None = None,
+        **kwargs,
+    ) -> None:
+        """Allow construction from either a composed base or flat kwargs.
+
+        Flat kwargs expected: order_index, study, config, mae, rmse,
+        artifact, accuracy_summary, r_squared.
+        """
+        if base is None:
+            base = BaseOpinionSweepOutcome(
+                order_index=kwargs.pop("order_index"),
+                study=kwargs.pop("study"),
+                config=kwargs.pop("config"),
+                mae=kwargs.pop("mae"),
+                rmse=kwargs.pop("rmse"),
+                artifact=kwargs.pop("artifact"),
+                accuracy_summary=kwargs.pop("accuracy_summary"),
+            )
+            # ignore any leftover unknown kwargs for robustness
+        if r_squared is None:
+            r_squared = kwargs.pop("r_squared", None)
+        if r_squared is None:
+            raise TypeError("OpinionSweepOutcome requires r_squared")
+        object.__setattr__(self, "base", base)
+        object.__setattr__(self, "r_squared", float(r_squared))
+
+    # Compatibility properties mirroring BaseOpinionSweepOutcome
+    @property
+    def order_index(self) -> int:  # pragma: no cover - simple forwarding
+        """Deterministic ordering index assigned to the task.
+
+        :rtype: int
+        """
+        return self.base.order_index
+
+    @property
+    def study(self) -> StudySpec:  # pragma: no cover - simple forwarding
+        """Study metadata associated with the sweep.
+
+        :rtype: ~common.pipeline.types.StudySpec
+        """
+        return self.base.study
+
+    @property
+    def config(self) -> SweepConfig:  # pragma: no cover - simple forwarding
+        """Evaluated sweep configuration.
+
+        :rtype: ~xgb.pipeline.context.SweepConfig
+        """
+        return self.base.config
+
+    @property
+    def mae(self) -> float:  # pragma: no cover - simple forwarding
+        """Mean absolute error achieved by the configuration.
+
+        :rtype: float
+        """
+        return self.base.mae
+
+    @property
+    def rmse(self) -> float:  # pragma: no cover - simple forwarding
+        """Root mean squared error achieved by the configuration.
+
+        :rtype: float
+        """
+        return self.base.rmse
+
+    @property
+    def artifact(self):  # pragma: no cover - simple forwarding
+        """Metrics artefact containing the payload and storage path.
+
+        :rtype: ~common.opinion.sweep_types.MetricsArtifact
+        """
+        return self.base.artifact
+
+    @property
+    def accuracy_summary(self):  # pragma: no cover - simple forwarding
+        """Summary of directional accuracy metrics.
+
+        :rtype: ~common.opinion.sweep_types.AccuracySummary
+        """
+        return self.base.accuracy_summary
+
+    @property
+    def metrics_path(self):  # pragma: no cover - simple forwarding
+        """Filesystem path to the persisted metrics artefact.
+
+        :rtype: ~pathlib.Path
+        """
+        return self.base.metrics_path
+
+    @property
+    def metrics(self):  # pragma: no cover - simple forwarding
+        """Raw metrics payload loaded from disk.
+
+        :rtype: Mapping[str, object]
+        """
+        return self.base.metrics
+
+    @property
+    def accuracy(self):  # pragma: no cover - simple forwarding
+        """Directional accuracy achieved by the configuration.
+
+        :rtype: Optional[float]
+        """
+        return self.base.accuracy
+
+    @property
+    def baseline_accuracy(self):  # pragma: no cover - simple forwarding
+        """Directional accuracy achieved by the baseline configuration.
+
+        :rtype: Optional[float]
+        """
+        return self.base.baseline_accuracy
+
+    @property
+    def accuracy_delta(self):  # pragma: no cover - simple forwarding
+        """Improvement in accuracy over the baseline configuration.
+
+        :rtype: Optional[float]
+        """
+        return self.base.accuracy_delta
+
+    @property
+    def eligible(self):  # pragma: no cover - simple forwarding
+        """Number of evaluation examples contributing to accuracy metrics.
+
+        :rtype: Optional[int]
+        """
+        return self.base.eligible
 
 
 @dataclass(frozen=True)
@@ -335,7 +467,7 @@ class OpinionSweepTask(BaseOpinionSweepTask[SweepConfig]):
     Extend :class:`common.opinion.sweep_types.BaseOpinionSweepTask` with the
     keyword arguments required by the XGBoost implementation.
 
-    :param request_args: Keyword arguments passed to :func:`run_opinion_eval`.
+    :param request_args: Keyword arguments passed to :func:`~knn.core.opinion.run_opinion_eval`.
     :type request_args: Mapping[str, object]
     :param feature_space: Feature space evaluated by the sweep task.
     :type feature_space: str
@@ -347,98 +479,199 @@ class OpinionSweepTask(BaseOpinionSweepTask[SweepConfig]):
 OpinionStudySelection = narrow_opinion_selection(OpinionSweepOutcome)
 
 
-# pylint: disable=too-many-instance-attributes
 @dataclass(frozen=True)
-class OpinionSweepRunContext:
-    """
-    Configuration shared across opinion sweep evaluations.
-
-    :param dataset: Dataset identifier passed to opinion sweeps.
-    :type dataset: str
-    :param cache_dir: Cache directory leveraged by dataset loading.
-    :type cache_dir: str
-    :param sweep_dir: Root directory where opinion sweep artefacts are stored.
-    :type sweep_dir: Path
-    :param extra_fields: Additional prompt columns appended to documents.
-    :type extra_fields: Sequence[str]
-    :param max_participants: Optional cap on participants per study.
-    :type max_participants: int
-    :param seed: Random seed for subsampling.
-    :type seed: int
-    :param max_features: Maximum TF-IDF features (``None`` allows all).
-    :type max_features: Optional[int]
-    :param tree_method: Tree construction algorithm passed to XGBoost.
-    :type tree_method: str
-    :param overwrite: Flag controlling whether existing artefacts may be overwritten.
-    :type overwrite: bool
-    :param tfidf_config: TF-IDF vectoriser configuration applied during sweeps.
-    :type tfidf_config: TfidfConfig
-    :param word2vec_config: Word2Vec configuration applied during sweeps.
-    :type word2vec_config: Word2VecVectorizerConfig
-    :param sentence_transformer_config: Sentence-transformer configuration for sweeps.
-    :type sentence_transformer_config: SentenceTransformerVectorizerConfig
-    :param word2vec_model_base: Optional root directory for Word2Vec artefacts.
-    :type word2vec_model_base: Optional[Path]
-    """
+class OpinionDataSettings:
+    """Dataset and sampling settings for opinion sweeps."""
 
     dataset: str
     cache_dir: str
-    sweep_dir: Path
     extra_fields: Sequence[str]
     max_participants: int
     seed: int
     max_features: int | None
-    tree_method: str
-    overwrite: bool
+
+
+@dataclass(frozen=True)
+class OpinionVectorizerSettings:
+    """Vectoriser configurations used across opinion sweep tasks."""
+
     tfidf_config: TfidfConfig
     word2vec_config: Word2VecVectorizerConfig
     sentence_transformer_config: SentenceTransformerVectorizerConfig
     word2vec_model_base: Path | None
 
 
-# pylint: disable=too-many-instance-attributes
 @dataclass(frozen=True)
-class NextVideoMetricSummary:
-    """
-    Normalised view of slate metrics emitted by the XGBoost evaluations.
+class OpinionXgbSettings:
+    """XGBoost-related settings shared across sweeps."""
 
-    :param accuracy: Validation accuracy (``None`` when unavailable).
-    :type accuracy: Optional[float]
-    :param coverage: Validation coverage capturing known candidate recall.
-    :type coverage: Optional[float]
-    :param accuracy_eligible: Accuracy computed on eligible rows only.
-    :type accuracy_eligible: Optional[float]
-    :param evaluated: Number of evaluation rows.
-    :type evaluated: Optional[int]
-    :param correct: Number of correct predictions.
-    :type correct: Optional[int]
-    :param correct_eligible: Number of correct predictions among eligible rows.
-    :type correct_eligible: Optional[int]
-    :param eligible: Total number of eligible rows contributing to eligible-only metrics.
-    :type eligible: Optional[int]
-    :param known_hits: Correct predictions among known candidates.
-    :type known_hits: Optional[int]
-    :param known_total: Evaluations featuring at least one known candidate.
-    :type known_total: Optional[int]
-    :param known_availability: Fraction of evaluations containing a known candidate.
-    :type known_availability: Optional[float]
-    :param avg_probability: Mean probability recorded for known predictions.
-    :type avg_probability: Optional[float]
-    :param baseline_most_frequent_accuracy:
-        Accuracy achieved by recommending the most frequent gold index.
-    :type baseline_most_frequent_accuracy: Optional[float]
-    :param random_baseline_accuracy:
-        Expected accuracy from uniformly sampling a slate candidate.
-    :type random_baseline_accuracy: Optional[float]
-    :param dataset: Dataset identifier.
-    :type dataset: Optional[str]
-    :param issue: Issue key under evaluation.
-    :type issue: Optional[str]
-    :param issue_label: Human-readable issue label.
-    :type issue_label: Optional[str]
-    :param study_label: Human-readable study label.
-    :type study_label: Optional[str]
-    """
+    tree_method: str
+    overwrite: bool
+
+
+@dataclass(frozen=True, init=False)
+class OpinionSweepRunContext:
+    """Configuration shared across opinion sweep evaluations (grouped)."""
+
+    sweep_dir: Path
+    data: OpinionDataSettings
+    vectorizers: OpinionVectorizerSettings
+    xgb: OpinionXgbSettings
+
+    # Backwards-compat initialiser: supports both grouped settings and legacy
+    # flat keyword arguments used across the codebase and tests. This inflates
+    # the apparent number of locals, so we selectively disable the lint.
+    def __init__(  # pylint: disable=too-many-locals
+        self,
+        *,
+        sweep_dir: Path,
+        data: OpinionDataSettings | None = None,
+        vectorizers: OpinionVectorizerSettings | None = None,
+        xgb: OpinionXgbSettings | None = None,
+        # Legacy flat kwargs for backwards compatibility
+        dataset: str | None = None,
+        cache_dir: str | None = None,
+        extra_fields: Sequence[str] | None = None,
+        max_participants: int | None = None,
+        seed: int | None = None,
+        max_features: int | None = None,
+        tree_method: str | None = None,
+        overwrite: bool | None = None,
+        tfidf_config: TfidfConfig | None = None,
+        word2vec_config: Word2VecVectorizerConfig | None = None,
+        sentence_transformer_config: SentenceTransformerVectorizerConfig | None = None,
+        word2vec_model_base: Path | None = None,
+    ) -> None:
+        if data is None:
+            data = OpinionDataSettings(
+                dataset=dataset or "",
+                cache_dir=cache_dir or "",
+                extra_fields=tuple(extra_fields or ()),
+                max_participants=int(max_participants or 0),
+                seed=int(seed or 0),
+                max_features=max_features,
+            )
+        if vectorizers is None:
+            vectorizers = OpinionVectorizerSettings(
+                tfidf_config=tfidf_config or TfidfConfig(),
+                word2vec_config=word2vec_config or Word2VecVectorizerConfig(),
+                sentence_transformer_config=
+                (sentence_transformer_config or SentenceTransformerVectorizerConfig()),
+                word2vec_model_base=word2vec_model_base,
+            )
+        if xgb is None:
+            xgb = OpinionXgbSettings(
+                tree_method=tree_method or "hist",
+                overwrite=bool(overwrite) if overwrite is not None else False,
+            )
+        object.__setattr__(self, "sweep_dir", sweep_dir)
+        object.__setattr__(self, "data", data)
+        object.__setattr__(self, "vectorizers", vectorizers)
+        object.__setattr__(self, "xgb", xgb)
+
+    # Backwards-compatible attribute accessors
+    @property
+    def dataset(self) -> str:  # pragma: no cover - simple forwarding
+        """Dataset identifier passed to opinion sweeps.
+
+        :rtype: str
+        """
+        return self.data.dataset
+
+    @property
+    def cache_dir(self) -> str:  # pragma: no cover - simple forwarding
+        """Dataset cache directory used during loading.
+
+        :rtype: str
+        """
+        return self.data.cache_dir
+
+    @property
+    def extra_fields(self) -> Sequence[str]:  # pragma: no cover - simple forwarding
+        """Extra text columns appended to prompt documents.
+
+        :rtype: Sequence[str]
+        """
+        return self.data.extra_fields
+
+    @property
+    def max_participants(self) -> int:  # pragma: no cover - simple forwarding
+        """Cap on participants per study (sampling control).
+
+        :rtype: int
+        """
+        return self.data.max_participants
+
+    @property
+    def seed(self) -> int:  # pragma: no cover - simple forwarding
+        """Random seed used for deterministic sampling.
+
+        :rtype: int
+        """
+        return self.data.seed
+
+    @property
+    def max_features(self) -> int | None:  # pragma: no cover - simple forwarding
+        """Maximum number of TF-IDF features, if constrained.
+
+        :rtype: Optional[int]
+        """
+        return self.data.max_features
+
+    @property
+    def tfidf_config(self) -> TfidfConfig:  # pragma: no cover - simple forwarding
+        """TF-IDF vectoriser configuration.
+
+        :rtype: ~xgb.core.vectorizers.TfidfConfig
+        """
+        return self.vectorizers.tfidf_config
+
+    @property
+    def word2vec_config(self) -> Word2VecVectorizerConfig:  # pragma: no cover
+        """Word2Vec vectoriser configuration.
+
+        :rtype: ~xgb.core.vectorizers.Word2VecVectorizerConfig
+        """
+        return self.vectorizers.word2vec_config
+
+    @property
+    def sentence_transformer_config(
+        self,
+    ) -> SentenceTransformerVectorizerConfig:  # pragma: no cover
+        """Sentence-transformer configuration for embedding extraction.
+
+        :rtype: ~xgb.core.vectorizers.SentenceTransformerVectorizerConfig
+        """
+        return self.vectorizers.sentence_transformer_config
+
+    @property
+    def word2vec_model_base(self) -> Path | None:  # pragma: no cover
+        """Optional base directory for persisted Word2Vec models.
+
+        :rtype: Optional[~pathlib.Path]
+        """
+        return self.vectorizers.word2vec_model_base
+
+    @property
+    def tree_method(self) -> str:  # pragma: no cover - simple forwarding
+        """XGBoost tree construction algorithm.
+
+        :rtype: str
+        """
+        return self.xgb.tree_method
+
+    @property
+    def overwrite(self) -> bool:  # pragma: no cover - simple forwarding
+        """Whether to overwrite existing artefacts during sweeps.
+
+        :rtype: bool
+        """
+        return self.xgb.overwrite
+
+
+@dataclass(frozen=True)
+class _NextVideoCore:
+    """Core next-video metrics and baselines."""
 
     accuracy: Optional[float] = None
     coverage: Optional[float] = None
@@ -453,72 +686,336 @@ class NextVideoMetricSummary:
     avg_probability: Optional[float] = None
     baseline_most_frequent_accuracy: Optional[float] = None
     random_baseline_accuracy: Optional[float] = None
+
+
+@dataclass(frozen=True)
+class _NextVideoMeta:
+    """Metadata describing the evaluation context for next-video metrics."""
+
     dataset: Optional[str] = None
     issue: Optional[str] = None
     issue_label: Optional[str] = None
     study_label: Optional[str] = None
 
 
-# pylint: disable=too-many-instance-attributes
 @dataclass(frozen=True)
-class OpinionSummary(OpinionCalibrationMetrics):
-    """
-    Normalised view of opinion-regression metrics.
+class NextVideoMetricSummary:
+    """Grouped next-video metrics with compatibility accessors."""
 
-    :param mae_after: Mean absolute error achieved by the regressor.
-    :type mae_after: Optional[float]
-    :param mae_change: Mean absolute error on the opinion-change signal.
-    :type mae_change: Optional[float]
-    :param rmse_after: Root mean squared error achieved by the regressor.
-    :type rmse_after: Optional[float]
-    :param r2_after: Coefficient of determination achieved by the regressor.
-    :type r2_after: Optional[float]
-    :param baseline_mae: Baseline MAE using the no-change predictor.
-    :type baseline_mae: Optional[float]
-    :param rmse_change: RMSE on the predicted opinion-change signal.
-    :type rmse_change: Optional[float]
-    :param baseline_rmse_change: Baseline RMSE on the opinion-change signal.
-    :type baseline_rmse_change: Optional[float]
-    :param mae_delta: Absolute MAE improvement over the baseline.
-    :type mae_delta: Optional[float]
-    :param accuracy_after: Directional accuracy achieved by the regressor.
-    :type accuracy_after: Optional[float]
-    :param calibration_slope: Calibration slope between predicted and actual opinion deltas.
-    :type calibration_slope: Optional[float]
-    :param calibration_intercept: Calibration intercept for predicted deltas.
-    :type calibration_intercept: Optional[float]
-    :param calibration_ece: Expected calibration error for the model.
-    :type calibration_ece: Optional[float]
-    :param kl_divergence_change: KL divergence between predicted and actual change distributions.
-    :type kl_divergence_change: Optional[float]
-    :param participants: Number of participants in the evaluation split.
-    :type participants: Optional[int]
-    :param eligible: Number of evaluation examples contributing to accuracy metrics.
-    :type eligible: Optional[int]
-    :param dataset: Dataset identifier.
-    :type dataset: Optional[str]
-    :param split: Evaluation split name.
-    :vartype split: Optional[str]
-    :ivar label: Human-readable study label.
-    :vartype label: Optional[str]
-    :note: Baseline calibration and accuracy deltas are detailed in
-        :class:`common.opinion.OpinionCalibrationMetrics`.
-    """
+    core: _NextVideoCore
+    meta: _NextVideoMeta
 
+    # Compatibility properties
+    @property
+    def accuracy(self) -> Optional[float]:  # pragma: no cover - forwarding
+        return self.core.accuracy
+
+    @property
+    def coverage(self) -> Optional[float]:  # pragma: no cover
+        return self.core.coverage
+
+    @property
+    def accuracy_eligible(self) -> Optional[float]:  # pragma: no cover
+        return self.core.accuracy_eligible
+
+    @property
+    def evaluated(self) -> Optional[int]:  # pragma: no cover
+        return self.core.evaluated
+
+    @property
+    def correct(self) -> Optional[int]:  # pragma: no cover
+        return self.core.correct
+
+    @property
+    def correct_eligible(self) -> Optional[int]:  # pragma: no cover
+        return self.core.correct_eligible
+
+    @property
+    def eligible(self) -> Optional[int]:  # pragma: no cover
+        return self.core.eligible
+
+    @property
+    def known_hits(self) -> Optional[int]:  # pragma: no cover
+        return self.core.known_hits
+
+    @property
+    def known_total(self) -> Optional[int]:  # pragma: no cover
+        return self.core.known_total
+
+    @property
+    def known_availability(self) -> Optional[float]:  # pragma: no cover
+        return self.core.known_availability
+
+    @property
+    def avg_probability(self) -> Optional[float]:  # pragma: no cover
+        return self.core.avg_probability
+
+    @property
+    def baseline_most_frequent_accuracy(self) -> Optional[float]:  # pragma: no cover
+        return self.core.baseline_most_frequent_accuracy
+
+    @property
+    def random_baseline_accuracy(self) -> Optional[float]:  # pragma: no cover
+        return self.core.random_baseline_accuracy
+
+    @property
+    def dataset(self) -> Optional[str]:  # pragma: no cover
+        return self.meta.dataset
+
+    @property
+    def issue(self) -> Optional[str]:  # pragma: no cover
+        return self.meta.issue
+
+    @property
+    def issue_label(self) -> Optional[str]:  # pragma: no cover
+        return self.meta.issue_label
+
+    @property
+    def study_label(self) -> Optional[str]:  # pragma: no cover
+        return self.meta.study_label
+
+    @classmethod
+    def create(
+        cls,
+        *,
+        accuracy: Optional[float] = None,
+        coverage: Optional[float] = None,
+        accuracy_eligible: Optional[float] = None,
+        evaluated: Optional[int] = None,
+        correct: Optional[int] = None,
+        correct_eligible: Optional[int] = None,
+        eligible: Optional[int] = None,
+        known_hits: Optional[int] = None,
+        known_total: Optional[int] = None,
+        known_availability: Optional[float] = None,
+        avg_probability: Optional[float] = None,
+        baseline_most_frequent_accuracy: Optional[float] = None,
+        random_baseline_accuracy: Optional[float] = None,
+        dataset: Optional[str] = None,
+        issue: Optional[str] = None,
+        issue_label: Optional[str] = None,
+        study_label: Optional[str] = None,
+    ) -> "NextVideoMetricSummary":
+        core = _NextVideoCore(
+            accuracy=accuracy,
+            coverage=coverage,
+            accuracy_eligible=accuracy_eligible,
+            evaluated=evaluated,
+            correct=correct,
+            correct_eligible=correct_eligible,
+            eligible=eligible,
+            known_hits=known_hits,
+            known_total=known_total,
+            known_availability=known_availability,
+            avg_probability=avg_probability,
+            baseline_most_frequent_accuracy=baseline_most_frequent_accuracy,
+            random_baseline_accuracy=random_baseline_accuracy,
+        )
+        meta = _NextVideoMeta(
+            dataset=dataset,
+            issue=issue,
+            issue_label=issue_label,
+            study_label=study_label,
+        )
+        return cls(core=core, meta=meta)
+
+
+@dataclass(frozen=True)
+class _OpinionAfter:
     mae_after: Optional[float] = None
     mae_change: Optional[float] = None
     rmse_after: Optional[float] = None
     r2_after: Optional[float] = None
-    baseline_mae: Optional[float] = None
     rmse_change: Optional[float] = None
-    baseline_rmse_change: Optional[float] = None
-    mae_delta: Optional[float] = None
     accuracy_after: Optional[float] = None
+
+
+@dataclass(frozen=True)
+class _OpinionBaseline:
+    baseline_mae: Optional[float] = None
+    baseline_rmse_change: Optional[float] = None
+    baseline_accuracy: Optional[float] = None
+    baseline_calibration_slope: Optional[float] = None
+    baseline_calibration_intercept: Optional[float] = None
+    baseline_calibration_ece: Optional[float] = None
+    baseline_kl_divergence_change: Optional[float] = None
+
+
+@dataclass(frozen=True)
+class _OpinionMeta:
+    participants: Optional[int] = None
+    eligible: Optional[int] = None
+    dataset: Optional[str] = None
+    split: Optional[str] = None
+    label: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class _OpinionCalibration:
     calibration_slope: Optional[float] = None
     calibration_intercept: Optional[float] = None
     calibration_ece: Optional[float] = None
     kl_divergence_change: Optional[float] = None
-    label: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class _OpinionDeltas:
+    mae_delta: Optional[float] = None
+    accuracy_delta: Optional[float] = None
+
+
+@dataclass(frozen=True)
+class OpinionSummary:
+    """Grouped opinion-regression metrics with compatibility accessors."""
+
+    after: _OpinionAfter
+    baseline: _OpinionBaseline
+    calibration: _OpinionCalibration
+    deltas: _OpinionDeltas
+    meta: _OpinionMeta
+
+    # Properties exposing the flat attribute interface used by report code
+    @property
+    def mae_after(self) -> Optional[float]:  # pragma: no cover - forwarding
+        return self.after.mae_after
+
+    @property
+    def mae_change(self) -> Optional[float]:  # pragma: no cover
+        return self.after.mae_change
+
+    @property
+    def rmse_after(self) -> Optional[float]:  # pragma: no cover
+        return self.after.rmse_after
+
+    @property
+    def r2_after(self) -> Optional[float]:  # pragma: no cover
+        return self.after.r2_after
+
+    @property
+    def rmse_change(self) -> Optional[float]:  # pragma: no cover
+        return self.after.rmse_change
+
+    @property
+    def accuracy_after(self) -> Optional[float]:  # pragma: no cover
+        return self.after.accuracy_after
+
+    @property
+    def baseline_mae(self) -> Optional[float]:  # pragma: no cover
+        return self.baseline.baseline_mae
+
+    @property
+    def baseline_rmse_change(self) -> Optional[float]:  # pragma: no cover
+        return self.baseline.baseline_rmse_change
+
+    @property
+    def baseline_accuracy(self) -> Optional[float]:  # pragma: no cover
+        return self.baseline.baseline_accuracy
+
+    @property
+    def calibration_slope(self) -> Optional[float]:  # pragma: no cover
+        return self.calibration.calibration_slope
+
+    @property
+    def baseline_calibration_slope(self) -> Optional[float]:  # pragma: no cover
+        return self.baseline.baseline_calibration_slope
+
+    @property
+    def calibration_intercept(self) -> Optional[float]:  # pragma: no cover
+        return self.calibration.calibration_intercept
+
+    @property
+    def baseline_calibration_intercept(self) -> Optional[float]:  # pragma: no cover
+        return self.baseline.baseline_calibration_intercept
+
+    @property
+    def calibration_ece(self) -> Optional[float]:  # pragma: no cover
+        return self.calibration.calibration_ece
+
+    @property
+    def baseline_calibration_ece(self) -> Optional[float]:  # pragma: no cover
+        return self.baseline.baseline_calibration_ece
+
+    @property
+    def kl_divergence_change(self) -> Optional[float]:  # pragma: no cover
+        return self.calibration.kl_divergence_change
+
+    @property
+    def baseline_kl_divergence_change(self) -> Optional[float]:  # pragma: no cover
+        return self.baseline.baseline_kl_divergence_change
+
+    @property
+    def participants(self) -> Optional[int]:  # pragma: no cover
+        return self.meta.participants
+
+    @property
+    def eligible(self) -> Optional[int]:  # pragma: no cover
+        return self.meta.eligible
+
+    @property
+    def dataset(self) -> Optional[str]:  # pragma: no cover
+        return self.meta.dataset
+
+    @property
+    def split(self) -> Optional[str]:  # pragma: no cover
+        return self.meta.split
+
+    @property
+    def label(self) -> Optional[str]:  # pragma: no cover
+        return self.meta.label
+
+    @property
+    def mae_delta(self) -> Optional[float]:  # pragma: no cover
+        return self.deltas.mae_delta
+
+    @property
+    def accuracy_delta(self) -> Optional[float]:  # pragma: no cover
+        return self.deltas.accuracy_delta
+
+    @classmethod
+    def from_kwargs(cls, **kwargs) -> "OpinionSummary":
+        """Construct a grouped summary from flat keyword arguments."""
+
+        after = _OpinionAfter(
+            mae_after=kwargs.get("mae_after"),
+            mae_change=kwargs.get("mae_change"),
+            rmse_after=kwargs.get("rmse_after"),
+            r2_after=kwargs.get("r2_after"),
+            rmse_change=kwargs.get("rmse_change"),
+            accuracy_after=kwargs.get("accuracy_after"),
+        )
+        baseline = _OpinionBaseline(
+            baseline_mae=kwargs.get("baseline_mae"),
+            baseline_rmse_change=kwargs.get("baseline_rmse_change"),
+            baseline_accuracy=kwargs.get("baseline_accuracy"),
+            baseline_calibration_slope=kwargs.get("baseline_calibration_slope"),
+            baseline_calibration_intercept=kwargs.get("baseline_calibration_intercept"),
+            baseline_calibration_ece=kwargs.get("baseline_calibration_ece"),
+            baseline_kl_divergence_change=kwargs.get("baseline_kl_divergence_change"),
+        )
+        calibration = _OpinionCalibration(
+            calibration_slope=kwargs.get("calibration_slope"),
+            calibration_intercept=kwargs.get("calibration_intercept"),
+            calibration_ece=kwargs.get("calibration_ece"),
+            kl_divergence_change=kwargs.get("kl_divergence_change"),
+        )
+        deltas = _OpinionDeltas(
+            mae_delta=kwargs.get("mae_delta"),
+            accuracy_delta=kwargs.get("accuracy_delta"),
+        )
+        meta = _OpinionMeta(
+            participants=kwargs.get("participants"),
+            eligible=kwargs.get("eligible"),
+            dataset=kwargs.get("dataset"),
+            split=kwargs.get("split"),
+            label=kwargs.get("label"),
+        )
+        return cls(
+            after=after,
+            baseline=baseline,
+            calibration=calibration,
+            deltas=deltas,
+            meta=meta,
+        )
 
 
 __all__ = [
@@ -532,6 +1029,9 @@ __all__ = [
     "OpinionSweepRunContext",
     "StudySelection",
     "StudySpec",
+    "OpinionDataSettings",
+    "OpinionVectorizerSettings",
+    "OpinionXgbSettings",
     "SweepConfig",
     "SweepOutcome",
     "SweepRunContext",

@@ -72,6 +72,37 @@ Prompt Document Utilities
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: common.prompts.selection
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Opinion Utilities
+-----------------
+
+.. automodule:: common.opinion
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: common.opinion.models
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: common.opinion.sweep_types
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Pipeline Types
+--------------
+
+.. automodule:: common.pipeline.types
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Reporting Utilities
 -------------------
 

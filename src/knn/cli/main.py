@@ -22,7 +22,7 @@ import logging
 from pathlib import Path
 
 from common.cli.args import add_comma_separated_argument
-from common.cli.options import add_overwrite_argument
+from common.cli.options import add_overwrite_argument, add_eval_arguments
 
 from ..core.evaluate import run_eval
 from ..core.features import Word2VecConfig
@@ -138,13 +138,17 @@ def build_parser() -> argparse.ArgumentParser:
         dest="knn_seed",
         help="Random seed applied when subsampling the train split.",
     )
-    parser.add_argument(
-        "--eval-max",
-        "--eval_max",
-        type=int,
-        default=0,
-        dest="eval_max",
-        help="Limit evaluation examples (0 means evaluate every row).",
+    # Shared eval args (dataset, issues, eval_max, out_dir, cache_dir, overwrite)
+    add_eval_arguments(
+        parser,
+        default_out_dir=str(Path("models") / "knn"),
+        default_cache_dir=str(Path.cwd() / "hf_cache"),
+        include_llm_args=False,
+        include_opinion_args=False,
+        include_studies_filter=False,
+        dataset_default="data/cleaned_grail",
+        issues_default="",
+        include_legacy_aliases=True,
     )
     parser.add_argument(
         "--word2vec-size",
@@ -230,21 +234,7 @@ def build_parser() -> argparse.ArgumentParser:
         dest="train_curve_max",
         help="Limit the number of training examples evaluated for curve metrics (0 means use all).",
     )
-    parser.add_argument(
-        "--out-dir",
-        "--out_dir",
-        default=str(Path("models") / "knn"),
-        dest="out_dir",
-        help="Directory for predictions, metrics, and saved indices.",
-    )
-    add_overwrite_argument(parser)
-    parser.add_argument(
-        "--cache-dir",
-        "--cache_dir",
-        default=str(Path.cwd() / "hf_cache"),
-        dest="cache_dir",
-        help="HF datasets cache directory.",
-    )
+    # out_dir/cache_dir/overwrite added via add_eval_arguments
     parser.add_argument(
         "--knn-text-fields",
         "--knn_text_fields",
@@ -271,18 +261,7 @@ def build_parser() -> argparse.ArgumentParser:
         dest="bootstrap_seed",
         help="Random seed for bootstrap resampling.",
     )
-    parser.add_argument(
-        "--dataset",
-        default="data/cleaned_grail",
-        help="Local dataset path (load_from_disk) or Hugging Face dataset id.",
-    )
-    parser.add_argument(
-        "--issues",
-        "--issue",
-        default="",
-        dest="issues",
-        help="Comma-separated list of issues to evaluate (defaults to all).",
-    )
+    # 'dataset' and 'issues' added via add_eval_arguments
     parser.add_argument(
         "--train-issues",
         "--train_issues",

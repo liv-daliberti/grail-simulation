@@ -38,10 +38,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     parser = argparse.ArgumentParser(description="Evaluate GPT-4o on the GRAIL slate dataset.")
     add_opts = import_module("common.cli.options")
-    add_opts.add_gpt4o_eval_arguments(
+    add_opts.add_eval_arguments(
         parser,
         default_out_dir=str(DEFAULT_OUT_DIR),
         default_cache_dir=str(DEFAULT_CACHE_DIR),
+        include_llm_args=True,
+        include_opinion_args=True,
+        include_studies_filter=True,
     )
     return parser
 

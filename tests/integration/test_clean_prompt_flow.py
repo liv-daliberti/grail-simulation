@@ -159,10 +159,10 @@ def test_clean_example_includes_required_open_r1_columns(clean_example: dict) ->
     pytest.importorskip("torch", reason="open_r1 modules require torch")
     pytest.importorskip("transformers", reason="open_r1 modules require transformers")
     try:
-        from open_r1.grail import PASSTHROUGH_FIELDS as GRAIL_PASSTHROUGH_FIELDS  # type: ignore
-        from open_r1.grail import TRAIN_KEEP_COLUMNS  # type: ignore
-        from open_r1.grpo import KEEP_COLUMNS as GRPO_KEEP_COLUMNS  # type: ignore
-        from open_r1.grpo import PASSTHROUGH_KEYS as GRPO_PASSTHROUGH_KEYS  # type: ignore
+        from grail.grail import PASSTHROUGH_FIELDS as GRAIL_PASSTHROUGH_FIELDS  # type: ignore
+        from grail.grail import TRAIN_KEEP_COLUMNS  # type: ignore
+        from grpo.grpo import KEEP_COLUMNS as GRPO_KEEP_COLUMNS  # type: ignore
+        from grpo.grpo import PASSTHROUGH_KEYS as GRPO_PASSTHROUGH_KEYS  # type: ignore
     except ImportError as exc:
         pytest.skip(f"open_r1 dependencies unavailable: {exc}")
 

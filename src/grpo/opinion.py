@@ -33,7 +33,7 @@ from common.opinion import (
     format_opinion_user_prompt,
 )
 from common.pipeline.io import write_metrics_json, write_segmented_markdown_log
-from open_r1.example_utils import row_to_training_example
+from common.open_r1.example_utils import row_to_training_example
 
 from .dataset import load_dataset_split
 from .model import generate_chat_completion

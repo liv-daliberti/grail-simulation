@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Unit tests for :mod:`open_r1.example_utils` opinion helpers."""
+"""Unit tests for :mod:`common.open_r1.example_utils` opinion helpers."""
 
 from __future__ import annotations
 
@@ -7,8 +7,8 @@ import json
 
 import pytest
 
-from open_r1.constants import DEFAULT_SYSTEM_PROMPT
-from open_r1.example_utils import (  # pylint: disable=protected-access
+from common.open_r1.constants import DEFAULT_SYSTEM_PROMPT
+from common.open_r1.example_utils import (  # pylint: disable=protected-access
     _opinion_direction_label,
     row_to_training_example,
 )

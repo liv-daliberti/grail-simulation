@@ -18,7 +18,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable, Sequence
+from typing import Any, Iterable, Sequence
 
 import numpy as np
 
@@ -27,7 +27,11 @@ try:  # pragma: no cover - optional dependency
 except ImportError:  # pragma: no cover - optional dependency
     SentenceTransformer = None  # type: ignore[assignment]
 
-__all__ = ["SentenceTransformerConfig", "SentenceTransformerEncoder"]
+__all__ = [
+    "SentenceTransformerConfig",
+    "SentenceTransformerEncoder",
+    "sentence_transformer_config_from_args",
+]
 
 
 @dataclass(frozen=True)
@@ -37,6 +41,24 @@ class SentenceTransformerConfig:
     device: str | None = None
     batch_size: int = 32
     normalize: bool = True
+
+
+def sentence_transformer_config_from_args(args: Any) -> SentenceTransformerConfig:
+    """
+    Build a :class:`SentenceTransformerConfig` from CLI-style arguments.
+
+    :param args: Object exposing attributes for the relevant CLI options.
+    :returns: Populated SentenceTransformer configuration.
+    """
+
+    defaults = SentenceTransformerConfig()
+    device = getattr(args, "sentence_transformer_device", "") or None
+    return SentenceTransformerConfig(
+        model_name=getattr(args, "sentence_transformer_model", defaults.model_name),
+        device=device,
+        batch_size=int(getattr(args, "sentence_transformer_batch_size", defaults.batch_size)),
+        normalize=bool(getattr(args, "sentence_transformer_normalize", defaults.normalize)),
+    )
 
 
 class SentenceTransformerEncoder:

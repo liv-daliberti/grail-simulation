@@ -29,7 +29,10 @@ from common.opinion import (
     ensure_train_examples,
     log_participant_counts,
 )
-from common.text.embeddings import SentenceTransformerConfig
+from common.text.embeddings import (
+    SentenceTransformerConfig,
+    sentence_transformer_config_from_args,
+)
 
 from .data import (
     DEFAULT_DATASET_SOURCE,
@@ -114,17 +117,7 @@ def _resolve_sentence_config(
     """
     if feature_space != "sentence_transformer":
         return None
-    device = getattr(args, "sentence_transformer_device", "") or None
-    return SentenceTransformerConfig(
-        model_name=getattr(
-            args,
-            "sentence_transformer_model",
-            SentenceTransformerConfig().model_name,
-        ),
-        device=device,
-        batch_size=int(getattr(args, "sentence_transformer_batch_size", 32)),
-        normalize=bool(getattr(args, "sentence_transformer_normalize", True)),
-    )
+    return sentence_transformer_config_from_args(args)
 
 
 def _training_curve_metrics(

@@ -26,7 +26,7 @@ from common.pipeline.formatters import (
 )
 
 from .accumulators import _OpinionPortfolioAccumulator
-from .metrics import _append_difference, _append_if_not_none, _difference
+from .metrics import _append_difference, _append_if_not_none
 from .summaries import _extract_opinion_summary
 from ...context import OpinionSummary
 

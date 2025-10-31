@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Mapping, Sequence
 
 from common.opinion import DEFAULT_SPECS
+from common.rlhf.reports import ReportOptions
 
 from . import DEFAULT_DATASET_PATH, DEFAULT_EVAL_SPLIT
 from .config import DEFAULT_SYSTEM_PROMPT, OPINION_SYSTEM_PROMPT, repo_root as _repo_root
@@ -53,6 +54,11 @@ from .opinion import (
 from .reports import generate_reports
 
 LOGGER = logging.getLogger("grpo.pipeline")
+
+DEFAULT_REGENERATE_HINT = (
+    "Regenerate via `python -m grpo.pipeline --stage full` after producing "
+    "updated evaluation artifacts under `models/grpo/`."
+)
 
 
 @dataclass(frozen=True)
@@ -183,6 +189,24 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
         "--out-dir",
         default=None,
         help="Directory receiving evaluation artifacts (defaults to <repo>/models/grpo).",
+    )
+    parser.add_argument(
+        "--reports-subdir",
+        default="grpo",
+        help="Subdirectory under reports/ to store Markdown summaries.",
+    )
+    parser.add_argument(
+        "--baseline-label",
+        default="GRPO",
+        help="Display name for the baseline used in report headings.",
+    )
+    parser.add_argument(
+        "--regenerate-hint",
+        default=DEFAULT_REGENERATE_HINT,
+        help=(
+            "Sentence appended to the catalog README describing how to refresh artefacts. "
+            "Pass an empty string to omit."
+        ),
     )
     parser.add_argument(
         "--system-prompt-file",
@@ -592,12 +616,14 @@ def _generate_reports_if_needed(
     selection: StageSelection,
     context: PipelineContext,
     results: PipelineResults,
+    args: argparse.Namespace,
 ) -> None:
     """Load cached results when necessary and generate reports.
 
     :param selection: Flags indicating which report types to render.
     :param context: Filesystem context describing where artifacts live.
     :param results: Evaluation results produced during the current invocation.
+    :param args: CLI argument namespace providing reporting configuration.
     :returns: ``None``. Reports are materialized on disk.
     """
     next_result = results.next_video
@@ -612,8 +638,16 @@ def _generate_reports_if_needed(
         repo_root=context.repo_root,
         next_video=next_result if selection.run_next_video else None,
         opinion=opinion_result if selection.run_opinion else None,
+        options=ReportOptions(
+            args.reports_subdir,  # reports_subdir
+            args.baseline_label,  # baseline_label
+            args.regenerate_hint or None,
+        ),
     )
-    LOGGER.info("Reports written under %s.", context.repo_root / "reports" / "grpo")
+    LOGGER.info(
+        "Reports written under %s.",
+        context.repo_root / "reports" / args.reports_subdir,
+    )
 
 
 def main(argv: Sequence[str] | None = None) -> None:
@@ -637,7 +671,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         results = _run_evaluations(args, selection, context, prompts)
 
     if selection.run_reports:
-        _generate_reports_if_needed(selection, context, results)
+        _generate_reports_if_needed(selection, context, results, args)
 
 
 if __name__ == "__main__":  # pragma: no cover

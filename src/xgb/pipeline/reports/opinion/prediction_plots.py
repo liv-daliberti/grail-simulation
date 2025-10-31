@@ -20,7 +20,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Mapping, Optional
+from typing import List, Mapping
 
 from common.reports.utils import append_image_section
 
@@ -65,6 +65,7 @@ class _OpinionPredictionVectors:
         :param after: Observed post-study opinion index.
         :param predicted_after: Model-predicted post-study opinion index.
         :param predicted_change: Model-predicted opinion delta.
+        :returns: ``None``. Appends the sample to all relevant sequences.
         """
 
         self.actual_after.append(after)
@@ -74,22 +75,34 @@ class _OpinionPredictionVectors:
         self.predicted_changes.append(predicted_change)
 
     def has_post_indices(self) -> bool:
-        """Return ``True`` when post-study predictions are available."""
+        """Return ``True`` when post-study predictions are available.
+
+        :returns: ``True`` when both actual and predicted post indices exist.
+        """
 
         return bool(self.actual_after and self.predicted_after)
 
     def has_change_series(self) -> bool:
-        """Return ``True`` when change deltas are available."""
+        """Return ``True`` when change deltas are available.
+
+        :returns: ``True`` when both actual and predicted change sequences exist.
+        """
 
         return bool(self.actual_changes and self.predicted_changes)
 
     def has_errors(self) -> bool:
-        """Return ``True`` when prediction errors were recorded."""
+        """Return ``True`` when prediction errors were recorded.
+
+        :returns: ``True`` when any error values have been accumulated.
+        """
 
         return bool(self.errors)
 
     def has_observations(self) -> bool:
-        """Return ``True`` when any accumulated sequences are non-empty."""
+        """Return ``True`` when any accumulated sequences are non-empty.
+
+        :returns: ``True`` when at least one sequence contains data.
+        """
 
         return bool(self.actual_after or self.actual_changes or self.errors)
 
@@ -112,6 +125,12 @@ def _collect_opinion_prediction_vectors(
     def _parse_prediction_row(
         payload: Mapping[str, object],
     ) -> tuple[float, float, float, float] | None:
+        """Extract numeric opinion values from a cached prediction row.
+
+        :param payload: JSON-decoded prediction record.
+        :returns: Tuple ``(before, after, predicted_after, predicted_change)``
+            or ``None`` when parsing fails.
+        """
         before = payload.get("before")
         after_value = payload.get("after")
         pred_after = payload.get("prediction")

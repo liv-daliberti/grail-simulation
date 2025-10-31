@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Any, Iterable, Iterator, Mapping, MutableMapping, Sequence
 
 import common.data.hf_datasets as _hf_datasets
-from open_r1.example_utils import row_to_training_example
+from common.open_r1.example_utils import row_to_training_example
 
 DOWNLOAD_CONFIG_CLS, LOAD_DATASET, LOAD_FROM_DISK = _hf_datasets.get_dataset_loaders()
 

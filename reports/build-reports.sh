@@ -277,45 +277,110 @@ if [ "${SKIP_GPT4O}" != "1" ]; then
   "${PYTHON_BIN}" -m gpt4o.pipeline "${GPT4O_ARGS[@]}"
 fi
 
-log "Report refresh completed."
+run_rlhf_report_pipeline() {
+  local flavor="$1"
+  local module="$2"
+  local models_dir="$3"
+  local reports_dir="$4"
+  local label_override="$5"
+  local scenario_name="$6"
+
+  local next_root="${models_dir}/next_video"
+  local opinion_root="${models_dir}/opinion"
+  local label="${label_override}"
+
+  if [ -z "${label}" ]; then
+    if [ -d "${next_root}" ]; then
+      mapfile -t _labels < <(find "${next_root}" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
+    else
+      _labels=()
+    fi
+    if [ -z "${label}" ] && [ ${#_labels[@]} -eq 1 ]; then
+      label="${_labels[0]}"
+    fi
+  fi
+
+  local scenario_desc="${scenario_name:-$(basename "${models_dir}")}"
+  if [ -z "${scenario_desc}" ] || [ "${scenario_desc}" = "." ] || [ "${scenario_desc}" = "default" ]; then
+    scenario_desc="${flavor,,}-default"
+  fi
+
+  if [ -z "${label}" ]; then
+    log "Skipping ${flavor} report regeneration for scenario ${scenario_desc} (set ${flavor}_REPORT_LABEL or populate ${models_dir})."
+    return 1
+  fi
+
+  if [ -d "${reports_dir}" ]; then
+    log "Clearing existing ${flavor} reports at ${reports_dir}"
+    rm -rf "${reports_dir}"
+  fi
+  mkdir -p "${reports_dir}"
+
+  log "Regenerating ${flavor} reports for label ${label} (scenario ${scenario_desc})"
+  declare -a args=(
+    "--dataset" "${DATASET}"
+    "--out-dir" "${models_dir}"
+    "--label" "${label}"
+    "--stage" "reports"
+  )
+  if [ ! -d "${next_root}/${label}" ]; then
+    args+=("--no-next-video")
+  fi
+  if [ ! -d "${opinion_root}/${label}" ]; then
+    args+=("--no-opinion")
+  fi
+  "${PYTHON_BIN}" -m "${module}" "${args[@]}"
+}
+
+process_rlhf_family() {
+  local flavor="$1"
+  local module="$2"
+  local base_models_dir="$3"
+  local base_reports_dir="$4"
+  local label_override="$5"
+
+  local candidates=("${base_models_dir}")
+  if [ -d "${base_models_dir}" ]; then
+    while IFS= read -r subdir; do
+      candidates+=("${base_models_dir}/${subdir}")
+    done < <(find "${base_models_dir}" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
+  fi
+
+  local attempted=0
+  local succeeded=0
+  for candidate in "${candidates[@]}"; do
+    if [ ! -d "${candidate}" ]; then
+      continue
+    fi
+    attempted=1
+    local scenario_name
+    local target_reports_dir="${base_reports_dir}"
+    if [ "${candidate}" = "${base_models_dir}" ]; then
+      scenario_name="default"
+    else
+      scenario_name="${candidate##${base_models_dir}/}"
+      target_reports_dir="${base_reports_dir}/${scenario_name}"
+    fi
+    if run_rlhf_report_pipeline "${flavor}" "${module}" "${candidate}" "${target_reports_dir}" "${label_override}" "${scenario_name}"; then
+      succeeded=1
+    fi
+  done
+
+  if [ "${attempted}" -eq 0 ]; then
+    log "No ${flavor} artefacts found under ${base_models_dir}; skipping."
+  elif [ "${succeeded}" -eq 0 ]; then
+    log "Unable to regenerate ${flavor} reports; see messages above for details."
+  fi
+}
 
 GRPO_MODELS_DIR="${GRPO_MODELS_DIR:-${REPO_ROOT}/models/grpo}"
 GRPO_REPORTS_DIR="${GRPO_REPORTS_DIR:-${REPO_ROOT}/reports/grpo}"
-GRPO_NEXT_ROOT="${GRPO_MODELS_DIR}/next_video"
-GRPO_OPINION_ROOT="${GRPO_MODELS_DIR}/opinion"
-GRPO_LABEL="${GRPO_REPORT_LABEL:-}" 
+GRPO_LABEL="${GRPO_REPORT_LABEL:-}"
+process_rlhf_family "GRPO" "grpo.pipeline" "${GRPO_MODELS_DIR}" "${GRPO_REPORTS_DIR}" "${GRPO_LABEL}"
 
-if [ -z "${GRPO_LABEL}" ]; then
-  if [ -d "${GRPO_NEXT_ROOT}" ]; then
-    mapfile -t _grpo_labels < <(find "${GRPO_NEXT_ROOT}" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
-  else
-    _grpo_labels=()
-  fi
-  if [ -z "${GRPO_LABEL}" ] && [ ${#_grpo_labels[@]} -eq 1 ]; then
-    GRPO_LABEL="${_grpo_labels[0]}"
-  fi
-fi
+GRAIL_MODELS_DIR="${GRAIL_MODELS_DIR:-${REPO_ROOT}/models/grail}"
+GRAIL_REPORTS_DIR="${GRAIL_REPORTS_DIR:-${REPO_ROOT}/reports/grail}"
+GRAIL_LABEL="${GRAIL_REPORT_LABEL:-}"
+process_rlhf_family "GRAIL" "grail.pipeline" "${GRAIL_MODELS_DIR}" "${GRAIL_REPORTS_DIR}" "${GRAIL_LABEL}"
 
-if [ -z "${GRPO_LABEL}" ]; then
-  log "Skipping GRPO report regeneration (set GRPO_REPORT_LABEL or populate models/grpo)."
-else
-  if [ -d "${GRPO_REPORTS_DIR}" ]; then
-    log "Clearing existing GRPO reports at ${GRPO_REPORTS_DIR}"
-    rm -rf "${GRPO_REPORTS_DIR}"
-  fi
-  mkdir -p "${GRPO_REPORTS_DIR}"
-  log "Regenerating GRPO reports for label ${GRPO_LABEL}"
-  declare -a GRPO_ARGS=(
-    "--dataset" "${DATASET}"
-    "--out-dir" "${GRPO_MODELS_DIR}"
-    "--label" "${GRPO_LABEL}"
-    "--stage" "reports"
-  )
-  if [ ! -d "${GRPO_NEXT_ROOT}/${GRPO_LABEL}" ]; then
-    GRPO_ARGS+=("--no-next-video")
-  fi
-  if [ ! -d "${GRPO_OPINION_ROOT}/${GRPO_LABEL}" ]; then
-    GRPO_ARGS+=("--no-opinion")
-  fi
-  "${PYTHON_BIN}" -m grpo.pipeline "${GRPO_ARGS[@]}"
-fi
+log "Report refresh completed."

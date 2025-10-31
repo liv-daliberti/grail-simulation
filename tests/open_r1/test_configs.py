@@ -1,4 +1,4 @@
-"""Tests for :mod:`open_r1.configs` dataset handling logic."""
+"""Tests for :mod:`common.open_r1.configs` dataset handling logic."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import pytest
 
 pytest.importorskip("trl", reason="trl must be installed to run configuration tests.")
 
-from open_r1.configs import (  # pylint: disable=wrong-import-position
+from common.open_r1.configs import (  # pylint: disable=wrong-import-position
     DatasetConfig,
     DatasetMixtureConfig,
     ScriptArguments,

@@ -123,7 +123,7 @@ class TitleResolver:
         env: TitleResolverEnvConfig | None = None,
         logger_name: str = "title-index",
     ) -> None:
-        """Create a new :class:`TitleResolver` instance.
+        """Create a new :class:`~common.text.title_index.TitleResolver` instance.
 
         :param default_dirs: Optional list of fallback directories searched for CSVs.
         :param env: Environment-variable configuration used while discovering CSVs.

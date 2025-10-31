@@ -40,11 +40,12 @@ The interaction logs trace back to the public behavioral dataset introduced in [
 ├── reports/                  # Markdown reports rendered from analyses
 ├── scripts/                  # Utility entrypoints (linting, testing, exports)
 ├── src/                      # Python packages for agents, models, and visualization
-│   ├── common/               # Shared CLI, prompt, pipeline, and reporting utilities
+│   ├── common/               # Shared CLI, prompt, pipeline, and RL utilities (see common/open_r1/)
+│   ├── grail/                # GRPO + discriminator (GAIL) training entry points
+│   ├── grpo/                 # GRPO baseline training and evaluation pipelines
 │   ├── knn/                  # Reworked k-NN baseline (cli/, core/, pipeline/)
 │   ├── xgb/                  # Reworked XGBoost baseline (cli/, core/, pipeline/)
 │   ├── gpt4o/                # GPT-4o slate-prediction baseline + pipeline wrapper
-│   ├── open_r1/              # Supervised fine-tuning & RL trainers (see src/open_r1/README.md)
 │   ├── prompt_builder/       # Prompt templating helpers packaged for reuse
 │   └── visualization/        # Recommendation-tree renderers / plotting tools
 ├── tests/                    # Pytest suite covering data + model components
@@ -170,7 +171,7 @@ Pytest markers in `development/pytest.ini` scope the suites that back the workfl
 - `knn` - k-NN feature extraction, index building, and inference.
 - `xgb` - XGBoost baseline training and CLI helpers.
 - `gpt4o` - GPT-4o conversation utilities.
-- `open_r1` - Open-R1 reinforcement learning helpers.
+- `open_r1` - Shared Open-R1 reinforcement learning helpers under `common.open_r1`.
 - `integration` - Cross-package integration flows.
 - `visualization` - Visualization and reporting helpers.
 
@@ -204,8 +205,8 @@ The repository stitches together several subsystems to turn raw CodeOcean logs i
 Launch the reinforcement-learning recipes via SLURM:
 
 ```bash
-sbatch training/training-grail.sh    # RL + discriminator shaping (src/open_r1/grail.py)
-sbatch training/training-grpo.sh     # RL baseline (src/open_r1/grpo.py)
+sbatch training/training-grail.sh    # RL + discriminator shaping (src/grail/grail.py)
+sbatch training/training-grpo.sh     # RL baseline (src/grpo/grpo.py)
 ```
 
 Baselines:

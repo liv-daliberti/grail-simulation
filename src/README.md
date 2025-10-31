@@ -19,9 +19,14 @@ single packaging story.
   conversation builder. After exporting API credentials, launch
   `python -m gpt4o.cli --out-dir reports/gpt4o --eval_max 100`
   or run the sweep/report harness via `python -m gpt4o.pipeline`.
-- `open_r1/` – GRPO/GRAIL/SFT reinforcement-learning stack. Recipes under
-  `recipes/**` feed the trainers; e.g.
-  `python src/open_r1/grpo.py --config recipes/Qwen2.5-1.5B-Instruct/grpo/config_grpo.yaml`.
+- `common/open_r1/` – shared Open-R1 reinforcement-learning helpers (prompt
+  preparation, reward wiring, dataset utilities) consumed by the GRPO and GRAIL
+  trainers.
+- `grpo/` – GRPO baseline training and evaluation entry points. Launch via
+  `python src/grpo/grpo.py --config recipes/Qwen2.5-1.5B-Instruct/grpo/config_grpo_gun.yaml`
+  (swap `_gun` for `_wage` to target the wage task).
+- `grail/` – GRPO + discriminator (GAIL-style) training entry points that extend
+  the GRPO baseline with online reward shaping.
 
 ## Shared Utilities
 

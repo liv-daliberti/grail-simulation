@@ -8,7 +8,7 @@ from typing import Any, List
 import pytest
 
 try:
-    from open_r1.grail import LearnableRewardMixer, MixerSetup
+    from grail.grail import LearnableRewardCallable, LearnableRewardMixer, MixerSetup
 except ImportError as exc:  # pragma: no cover - optional dependency guard
     pytest.skip(f"Skipping mixer tests: {exc}", allow_module_level=True)
 
@@ -46,3 +46,38 @@ def test_learnable_reward_mixer_prefers_stronger_signal(monkeypatch):
     alpha, beta = mixer.current_alpha_beta()
     assert alpha > 0.9
     assert beta < 0.1
+
+
+def test_learnable_reward_mixer_exposes_config():
+    """Mixer should expose a minimal config namespace for TRL compatibility."""
+    mixer = LearnableRewardMixer(
+        setup=MixerSetup(
+            base_reward_fns=[_constant_reward(1.0)],
+            base_weights=[1.0],
+            initial_mix=(0.6, 0.4),
+        ),
+        discriminator_reward_fn=_constant_reward(0.5),
+    )
+
+    assert hasattr(mixer, "config")
+    assert getattr(mixer.config, "_name_or_path", "") == "learnable_reward_mixer"
+
+
+def test_learnable_reward_callable_routes_to_mixer(monkeypatch):
+    """Wrapper should adapt mixer to TRL's reward function signature."""
+    monkeypatch.setenv("GAIL_TRAIN", "0")  # prevent optimiser stepping noise
+    mixer = LearnableRewardMixer(
+        setup=MixerSetup(
+            base_reward_fns=[_constant_reward(0.5)],
+            base_weights=[1.0],
+            initial_mix=(0.8, 0.2),
+        ),
+        discriminator_reward_fn=_constant_reward(0.1),
+    )
+    wrapper = LearnableRewardCallable(mixer)
+
+    prompts = [["system prompt"]]
+    completions = ["hello"]
+    rewards = wrapper(prompts=prompts, completions=completions, completion_ids=[[1, 2, 3]], answer="gold")
+
+    assert rewards == pytest.approx(mixer(completions, "gold"))

@@ -144,7 +144,12 @@ def _write_opinion_report(
 
 
 def _write_opinion_csv(directory: Path, metrics: Mapping[str, Mapping[str, object]]) -> None:
-    """Write per-study opinion metrics to opinion_metrics.csv."""
+    """Write per-study opinion metrics to ``opinion_metrics.csv``.
+
+    :param directory: Opinion report directory receiving the CSV export.
+    :param metrics: Mapping from study identifiers to metrics payloads.
+    :returns: ``None``. Serialises the metrics to the CSV file when available.
+    """
 
     if not metrics:
         return

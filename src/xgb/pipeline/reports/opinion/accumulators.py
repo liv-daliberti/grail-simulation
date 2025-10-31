@@ -54,7 +54,13 @@ class _WeightedMetricAccumulator:
         baseline: Optional[float],
         weight: Optional[float],
     ) -> None:
-        """Add a weighted measurement to the aggregate."""
+        """Add a weighted measurement to the aggregate.
+
+        :param value: Metric value contributed by the current record.
+        :param baseline: Baseline metric aligned with ``value`` when available.
+        :param weight: Participant weight applied to both value and baseline.
+        :returns: ``None``. Updates the running weighted statistics in-place.
+        """
 
         if value is None or weight in (None, 0):
             return
@@ -66,14 +72,20 @@ class _WeightedMetricAccumulator:
             self.baseline_weight_total += weight_float
 
     def weighted_value(self) -> Optional[float]:
-        """Return the weighted metric value."""
+        """Return the weighted metric value.
+
+        :returns: Weighted metric or ``None`` when no samples were added.
+        """
 
         if self.weight_total <= 0:
             return None
         return self.value_sum / self.weight_total
 
     def weighted_baseline(self) -> Optional[float]:
-        """Return the weighted baseline metric."""
+        """Return the weighted baseline metric.
+
+        :returns: Weighted baseline value or ``None`` when unavailable.
+        """
 
         if self.baseline_weight_total <= 0:
             return None
@@ -149,6 +161,7 @@ class _OpinionPortfolioAccumulator:  # pylint: disable=too-many-instance-attribu
         :param baseline: Baseline value aligned with ``value`` when available.
         :param target: Storage containers (lists and accumulators) receiving updates.
         :param context: Metadata describing the current study/selection.
+        :returns: ``None``. Appends entries and updates weighted statistics.
         """
 
         if value is not None:
@@ -167,6 +180,7 @@ class _OpinionPortfolioAccumulator:  # pylint: disable=too-many-instance-attribu
 
         :param summary: Opinion summary containing the metrics to aggregate.
         :param label: Human-readable label for the study or selection.
+        :returns: ``None``. Adds summary values to the portfolio aggregates.
         """
 
         metrics = summarise_opinion_metrics(summary, prefer_after_fields=True)

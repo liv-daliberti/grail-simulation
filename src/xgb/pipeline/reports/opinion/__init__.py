@@ -22,7 +22,7 @@ from .observations import _opinion_cross_study_diagnostics, _opinion_observation
 from .report import OpinionReportOptions, _write_opinion_report
 from .summaries import _extract_opinion_summary
 
-__all__ = [
+_EXPORTS = (
     "_OpinionPortfolioAccumulator",
     "_WeightedMetricAccumulator",
     "OpinionReportOptions",
@@ -30,4 +30,6 @@ __all__ = [
     "_opinion_cross_study_diagnostics",
     "_opinion_observations",
     "_write_opinion_report",
-]
+)
+
+__all__ = [name for name in _EXPORTS if name in globals()]

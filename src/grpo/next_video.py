@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING, Iterable, List, Mapping, Sequence
 
 from common.evaluation import slate_eval
 from common.pipeline.io import write_metrics_json, write_segmented_markdown_log
-from gpt4o import utils as gpt4o_utils
+from gpt4o.core import utils as gpt4o_utils
 
 from .dataset import PreparedExample, load_dataset_split, prepare_examples
 from .model import generate_chat_completion

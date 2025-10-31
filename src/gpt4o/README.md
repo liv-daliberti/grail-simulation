@@ -61,30 +61,21 @@ Curious how the cleaned rows are produced before uploading to Hugging Face?
 `clean_data/sessions/README.md` walks through the session-ingestion pipeline
 that backs every downstream baseline.
 
-> 💡 The legacy command `python src/gpt4o/gpt-4o-baseline.py` still works and now
-> forwards to `gpt4o.cli:main`.
+> 💡 The helper command `python src/gpt4o/scripts/gpt-4o-baseline.py` forwards to
+> `gpt4o.cli:main` for local experiments.
 
 ## Module layout
 
-- `client.py` — thin wrapper around the Azure OpenAI client plus the `ds_call`
-  helper used during evaluation.
- - `config.py` — centralized configuration, dataset identifiers, and prompt
-  template defaults.
-- `conversation.py` — constructs messages from cleaned rows, including option
-  formatting and answer-tag insertion for reliable parsing.
-- `evaluate.py` — handles dataset loading, metrics aggregation, telemetry
-  buckets, and the retry loop around API calls. It now records accuracy and
-  formatting rates by issue and participant study for downstream fairness checks.
-- `cli.py` — argument parser and runtime entry point (mirrors `knn`/`xgb` CLIs).
-  Pass `--opinion_studies`, `--opinion_max_participants`, or
-  `--opinion_direction_tolerance` to customise the opinion stage.
-- `config.py` — aggregates shared settings, including the system prompts used for
-  next-video ranking (`SYSTEM_PROMPT`) and opinion shift (`OPINION_SYSTEM_PROMPT`).
-- `opinion.py` — GPT-4o opinion-shift evaluation runner shared by the pipeline.
-- `pipeline.py` — orchestrates sweeps, selection, opinion evaluation, and report
-  regeneration for the GPT-4o baseline.
-- `titles.py` / `utils.py` — shared helpers for title resolution, text
-  canonicalization, and response parsing.
+- `core/` — evaluation primitives (Azure client, config, conversation builder,
+  prompt titles, utilities) plus the opinion-stage helpers under
+  `core/opinion/`.
+- `cli/` — argument parser and runtime entry point (mirrors `knn`/`xgb` CLIs).
+- `pipeline/` — sweep orchestration, evaluation promotion, and cache rebuild
+  helpers. The top-level module remains importable via `gpt4o.pipeline`.
+- `pipeline_reports/` — Markdown report generation used by the pipeline’s final
+  stage.
+- `scripts/` — thin wrappers for backwards-compatible `python src/gpt4o/...`
+  invocations.
 
-Each module has a narrow responsibility, making it easy to swap components or
-reuse the prompt builder in other workflows.
+Each subpackage has a narrow responsibility, making it easy to swap components
+or reuse the prompt builder in other workflows.

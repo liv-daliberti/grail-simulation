@@ -1,4 +1,4 @@
-"""Unit tests targeting lightweight helpers in :mod:`open_r1.rewards`."""
+"""Unit tests targeting lightweight helpers in :mod:`common.open_r1.rewards`."""
 
 from __future__ import annotations
 
@@ -133,19 +133,19 @@ def _install_reward_dep_stubs() -> None:
         torch_stub.__getattr__ = _getattr  # type: ignore[attr-defined]
         sys.modules["torch"] = torch_stub
 
-    utils_stub = types.ModuleType("open_r1.utils")
+    utils_stub = types.ModuleType("common.open_r1.utils")
     utils_stub.__path__ = []  # mark as package for submodule imports
 
     utils_stub.get_dataset = lambda *args, **kwargs: None  # type: ignore[assignment]
     utils_stub.get_model = lambda *args, **kwargs: None  # type: ignore[assignment]
     utils_stub.get_tokenizer = lambda *args, **kwargs: None  # type: ignore[assignment]
 
-    sys.modules["open_r1.utils"] = utils_stub
+    sys.modules["common.open_r1.utils"] = utils_stub
 
 
 _install_reward_dep_stubs()
 
-from open_r1 import rewards  # pylint: disable=wrong-import-position
+from common.open_r1 import rewards  # pylint: disable=wrong-import-position
 
 
 def test_parse_slate_names_supports_multiple_formats() -> None:

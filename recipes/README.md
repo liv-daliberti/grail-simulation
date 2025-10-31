@@ -2,16 +2,17 @@
 
 The `recipes/` directory collects configuration assets used to launch GRAIL
 training jobs. Each YAML file is ingested by the TRL-powered entry points under
-`src/open_r1/`, so updating hyperparameters, dataset mixtures, or logging knobs
-rarely requires changing Python code.
+`src/grail/` and `src/grpo/`, with shared helpers living in
+`src/common/open_r1/`, so updating hyperparameters, dataset mixtures, or logging
+knobs rarely requires changing Python code.
 
 ## Layout
 
 - `accelerate_configs/` – templates for `accelerate launch` (e.g. the Deepspeed
   ZeRO-3 config referenced by the SLURM wrappers in `training/`).
 - `Qwen2.5-1.5B-Instruct/` – model-specific recipes. The `grpo/` folder holds
-  GRPO and GRAIL (discriminator) configs used by `src/open_r1/grpo.py` and
-  `src/open_r1/grail.py`.
+  GRPO and GRAIL (discriminator) configs used by `src/grpo/grpo.py` and
+  `src/grail/grail.py`.
 
 Add new model families by creating sibling directories (for example,
 `Mistral-7B/`) and mirroring the task-oriented subfolders (`grpo/`, `sft/`,
@@ -23,8 +24,10 @@ The trainers accept a `--config` flag pointing to any recipe file:
 
 ```bash
 accelerate launch --config_file recipes/accelerate_configs/zero3.yaml \
-  src/open_r1/grpo.py --config recipes/Qwen2.5-1.5B-Instruct/grpo/config_grpo.yaml
+  src/grpo/grpo.py --config recipes/Qwen2.5-1.5B-Instruct/grpo/config_grpo_gun.yaml
 ```
+
+Swap `_gun` for `_wage` (and the analogous GRAIL recipe) to target the wage task.
 
 The SLURM scripts in `training/` set the same environment variables (`CONFIG`,
 `ACCEL_CONFIG`, `MAIN_SCRIPT`) before calling `accelerate launch`, so you can

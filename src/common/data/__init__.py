@@ -15,6 +15,7 @@
 
 """Exports for optional Hugging Face datasets helpers."""
 
+from .grail import DEFAULT_DATASET_PATH, DEFAULT_EVAL_SPLIT
 from .hf_datasets import (
     DatasetDict,
     DownloadConfig,
@@ -25,6 +26,8 @@ from .hf_datasets import (
 )
 
 __all__ = [
+    "DEFAULT_DATASET_PATH",
+    "DEFAULT_EVAL_SPLIT",
     "DatasetDict",
     "DownloadConfig",
     "get_dataset_loaders",

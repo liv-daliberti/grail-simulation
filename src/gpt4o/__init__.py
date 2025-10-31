@@ -15,5 +15,15 @@
 
 """Public exports for the GPT-4o baseline package."""
 
-from .evaluate import run_eval  # noqa: F401
+from __future__ import annotations
+
+from pathlib import Path
+
+from .core.evaluate import run_eval  # noqa: F401
 from .pipeline import main as pipeline_main  # noqa: F401
+
+_CORE_PATH = Path(__file__).resolve().parent / "core"
+if str(_CORE_PATH) not in __path__:
+    __path__.append(str(_CORE_PATH))
+
+__all__ = ["run_eval", "pipeline_main"]

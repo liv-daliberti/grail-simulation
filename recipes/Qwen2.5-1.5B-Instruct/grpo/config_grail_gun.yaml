@@ -1,0 +1,89 @@
+model_name_or_path: Qwen/Qwen2.5-1.5B-Instruct
+torch_dtype: bfloat16
+attn_implementation: sdpa
+dataset_name: od2961/grail-gun
+dataset_train_split: train
+dataset_test_split: validation
+dataset_prompt_column: state_text
+dataset_solution_column: next_video_id
+system_prompt: "You are choosing EXACTLY ONE item from the list of OPTIONS for a specific\
+  \ VIEWER.\n\nInput you will see:\n  \u2022 Viewer profile and optional context/history\n\
+  \  \u2022 An \"OPTIONS:\" list with items numbered 1..N\n    \u2013 Each item is\
+  \ shown as either a title (preferred) or an id\n\nYour job:\n  \u2022 Think briefly\
+  \ in <think>\u2026</think> using the viewer\u2019s profile, context, and options.\n\
+  \  \u2022 Compare the top 2\u20133 candidates, then choose the single best option.\n\
+  \  \u2022 Never invent new items; choose only from the given OPTIONS list.\n\nOutput\
+  \ format (STRICT):\n  - Always include these tags in order: <think>\u2026</think>,\
+  \ <answer>\u2026</answer>, <opinion>\u2026</opinion>.\n  - First output your hidden\
+  \ reasoning in <think>\u2026</think>.\n    - Reference candidates by their numbers\
+  \ and names (or ids) to justify the choice.\n  - Next output ONLY the chosen option\u2019\
+  s NUMBER inside <answer>\u2026</answer>.\n    - Do NOT output the name, id, or any\
+  \ extra text\u2014ONLY the number.\n    - Do NOT include punctuation, quotes, or\
+  \ a period after the number.\n  - Finally output <opinion>\u2026</opinion> with\
+  \ exactly one of: increase, decrease, or no_change.\n\nExample of valid output:\n\
+  \  <think>\n  WHY YOU THINK THIS IS THE RIGHT CHOICE\n  </think>\n  <answer>\n \
+  \ 3\n  </answer>\n  <opinion>\n  increase\n  </opinion>\n\nINVALID patterns (never\
+  \ do these):\n  <answer>3.</answer>                 \u2190 trailing period\n  <answer>\"\
+  3\"</answer>                \u2190 quoted\n  <answer>Option 3</answer>         \
+  \  \u2190 extra words\n  <answer>Parkland \u2026</answer>         \u2190 name instead\
+  \ of number\n  <opinion>maybe</opinion>            \u2190 not one of the allowed\
+  \ direction tokens\n"
+max_prompt_length: 2024
+max_completion_length: 512
+bf16: true
+use_vllm: true
+do_eval: true
+per_device_train_batch_size: 8
+per_device_eval_batch_size: 8
+gradient_accumulation_steps: 16
+gradient_checkpointing: true
+gradient_checkpointing_kwargs:
+  use_reentrant: false
+learning_rate: 5e-5
+adam_beta2: 0.99
+adam_epsilon: 1e-06
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+num_generations: 4
+num_train_epochs: 10
+max_steps: -1
+output_dir: models/grail/gun
+save_strategy: steps
+save_steps: 10
+save_total_limit: 500
+evaluation_strategy: steps
+eval_steps: 10
+logging_strategy: steps
+logging_steps: 1
+log_level: info
+log_completions: true
+report_to:
+- wandb
+reward_funcs:
+- pure_accuracy_reward
+reward_weights:
+- 1.0
+kl_target: 0.07
+init_kl_coeff: 0.2
+kl_horizon: 50000
+kl_ctl_step_size: 0.15
+clip_range: 0.05
+clip_range_vf: 0.5
+max_grad_norm: 0.15
+vf_coef: 0.25
+reward_normalization: true
+gamma: 0.99
+gae_lambda: 0.95
+advantage_normalization: running
+reward_clip:
+- 0
+- 1
+advantage_clip:
+- -1
+- 1
+log_kl_per_token: true
+log_grad_norm_after_clip: true
+seed: 42
+push_to_hub: true
+hub_model_id: od2961/Qwen2.5-1.5B-OpenR1-GRAIL-GUN
+hub_strategy: every_save

@@ -40,6 +40,7 @@ def _append_if_not_none(values: List[float], value: Optional[float]) -> None:
 
     :param values: Mutable list receiving numeric values.
     :param value: Candidate value to append.
+    :returns: ``None``. Appends to ``values`` when appropriate.
     """
 
     if value is not None:
@@ -57,6 +58,7 @@ def _append_difference(
     :param values: Mutable list receiving numeric deltas.
     :param baseline: Baseline metric value.
     :param value: Updated metric value.
+    :returns: ``None``. Appends the computed delta when valid.
     """
 
     delta_value = _difference(baseline, value)

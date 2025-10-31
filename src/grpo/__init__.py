@@ -17,10 +17,6 @@
 
 from __future__ import annotations
 
-__all__ = [
-    "DEFAULT_DATASET_PATH",
-    "DEFAULT_EVAL_SPLIT",
-]
+from common.data import DEFAULT_DATASET_PATH, DEFAULT_EVAL_SPLIT
 
-DEFAULT_DATASET_PATH = "data/cleaned_grail"
-DEFAULT_EVAL_SPLIT = "validation"
+__all__ = ["DEFAULT_DATASET_PATH", "DEFAULT_EVAL_SPLIT"]

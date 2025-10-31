@@ -17,13 +17,14 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import sys
 from pathlib import Path
-from types import ModuleType
-from typing import Callable, Dict, Mapping, Sequence
+from typing import Any, Callable, Dict, List, Mapping, Sequence, TypeVar
 
 from common.pipeline.io import load_metrics_json
+from common.pipeline.utils import merge_indexed_outcomes
 
 from ...cli import build_parser as build_xgb_parser
 from ...core.evaluate import run_eval
@@ -36,6 +37,30 @@ except ImportError:  # pragma: no cover - optional dependency
 
 DEFAULT_OPINION_FEATURE_SPACE = "tfidf"
 LOGGER = logging.getLogger("xgb.pipeline.sweeps")
+OutcomeT = TypeVar("OutcomeT")
+MetricsFactory = Callable[[], Dict[str, object]]
+
+
+def get_sweeps_attr(name: str) -> Any:
+    """
+    Retrieve an attribute from the public ``xgb.pipeline.sweeps`` namespace.
+
+    The helper keeps monkeypatched call sites working while allowing internal
+    helpers to obtain underscored functions without tripping pylint's protected
+    access checks.
+
+    :param name: Attribute name to resolve (for example ``\"_load_metrics\"``).
+    :type name: str
+    :returns: Attribute fetched from the ``xgb.pipeline.sweeps`` module.
+    :rtype: Any
+    :raises AttributeError: If the sweeps package is not loaded or the attribute
+        cannot be found.
+    """
+
+    sweeps_module = sys.modules.get("xgb.pipeline.sweeps")
+    if sweeps_module is None or not hasattr(sweeps_module, name):
+        raise AttributeError(f"sweeps attribute {name!r} is unavailable")
+    return getattr(sweeps_module, name)
 
 
 def _inject_study_metadata(metrics: Dict[str, object], spec: StudySpec) -> None:
@@ -77,6 +102,61 @@ def _run_xgb_cli(args: Sequence[str]) -> None:
     run_eval(namespace)
 
 
+def merge_sweep_outcomes(
+    cached: Sequence[OutcomeT],
+    executed: Sequence[OutcomeT],
+    *,
+    duplicate_message: str,
+) -> List[OutcomeT]:
+    """Merge cached and executed outcomes while logging duplicate replacements."""
+
+    return merge_indexed_outcomes(
+        cached,
+        executed,
+        logger=LOGGER,
+        message=duplicate_message,
+        args_factory=lambda _existing, incoming: (incoming.order_index,),
+    )
+
+
+def persist_metrics_payload(
+    metrics_path: Path,
+    metrics: Dict[str, object],
+    *,
+    debug_message: str,
+) -> None:
+    """Persist metrics to disk, tolerating missing directories and IO errors."""
+
+    metrics_path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with open(metrics_path, "w", encoding="utf-8") as handle:
+            json.dump(metrics, handle, indent=2)
+    except OSError:  # pragma: no cover - best-effort breadcrumb
+        LOGGER.debug(debug_message, metrics_path)
+
+
+def ensure_metrics_with_placeholder(
+    loader: Callable[[], Dict[str, object] | None],
+    *,
+    placeholder_factory: MetricsFactory,
+    metrics_path: Path,
+    debug_message: str,
+) -> Dict[str, object]:
+    """Return metrics from ``loader`` or materialise a placeholder payload."""
+
+    metrics = loader()
+    if metrics is not None:
+        return metrics
+
+    placeholder = placeholder_factory()
+    persist_metrics_payload(
+        metrics_path,
+        placeholder,
+        debug_message=debug_message,
+    )
+    return placeholder
+
+
 def _gpu_tree_method_supported() -> bool:
     """
     Determine whether the installed XGBoost build supports GPU boosters.
@@ -85,7 +165,7 @@ def _gpu_tree_method_supported() -> bool:
     :rtype: bool
     """
 
-    sweeps_module: ModuleType | None = sys.modules.get("xgb.pipeline.sweeps")
+    sweeps_module = sys.modules.get("xgb.pipeline.sweeps")
     xgb_module = getattr(sweeps_module, "xgboost", xgboost) if sweeps_module else xgboost
 
     if xgb_module is None:
@@ -110,10 +190,14 @@ def _gpu_tree_method_supported() -> bool:
 __all__ = [
     "DEFAULT_OPINION_FEATURE_SPACE",
     "LOGGER",
+    "get_sweeps_attr",
+    "merge_sweep_outcomes",
+    "persist_metrics_payload",
     "xgboost",
     "_gpu_tree_method_supported",
     "_inject_study_metadata",
     "_load_metrics",
     "_load_metrics_with_log",
+    "ensure_metrics_with_placeholder",
     "_run_xgb_cli",
 ]

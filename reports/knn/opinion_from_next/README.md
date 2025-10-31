@@ -13,7 +13,7 @@ This section reuses the selected next-video recommendation configuration to esti
 | Study 1 – Gun Control (MTurk) | 162 | 50 | 0.704 | 0.074 | +0.630 | 0.030 | +0.007 | 0.038 | 0.983 | 0.030 | 0.038 | +0.008 | 0.199 | 0.020 | 0.008 | — | 10.979 | +10.467 | 0.037 |
 | Study 2 – Minimum Wage (MTurk) | 165 | 50 | 0.527 | 0.061 | +0.467 | 0.093 | +0.003 | 0.128 | 0.786 | 0.093 | 0.128 | +0.010 | 1.079 | 0.007 | 0.018 | — | 8.264 | +10.105 | 0.096 |
 | Study 3 – Minimum Wage (YouGov) | 257 | 50 | 0.494 | 0.058 | +0.436 | 0.088 | -0.004 | 0.125 | 0.771 | 0.088 | 0.125 | +0.001 | 0.155 | 0.018 | 0.022 | — | 7.392 | +9.188 | 0.084 |
-*Assets:* [MAE / R² curves and heatmaps](../tfidf/opinion_from_next/)
+*Assets:* see figures in ``../tfidf/opinion_from_next/`` (MAE / R² curves and heatmaps)
 
 ## Word2Vec Feature Space
 
@@ -22,7 +22,7 @@ This section reuses the selected next-video recommendation configuration to esti
 | Study 1 – Gun Control (MTurk) | 162 | 50 | 0.704 | 0.074 | +0.630 | 0.030 | +0.007 | 0.038 | 0.983 | 0.030 | 0.038 | +0.008 | 0.101 | 0.023 | 0.006 | — | 11.168 | +10.277 | 0.037 |
 | Study 2 – Minimum Wage (MTurk) | 165 | 25 | 0.564 | 0.061 | +0.503 | 0.091 | +0.005 | 0.126 | 0.794 | 0.091 | 0.126 | +0.013 | 1.025 | 0.012 | 0.027 | — | 7.914 | +10.455 | 0.096 |
 | Study 3 – Minimum Wage (YouGov) | 257 | 50 | 0.510 | 0.058 | +0.451 | 0.089 | -0.004 | 0.127 | 0.764 | 0.089 | 0.127 | -0.001 | -0.154 | 0.025 | 0.025 | — | 9.488 | +7.092 | 0.084 |
-*Assets:* [MAE / R² curves and heatmaps](../word2vec/opinion_from_next/)
+*Assets:* see figures in ``../word2vec/opinion_from_next/`` (MAE / R² curves and heatmaps)
 
 ## Sentence-Transformer Feature Space
 
@@ -31,7 +31,7 @@ This section reuses the selected next-video recommendation configuration to esti
 | Study 1 – Gun Control (MTurk) | 162 | 50 | 0.704 | 0.074 | +0.630 | 0.030 | +0.007 | 0.038 | 0.983 | 0.030 | 0.038 | +0.008 | 0.030 | 0.025 | 0.009 | — | 14.511 | +6.935 | 0.037 |
 | Study 2 – Minimum Wage (MTurk) | 165 | 25 | 0.552 | 0.061 | +0.491 | 0.089 | +0.007 | 0.126 | 0.791 | 0.089 | 0.126 | +0.012 | 1.073 | 0.007 | 0.032 | — | 8.074 | +10.294 | 0.096 |
 | Study 3 – Minimum Wage (YouGov) | 257 | 50 | 0.521 | 0.058 | +0.463 | 0.089 | -0.004 | 0.125 | 0.768 | 0.089 | 0.125 | -0.000 | 0.083 | 0.019 | 0.020 | — | 9.523 | +7.057 | 0.084 |
-*Assets:* [MAE / R² curves and heatmaps](../sentence_transformer/opinion_from_next/)
+*Assets:* see figures in ``../sentence_transformer/opinion_from_next/`` (MAE / R² curves and heatmaps)
 
 ### Opinion Change Heatmaps
 
@@ -81,7 +81,7 @@ This section reuses the selected next-video recommendation configuration to esti
 
 ## TF-IDF Feature Space
 
-#### Weighted Summary
+### Weighted Summary
 
 - Weighted MAE 0.073 across 584 participants.
 - Weighted baseline MAE 0.074 (+0.001 vs. final).
@@ -110,7 +110,7 @@ This section reuses the selected next-video recommendation configuration to esti
 
 ## Word2Vec Feature Space
 
-#### Weighted Summary
+### Weighted Summary
 
 - Weighted MAE 0.073 across 584 participants.
 - Weighted baseline MAE 0.074 (+0.002 vs. final).
@@ -139,7 +139,7 @@ This section reuses the selected next-video recommendation configuration to esti
 
 ## Sentence-Transformer Feature Space
 
-#### Weighted Summary
+### Weighted Summary
 
 - Weighted MAE 0.073 across 584 participants.
 - Weighted baseline MAE 0.074 (+0.002 vs. final).

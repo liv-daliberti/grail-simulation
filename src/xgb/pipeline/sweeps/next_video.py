@@ -19,10 +19,8 @@ from __future__ import annotations
 
 import json
 import logging
-import sys
 from pathlib import Path
-from types import ModuleType
-from typing import Dict, List, Mapping, Sequence, Tuple, TYPE_CHECKING
+from typing import Callable, Dict, List, Mapping, Sequence, Tuple, cast
 
 from common.pipeline.executor import execute_indexed_tasks
 from common.pipeline.utils import make_placeholder_metrics, merge_indexed_outcomes
@@ -35,16 +33,7 @@ from ..context import (
     SweepRunContext,
     SweepTask,
 )
-from .common import LOGGER
-
-if TYPE_CHECKING:  # pragma: no cover
-    from . import __init__ as sweeps_api
-
-
-def _api() -> ModuleType:
-    """Return the public sweeps package for dynamic attribute lookups."""
-
-    return sys.modules[__package__]
+from .common import LOGGER, get_sweeps_attr
 
 
 def _sweep_outcome_from_metrics(

@@ -12,3 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Common visualization helpers and defaults.
+
+This package hosts lightweight plotting utilities (for example, Matplotlib
+defaults) that are reused by multiple baselines and report generators. Keep
+imports optional so the package can be imported during documentation builds
+without requiring heavy dependencies.
+"""

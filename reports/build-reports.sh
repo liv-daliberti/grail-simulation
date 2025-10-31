@@ -285,11 +285,18 @@ run_rlhf_report_pipeline() {
   local label_override="$5"
   local scenario_name="$6"
 
-  local next_root="${models_dir}/next_video"
-  local opinion_root="${models_dir}/opinion"
+  # Prefer checkpoint-50 tree when present (user wants reporting from checkpoint-50)
+  local effective_models_dir="${models_dir}"
+  if [ -d "${models_dir}/checkpoint-50" ]; then
+    effective_models_dir="${models_dir}/checkpoint-50"
+  fi
+
+  local next_root="${effective_models_dir}/next_video"
+  local opinion_root="${effective_models_dir}/opinion"
   local label="${label_override}"
 
   if [ -z "${label}" ]; then
+    # Try to auto-detect from next_video label directories first
     if [ -d "${next_root}" ]; then
       mapfile -t _labels < <(find "${next_root}" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
     else
@@ -297,6 +304,13 @@ run_rlhf_report_pipeline() {
     fi
     if [ -z "${label}" ] && [ ${#_labels[@]} -eq 1 ]; then
       label="${_labels[0]}"
+    fi
+    # Fallback: detect from opinion if next_video not present or ambiguous
+    if [ -z "${label}" ] && [ -d "${opinion_root}" ]; then
+      mapfile -t _op_labels < <(find "${opinion_root}" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
+      if [ ${#_op_labels[@]} -eq 1 ]; then
+        label="${_op_labels[0]}"
+      fi
     fi
   fi
 
@@ -306,7 +320,7 @@ run_rlhf_report_pipeline() {
   fi
 
   if [ -z "${label}" ]; then
-    log "Skipping ${flavor} report regeneration for scenario ${scenario_desc} (set ${flavor}_REPORT_LABEL or populate ${models_dir})."
+    log "Skipping ${flavor} report regeneration for scenario ${scenario_desc} (set ${flavor}_REPORT_LABEL or populate ${effective_models_dir})."
     return 1
   fi
 
@@ -319,7 +333,7 @@ run_rlhf_report_pipeline() {
   log "Regenerating ${flavor} reports for label ${label} (scenario ${scenario_desc})"
   declare -a args=(
     "--dataset" "${DATASET}"
-    "--out-dir" "${models_dir}"
+    "--out-dir" "${effective_models_dir}"
     "--label" "${label}"
     "--stage" "reports"
   )

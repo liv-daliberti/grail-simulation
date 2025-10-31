@@ -44,6 +44,15 @@ StudyLabel = str  # e.g. "Study 1 – Gun Control (MTurk)"
 
 @dataclass(frozen=True)
 class MetricBundle:
+    """Per-study metrics used when assembling portfolio tables.
+
+    :param next_video_accuracy: Eligible accuracy for the next‑video task
+        (0–1) or ``None`` when the value is unavailable.
+    :param opinion_direction: Directional accuracy for opinion shift
+        (0–1) or ``None`` when missing.
+    :param opinion_mae: Mean absolute error for opinion predictions
+        (non‑negative) or ``None`` when missing.
+    """
     next_video_accuracy: Optional[float] = None
     opinion_direction: Optional[float] = None
     opinion_mae: Optional[float] = None
@@ -441,6 +450,11 @@ def generate_portfolio_report(repo_root: Path) -> None:
 
 
 def main(argv: Sequence[str] | None = None) -> None:  # pragma: no cover - CLI convenience
+    """CLI entry point that regenerates the portfolio report.
+
+    :param argv: Optional sequence of CLI tokens (defaults to ``sys.argv[1:]``).
+    :returns: ``None``.
+    """
     repo_root = Path(__file__).resolve().parents[3]
     generate_portfolio_report(repo_root)
 

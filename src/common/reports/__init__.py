@@ -12,3 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Shared reporting helpers for Markdown outputs.
+
+Utilities under :mod:`common.reports` provide small, side‑effect‑free
+functions for generating Markdown reports and catalogs consumed by the
+baseline pipelines. Submodules include table rendering, report file
+initialisation, and consolidated portfolio summaries.
+
+The modules are designed to be safe for Sphinx autodoc and unit tests.
+"""

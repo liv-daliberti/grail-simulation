@@ -12,3 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Prompt package namespace used by baselines and docs.
+
+This package groups helpers for building viewer prompts, profiles, and
+documentation-ready examples used across baselines. Concrete builders and
+formatters live under :mod:`common.prompts.docs`.
+
+The package is intentionally lightweight so it can be imported by Sphinx
+autodoc without side effects.
+"""

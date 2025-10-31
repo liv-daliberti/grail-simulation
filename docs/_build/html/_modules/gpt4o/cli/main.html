@@ -300,10 +300,13 @@
 
     <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Evaluate GPT-4o on the GRAIL slate dataset.&quot;</span><span class="p">)</span>
     <span class="n">add_opts</span> <span class="o">=</span> <span class="n">import_module</span><span class="p">(</span><span class="s2">&quot;common.cli.options&quot;</span><span class="p">)</span>
-    <span class="n">add_opts</span><span class="o">.</span><span class="n">add_gpt4o_eval_arguments</span><span class="p">(</span>
+    <span class="n">add_opts</span><span class="o">.</span><span class="n">add_eval_arguments</span><span class="p">(</span>
         <span class="n">parser</span><span class="p">,</span>
         <span class="n">default_out_dir</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">DEFAULT_OUT_DIR</span><span class="p">),</span>
         <span class="n">default_cache_dir</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">DEFAULT_CACHE_DIR</span><span class="p">),</span>
+        <span class="n">include_llm_args</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">include_opinion_args</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">include_studies_filter</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">parser</span></div>
 

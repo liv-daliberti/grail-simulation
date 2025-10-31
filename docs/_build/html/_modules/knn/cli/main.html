@@ -282,7 +282,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">common.cli.args</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_comma_separated_argument</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">common.cli.options</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_overwrite_argument</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.cli.options</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_overwrite_argument</span><span class="p">,</span> <span class="n">add_eval_arguments</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">..core.evaluate</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_eval</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..core.features</span><span class="w"> </span><span class="kn">import</span> <span class="n">Word2VecConfig</span>
@@ -400,13 +400,17 @@
         <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;knn_seed&quot;</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Random seed applied when subsampling the train split.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--eval-max&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;--eval_max&quot;</span><span class="p">,</span>
-        <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;eval_max&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Limit evaluation examples (0 means evaluate every row).&quot;</span><span class="p">,</span>
+    <span class="c1"># Shared eval args (dataset, issues, eval_max, out_dir, cache_dir, overwrite)</span>
+    <span class="n">add_eval_arguments</span><span class="p">(</span>
+        <span class="n">parser</span><span class="p">,</span>
+        <span class="n">default_out_dir</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;models&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;knn&quot;</span><span class="p">),</span>
+        <span class="n">default_cache_dir</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span> <span class="o">/</span> <span class="s2">&quot;hf_cache&quot;</span><span class="p">),</span>
+        <span class="n">include_llm_args</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">include_opinion_args</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">include_studies_filter</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">dataset_default</span><span class="o">=</span><span class="s2">&quot;data/cleaned_grail&quot;</span><span class="p">,</span>
+        <span class="n">issues_default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">include_legacy_aliases</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--word2vec-size&quot;</span><span class="p">,</span>
@@ -492,21 +496,7 @@
         <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;train_curve_max&quot;</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Limit the number of training examples evaluated for curve metrics (0 means use all).&quot;</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--out-dir&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;--out_dir&quot;</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;models&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;knn&quot;</span><span class="p">),</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;out_dir&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Directory for predictions, metrics, and saved indices.&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">add_overwrite_argument</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--cache-dir&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;--cache_dir&quot;</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span> <span class="o">/</span> <span class="s2">&quot;hf_cache&quot;</span><span class="p">),</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;cache_dir&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;HF datasets cache directory.&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="c1"># out_dir/cache_dir/overwrite added via add_eval_arguments</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--knn-text-fields&quot;</span><span class="p">,</span>
         <span class="s2">&quot;--knn_text_fields&quot;</span><span class="p">,</span>
@@ -533,18 +523,7 @@
         <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;bootstrap_seed&quot;</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Random seed for bootstrap resampling.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--dataset&quot;</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;data/cleaned_grail&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Local dataset path (load_from_disk) or Hugging Face dataset id.&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--issues&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;--issue&quot;</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;issues&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Comma-separated list of issues to evaluate (defaults to all).&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="c1"># &#39;dataset&#39; and &#39;issues&#39; added via add_eval_arguments</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--train-issues&quot;</span><span class="p">,</span>
         <span class="s2">&quot;--train_issues&quot;</span><span class="p">,</span>

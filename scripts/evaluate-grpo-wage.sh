@@ -28,12 +28,17 @@ LOG_DIR=${LOG_DIR_OVERRIDE:-${LOG_DIR:-"$ROOT_DIR/logs/grpo_eval/wage"}}
 export LOG_DIR
 RUN_LABEL=${RUN_LABEL:-grpo-wage-checkpoint-50}
 MODEL_PATH=${MODEL_PATH:-"$ROOT_DIR/models/grpo/wage/checkpoint-50"}
-DATASET=${DATASET:-"$ROOT_DIR/data/cleaned_grail"}
+# Evaluate wage model on the wage validation split only
+DATASET=${DATASET:-"$ROOT_DIR/data/cleaned_grail/minimum_wage"}
 SPLIT=${SPLIT:-validation}
 OUT_DIR=${OUT_DIR:-"$MODEL_PATH"}
 STAGE=${STAGE:-evaluate}
 LOG_LEVEL=${LOG_LEVEL:-INFO}
+# Restrict to the wage issue by default
 ISSUES=${ISSUES:-minimum_wage}
+# Default report location and label per model
+REPORTS_SUBDIR=${REPORTS_SUBDIR:-grpo-wage}
+BASELINE_LABEL=${BASELINE_LABEL:-"GRPO (Wage)"}
 
 # Do not force stage/label here; override via environment when needed, e.g.:
 #   STAGE=full RUN_LABEL=grpo-wage-checkpoint-50 scripts/evaluate-grpo-wage.sh
@@ -68,7 +73,6 @@ export TMPDIR=${TMPDIR:-"$ROOT_DIR/.tmp"}
 export HF_HOME=${HF_HOME:-"$ROOT_DIR/.hf_cache"}
 export HF_HUB_CACHE=${HF_HUB_CACHE:-"$ROOT_DIR/.cache/huggingface/transformers"}
 export HF_DATASETS_CACHE=${HF_DATASETS_CACHE:-"$ROOT_DIR/.cache/huggingface/datasets"}
-export TRANSFORMERS_CACHE=${TRANSFORMERS_CACHE:-"$HF_HUB_CACHE"}
 export TORCH_HOME=${TORCH_HOME:-"$XDG_CACHE_HOME/torch"}
 export TRITON_CACHE_DIR=${TRITON_CACHE_DIR:-"$ROOT_DIR/.triton"}
 export VLLM_CONFIG_ROOT=${VLLM_CONFIG_ROOT:-"$XDG_CONFIG_HOME/vllm"}
@@ -111,6 +115,8 @@ srun --ntasks=1 --gres=gpu:1 --cpus-per-task=8 python -u -m grpo.pipeline \
   --label "$RUN_LABEL" \
   --out-dir "$OUT_DIR" \
   --stage "$STAGE" \
+  --reports-subdir "$REPORTS_SUBDIR" \
+  --baseline-label "$BASELINE_LABEL" \
   --log-level "$LOG_LEVEL" \
   "${EXTRA_ARGS[@]}" \
   "$@"

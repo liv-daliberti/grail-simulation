@@ -216,7 +216,7 @@ def _collect_next_video_final(
 
 
 def _collect_opinion_sweeps(
-    outcomes: Sequence[OpinionSweepOutcome],
+    outcomes: Sequence["xgb.pipeline.context.OpinionSweepOutcome"],
 ) -> tuple[list[Sequence[str]], set[str]]:
     """Return table rows and unique field set for opinion sweeps."""
     rows: list[Sequence[str]] = []

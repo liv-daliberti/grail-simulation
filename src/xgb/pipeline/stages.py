@@ -33,8 +33,6 @@ from common.pipeline.stage import (
 from .context import (
     FinalEvalContext,
     OpinionStageConfig,
-    OpinionStudySelection,
-    OpinionSweepOutcome,
     OpinionSweepRunContext,
     OpinionSweepTask,
     OpinionDataSettings,
@@ -238,7 +236,7 @@ def handle_plan_or_dry_run(
     planned_slate_tasks: Sequence[SweepTask],
     cached_slate_planned: Sequence[SweepOutcome],
     planned_opinion_tasks: Sequence[OpinionSweepTask],
-    cached_opinion_planned: Sequence[OpinionSweepOutcome],
+    cached_opinion_planned: Sequence["xgb.pipeline.context.OpinionSweepOutcome"],
 ) -> bool:
     """Emit plan or dry-run summaries and stop further execution when requested."""
 
@@ -285,7 +283,7 @@ def handle_sweeps_stage(
     planned_slate_tasks: Sequence[SweepTask],
     cached_slate_planned: Sequence[SweepOutcome],
     planned_opinion_tasks: Sequence[OpinionSweepTask],
-    cached_opinion_planned: Sequence[OpinionSweepOutcome],
+    cached_opinion_planned: Sequence["xgb.pipeline.context.OpinionSweepOutcome"],
     prepare,
 ) -> bool:
     """Execute the sweeps-only stage using CLI-driven partitioning."""
@@ -308,7 +306,10 @@ def handle_sweeps_stage(
         _pipeline_attr("_execute_sweep_tasks"),
     )
     _exec_opinion_sweeps = cast(
-        Callable[[Sequence[OpinionSweepTask]], Sequence[OpinionSweepOutcome]],
+        Callable[
+            [Sequence[OpinionSweepTask]],
+            Sequence["xgb.pipeline.context.OpinionSweepOutcome"],
+        ],
         _pipeline_attr("_execute_opinion_sweep_tasks"),
     )
 
@@ -355,7 +356,7 @@ def prepare_pending_and_cached(
     List[SweepTask],
     List[SweepOutcome],
     List[OpinionSweepTask],
-    List[OpinionSweepOutcome],
+    List["xgb.pipeline.context.OpinionSweepOutcome"],
 ]:
     """Prepare stage-specific pending tasks and cached outcomes for both pipelines."""
 
@@ -378,10 +379,16 @@ def prepare_pending_and_cached(
         )
 
     pending_opinion_tasks: List[OpinionSweepTask] = []
-    cached_opinion_outcomes: List[OpinionSweepOutcome] = []
+    cached_opinion_outcomes: List["xgb.pipeline.context.OpinionSweepOutcome"] = []
     if run_opinion and opinion_sweep_context is not None:
         prep_opinion = cast(
-            Callable[..., Tuple[List[OpinionSweepTask], List[OpinionSweepOutcome]]],
+            Callable[
+                ...,
+                Tuple[
+                    List[OpinionSweepTask],
+                    List["xgb.pipeline.context.OpinionSweepOutcome"],
+                ],
+            ],
             _prepare_opinion_sweep_tasks,
         )
         pending_opinion_tasks, cached_opinion_outcomes = prep_opinion(
@@ -452,11 +459,11 @@ def maybe_execute_full_stage(
     pending_slate_tasks: Sequence[SweepTask],
     pending_opinion_tasks: Sequence[OpinionSweepTask],
     jobs: int,
-) -> tuple[List[SweepOutcome], List[OpinionSweepOutcome]]:
+) -> tuple[List[SweepOutcome], List["xgb.pipeline.context.OpinionSweepOutcome"]]:
     """Execute sweeps for the "full" stage when requested by the caller."""
 
     executed_slate_outcomes: List[SweepOutcome] = []
-    executed_opinion_outcomes: List[OpinionSweepOutcome] = []
+    executed_opinion_outcomes: List["xgb.pipeline.context.OpinionSweepOutcome"] = []
     if stage == "full":
         if run_next_video:
             exec_sweeps = cast(
@@ -469,7 +476,7 @@ def maybe_execute_full_stage(
             )
         if run_opinion:
             exec_opinion = cast(
-                Callable[..., List[OpinionSweepOutcome]],
+                Callable[..., List["xgb.pipeline.context.OpinionSweepOutcome"]],
                 _execute_opinion_sweep_tasks,
             )
             executed_opinion_outcomes = exec_opinion(
@@ -559,7 +566,7 @@ def _write_reports_from_inputs(
     allow_incomplete: bool,
     paths,
     outcomes: Sequence[SweepOutcome],
-    opinion_sweep_outcomes: Sequence[OpinionSweepOutcome],
+    opinion_sweep_outcomes: Sequence["xgb.pipeline.context.OpinionSweepOutcome"],
     selections: Mapping[str, StudySelection],
     opinion_selections: Mapping[str, "xgb.pipeline.context.OpinionStudySelection"],
     inputs: _ReportInputs,
@@ -613,9 +620,9 @@ def merge_and_validate_outcomes(
     allow_incomplete: bool,
     cached_slate_outcomes: Sequence[SweepOutcome],
     executed_slate_outcomes: Sequence[SweepOutcome],
-    cached_opinion_outcomes: Sequence[OpinionSweepOutcome],
-    executed_opinion_outcomes: Sequence[OpinionSweepOutcome],
-) -> tuple[List[SweepOutcome], List[OpinionSweepOutcome]]:
+    cached_opinion_outcomes: Sequence["xgb.pipeline.context.OpinionSweepOutcome"],
+    executed_opinion_outcomes: Sequence["xgb.pipeline.context.OpinionSweepOutcome"],
+) -> tuple[List[SweepOutcome], List["xgb.pipeline.context.OpinionSweepOutcome"]]:
     """Merge cached and executed outcomes and check completeness."""
 
     outcomes: List[SweepOutcome] = []
@@ -631,7 +638,7 @@ def merge_and_validate_outcomes(
             else:
                 raise RuntimeError("No sweep outcomes available; ensure sweeps have completed.")
 
-    opinion_sweep_outcomes: List[OpinionSweepOutcome] = []
+    opinion_sweep_outcomes: List["xgb.pipeline.context.OpinionSweepOutcome"] = []
     if run_opinion:
         opinion_sweep_outcomes = _merge_opinion_sweep_outcomes(  # type: ignore[operator]
             cached_opinion_outcomes,
@@ -657,7 +664,7 @@ def select_and_log_configs(
     run_opinion: bool,
     allow_incomplete: bool,
     outcomes: Sequence[SweepOutcome],
-    opinion_sweep_outcomes: Sequence[OpinionSweepOutcome],
+    opinion_sweep_outcomes: Sequence["xgb.pipeline.context.OpinionSweepOutcome"],
 ) -> tuple[Dict[str, StudySelection], Dict[str, "xgb.pipeline.context.OpinionStudySelection"]]:
     """Choose the best configurations per-study and log selections."""
 
@@ -718,7 +725,7 @@ def maybe_reports_stage(
     study_specs,
     paths,
     outcomes: Sequence[SweepOutcome],
-    opinion_sweep_outcomes: Sequence[OpinionSweepOutcome],
+    opinion_sweep_outcomes: Sequence["xgb.pipeline.context.OpinionSweepOutcome"],
 ) -> bool:
     """Generate reports when requested and return True when handled."""
 
@@ -758,7 +765,7 @@ def finalize_and_report(
     selections: Mapping[str, StudySelection],
     opinion_selections: Mapping[str, "xgb.pipeline.context.OpinionStudySelection"],
     outcomes: Sequence[SweepOutcome],
-    opinion_sweep_outcomes: Sequence[OpinionSweepOutcome],
+    opinion_sweep_outcomes: Sequence["xgb.pipeline.context.OpinionSweepOutcome"],
     paths,
     study_specs,
 ) -> None:

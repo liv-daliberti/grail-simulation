@@ -48,7 +48,6 @@ from ..core.vectorizers import Word2VecVectorizerConfig
 from .context import (
     FinalEvalContext,
     OpinionStageConfig,
-    OpinionStudySelection,
     StudySelection,
     StudySpec,
 )

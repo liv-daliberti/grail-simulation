@@ -343,8 +343,8 @@ class _OpinionStudyView:
     label: str
     issue_label: str
     selection: Optional["xgb.pipeline.context.OpinionStudySelection"]
-    ordered: List[OpinionSweepOutcome]
-    displayed: List[OpinionSweepOutcome]
+    ordered: List["xgb.pipeline.context.OpinionSweepOutcome"]
+    displayed: List["xgb.pipeline.context.OpinionSweepOutcome"]
     display_limit: int
 
     def has_more_results(self) -> bool:
@@ -361,11 +361,11 @@ class _OpinionStudyView:
 
 
 def _group_opinion_outcomes(
-    outcomes: Sequence[OpinionSweepOutcome],
-) -> Dict[str, List[OpinionSweepOutcome]]:
+    outcomes: Sequence["xgb.pipeline.context.OpinionSweepOutcome"],
+) -> Dict[str, List["xgb.pipeline.context.OpinionSweepOutcome"]]:
     """Bucket opinion sweep outcomes by study key."""
 
-    grouped: Dict[str, List[OpinionSweepOutcome]] = {}
+    grouped: Dict[str, List["xgb.pipeline.context.OpinionSweepOutcome"]] = {}
     for outcome in outcomes:
         grouped.setdefault(outcome.study.key, []).append(outcome)
     return grouped
@@ -374,7 +374,7 @@ def _group_opinion_outcomes(
 def _opinion_sort_key(
     study_key: str,
     selections: Mapping[str, "xgb.pipeline.context.OpinionStudySelection"],
-    grouped: Mapping[str, Sequence[OpinionSweepOutcome]],
+    grouped: Mapping[str, Sequence["xgb.pipeline.context.OpinionSweepOutcome"]],
 ) -> str:
     """Return a case-insensitive sort key for the opinion study tables."""
 
@@ -389,7 +389,7 @@ def _opinion_sort_key(
 
 def _build_opinion_view(
     study_key: str,
-    outcomes: Sequence[OpinionSweepOutcome],
+    outcomes: Sequence["xgb.pipeline.context.OpinionSweepOutcome"],
     selection: Optional["xgb.pipeline.context.OpinionStudySelection"],
     *,
     display_limit: int,
@@ -486,7 +486,7 @@ def _selected_opinion_summary(view: _OpinionStudyView) -> Optional[OpinionSummar
 
 def _opinion_hyperparameter_section(
     *,
-    outcomes: Sequence[OpinionSweepOutcome],
+    outcomes: Sequence["xgb.pipeline.context.OpinionSweepOutcome"],
     selections: Mapping[str, "xgb.pipeline.context.OpinionStudySelection"],
     allow_incomplete: bool,
 ) -> List[str]:

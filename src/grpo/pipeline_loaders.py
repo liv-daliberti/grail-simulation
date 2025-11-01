@@ -107,16 +107,25 @@ def _load_next_video_from_disk(run_dir: Path) -> NextVideoEvaluationResult | Non
         children = [p for p in candidate.glob("*") if p.is_dir()]
         viable: list[tuple[float, Path]] = []
         for child in children:
-            m = child / "metrics.json"
-            p = child / "predictions.jsonl"
-            if m.exists() or p.exists():
-                # Use latest mtime of either artefact as the ranking key
+            child_metrics_path = child / "metrics.json"
+            child_predictions_path = child / "predictions.jsonl"
+            if child_metrics_path.exists() or child_predictions_path.exists():
+                # Use latest mtime of either artifact as the ranking key
                 try:
-                    mt = max(m.stat().st_mtime if m.exists() else 0.0,
-                             p.stat().st_mtime if p.exists() else 0.0)
+                    metrics_mtime = (
+                        child_metrics_path.stat().st_mtime
+                        if child_metrics_path.exists()
+                        else 0.0
+                    )
+                    predictions_mtime = (
+                        child_predictions_path.stat().st_mtime
+                        if child_predictions_path.exists()
+                        else 0.0
+                    )
+                    latest_mtime = max(metrics_mtime, predictions_mtime)
                 except OSError:
-                    mt = 0.0
-                viable.append((mt, child))
+                    latest_mtime = 0.0
+                viable.append((latest_mtime, child))
         if not viable:
             return candidate
         # Pick the newest viable child

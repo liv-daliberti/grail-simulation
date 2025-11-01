@@ -32,11 +32,13 @@ os.environ.setdefault("XDG_CONFIG_HOME", str(_CONFIG))
 os.environ.setdefault("XDG_DATA_HOME", str(_DATA))
 os.environ.setdefault("HF_HOME", str(_CACHE / "huggingface"))
 os.environ.setdefault("HF_HUB_CACHE", str(_CACHE / "huggingface"))
-os.environ.setdefault("TRANSFORMERS_CACHE", str(_CACHE / "huggingface" / "hub"))
 os.environ.setdefault("PYTORCH_HOME", str(_CACHE / "torch"))
 os.environ.setdefault("PIP_CACHE_DIR", str(_CACHE / "pip"))
 os.environ.setdefault("TMPDIR", str(_TMP))
 os.environ.setdefault("PYTHONPYCACHEPREFIX", str(_PYC))
+
+# Ensure deprecated Transformers env is not present to avoid warnings
+os.environ.pop("TRANSFORMERS_CACHE", None)
 
 
 @pytest.fixture(autouse=True)

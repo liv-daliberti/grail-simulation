@@ -397,6 +397,13 @@ GRAIL_REPORTS_DIR="${GRAIL_REPORTS_DIR:-${REPO_ROOT}/reports/grail}"
 GRAIL_LABEL="${GRAIL_REPORT_LABEL:-}"
 process_rlhf_family "GRAIL" "grail.pipeline" "${GRAIL_MODELS_DIR}" "${GRAIL_REPORTS_DIR}" "${GRAIL_LABEL}"
 
+# Aggregate RLHF family reports (combine gun + wage into a single page per family),
+# mirroring GPT-4o's single-report style. Runs after per-scenario refresh so
+# the aggregator can pick up the latest artifacts.
+log "Aggregating RLHF family reports (GRPO/GRAIL) into single pages..."
+"${PYTHON_BIN}" -m common.rlhf.aggregate_family_report --family grpo || log "GRPO aggregation skipped (missing artifacts)"
+"${PYTHON_BIN}" -m common.rlhf.aggregate_family_report --family grail || log "GRAIL aggregation skipped (missing artifacts)"
+
 log "Generating main portfolio comparison report..."
 "${PYTHON_BIN}" - <<'PY'
 from pathlib import Path

@@ -2983,7 +2983,7 @@ attribute interface via properties that forward to <code class="docutils literal
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>base</strong> (<a class="reference internal" href="common.html#common.opinion.BaseOpinionSweepOutcome" title="common.opinion.BaseOpinionSweepOutcome"><em>BaseOpinionSweepOutcome</em></a><em>[</em><a class="reference internal" href="gpt4o.html#gpt4o.pipeline.SweepConfig" title="gpt4o.pipeline.SweepConfig"><em>SweepConfig</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>base</strong> (<a class="reference internal" href="common.html#common.opinion.BaseOpinionSweepOutcome" title="common.opinion.BaseOpinionSweepOutcome"><em>BaseOpinionSweepOutcome</em></a><em>[</em><em>'xgb.pipeline.context.SweepConfig'</em><em>] </em><em>| </em><em>None</em>)</p></li>
 <li><p><strong>r_squared</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
@@ -3599,7 +3599,7 @@ metrics mapping to keep the instance attribute count small.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>order_index</strong> (<em>int</em>)</p></li>
-<li><p><strong>config</strong> (<a class="reference internal" href="gpt4o.html#gpt4o.pipeline.SweepConfig" title="gpt4o.pipeline.SweepConfig"><em>SweepConfig</em></a>)</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="#xgb.pipeline.context.SweepConfig" title="xgb.pipeline.context.SweepConfig"><em>xgb.pipeline.context.SweepConfig</em></a>)</p></li>
 <li><p><strong>metrics_path</strong> (<em>Path</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>metrics</strong> (<em>dict</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>accuracy</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
@@ -3678,13 +3678,13 @@ Returns <code class="docutils literal notranslate"><span class="pre">0.0</span><
 <dl class="py class">
 <dt class="sig sig-object py">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline_context.</span></span><span class="sig-name descname"><span class="pre">SweepTask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_cli</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_cli</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tree_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_participant_studies</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline/context/sweep.html#SweepTask"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">common.opinion.sweep_helpers.ExtrasSweepTask</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">SweepConfig</span></code>]</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">common.opinion.sweep_helpers.ExtrasSweepTask</span></code>[<a class="reference internal" href="#xgb.pipeline.context.SweepConfig" title="xgb.pipeline.context.SweepConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">xgb.pipeline.context.SweepConfig</span></code></a>]</p>
 <p>Extend <code class="xref py py-class docutils literal notranslate"><span class="pre">common.opinion.sweep_types.BaseSweepTask</span></code> with XGBoost metadata.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>index</strong> (<em>int</em>)</p></li>
-<li><p><strong>config</strong> (<a class="reference internal" href="gpt4o.html#gpt4o.pipeline.SweepConfig" title="gpt4o.pipeline.SweepConfig"><em>SweepConfig</em></a>)</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="#xgb.pipeline.context.SweepConfig" title="xgb.pipeline.context.SweepConfig"><em>xgb.pipeline.context.SweepConfig</em></a>)</p></li>
 <li><p><strong>base_cli</strong> (<em>Tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>)</p></li>
 <li><p><strong>extra_cli</strong> (<em>Tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>)</p></li>
 <li><p><strong>run_root</strong> (<em>Path</em>)</p></li>
@@ -4522,7 +4522,7 @@ attribute interface via properties that forward to <code class="docutils literal
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>base</strong> (<a class="reference internal" href="common.html#common.opinion.BaseOpinionSweepOutcome" title="common.opinion.BaseOpinionSweepOutcome"><em>BaseOpinionSweepOutcome</em></a><em>[</em><a class="reference internal" href="#xgb.pipeline.context.SweepConfig" title="xgb.pipeline.context.SweepConfig"><em>SweepConfig</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>base</strong> (<a class="reference internal" href="common.html#common.opinion.BaseOpinionSweepOutcome" title="common.opinion.BaseOpinionSweepOutcome"><em>BaseOpinionSweepOutcome</em></a><em>[</em><em>'xgb.pipeline.context.SweepConfig'</em><em>] </em><em>| </em><em>None</em>)</p></li>
 <li><p><strong>r_squared</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
@@ -5138,7 +5138,7 @@ metrics mapping to keep the instance attribute count small.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>order_index</strong> (<em>int</em>)</p></li>
-<li><p><strong>config</strong> (<a class="reference internal" href="#xgb.pipeline.context.SweepConfig" title="xgb.pipeline.context.SweepConfig"><em>SweepConfig</em></a>)</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="#xgb.pipeline.context.SweepConfig" title="xgb.pipeline.context.SweepConfig"><em>xgb.pipeline.context.SweepConfig</em></a>)</p></li>
 <li><p><strong>metrics_path</strong> (<em>Path</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>metrics</strong> (<em>dict</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>accuracy</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
@@ -5217,13 +5217,13 @@ Returns <code class="docutils literal notranslate"><span class="pre">0.0</span><
 <dl class="py class">
 <dt class="sig sig-object py" id="xgb.pipeline.context.SweepTask">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xgb.pipeline.context.</span></span><span class="sig-name descname"><span class="pre">SweepTask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_cli</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_cli</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tree_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_participant_studies</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xgb/pipeline/context/sweep.html#SweepTask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#xgb.pipeline.context.SweepTask" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">common.opinion.sweep_helpers.ExtrasSweepTask</span></code>[<a class="reference internal" href="#xgb.pipeline.context.SweepConfig" title="xgb.pipeline.context.SweepConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">SweepConfig</span></code></a>]</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">common.opinion.sweep_helpers.ExtrasSweepTask</span></code>[<a class="reference internal" href="#xgb.pipeline.context.SweepConfig" title="xgb.pipeline.context.SweepConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">xgb.pipeline.context.SweepConfig</span></code></a>]</p>
 <p>Extend <code class="xref py py-class docutils literal notranslate"><span class="pre">common.opinion.sweep_types.BaseSweepTask</span></code> with XGBoost metadata.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>index</strong> (<em>int</em>)</p></li>
-<li><p><strong>config</strong> (<a class="reference internal" href="#xgb.pipeline.context.SweepConfig" title="xgb.pipeline.context.SweepConfig"><em>SweepConfig</em></a>)</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="#xgb.pipeline.context.SweepConfig" title="xgb.pipeline.context.SweepConfig"><em>xgb.pipeline.context.SweepConfig</em></a>)</p></li>
 <li><p><strong>base_cli</strong> (<em>Tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>)</p></li>
 <li><p><strong>extra_cli</strong> (<em>Tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>)</p></li>
 <li><p><strong>run_root</strong> (<em>Path</em>)</p></li>
@@ -5480,11 +5480,11 @@ public entry points here to ease the transition to the reorganised package.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>metrics</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em><em>]</em>)</p></li>
-<li><p><strong>outcomes</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="#xgb.pipeline.context.OpinionSweepOutcome" title="xgb.pipeline.context.OpinionSweepOutcome"><em>xgb.pipeline.context.OpinionSweepOutcome</em></a><em>]</em>)</p></li>
-<li><p><strong>selections</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>TypeAliasForwardRef</em><em>(</em><em>'common.pipeline.types.OpinionStudySelection'</em><em>)</em><em>]</em>)</p></li>
+<li><p><strong>outcomes</strong> (<em>Sequence</em><em>[</em><em>'xgb.pipeline.context.OpinionSweepOutcome'</em><em>]</em>)</p></li>
+<li><p><strong>selections</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>'xgb.pipeline.context.OpinionStudySelection'</em><em>]</em>)</p></li>
 <li><p><strong>title</strong> (<em>str</em>)</p></li>
 <li><p><strong>description_lines</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
-<li><p><strong>predictions_root</strong> (<em>pathlib.Path</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>predictions_root</strong> (<em>Path</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>regenerate_plots</strong> (<em>bool</em>)</p></li>
 </ul>
 </dd>
@@ -5501,12 +5501,12 @@ public entry points here to ease the transition to the reorganised package.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="xgb.pipeline_reports.OpinionReportData.outcomes">
-<span class="sig-name descname"><span class="pre">outcomes</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#xgb.pipeline.context.OpinionSweepOutcome" title="xgb.pipeline.context.OpinionSweepOutcome"><span class="pre">xgb.pipeline.context.OpinionSweepOutcome</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">()</span></em><a class="headerlink" href="#xgb.pipeline_reports.OpinionReportData.outcomes" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">outcomes</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'xgb.pipeline.context.OpinionSweepOutcome'</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">()</span></em><a class="headerlink" href="#xgb.pipeline_reports.OpinionReportData.outcomes" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="xgb.pipeline_reports.OpinionReportData.predictions_root">
-<span class="sig-name descname"><span class="pre">predictions_root</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_reports.OpinionReportData.predictions_root" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">predictions_root</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#xgb.pipeline_reports.OpinionReportData.predictions_root" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -5516,7 +5516,7 @@ public entry points here to ease the transition to the reorganised package.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="xgb.pipeline_reports.OpinionReportData.selections">
-<span class="sig-name descname"><span class="pre">selections</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">TypeAliasForwardRef</span><span class="p"><span class="pre">(</span></span><span class="s"><span class="pre">'common.pipeline.types.OpinionStudySelection'</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.pipeline_reports.OpinionReportData.selections" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">selections</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'xgb.pipeline.context.OpinionStudySelection'</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#xgb.pipeline_reports.OpinionReportData.selections" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">

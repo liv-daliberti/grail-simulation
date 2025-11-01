@@ -27,7 +27,7 @@ from typing import List, Optional, Sequence
 from common.visualization.matplotlib import plt
 from common.pipeline.io import write_markdown_lines
 from common.reports.utils import start_markdown_report
-from ..context import OpinionStudySelection, StudySelection
+from ..context import StudySelection
 
 LOGGER = logging.getLogger("xgb.pipeline.reports")
 

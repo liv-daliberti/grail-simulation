@@ -1,2 +1,0 @@
-study,participants,eligible,accuracy_after,baseline_accuracy,accuracy_delta,mae_after,baseline_mae,mae_delta,rmse_after,r2_after,mae_change,rmse_change,rmse_change_delta,calibration_slope,calibration_intercept,calibration_ece,calibration_ece_delta,kl_divergence_change,kl_divergence_delta,dataset,split
-study1,,,,,,,,,,,,,,,,,,,,,

@@ -22,8 +22,6 @@ from pathlib import Path
 from typing import Mapping, Sequence
 
 from ..context import (
-    OpinionStudySelection,
-    OpinionSweepOutcome,
     StudySelection,
     SweepOutcome,
 )
@@ -50,8 +48,11 @@ class OpinionReportData:
     """Bundle describing opinion sweep data and aggregated metrics."""
 
     metrics: Mapping[str, Mapping[str, object]] = field(default_factory=dict)
-    outcomes: Sequence[OpinionSweepOutcome] = ()
-    selections: Mapping[str, "xgb.pipeline.context.OpinionStudySelection"] = field(default_factory=dict)
+    outcomes: Sequence["xgb.pipeline.context.OpinionSweepOutcome"] = ()
+    selections: Mapping[
+        str,
+        "xgb.pipeline.context.OpinionStudySelection",
+    ] = field(default_factory=dict)
     title: str = "XGBoost Opinion Regression"
     description_lines: Sequence[str] | None = None
     predictions_root: Path | None = None

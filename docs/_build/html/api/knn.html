@@ -3995,6 +3995,60 @@ call-sites that assemble simple <code class="docutils literal notranslate"><span
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="knn.pipeline.context.PipelineContext.set_sentence_batch_size">
+<span class="sig-name descname"><span class="pre">set_sentence_batch_size</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/pipeline/context_pipeline.html#PipelineContext.set_sentence_batch_size"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.pipeline.context.PipelineContext.set_sentence_batch_size" title="Link to this definition">¶</a></dt>
+<dd><p>Set the SentenceTransformer batch size.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>int</em>) – New batch size.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="knn.pipeline.context.PipelineContext.set_sentence_device">
+<span class="sig-name descname"><span class="pre">set_sentence_device</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/pipeline/context_pipeline.html#PipelineContext.set_sentence_device"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.pipeline.context.PipelineContext.set_sentence_device" title="Link to this definition">¶</a></dt>
+<dd><p>Set the SentenceTransformer device.</p>
+<p>This method safely updates the internal model defaults using
+<code class="docutils literal notranslate"><span class="pre">object.__setattr__</span></code> via the property’s setter, preserving the
+frozen dataclass guarantees for other attributes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>str</em><em> | </em><em>None</em>) – Device identifier (e.g., <code class="docutils literal notranslate"><span class="pre">&quot;cuda&quot;</span></code>) or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="knn.pipeline.context.PipelineContext.set_sentence_normalize">
+<span class="sig-name descname"><span class="pre">set_sentence_normalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/pipeline/context_pipeline.html#PipelineContext.set_sentence_normalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.pipeline.context.PipelineContext.set_sentence_normalize" title="Link to this definition">¶</a></dt>
+<dd><p>Enable or disable L2-normalization for SentenceTransformer embeddings.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>bool</em>) – Normalization flag.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py attribute">
 <dt class="sig sig-object py" id="knn.pipeline.context.PipelineContext.study_tokens">
 <span class="sig-name descname"><span class="pre">study_tokens</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#knn.pipeline.context.PipelineContext.study_tokens" title="Link to this definition">¶</a></dt>
@@ -7339,6 +7393,9 @@ pre-refactor invocations.</p></li>
 <li><a class="reference internal" href="#knn.pipeline.context.PipelineContext.sentence_batch_size"><code class="docutils literal notranslate"><span class="pre">PipelineContext.sentence_batch_size</span></code></a></li>
 <li><a class="reference internal" href="#knn.pipeline.context.PipelineContext.sentence_device"><code class="docutils literal notranslate"><span class="pre">PipelineContext.sentence_device</span></code></a></li>
 <li><a class="reference internal" href="#knn.pipeline.context.PipelineContext.sentence_normalize"><code class="docutils literal notranslate"><span class="pre">PipelineContext.sentence_normalize</span></code></a></li>
+<li><a class="reference internal" href="#knn.pipeline.context.PipelineContext.set_sentence_batch_size"><code class="docutils literal notranslate"><span class="pre">PipelineContext.set_sentence_batch_size()</span></code></a></li>
+<li><a class="reference internal" href="#knn.pipeline.context.PipelineContext.set_sentence_device"><code class="docutils literal notranslate"><span class="pre">PipelineContext.set_sentence_device()</span></code></a></li>
+<li><a class="reference internal" href="#knn.pipeline.context.PipelineContext.set_sentence_normalize"><code class="docutils literal notranslate"><span class="pre">PipelineContext.set_sentence_normalize()</span></code></a></li>
 <li><a class="reference internal" href="#knn.pipeline.context.PipelineContext.study_tokens"><code class="docutils literal notranslate"><span class="pre">PipelineContext.study_tokens</span></code></a></li>
 </ul>
 </li>

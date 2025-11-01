@@ -28,7 +28,11 @@ LOG_DIR=${LOG_DIR_OVERRIDE:-${LOG_DIR:-"$ROOT_DIR/logs/grail_eval/wage"}}
 export LOG_DIR
 RUN_LABEL=${RUN_LABEL:-grail-wage-checkpoint-50}
 MODEL_PATH=${MODEL_PATH:-"$ROOT_DIR/models/grail/wage/checkpoint-50"}
+# Evaluate wage model on the wage validation split only
 DATASET=${DATASET:-"$ROOT_DIR/data/cleaned_grail/minimum_wage"}
+# Default report location and label per model
+REPORTS_SUBDIR=${REPORTS_SUBDIR:-grail-wage}
+BASELINE_LABEL=${BASELINE_LABEL:-"GRAIL (Wage)"}
 SPLIT=${SPLIT:-validation}
 OUT_DIR=${OUT_DIR:-"$MODEL_PATH"}
 STAGE=${STAGE:-evaluate}
@@ -85,6 +89,8 @@ srun --ntasks=1 --gres=gpu:1 --cpus-per-task=8 python -u -m grail.pipeline \
   --label "$RUN_LABEL" \
   --out-dir "$OUT_DIR" \
   --stage "$STAGE" \
+  --reports-subdir "$REPORTS_SUBDIR" \
+  --baseline-label "$BASELINE_LABEL" \
   --log-level "$LOG_LEVEL" \
   "${EXTRA_ARGS[@]}" \
   "$@"

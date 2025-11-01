@@ -28,13 +28,20 @@ LOG_DIR=${LOG_DIR_OVERRIDE:-${LOG_DIR:-"$ROOT_DIR/logs/grpo_eval/gun"}}
 export LOG_DIR
 RUN_LABEL=${RUN_LABEL:-grpo-gun-checkpoint-50}
 MODEL_PATH=${MODEL_PATH:-"$ROOT_DIR/models/grpo/gun/checkpoint-50"}
-DATASET=${DATASET:-"$ROOT_DIR/data/cleaned_grail"}
+# Evaluate gun model on the gun validation split only
+DATASET=${DATASET:-"$ROOT_DIR/data/cleaned_grail/gun_control"}
 SPLIT=${SPLIT:-validation}
 OUT_DIR=${OUT_DIR:-"$MODEL_PATH"}
 STAGE=${STAGE:-evaluate}
 LOG_LEVEL=${LOG_LEVEL:-INFO}
+# Restrict to the gun issue by default
 ISSUES=${ISSUES:-gun_control}
+# Default report location and label per model
+REPORTS_SUBDIR=${REPORTS_SUBDIR:-grpo-gun}
+BASELINE_LABEL=${BASELINE_LABEL:-"GRPO (Gun)"}
 
+# Do not force stage/label here; override via environment when needed, e.g.:
+#   STAGE=full RUN_LABEL=grpo-gun-checkpoint-50 scripts/evaluate-grpo-gun.sh
 mkdir -p "$LOG_DIR"
 
 export PYTHONUNBUFFERED=${PYTHONUNBUFFERED:-1}
@@ -66,7 +73,6 @@ export TMPDIR=${TMPDIR:-"$ROOT_DIR/.tmp"}
 export HF_HOME=${HF_HOME:-"$ROOT_DIR/.hf_cache"}
 export HF_HUB_CACHE=${HF_HUB_CACHE:-"$ROOT_DIR/.cache/huggingface/transformers"}
 export HF_DATASETS_CACHE=${HF_DATASETS_CACHE:-"$ROOT_DIR/.cache/huggingface/datasets"}
-export TRANSFORMERS_CACHE=${TRANSFORMERS_CACHE:-"$HF_HUB_CACHE"}
 export TORCH_HOME=${TORCH_HOME:-"$XDG_CACHE_HOME/torch"}
 export TRITON_CACHE_DIR=${TRITON_CACHE_DIR:-"$ROOT_DIR/.triton"}
 export VLLM_CONFIG_ROOT=${VLLM_CONFIG_ROOT:-"$XDG_CONFIG_HOME/vllm"}
@@ -87,6 +93,7 @@ EXTRA_ARGS=()
 [[ -n "${TEMPERATURE:-}" ]] && EXTRA_ARGS+=(--temperature "$TEMPERATURE")
 [[ -n "${TOP_P:-}" ]] && EXTRA_ARGS+=(--top-p "$TOP_P")
 [[ -n "${MAX_NEW_TOKENS:-}" ]] && EXTRA_ARGS+=(--max-new-tokens "$MAX_NEW_TOKENS")
+[[ -n "${FLUSH_INTERVAL:-}" ]] && EXTRA_ARGS+=(--flush-interval "$FLUSH_INTERVAL")
 [[ -n "${EVAL_MAX:-}" ]] && EXTRA_ARGS+=(--eval-max "$EVAL_MAX")
 [[ -n "${STUDIES:-}" ]] && EXTRA_ARGS+=(--studies "$STUDIES")
 [[ -n "${OPINION_STUDIES:-}" ]] && EXTRA_ARGS+=(--opinion-studies "$OPINION_STUDIES")
@@ -108,6 +115,9 @@ srun --ntasks=1 --gres=gpu:1 --cpus-per-task=8 python -u -m grpo.pipeline \
   --label "$RUN_LABEL" \
   --out-dir "$OUT_DIR" \
   --stage "$STAGE" \
+  --reports-subdir "$REPORTS_SUBDIR" \
+  --baseline-label "$BASELINE_LABEL" \
   --log-level "$LOG_LEVEL" \
   "${EXTRA_ARGS[@]}" \
   "$@"
+

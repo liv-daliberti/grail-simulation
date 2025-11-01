@@ -333,17 +333,17 @@ def _prepare_opinion_sweep_tasks(
     configs: Sequence["xgb.pipeline.context.SweepConfig"],
     context: OpinionSweepRunContext,
     reuse_existing: bool,
-) -> Tuple[List[OpinionSweepTask], List[OpinionSweepOutcome]]:
+) -> Tuple[List[OpinionSweepTask], List["xgb.pipeline.context.OpinionSweepOutcome"]]:
     """Return pending opinion sweep tasks and cached outcomes."""
 
     pending: List[OpinionSweepTask] = []
-    cached: List[OpinionSweepOutcome] = []
+    cached: List["xgb.pipeline.context.OpinionSweepOutcome"] = []
     load_metrics = cast(
         Callable[[Path], Mapping[str, object]],
         get_sweeps_attr("_load_metrics"),
     )
     outcome_factory = cast(
-        Callable[[OpinionSweepTask, Mapping[str, object], Path], OpinionSweepOutcome],
+        Callable[[OpinionSweepTask, Mapping[str, object], Path], "xgb.pipeline.context.OpinionSweepOutcome"],
         get_sweeps_attr("_opinion_sweep_outcome_from_metrics"),
     )
     for task in _iter_opinion_sweep_tasks(
@@ -368,8 +368,8 @@ def _prepare_opinion_sweep_tasks(
 
 
 _merge_opinion_sweep_outcomes: Callable[
-    [Sequence[OpinionSweepOutcome], Sequence[OpinionSweepOutcome]],
-    List[OpinionSweepOutcome],
+    [Sequence["xgb.pipeline.context.OpinionSweepOutcome"], Sequence["xgb.pipeline.context.OpinionSweepOutcome"]],
+    List["xgb.pipeline.context.OpinionSweepOutcome"],
 ] = build_merge_sweep_outcomes(
     duplicate_message=(
         "Duplicate opinion sweep outcome for index=%d; replacing cached result."
@@ -381,7 +381,7 @@ _merge_opinion_sweep_outcomes: Callable[
 )
 
 
-def _execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
+def _execute_opinion_sweep_task(task: OpinionSweepTask) -> "xgb.pipeline.context.OpinionSweepOutcome":
     """
     Execute a single opinion sweep task and return the resulting metrics.
 
@@ -397,7 +397,7 @@ def _execute_opinion_sweep_task(task: OpinionSweepTask) -> OpinionSweepOutcome:
         get_sweeps_attr("_load_metrics_with_log"),
     )
     outcome_factory = cast(
-        Callable[[OpinionSweepTask, Mapping[str, object], Path], OpinionSweepOutcome],
+        Callable[[OpinionSweepTask, Mapping[str, object], Path], "xgb.pipeline.context.OpinionSweepOutcome"],
         get_sweeps_attr("_opinion_sweep_outcome_from_metrics"),
     )
     args = dict(task.request_args)
@@ -449,7 +449,7 @@ def _execute_opinion_sweep_tasks(
     tasks: Sequence[OpinionSweepTask],
     *,
     jobs: int,
-) -> List[OpinionSweepOutcome]:
+) -> List["xgb.pipeline.context.OpinionSweepOutcome"]:
     """
     Execute opinion sweep tasks, optionally in parallel.
 
@@ -567,7 +567,7 @@ def _load_opinion_from_next_metrics_from_disk(
 
 
 def _select_best_opinion_configs(
-    outcomes: Sequence[OpinionSweepOutcome],
+    outcomes: Sequence["xgb.pipeline.context.OpinionSweepOutcome"],
 ) -> Dict[str, "xgb.pipeline.context.OpinionStudySelection"]:
     """
     Pick the best opinion configuration per study prioritising MAE, RMSE, then R².

@@ -459,4 +459,7 @@ nitpicky = os.environ.get("SPHINX_NITPICKY", "").lower() in {"1", "true", "yes"}
 # These are informational and should not fail the docs build.
 suppress_warnings = [
     "myst.xref_missing",
+    # Many report images are generated artifacts and may be absent in clean
+    # checkouts; avoid noisy warnings when they are not present.
+    "image.not_readable",
 ]

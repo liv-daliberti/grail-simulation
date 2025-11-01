@@ -99,14 +99,20 @@ def _run_evaluations(
                 studies=_comma_separated(args.studies),
             ),
         )
-        run_dir = context.next_video_run_dir
-        run_dir.mkdir(parents=True, exist_ok=True)
+        # Avoid duplicating the label in the output path. The evaluation helper
+        # expects a base directory (e.g. .../next_video) and will create a
+        # subdirectory using `config_label`. Previously we passed
+        # `context.next_video_run_dir` (which already includes the label),
+        # resulting in nested paths like .../next_video/<label>/<label>.
+        # Use the stage root instead so outputs land in .../next_video/<label>.
+        base_dir = context.next_video_root
+        base_dir.mkdir(parents=True, exist_ok=True)
         results.next_video = run_next_video_evaluation(
             tokenizer=tokenizer,
             model=model,
             settings=settings,
             config_label=context.label,
-            out_dir=run_dir,
+            out_dir=base_dir,
         )
         _status("Next-video evaluation finished in %.2fs", time.perf_counter() - stage_start)
 

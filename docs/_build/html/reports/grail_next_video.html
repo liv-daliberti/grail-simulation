@@ -236,12 +236,20 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="prompt_builder.html">Prompt Builder Sample Prompts</a></li>
-<li class="toctree-l2"><a class="reference internal" href="knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l2"><a class="reference internal" href="knn_opinion.html">KNN Opinion Regression</a></li>
-<li class="toctree-l2"><a class="reference internal" href="knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
-<li class="toctree-l2"><a class="reference internal" href="knn_opinion_from_next.html">KNN Opinion Regression (Next-Video Config)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="knn_additional_features.html">KNN Additional Features</a></li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="xgb.html">XGBoost Report Catalog</a><input aria-label="Toggle navigation of XGBoost Report Catalog" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_next_video.html#id1">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_opinion_from_next.html">KNN Opinion Regression (Next-Video Config)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_opinion_from_next.html#knn-opinion-shift-study-next-video-config">KNN Opinion Shift Study (Next-Video Config)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_additional_features.html">KNN Additional Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_additional_features.html#additional-text-features">Additional Text Features</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="xgb.html">XGBoost Report Catalog</a><input aria-label="Toggle navigation of XGBoost Report Catalog" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="xgb_next_video.html">XGBoost Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="xgb_next_video.html#id1">XGBoost Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="xgb_opinion.html">XGBoost Opinion Regression</a></li>
@@ -300,9 +308,9 @@
           <section id="grail-next-video-baseline">
 <h1>GRAIL Next-Video Baseline<a class="headerlink" href="#grail-next-video-baseline" title="Link to this heading">¶</a></h1>
 <ul class="simple">
-<li><p><strong>Overall accuracy:</strong> 0.472 on 375 eligible slates out of 375 processed.</p></li>
-<li><p><strong>Parsed rate:</strong> 0.997</p></li>
-<li><p><strong>Formatted rate:</strong> 0.997</p></li>
+<li><p><strong>Overall accuracy:</strong> 0.437 on 1,871 eligible slates out of 1,871 processed.</p></li>
+<li><p><strong>Parsed rate:</strong> 0.995</p></li>
+<li><p><strong>Formatted rate:</strong> 0.995</p></li>
 </ul>
 <section id="accuracy-by-issue">
 <h2>Accuracy by Issue<a class="headerlink" href="#accuracy-by-issue" title="Link to this heading">¶</a></h2>
@@ -319,11 +327,11 @@
 </thead>
 <tbody>
 <tr class="row-even"><td><p>minimum_wage</p></td>
-<td class="text-right"><p>375</p></td>
-<td class="text-right"><p>375</p></td>
-<td class="text-right"><p>0.472</p></td>
-<td class="text-right"><p>0.997</p></td>
-<td class="text-right"><p>0.997</p></td>
+<td class="text-right"><p>1,871</p></td>
+<td class="text-right"><p>1,871</p></td>
+<td class="text-right"><p>0.437</p></td>
+<td class="text-right"><p>0.995</p></td>
+<td class="text-right"><p>0.995</p></td>
 </tr>
 </tbody>
 </table>
@@ -344,18 +352,18 @@
 </thead>
 <tbody>
 <tr class="row-even"><td><p>study2</p></td>
-<td class="text-right"><p>132</p></td>
-<td class="text-right"><p>132</p></td>
-<td class="text-right"><p>0.447</p></td>
-<td class="text-right"><p>0.992</p></td>
-<td class="text-right"><p>0.992</p></td>
+<td class="text-right"><p>671</p></td>
+<td class="text-right"><p>671</p></td>
+<td class="text-right"><p>0.362</p></td>
+<td class="text-right"><p>0.988</p></td>
+<td class="text-right"><p>0.988</p></td>
 </tr>
 <tr class="row-odd"><td><p>study3</p></td>
-<td class="text-right"><p>243</p></td>
-<td class="text-right"><p>243</p></td>
-<td class="text-right"><p>0.486</p></td>
-<td class="text-right"><p>1.000</p></td>
-<td class="text-right"><p>1.000</p></td>
+<td class="text-right"><p>1,200</p></td>
+<td class="text-right"><p>1,200</p></td>
+<td class="text-right"><p>0.479</p></td>
+<td class="text-right"><p>0.999</p></td>
+<td class="text-right"><p>0.999</p></td>
 </tr>
 </tbody>
 </table>

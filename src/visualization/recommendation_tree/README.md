@@ -13,8 +13,8 @@ package underpins the CLI documented in `src/visualization/README.md`.
 - `render.py` – Graphviz-based renderer that turns the structured models into
   SVG/PNG/PDF outputs.
 - `cli.py` – command-line entry point for batch rendering (invoked via
-  `python -m src.visualization.recommendation_tree.cli` or indirectly through
-  `recommendation_tree_viz.py`).
+  `python -m visualization.recommendation_tree.cli` with `PYTHONPATH=src`, or
+  indirectly through `recommendation_tree_viz.py`).
 - `__init__.py` – exports the public helpers.
 
 Extend `models.py` and `render.py` when introducing new visual annotations so

@@ -1,0 +1,1205 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Open-R1 Training API" href="open_r1.html"><link rel="prev" title="Common Utilities API" href="common.html">
+
+    <!-- Generated with Sphinx 7.4.7 and Furo 2025.09.25 -->
+        <title>Prompt Builder API - GRAIL Simulation documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=580074bf" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  --color-brand-primary: #1f4b8e;
+  --color-brand-content: #1f4b8e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #8bbcef;
+  --color-brand-content: #8bbcef;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #8bbcef;
+  --color-brand-content: #8bbcef;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">GRAIL Simulation  documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  
+  <span class="sidebar-brand-text">GRAIL Simulation  documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="clean_data.html">Clean Data Pipeline</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="knn.html">KNN Baseline API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xgb.html">XGBoost Baseline API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gpt4o.html">GPT-4o Tools API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="grail.html">GRAIL Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="grpo.html">GRPO Pipeline API</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="common.html">Common Utilities API</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Prompt Builder API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="open_r1.html">Open-R1 Training API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rlhf.html">Shared RLHF Helpers</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="visualization.html">Visualization Utilities</a></li>
+</ul>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../reports/index.html">Reports</a><input aria-label="Toggle navigation of Reports" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../reports/prompt_stats.html">Prompt feature report</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../reports/grpo.html">GRPO Reports</a><input aria-label="Toggle navigation of GRPO Reports" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reports/grpo_sample_generative_responses.html">GRPO Sample Generative Model Responses</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../reports/grail.html">GRAIL Reports</a><input aria-label="Toggle navigation of GRAIL Reports" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reports/grail_next_video.html">GRAIL Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/grail_opinion.html">GRAIL Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/grail_sample_generative_responses.html">GRAIL Sample Generative Model Responses</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../reports/gpt4o.html">GPT-4o Report Catalog</a><input aria-label="Toggle navigation of GPT-4o Report Catalog" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reports/gpt4o_next_video.html">GPT-4o Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/gpt4o_opinion.html">GPT-4o Opinion Shift</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/gpt4o_hyperparameter_tuning.html">GPT-4o Hyper-parameter Sweep</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/gpt4o_sample_generative_responses.html">GPT-4o Sample Generative Model Responses</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_next_video.html#id1">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion_from_next.html">KNN Opinion Regression (Next-Video Config)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion_from_next.html#knn-opinion-shift-study-next-video-config">KNN Opinion Shift Study (Next-Video Config)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_additional_features.html">KNN Additional Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/knn_additional_features.html#additional-text-features">Additional Text Features</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../reports/xgb.html">XGBoost Report Catalog</a><input aria-label="Toggle navigation of XGBoost Report Catalog" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reports/xgb_next_video.html">XGBoost Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/xgb_next_video.html#id1">XGBoost Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/xgb_opinion.html">XGBoost Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/xgb_opinion.html#id1">XGBoost Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/xgb_opinion_from_next.html">XGBoost Opinion (Next-Video Config)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/xgb_opinion_from_next.html#xgboost-opinion-regression-next-video-config">XGBoost Opinion Regression (Next-Video Config)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/xgb_hyperparameter_tuning.html">XGBoost Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/xgb_hyperparameter_tuning.html#hyper-parameter-tuning">Hyper-parameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/xgb_additional_features.html">XGBoost Additional Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/xgb_additional_features.html#additional-text-features">Additional Text Features</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../reports/main.html">Portfolio Comparison (Main)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reports/research_article_political_sciences.html">RESEARCH ARTICLE POLITICAL SCIENCES</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reports/visualized_recommendation_trees.html">Visualized Recommendation Trees</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/api/prompt_builder.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="prompt-builder-api">
+<h1>Prompt Builder API<a class="headerlink" href="#prompt-builder-api" title="Link to this heading">¶</a></h1>
+<p>The <a class="reference internal" href="#module-prompt_builder" title="prompt_builder"><code class="xref py py-mod docutils literal notranslate"><span class="pre">prompt_builder</span></code></a> package provides utilities for rendering rich
+viewer profiles and assembling user prompts from the cleaned GRAIL
+dataset rows. The following pages document the public interfaces exposed
+by each module.</p>
+<p id="module-prompt_builder">Public exports for the prompt-builder utilities package.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="prompt_builder.PromptSample">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">prompt_builder.</span></span><span class="sig-name descname"><span class="pre">PromptSample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">participant_study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">participant_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prompt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/samples.html#PromptSample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.PromptSample" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Container capturing a rendered prompt with associated metadata.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>issue</strong> (<em>str</em>) – Issue label that the prompt pertains to.</p></li>
+<li><p><strong>participant_study</strong> (<em>str</em><em> | </em><em>None</em>) – Study identifier when available.</p></li>
+<li><p><strong>participant_id</strong> (<em>str</em><em> | </em><em>None</em>) – Participant identifier or <code class="docutils literal notranslate"><span class="pre">None</span></code> when omitted.</p></li>
+<li><p><strong>split</strong> (<em>str</em>) – Dataset split name (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;train&quot;</span></code>).</p></li>
+<li><p><strong>prompt</strong> (<em>str</em>) – Rendered prompt text.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>issue</strong> (<em>str</em>)</p></li>
+<li><p><strong>participant_study</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>participant_id</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>split</strong> (<em>str</em>)</p></li>
+<li><p><strong>prompt</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="prompt_builder.PromptSample.issue">
+<span class="sig-name descname"><span class="pre">issue</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#prompt_builder.PromptSample.issue" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="prompt_builder.PromptSample.participant_id">
+<span class="sig-name descname"><span class="pre">participant_id</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#prompt_builder.PromptSample.participant_id" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="prompt_builder.PromptSample.participant_study">
+<span class="sig-name descname"><span class="pre">participant_study</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#prompt_builder.PromptSample.participant_study" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="prompt_builder.PromptSample.prompt">
+<span class="sig-name descname"><span class="pre">prompt</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#prompt_builder.PromptSample.prompt" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="prompt_builder.PromptSample.split">
+<span class="sig-name descname"><span class="pre">split</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#prompt_builder.PromptSample.split" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.as_list_json">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.</span></span><span class="sig-name descname"><span class="pre">as_list_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'[]'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/parsers.html#as_list_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.as_list_json" title="Link to this definition">¶</a></dt>
+<dd><p>Convert <code class="docutils literal notranslate"><span class="pre">source</span></code> into a Python list, accepting JSON strings and Arrow arrays.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>source</strong> (<em>Any</em>) – Value that may already be a list or serialised representation.</p></li>
+<li><p><strong>default</strong> (<em>str</em>) – Fallback JSON array used when <code class="docutils literal notranslate"><span class="pre">source</span></code> is empty.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Parsed list representation, or an empty list when conversion fails.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[Any]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.build_user_prompt">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.</span></span><span class="sig-name descname"><span class="pre">build_user_prompt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ex</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_hist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">12</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/prompt.html#build_user_prompt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.build_user_prompt" title="Link to this definition">¶</a></dt>
+<dd><p>Assemble the user prompt used for recommendation tasks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ex</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Cleaned interaction row with profile, history, and slate fields.</p></li>
+<li><p><strong>max_hist</strong> (<em>int</em>) – Maximum number of prior videos to include in the history section.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Natural-language prompt describing the viewer, viewing context, and options.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.clean_text">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.</span></span><span class="sig-name descname"><span class="pre">clean_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/formatters.html#clean_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.clean_text" title="Link to this definition">¶</a></dt>
+<dd><p>Convert <code class="docutils literal notranslate"><span class="pre">value</span></code> to normalised text, collapsing list-like inputs when present.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>value</strong> (<em>Any</em>) – Arbitrary value to format as human-friendly text.</p></li>
+<li><p><strong>limit</strong> (<em>int</em><em>, </em><em>optional</em>) – Optional character limit applied after normalisation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Cleaned string representation or an empty string when nothing meaningful remains.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.generate_prompt_samples">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.</span></span><span class="sig-name descname"><span class="pre">generate_prompt_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issues</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_per_issue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_history</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/samples.html#generate_prompt_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.generate_prompt_samples" title="Link to this definition">¶</a></dt>
+<dd><p>Load prompts for the requested <code class="docutils literal notranslate"><span class="pre">issues</span></code> from <code class="docutils literal notranslate"><span class="pre">dataset_path</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset_path</strong> (<em>str</em>) – Location of the cleaned dataset (Hugging Face format).</p></li>
+<li><p><strong>issues</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Iterable of issue labels to sample.</p></li>
+<li><p><strong>max_per_issue</strong> (<em>int</em>) – Number of prompts to collect per issue.</p></li>
+<li><p><strong>max_history</strong> (<em>int</em>) – History length passed to <a class="reference internal" href="#prompt_builder.prompt.build_user_prompt" title="prompt_builder.prompt.build_user_prompt"><code class="xref py py-func docutils literal notranslate"><span class="pre">prompt_builder.prompt.build_user_prompt()</span></code></a>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of <a class="reference internal" href="#prompt_builder.PromptSample" title="prompt_builder.PromptSample"><code class="xref py py-class docutils literal notranslate"><span class="pre">PromptSample</span></code></a> instances.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[<a class="reference internal" href="#prompt_builder.PromptSample" title="prompt_builder.PromptSample">PromptSample</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.is_nanlike">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.</span></span><span class="sig-name descname"><span class="pre">is_nanlike</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/parsers.html#is_nanlike"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.is_nanlike" title="Link to this definition">¶</a></dt>
+<dd><p>Determine whether <code class="docutils literal notranslate"><span class="pre">value</span></code> should be treated as a missing entry.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>Any</em>) – Candidate value that may represent <code class="docutils literal notranslate"><span class="pre">NaN</span></code> or null-ish text.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> when the value is considered missing, <code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.render_profile">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.</span></span><span class="sig-name descname"><span class="pre">render_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ex</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/profiles/render.html#render_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.render_profile" title="Link to this definition">¶</a></dt>
+<dd><p>Compose profile sentences describing the viewer associated with <code class="docutils literal notranslate"><span class="pre">ex</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ex</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Data row that may contain inline or nested survey information.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Structured profile output including sentences and placeholder state.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#prompt_builder.profiles.ProfileRender" title="prompt_builder.profiles.ProfileRender">ProfileRender</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.secs">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.</span></span><span class="sig-name descname"><span class="pre">secs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/parsers.html#secs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.secs" title="Link to this definition">¶</a></dt>
+<dd><p>Format <code class="docutils literal notranslate"><span class="pre">value</span></code> as an integer number of seconds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>Any</em>) – Duration-like value (numeric or string).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Seconds expressed as <code class="docutils literal notranslate"><span class="pre">&quot;&lt;int&gt;s&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;?&quot;</span></code> when parsing fails.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.synthesize_viewer_sentence">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.</span></span><span class="sig-name descname"><span class="pre">synthesize_viewer_sentence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ex</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/profiles/render.html#synthesize_viewer_sentence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.synthesize_viewer_sentence" title="Link to this definition">¶</a></dt>
+<dd><p>Generate a fallback viewer description when an explicit profile is absent.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ex</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Data row containing demographic and behavioural fields.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Concise description synthesised from available attributes.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.truthy">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.</span></span><span class="sig-name descname"><span class="pre">truthy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/parsers.html#truthy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.truthy" title="Link to this definition">¶</a></dt>
+<dd><p>Interpret common boolean representations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>Any</em>) – Input that may encode boolean information.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> or <code class="docutils literal notranslate"><span class="pre">False</span></code> when recognised, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[bool]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.write_samples_markdown">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.</span></span><span class="sig-name descname"><span class="pre">write_samples_markdown</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/samples.html#write_samples_markdown"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.write_samples_markdown" title="Link to this definition">¶</a></dt>
+<dd><p>Write <code class="docutils literal notranslate"><span class="pre">samples</span></code> to <code class="docutils literal notranslate"><span class="pre">output_path</span></code> in a readable Markdown layout.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>samples</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="#prompt_builder.PromptSample" title="prompt_builder.PromptSample"><em>PromptSample</em></a><em>]</em>) – Iterable of prompt samples to render.</p></li>
+<li><p><strong>output_path</strong> (<em>str</em>) – Destination Markdown file.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Path to the written Markdown file.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Path</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-prompt_builder.constants">Shared constants for rendering viewer profiles and prompts.</p>
+<p id="module-prompt_builder.parsers">Parsing helpers shared by the prompt_builder package.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.parsers.as_list_json">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.parsers.</span></span><span class="sig-name descname"><span class="pre">as_list_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'[]'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/parsers.html#as_list_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.parsers.as_list_json" title="Link to this definition">¶</a></dt>
+<dd><p>Convert <code class="docutils literal notranslate"><span class="pre">source</span></code> into a Python list, accepting JSON strings and Arrow arrays.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>source</strong> (<em>Any</em>) – Value that may already be a list or serialised representation.</p></li>
+<li><p><strong>default</strong> (<em>str</em>) – Fallback JSON array used when <code class="docutils literal notranslate"><span class="pre">source</span></code> is empty.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Parsed list representation, or an empty list when conversion fails.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[Any]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.parsers.format_age">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.parsers.</span></span><span class="sig-name descname"><span class="pre">format_age</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/parsers.html#format_age"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.parsers.format_age" title="Link to this definition">¶</a></dt>
+<dd><p>Normalise age-related text into a canonical string representation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>Any</em>) – Age value supplied as text or numeric.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Cleaned age string, or <code class="docutils literal notranslate"><span class="pre">None</span></code> when the age cannot be inferred.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.parsers.format_count">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.parsers.</span></span><span class="sig-name descname"><span class="pre">format_count</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/parsers.html#format_count"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.parsers.format_count" title="Link to this definition">¶</a></dt>
+<dd><p>Present <code class="docutils literal notranslate"><span class="pre">value</span></code> as a human-readable count with thousands separators.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>Any</em>) – Numeric or textual count.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Formatted count string, or <code class="docutils literal notranslate"><span class="pre">None</span></code> for missing/invalid input.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.parsers.format_yes_no">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.parsers.</span></span><span class="sig-name descname"><span class="pre">format_yes_no</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'yes'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'no'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/parsers.html#format_yes_no"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.parsers.format_yes_no" title="Link to this definition">¶</a></dt>
+<dd><p>Render <code class="docutils literal notranslate"><span class="pre">value</span></code> as a <code class="docutils literal notranslate"><span class="pre">yes</span></code>/<code class="docutils literal notranslate"><span class="pre">no</span></code> string when a boolean marker is present.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>value</strong> (<em>Any</em>) – Input that may encode a boolean concept.</p></li>
+<li><p><strong>yes</strong> (<em>str</em>) – Text to return when <code class="docutils literal notranslate"><span class="pre">value</span></code> evaluates to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+<li><p><strong>no</strong> (<em>str</em>) – Text to return when <code class="docutils literal notranslate"><span class="pre">value</span></code> evaluates to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">yes</span></code> or <code class="docutils literal notranslate"><span class="pre">no</span></code> strings, or <code class="docutils literal notranslate"><span class="pre">None</span></code> when the value is indeterminate.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.parsers.is_nanlike">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.parsers.</span></span><span class="sig-name descname"><span class="pre">is_nanlike</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/parsers.html#is_nanlike"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.parsers.is_nanlike" title="Link to this definition">¶</a></dt>
+<dd><p>Determine whether <code class="docutils literal notranslate"><span class="pre">value</span></code> should be treated as a missing entry.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>Any</em>) – Candidate value that may represent <code class="docutils literal notranslate"><span class="pre">NaN</span></code> or null-ish text.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> when the value is considered missing, <code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.parsers.secs">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.parsers.</span></span><span class="sig-name descname"><span class="pre">secs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/parsers.html#secs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.parsers.secs" title="Link to this definition">¶</a></dt>
+<dd><p>Format <code class="docutils literal notranslate"><span class="pre">value</span></code> as an integer number of seconds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>Any</em>) – Duration-like value (numeric or string).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Seconds expressed as <code class="docutils literal notranslate"><span class="pre">&quot;&lt;int&gt;s&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;?&quot;</span></code> when parsing fails.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.parsers.truthy">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.parsers.</span></span><span class="sig-name descname"><span class="pre">truthy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/parsers.html#truthy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.parsers.truthy" title="Link to this definition">¶</a></dt>
+<dd><p>Interpret common boolean representations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>Any</em>) – Input that may encode boolean information.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> or <code class="docutils literal notranslate"><span class="pre">False</span></code> when recognised, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[bool]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-prompt_builder.formatters">String formatting helpers used while rendering viewer prompts.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.formatters.clean_text">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.formatters.</span></span><span class="sig-name descname"><span class="pre">clean_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/formatters.html#clean_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.formatters.clean_text" title="Link to this definition">¶</a></dt>
+<dd><p>Convert <code class="docutils literal notranslate"><span class="pre">value</span></code> to normalised text, collapsing list-like inputs when present.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>value</strong> (<em>Any</em>) – Arbitrary value to format as human-friendly text.</p></li>
+<li><p><strong>limit</strong> (<em>int</em><em>, </em><em>optional</em>) – Optional character limit applied after normalisation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Cleaned string representation or an empty string when nothing meaningful remains.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.formatters.describe_age_fragment">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.formatters.</span></span><span class="sig-name descname"><span class="pre">describe_age_fragment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/formatters.html#describe_age_fragment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.formatters.describe_age_fragment" title="Link to this definition">¶</a></dt>
+<dd><p>Produce a natural-language age fragment derived from <code class="docutils literal notranslate"><span class="pre">value</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>Any</em>) – Raw age input as text or numeric data.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Age description suitable for insertion into a sentence, or <code class="docutils literal notranslate"><span class="pre">None</span></code> when unknown.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.formatters.describe_gender_fragment">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.formatters.</span></span><span class="sig-name descname"><span class="pre">describe_gender_fragment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/formatters.html#describe_gender_fragment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.formatters.describe_gender_fragment" title="Link to this definition">¶</a></dt>
+<dd><p>Produce a normalised gender fragment derived from <code class="docutils literal notranslate"><span class="pre">value</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>Any</em>) – Raw gender input as text or coded data.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Gender description ready for sentence use, or <code class="docutils literal notranslate"><span class="pre">None</span></code> when unknown.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.formatters.human_join">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.formatters.</span></span><span class="sig-name descname"><span class="pre">human_join</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/formatters.html#human_join"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.formatters.human_join" title="Link to this definition">¶</a></dt>
+<dd><p>Join <code class="docutils literal notranslate"><span class="pre">parts</span></code> into a grammatically friendly string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parts</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – Text fragments to combine.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Items joined with commas and <code class="docutils literal notranslate"><span class="pre">and</span></code> following English style.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.formatters.normalize_language_text">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.formatters.</span></span><span class="sig-name descname"><span class="pre">normalize_language_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/formatters.html#normalize_language_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.formatters.normalize_language_text" title="Link to this definition">¶</a></dt>
+<dd><p>Convert language codes or informal labels into human-friendly names.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>Any</em>) – Raw language identifier.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Normalised language name or an empty string when nothing is provided.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.formatters.truncate_text">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.formatters.</span></span><span class="sig-name descname"><span class="pre">truncate_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">160</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/formatters.html#truncate_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.formatters.truncate_text" title="Link to this definition">¶</a></dt>
+<dd><p>Trim <code class="docutils literal notranslate"><span class="pre">text</span></code> to <code class="docutils literal notranslate"><span class="pre">limit</span></code> characters, adding an ellipsis when truncation occurs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>text</strong> (<em>str</em>) – Raw text to condense.</p></li>
+<li><p><strong>limit</strong> (<em>int</em>) – Maximum number of characters to allow before shortening.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Condensed text, suffixed with <code class="docutils literal notranslate"><span class="pre">...</span></code> when the original exceeded <code class="docutils literal notranslate"><span class="pre">limit</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.formatters.with_indefinite_article">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.formatters.</span></span><span class="sig-name descname"><span class="pre">with_indefinite_article</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">phrase</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/formatters.html#with_indefinite_article"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.formatters.with_indefinite_article" title="Link to this definition">¶</a></dt>
+<dd><p>Prefix <code class="docutils literal notranslate"><span class="pre">phrase</span></code> with an appropriate indefinite article.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>phrase</strong> (<em>str</em>) – The phrase to augment.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The phrase with <code class="docutils literal notranslate"><span class="pre">a</span></code> or <code class="docutils literal notranslate"><span class="pre">an</span></code> prepended when needed.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-prompt_builder.profiles">Profile rendering utilities for viewer-centric prompt generation.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="prompt_builder.profiles.ProfileRender">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">prompt_builder.profiles.</span></span><span class="sig-name descname"><span class="pre">ProfileRender</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sentences</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viewer_placeholder</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/profiles/render.html#ProfileRender"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.profiles.ProfileRender" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Container for profile sentences and placeholder metadata.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sentences</strong> – Ordered sentences describing the viewer’s profile.</p></li>
+<li><p><strong>viewer_placeholder</strong> – Flag indicating the profile relied on fallback text.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>sentences</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>viewer_placeholder</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="prompt_builder.profiles.ProfileRender.sentences">
+<span class="sig-name descname"><span class="pre">sentences</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#prompt_builder.profiles.ProfileRender.sentences" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="prompt_builder.profiles.ProfileRender.viewer_placeholder">
+<span class="sig-name descname"><span class="pre">viewer_placeholder</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#prompt_builder.profiles.ProfileRender.viewer_placeholder" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.profiles.render_profile">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.profiles.</span></span><span class="sig-name descname"><span class="pre">render_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ex</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/profiles/render.html#render_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.profiles.render_profile" title="Link to this definition">¶</a></dt>
+<dd><p>Compose profile sentences describing the viewer associated with <code class="docutils literal notranslate"><span class="pre">ex</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ex</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Data row that may contain inline or nested survey information.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Structured profile output including sentences and placeholder state.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#prompt_builder.profiles.ProfileRender" title="prompt_builder.profiles.ProfileRender">ProfileRender</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.profiles.synthesize_viewer_sentence">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.profiles.</span></span><span class="sig-name descname"><span class="pre">synthesize_viewer_sentence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ex</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/profiles/render.html#synthesize_viewer_sentence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.profiles.synthesize_viewer_sentence" title="Link to this definition">¶</a></dt>
+<dd><p>Generate a fallback viewer description when an explicit profile is absent.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ex</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Data row containing demographic and behavioural fields.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Concise description synthesised from available attributes.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-prompt_builder.prompt">Prompt rendering helpers for the Grail recommendation tasks.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.prompt.build_user_prompt">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.prompt.</span></span><span class="sig-name descname"><span class="pre">build_user_prompt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ex</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_hist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">12</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/prompt.html#build_user_prompt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.prompt.build_user_prompt" title="Link to this definition">¶</a></dt>
+<dd><p>Assemble the user prompt used for recommendation tasks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ex</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Cleaned interaction row with profile, history, and slate fields.</p></li>
+<li><p><strong>max_hist</strong> (<em>int</em>) – Maximum number of prior videos to include in the history section.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Natural-language prompt describing the viewer, viewing context, and options.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.prompt.lookup_video_stats">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.prompt.</span></span><span class="sig-name descname"><span class="pre">lookup_video_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/video_stats.html#lookup_video_stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.prompt.lookup_video_stats" title="Link to this definition">¶</a></dt>
+<dd><p>Return engagement metrics for <code class="docutils literal notranslate"><span class="pre">video_id</span></code> when available.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>video_id</strong> (<em>str</em>) – YouTube video identifier.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Engagement metrics dictionary or an empty mapping.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>VideoStats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.prompt.synthesize_viewer_sentence">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.prompt.</span></span><span class="sig-name descname"><span class="pre">synthesize_viewer_sentence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ex</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/profiles/render.html#synthesize_viewer_sentence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.prompt.synthesize_viewer_sentence" title="Link to this definition">¶</a></dt>
+<dd><p>Generate a fallback viewer description when an explicit profile is absent.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ex</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Data row containing demographic and behavioural fields.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Concise description synthesised from available attributes.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-prompt_builder.samples">Prompt sampling helpers for the Grail recommendation datasets.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="prompt_builder.samples.PromptSample">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">prompt_builder.samples.</span></span><span class="sig-name descname"><span class="pre">PromptSample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">participant_study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">participant_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prompt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/samples.html#PromptSample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.samples.PromptSample" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Container capturing a rendered prompt with associated metadata.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>issue</strong> (<em>str</em>) – Issue label that the prompt pertains to.</p></li>
+<li><p><strong>participant_study</strong> (<em>str</em><em> | </em><em>None</em>) – Study identifier when available.</p></li>
+<li><p><strong>participant_id</strong> (<em>str</em><em> | </em><em>None</em>) – Participant identifier or <code class="docutils literal notranslate"><span class="pre">None</span></code> when omitted.</p></li>
+<li><p><strong>split</strong> (<em>str</em>) – Dataset split name (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;train&quot;</span></code>).</p></li>
+<li><p><strong>prompt</strong> (<em>str</em>) – Rendered prompt text.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>issue</strong> (<em>str</em>)</p></li>
+<li><p><strong>participant_study</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>participant_id</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>split</strong> (<em>str</em>)</p></li>
+<li><p><strong>prompt</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="prompt_builder.samples.PromptSample.issue">
+<span class="sig-name descname"><span class="pre">issue</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#prompt_builder.samples.PromptSample.issue" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="prompt_builder.samples.PromptSample.participant_id">
+<span class="sig-name descname"><span class="pre">participant_id</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#prompt_builder.samples.PromptSample.participant_id" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="prompt_builder.samples.PromptSample.participant_study">
+<span class="sig-name descname"><span class="pre">participant_study</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#prompt_builder.samples.PromptSample.participant_study" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="prompt_builder.samples.PromptSample.prompt">
+<span class="sig-name descname"><span class="pre">prompt</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#prompt_builder.samples.PromptSample.prompt" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="prompt_builder.samples.PromptSample.split">
+<span class="sig-name descname"><span class="pre">split</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#prompt_builder.samples.PromptSample.split" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.samples.generate_prompt_samples">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.samples.</span></span><span class="sig-name descname"><span class="pre">generate_prompt_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issues</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_per_issue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_history</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/samples.html#generate_prompt_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.samples.generate_prompt_samples" title="Link to this definition">¶</a></dt>
+<dd><p>Load prompts for the requested <code class="docutils literal notranslate"><span class="pre">issues</span></code> from <code class="docutils literal notranslate"><span class="pre">dataset_path</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset_path</strong> (<em>str</em>) – Location of the cleaned dataset (Hugging Face format).</p></li>
+<li><p><strong>issues</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Iterable of issue labels to sample.</p></li>
+<li><p><strong>max_per_issue</strong> (<em>int</em>) – Number of prompts to collect per issue.</p></li>
+<li><p><strong>max_history</strong> (<em>int</em>) – History length passed to <a class="reference internal" href="#prompt_builder.prompt.build_user_prompt" title="prompt_builder.prompt.build_user_prompt"><code class="xref py py-func docutils literal notranslate"><span class="pre">prompt_builder.prompt.build_user_prompt()</span></code></a>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of <a class="reference internal" href="#prompt_builder.samples.PromptSample" title="prompt_builder.samples.PromptSample"><code class="xref py py-class docutils literal notranslate"><span class="pre">PromptSample</span></code></a> instances.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[<a class="reference internal" href="#prompt_builder.samples.PromptSample" title="prompt_builder.samples.PromptSample">PromptSample</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.samples.main">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.samples.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">argv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/samples.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.samples.main" title="Link to this definition">¶</a></dt>
+<dd><p>Entry point for the prompt-sample CLI.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>argv</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Optional list of CLI arguments; defaults to <code class="xref py py-data docutils literal notranslate"><span class="pre">sys.argv</span></code>.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If no issues are provided via <code class="docutils literal notranslate"><span class="pre">--issues</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.samples.write_samples_markdown">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.samples.</span></span><span class="sig-name descname"><span class="pre">write_samples_markdown</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/samples.html#write_samples_markdown"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.samples.write_samples_markdown" title="Link to this definition">¶</a></dt>
+<dd><p>Write <code class="docutils literal notranslate"><span class="pre">samples</span></code> to <code class="docutils literal notranslate"><span class="pre">output_path</span></code> in a readable Markdown layout.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>samples</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="#prompt_builder.samples.PromptSample" title="prompt_builder.samples.PromptSample"><em>PromptSample</em></a><em>]</em>) – Iterable of prompt samples to render.</p></li>
+<li><p><strong>output_path</strong> (<em>str</em>) – Destination Markdown file.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Path to the written Markdown file.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Path</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-prompt_builder.video_stats">Lazy loader for YouTube video engagement statistics used in prompts.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.video_stats.get_video_stats">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.video_stats.</span></span><span class="sig-name descname"><span class="pre">get_video_stats</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/video_stats.html#get_video_stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.video_stats.get_video_stats" title="Link to this definition">¶</a></dt>
+<dd><p>Return a mapping of video id to engagement metrics.</p>
+<p>The function searches a small set of candidate locations and caches the first
+successful load for the duration of the process. Missing files yield an empty
+mapping.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Mapping from video id to engagement metric dictionary.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dict[str, VideoStats]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prompt_builder.video_stats.lookup_video_stats">
+<span class="sig-prename descclassname"><span class="pre">prompt_builder.video_stats.</span></span><span class="sig-name descname"><span class="pre">lookup_video_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/prompt_builder/video_stats.html#lookup_video_stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#prompt_builder.video_stats.lookup_video_stats" title="Link to this definition">¶</a></dt>
+<dd><p>Return engagement metrics for <code class="docutils literal notranslate"><span class="pre">video_id</span></code> when available.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>video_id</strong> (<em>str</em>) – YouTube video identifier.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Engagement metrics dictionary or an empty mapping.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>VideoStats</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="open_r1.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Open-R1 Training API</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="common.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Common Utilities API</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2025, GRAIL Simulation Team
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Prompt Builder API</a><ul>
+<li><a class="reference internal" href="#prompt_builder.PromptSample"><code class="docutils literal notranslate"><span class="pre">PromptSample</span></code></a><ul>
+<li><a class="reference internal" href="#prompt_builder.PromptSample.issue"><code class="docutils literal notranslate"><span class="pre">PromptSample.issue</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.PromptSample.participant_id"><code class="docutils literal notranslate"><span class="pre">PromptSample.participant_id</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.PromptSample.participant_study"><code class="docutils literal notranslate"><span class="pre">PromptSample.participant_study</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.PromptSample.prompt"><code class="docutils literal notranslate"><span class="pre">PromptSample.prompt</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.PromptSample.split"><code class="docutils literal notranslate"><span class="pre">PromptSample.split</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#prompt_builder.as_list_json"><code class="docutils literal notranslate"><span class="pre">as_list_json()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.build_user_prompt"><code class="docutils literal notranslate"><span class="pre">build_user_prompt()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.clean_text"><code class="docutils literal notranslate"><span class="pre">clean_text()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.generate_prompt_samples"><code class="docutils literal notranslate"><span class="pre">generate_prompt_samples()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.is_nanlike"><code class="docutils literal notranslate"><span class="pre">is_nanlike()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.render_profile"><code class="docutils literal notranslate"><span class="pre">render_profile()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.secs"><code class="docutils literal notranslate"><span class="pre">secs()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.synthesize_viewer_sentence"><code class="docutils literal notranslate"><span class="pre">synthesize_viewer_sentence()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.truthy"><code class="docutils literal notranslate"><span class="pre">truthy()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.write_samples_markdown"><code class="docutils literal notranslate"><span class="pre">write_samples_markdown()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.parsers.as_list_json"><code class="docutils literal notranslate"><span class="pre">as_list_json()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.parsers.format_age"><code class="docutils literal notranslate"><span class="pre">format_age()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.parsers.format_count"><code class="docutils literal notranslate"><span class="pre">format_count()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.parsers.format_yes_no"><code class="docutils literal notranslate"><span class="pre">format_yes_no()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.parsers.is_nanlike"><code class="docutils literal notranslate"><span class="pre">is_nanlike()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.parsers.secs"><code class="docutils literal notranslate"><span class="pre">secs()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.parsers.truthy"><code class="docutils literal notranslate"><span class="pre">truthy()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.formatters.clean_text"><code class="docutils literal notranslate"><span class="pre">clean_text()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.formatters.describe_age_fragment"><code class="docutils literal notranslate"><span class="pre">describe_age_fragment()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.formatters.describe_gender_fragment"><code class="docutils literal notranslate"><span class="pre">describe_gender_fragment()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.formatters.human_join"><code class="docutils literal notranslate"><span class="pre">human_join()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.formatters.normalize_language_text"><code class="docutils literal notranslate"><span class="pre">normalize_language_text()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.formatters.truncate_text"><code class="docutils literal notranslate"><span class="pre">truncate_text()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.formatters.with_indefinite_article"><code class="docutils literal notranslate"><span class="pre">with_indefinite_article()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.profiles.ProfileRender"><code class="docutils literal notranslate"><span class="pre">ProfileRender</span></code></a><ul>
+<li><a class="reference internal" href="#prompt_builder.profiles.ProfileRender.sentences"><code class="docutils literal notranslate"><span class="pre">ProfileRender.sentences</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.profiles.ProfileRender.viewer_placeholder"><code class="docutils literal notranslate"><span class="pre">ProfileRender.viewer_placeholder</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#prompt_builder.profiles.render_profile"><code class="docutils literal notranslate"><span class="pre">render_profile()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.profiles.synthesize_viewer_sentence"><code class="docutils literal notranslate"><span class="pre">synthesize_viewer_sentence()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.prompt.build_user_prompt"><code class="docutils literal notranslate"><span class="pre">build_user_prompt()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.prompt.lookup_video_stats"><code class="docutils literal notranslate"><span class="pre">lookup_video_stats()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.prompt.synthesize_viewer_sentence"><code class="docutils literal notranslate"><span class="pre">synthesize_viewer_sentence()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.samples.PromptSample"><code class="docutils literal notranslate"><span class="pre">PromptSample</span></code></a><ul>
+<li><a class="reference internal" href="#prompt_builder.samples.PromptSample.issue"><code class="docutils literal notranslate"><span class="pre">PromptSample.issue</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.samples.PromptSample.participant_id"><code class="docutils literal notranslate"><span class="pre">PromptSample.participant_id</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.samples.PromptSample.participant_study"><code class="docutils literal notranslate"><span class="pre">PromptSample.participant_study</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.samples.PromptSample.prompt"><code class="docutils literal notranslate"><span class="pre">PromptSample.prompt</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.samples.PromptSample.split"><code class="docutils literal notranslate"><span class="pre">PromptSample.split</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#prompt_builder.samples.generate_prompt_samples"><code class="docutils literal notranslate"><span class="pre">generate_prompt_samples()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.samples.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.samples.write_samples_markdown"><code class="docutils literal notranslate"><span class="pre">write_samples_markdown()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.video_stats.get_video_stats"><code class="docutils literal notranslate"><span class="pre">get_video_stats()</span></code></a></li>
+<li><a class="reference internal" href="#prompt_builder.video_stats.lookup_video_stats"><code class="docutils literal notranslate"><span class="pre">lookup_video_stats()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

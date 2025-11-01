@@ -236,12 +236,20 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="prompt_builder.html">Prompt Builder Sample Prompts</a></li>
-<li class="toctree-l2"><a class="reference internal" href="knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l2"><a class="reference internal" href="knn_opinion.html">KNN Opinion Regression</a></li>
-<li class="toctree-l2"><a class="reference internal" href="knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
-<li class="toctree-l2"><a class="reference internal" href="knn_opinion_from_next.html">KNN Opinion Regression (Next-Video Config)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="knn_additional_features.html">KNN Additional Features</a></li>
-<li class="toctree-l2 current has-children"><a class="reference internal" href="xgb.html">XGBoost Report Catalog</a><input aria-label="Toggle navigation of XGBoost Report Catalog" checked="" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_next_video.html#id1">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_opinion_from_next.html">KNN Opinion Regression (Next-Video Config)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_opinion_from_next.html#knn-opinion-shift-study-next-video-config">KNN Opinion Shift Study (Next-Video Config)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_additional_features.html">KNN Additional Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_additional_features.html#additional-text-features">Additional Text Features</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current has-children"><a class="reference internal" href="xgb.html">XGBoost Report Catalog</a><input aria-label="Toggle navigation of XGBoost Report Catalog" checked="" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="xgb_next_video.html">XGBoost Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="xgb_next_video.html#id1">XGBoost Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="xgb_opinion.html">XGBoost Opinion Regression</a></li>
@@ -311,8 +319,8 @@
 </ul>
 <section id="next-video-sweeps">
 <h2>Next-Video Sweeps<a class="headerlink" href="#next-video-sweeps" title="Link to this heading">¶</a></h2>
-<section id="study-1-gun-control-mturk">
-<h3>Study 1 – Gun Control (MTurk)<a class="headerlink" href="#study-1-gun-control-mturk" title="Link to this heading">¶</a></h3>
+<section id="study-1-gun-control">
+<h3>Study 1 – Gun Control<a class="headerlink" href="#study-1-gun-control" title="Link to this heading">¶</a></h3>
 <p><em>Issue:</em> Gun Control</p>
 <div class="table-wrapper colwidths-auto docutils container">
 <table class="docutils align-default">
@@ -328,7 +336,7 @@
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><strong>tfidf_lr0p03_depth3_estim200_sub0p75_col0p8_l20p5_l10</strong></p></td>
+<tr class="row-even"><td><p><strong>tfidf_lr0p1_depth4_estim100_sub0p8_col0p8_l21_l10</strong></p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
@@ -344,7 +352,7 @@
 <section id="configuration-leaderboards">
 <h3>Configuration Leaderboards<a class="headerlink" href="#configuration-leaderboards" title="Link to this heading">¶</a></h3>
 <section id="id1">
-<h4>Study 1 – Gun Control (MTurk)<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h4>
+<h4>Study 1 – Gun Control<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h4>
 <div class="table-wrapper colwidths-auto docutils container">
 <table class="docutils align-default">
 <thead>
@@ -359,7 +367,7 @@
 </thead>
 <tbody>
 <tr class="row-even"><td class="text-right"><p>1</p></td>
-<td><p><strong>tfidf_lr0p03_depth3_estim200_sub0p75_col0p8_l20p5_l10</strong></p></td>
+<td><p><strong>tfidf_lr0p1_depth4_estim100_sub0p8_col0p8_l21_l10</strong></p></td>
 <td class="text-right"><p>0.000</p></td>
 <td class="text-right"><p>0.000</p></td>
 <td class="text-right"><p>0.000</p></td>
@@ -374,8 +382,8 @@
 <section id="selection-summary">
 <h3>Selection Summary<a class="headerlink" href="#selection-summary" title="Link to this heading">¶</a></h3>
 <ul class="simple">
-<li><p><strong>Study 1 – Gun Control (MTurk) (issue Gun Control)</strong>: accuracy 0.000 (coverage 0.000) using vectorizer=tfidf, lr=0.03, depth=3, estimators=200, subsample=0.75, colsample=0.8, λ=0.5, α=0.
-Command: <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">xgb.cli</span> <span class="pre">--fit_model</span> <span class="pre">--dataset</span> <span class="pre">data/cleaned_grail</span> <span class="pre">--issues</span> <span class="pre">gun_control</span> <span class="pre">--participant_studies</span> <span class="pre">study1</span> <span class="pre">--text_vectorizer</span> <span class="pre">tfidf</span> <span class="pre">--xgb_learning_rate</span> <span class="pre">0.03</span> <span class="pre">--xgb_max_depth</span> <span class="pre">3</span> <span class="pre">--xgb_n_estimators</span> <span class="pre">200</span> <span class="pre">--xgb_subsample</span> <span class="pre">0.75</span> <span class="pre">--xgb_colsample_bytree</span> <span class="pre">0.8</span> <span class="pre">--xgb_reg_lambda</span> <span class="pre">0.5</span> <span class="pre">--xgb_reg_alpha</span> <span class="pre">0.0</span> <span class="pre">--xgb_tree_method</span> <span class="pre">hist</span> <span class="pre">--out_dir</span> <span class="pre">'&lt;run_dir&gt;'</span></code></p></li>
+<li><p><strong>Study 1 – Gun Control (issue Gun Control)</strong>: accuracy 0.000 (coverage 0.000) using vectorizer=tfidf, lr=0.1, depth=4, estimators=100, subsample=0.8, colsample=0.8, λ=1, α=0.
+Command: <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">xgb.cli</span> <span class="pre">--fit_model</span> <span class="pre">--dataset</span> <span class="pre">data/cleaned_grail</span> <span class="pre">--issues</span> <span class="pre">gun_control</span> <span class="pre">--participant_studies</span> <span class="pre">study1</span> <span class="pre">--text_vectorizer</span> <span class="pre">tfidf</span> <span class="pre">--xgb_learning_rate</span> <span class="pre">0.1</span> <span class="pre">--xgb_max_depth</span> <span class="pre">4</span> <span class="pre">--xgb_n_estimators</span> <span class="pre">100</span> <span class="pre">--xgb_subsample</span> <span class="pre">0.8</span> <span class="pre">--xgb_colsample_bytree</span> <span class="pre">0.8</span> <span class="pre">--xgb_reg_lambda</span> <span class="pre">1.0</span> <span class="pre">--xgb_reg_alpha</span> <span class="pre">0.0</span> <span class="pre">--xgb_tree_method</span> <span class="pre">hist</span> <span class="pre">--out_dir</span> <span class="pre">'&lt;run_dir&gt;'</span></code></p></li>
 </ul>
 </section>
 <section id="parameter-frequency-across-selected-configurations">
@@ -392,22 +400,22 @@ Command: <code class="docutils literal notranslate"><span class="pre">python</sp
 <td><p>tfidf ×1</p></td>
 </tr>
 <tr class="row-odd"><td><p>Learning rate</p></td>
-<td><p>0.03 ×1</p></td>
+<td><p>0.1 ×1</p></td>
 </tr>
 <tr class="row-even"><td><p>Max depth</p></td>
-<td><p>3 ×1</p></td>
+<td><p>4 ×1</p></td>
 </tr>
 <tr class="row-odd"><td><p>Estimators</p></td>
-<td><p>200 ×1</p></td>
+<td><p>100 ×1</p></td>
 </tr>
 <tr class="row-even"><td><p>Subsample</p></td>
-<td><p>0.75 ×1</p></td>
+<td><p>0.8 ×1</p></td>
 </tr>
 <tr class="row-odd"><td><p>Column subsample</p></td>
 <td><p>0.8 ×1</p></td>
 </tr>
 <tr class="row-even"><td><p>L2 regularisation</p></td>
-<td><p>0.5 ×1</p></td>
+<td><p>1 ×1</p></td>
 </tr>
 <tr class="row-odd"><td><p>L1 regularisation</p></td>
 <td><p>0 ×1</p></td>
@@ -420,7 +428,7 @@ Command: <code class="docutils literal notranslate"><span class="pre">python</sp
 <section id="opinion-regression-sweeps">
 <h2>Opinion Regression Sweeps<a class="headerlink" href="#opinion-regression-sweeps" title="Link to this heading">¶</a></h2>
 <section id="id2">
-<h3>Study 1 – Gun Control (MTurk)<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
+<h3>Study 1 – Gun Control<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
 <p><em>Issue:</em> Gun Control</p>
 <div class="table-wrapper colwidths-auto docutils container">
 <table class="docutils align-default">
@@ -438,7 +446,7 @@ Command: <code class="docutils literal notranslate"><span class="pre">python</sp
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><strong>tfidf_lr0p03_depth3_estim200_sub0p75_col0p8_l20p5_l10</strong><br>vectorizer=tfidf, lr=0.03, depth=3, estimators=200, subsample=0.75, colsample=0.8, λ=0.5, α=0</p></td>
+<tr class="row-even"><td><p><strong>tfidf_lr0p1_depth4_estim100_sub0p8_col0p8_l21_l10</strong><br>vectorizer=tfidf, lr=0.1, depth=4, estimators=100, subsample=0.8, colsample=0.8, λ=1, α=0</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
@@ -449,7 +457,7 @@ Command: <code class="docutils literal notranslate"><span class="pre">python</sp
 <td class="text-right"><p>—</p></td>
 <td class="text-right"><p>—</p></td>
 </tr>
-<tr class="row-odd"><td><p>Command: <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">xgb.pipeline</span> <span class="pre">--stage</span> <span class="pre">full</span> <span class="pre">--tasks</span> <span class="pre">opinion</span> <span class="pre">--issues</span> <span class="pre">gun_control</span> <span class="pre">--studies</span> <span class="pre">study1</span> <span class="pre">--tree-method</span> <span class="pre">hist</span> <span class="pre">--learning-rate-grid</span> <span class="pre">0.03</span> <span class="pre">--max-depth-grid</span> <span class="pre">3</span> <span class="pre">--n-estimators-grid</span> <span class="pre">200</span> <span class="pre">--subsample-grid</span> <span class="pre">0.75</span> <span class="pre">--colsample-grid</span> <span class="pre">0.8</span> <span class="pre">--reg-lambda-grid</span> <span class="pre">0.5</span> <span class="pre">--reg-alpha-grid</span> <span class="pre">0</span> <span class="pre">--text-vectorizer-grid</span> <span class="pre">tfidf</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;models_dir&gt;'</span> <span class="pre">--dataset</span> <span class="pre">data/cleaned_grail</span></code></p></td>
+<tr class="row-odd"><td><p>Command: <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">xgb.pipeline</span> <span class="pre">--stage</span> <span class="pre">full</span> <span class="pre">--tasks</span> <span class="pre">opinion</span> <span class="pre">--issues</span> <span class="pre">gun_control</span> <span class="pre">--studies</span> <span class="pre">study1</span> <span class="pre">--tree-method</span> <span class="pre">hist</span> <span class="pre">--learning-rate-grid</span> <span class="pre">0.1</span> <span class="pre">--max-depth-grid</span> <span class="pre">4</span> <span class="pre">--n-estimators-grid</span> <span class="pre">100</span> <span class="pre">--subsample-grid</span> <span class="pre">0.8</span> <span class="pre">--colsample-grid</span> <span class="pre">0.8</span> <span class="pre">--reg-lambda-grid</span> <span class="pre">1</span> <span class="pre">--reg-alpha-grid</span> <span class="pre">0</span> <span class="pre">--text-vectorizer-grid</span> <span class="pre">tfidf</span> <span class="pre">--out-dir</span> <span class="pre">'&lt;models_dir&gt;'</span> <span class="pre">--dataset</span> <span class="pre">data/cleaned_grail</span></code></p></td>
 <td class="text-right"><p></p></td>
 <td class="text-right"><p></p></td>
 <td class="text-right"><p></p></td>

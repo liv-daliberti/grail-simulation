@@ -69,7 +69,7 @@ def _sweep_outcome_from_metrics(
 def _iter_sweep_tasks(
     *,
     studies: Sequence[StudySpec],
-    configs: Sequence[SweepConfig],
+    configs: Sequence["xgb.pipeline.context.SweepConfig"],
     context: SweepRunContext,
 ) -> Sequence[SweepTask]:
     """
@@ -119,7 +119,7 @@ def _iter_sweep_tasks(
 def _prepare_sweep_tasks(
     *,
     studies: Sequence[StudySpec],
-    configs: Sequence[SweepConfig],
+    configs: Sequence["xgb.pipeline.context.SweepConfig"],
     context: SweepRunContext,
     reuse_existing: bool,
 ) -> Tuple[List[SweepTask], List[SweepOutcome]]:
@@ -203,7 +203,7 @@ def _execute_sweep_tasks(
 def _run_sweeps(
     *,
     studies: Sequence[StudySpec],
-    configs: Sequence[SweepConfig],
+    configs: Sequence["xgb.pipeline.context.SweepConfig"],
     context: SweepRunContext,
 ) -> List[SweepOutcome]:
     """

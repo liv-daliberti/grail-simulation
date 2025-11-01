@@ -89,6 +89,42 @@ def _load_next_video_from_disk(run_dir: Path) -> NextVideoEvaluationResult | Non
     Rebuilds metrics from predictions.jsonl when necessary (partial runs).
     """
 
+    def _resolve_effective_run_dir(candidate: Path) -> Path:
+        """Return a run directory that actually contains outputs.
+
+        Supports legacy layouts where outputs were written under
+        ``<run_dir>/<label>`` by selecting a single immediate child that has
+        metrics/predictions when the top-level is empty. If multiple children
+        exist, prefer the one with the newest metrics.json or predictions.
+        """
+
+        top_metrics = candidate / "metrics.json"
+        top_preds = candidate / "predictions.jsonl"
+        if top_metrics.exists() or top_preds.exists():
+            return candidate
+
+        # Look one level down for a viable child directory
+        children = [p for p in candidate.glob("*") if p.is_dir()]
+        viable: list[tuple[float, Path]] = []
+        for child in children:
+            m = child / "metrics.json"
+            p = child / "predictions.jsonl"
+            if m.exists() or p.exists():
+                # Use latest mtime of either artefact as the ranking key
+                try:
+                    mt = max(m.stat().st_mtime if m.exists() else 0.0,
+                             p.stat().st_mtime if p.exists() else 0.0)
+                except OSError:
+                    mt = 0.0
+                viable.append((mt, child))
+        if not viable:
+            return candidate
+        # Pick the newest viable child
+        viable.sort(key=lambda t: t[0], reverse=True)
+        return viable[0][1]
+
+    run_dir = _resolve_effective_run_dir(run_dir)
+
     metrics_path = run_dir / "metrics.json"
     predictions_path = run_dir / "predictions.jsonl"
     qa_log_path = run_dir / "qa.log"

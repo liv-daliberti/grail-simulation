@@ -6,7 +6,7 @@ throughout the GRAIL reports. The public API lives at
 the `recommendation_tree` package so callers can import a single module.
 
 ## Recommendation Tree CLI
-- Launch with `python -m src.visualization.recommendation_tree_viz`. The entry
+- Launch with `python -m visualization.recommendation_tree_viz` (ensure `PYTHONPATH=src`). The entry
   point enforces either `--tree` (CSV containing ranked recommendations) or
   `--cleaned-data` (a HuggingFace dataset saved via `clean_data/clean_data.py`).
 - Always provide `--output path/to/figure.svg` or `--batch-output-dir`
@@ -23,7 +23,8 @@ the `recommendation_tree` package so callers can import a single module.
 Example: render a single CSV tree to SVG.
 
 ```bash
-python -m src.visualization.recommendation_tree_viz \
+export PYTHONPATH=src
+python -m visualization.recommendation_tree_viz \
   --tree reports/visualized_recommendation_trees/minimum_wage/tree.csv \
   --metadata reports/visualized_recommendation_trees/metadata.csv \
   --output reports/visualized_recommendation_trees/minimum_wage/tree.svg
@@ -32,7 +33,8 @@ python -m src.visualization.recommendation_tree_viz \
 Example: visualise a cleaned dataset session as PNG.
 
 ```bash
-python -m src.visualization.recommendation_tree_viz \
+export PYTHONPATH=src
+python -m visualization.recommendation_tree_viz \
   --cleaned-data data/cleaned_grail \
   --session-id session_0001 \
   --highlight v0,v1,v2 \

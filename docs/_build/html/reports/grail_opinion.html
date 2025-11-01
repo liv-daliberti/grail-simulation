@@ -236,12 +236,20 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="prompt_builder.html">Prompt Builder Sample Prompts</a></li>
-<li class="toctree-l2"><a class="reference internal" href="knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l2"><a class="reference internal" href="knn_opinion.html">KNN Opinion Regression</a></li>
-<li class="toctree-l2"><a class="reference internal" href="knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
-<li class="toctree-l2"><a class="reference internal" href="knn_opinion_from_next.html">KNN Opinion Regression (Next-Video Config)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="knn_additional_features.html">KNN Additional Features</a></li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="xgb.html">XGBoost Report Catalog</a><input aria-label="Toggle navigation of XGBoost Report Catalog" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_next_video.html#id1">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_opinion_from_next.html">KNN Opinion Regression (Next-Video Config)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_opinion_from_next.html#knn-opinion-shift-study-next-video-config">KNN Opinion Shift Study (Next-Video Config)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_additional_features.html">KNN Additional Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_additional_features.html#additional-text-features">Additional Text Features</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="xgb.html">XGBoost Report Catalog</a><input aria-label="Toggle navigation of XGBoost Report Catalog" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="xgb_next_video.html">XGBoost Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="xgb_next_video.html#id1">XGBoost Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="xgb_opinion.html">XGBoost Opinion Regression</a></li>
@@ -311,25 +319,25 @@
 </thead>
 <tbody>
 <tr class="row-even"><td><p>Eligible</p></td>
-<td class="text-right"><p>162</p></td>
+<td class="text-right"><p>422</p></td>
 </tr>
 <tr class="row-odd"><td><p>MAE (post-study)</p></td>
-<td class="text-right"><p>2.831</p></td>
+<td class="text-right"><p>0.896</p></td>
 </tr>
 <tr class="row-even"><td><p>MAE (change)</p></td>
-<td class="text-right"><p>2.831</p></td>
+<td class="text-right"><p>0.896</p></td>
 </tr>
 <tr class="row-odd"><td><p>Direction accuracy</p></td>
-<td class="text-right"><p>0.704</p></td>
+<td class="text-right"><p>0.524</p></td>
 </tr>
 <tr class="row-even"><td><p>RMSE (post-study)</p></td>
-<td class="text-right"><p>3.197</p></td>
+<td class="text-right"><p>1.410</p></td>
 </tr>
 <tr class="row-odd"><td><p>RMSE (change)</p></td>
-<td class="text-right"><p>3.197</p></td>
+<td class="text-right"><p>1.410</p></td>
 </tr>
 <tr class="row-even"><td><p>Calibration ECE</p></td>
-<td class="text-right"><p>2.831</p></td>
+<td class="text-right"><p>0.896</p></td>
 </tr>
 </tbody>
 </table>
@@ -351,28 +359,28 @@
 </thead>
 <tbody>
 <tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
-<td class="text-right"><p>162</p></td>
-<td class="text-right"><p>162</p></td>
-<td class="text-right"><p>2.831</p></td>
+<td class="text-right"><p>0</p></td>
+<td class="text-right"><p>0</p></td>
+<td class="text-right"><p>nan</p></td>
 <td class="text-right"><p>—</p></td>
-<td class="text-right"><p>0.704</p></td>
-<td class="text-right"><p>0.074</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
 </tr>
 <tr class="row-odd"><td><p>Study 2 – Minimum Wage (MTurk)</p></td>
-<td class="text-right"><p>0</p></td>
-<td class="text-right"><p>0</p></td>
-<td class="text-right"><p>nan</p></td>
+<td class="text-right"><p>165</p></td>
+<td class="text-right"><p>165</p></td>
+<td class="text-right"><p>0.902</p></td>
 <td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>0.545</p></td>
+<td class="text-right"><p>0.061</p></td>
 </tr>
 <tr class="row-even"><td><p>Study 3 – Minimum Wage (YouGov)</p></td>
-<td class="text-right"><p>0</p></td>
-<td class="text-right"><p>0</p></td>
-<td class="text-right"><p>nan</p></td>
+<td class="text-right"><p>257</p></td>
+<td class="text-right"><p>257</p></td>
+<td class="text-right"><p>0.892</p></td>
 <td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>0.510</p></td>
+<td class="text-right"><p>0.058</p></td>
 </tr>
 </tbody>
 </table>

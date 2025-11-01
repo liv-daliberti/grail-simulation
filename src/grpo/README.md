@@ -38,9 +38,9 @@ python src/grpo/grpo.py \
 
 Adjust the recipe path for alternate models/tasks. Helpful toggles include
 `--resume_from_checkpoint`, `--max_eval_samples`, and the environment variable
-`LOGLEVEL=DEBUG` when debugging dataset filtering. The SLURM wrapper
-`training/training-grpo.sh` wires all required environment variables for
-cluster runs.
+`LOGLEVEL=DEBUG` when debugging dataset filtering. The SLURM wrappers
+`training/training-grpo-gun.sh` and `training/training-grpo-wage.sh` wire all
+required environment variables for cluster runs.
 
 ## Extension checklist
 

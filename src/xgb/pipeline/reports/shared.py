@@ -112,7 +112,9 @@ def _xgb_next_video_command(selection: Optional[StudySelection]) -> Optional[str
     return _format_shell_command(command)
 
 
-def _xgb_opinion_command(selection: Optional[OpinionStudySelection]) -> Optional[str]:
+def _xgb_opinion_command(
+    selection: Optional["xgb.pipeline.context.OpinionStudySelection"],
+) -> Optional[str]:
     """
     Build a reproduction command for an opinion sweep selection.
 

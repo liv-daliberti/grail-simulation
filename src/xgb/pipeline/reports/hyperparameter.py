@@ -342,7 +342,7 @@ class _OpinionStudyView:
     key: str
     label: str
     issue_label: str
-    selection: Optional[OpinionStudySelection]
+    selection: Optional["xgb.pipeline.context.OpinionStudySelection"]
     ordered: List[OpinionSweepOutcome]
     displayed: List[OpinionSweepOutcome]
     display_limit: int
@@ -352,7 +352,7 @@ class _OpinionStudyView:
 
         return len(self.ordered) > self.display_limit
 
-    def selected_config(self) -> Optional[SweepConfig]:
+    def selected_config(self) -> Optional["xgb.pipeline.context.SweepConfig"]:
         """Return the SweepConfig associated with the promoted outcome."""
 
         if self.selection is None:
@@ -373,7 +373,7 @@ def _group_opinion_outcomes(
 
 def _opinion_sort_key(
     study_key: str,
-    selections: Mapping[str, OpinionStudySelection],
+    selections: Mapping[str, "xgb.pipeline.context.OpinionStudySelection"],
     grouped: Mapping[str, Sequence[OpinionSweepOutcome]],
 ) -> str:
     """Return a case-insensitive sort key for the opinion study tables."""
@@ -390,7 +390,7 @@ def _opinion_sort_key(
 def _build_opinion_view(
     study_key: str,
     outcomes: Sequence[OpinionSweepOutcome],
-    selection: Optional[OpinionStudySelection],
+    selection: Optional["xgb.pipeline.context.OpinionStudySelection"],
     *,
     display_limit: int,
 ) -> _OpinionStudyView:
@@ -487,7 +487,7 @@ def _selected_opinion_summary(view: _OpinionStudyView) -> Optional[OpinionSummar
 def _opinion_hyperparameter_section(
     *,
     outcomes: Sequence[OpinionSweepOutcome],
-    selections: Mapping[str, OpinionStudySelection],
+    selections: Mapping[str, "xgb.pipeline.context.OpinionStudySelection"],
     allow_incomplete: bool,
 ) -> List[str]:
     """

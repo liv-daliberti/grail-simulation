@@ -194,6 +194,9 @@ templates_path = ["_templates"]
 exclude_patterns: list[str] = ["_build", "Thumbs.db", ".DS_Store"]
 
 html_static_path = ["_static"]
+# Copy project report artifacts into the built site so that included Markdown
+# under `reports/` can reference images directly (e.g., ../reports/xgb/opinion/*).
+html_extra_path = ["../reports"]
 if (
     os.environ.get("SPHINX_ENABLE_FURO", "").lower() in {"1", "true", "yes"}
     or importlib.util.find_spec("furo") is not None

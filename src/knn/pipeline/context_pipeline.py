@@ -417,4 +417,39 @@ class PipelineContext:
             ),
         )
 
-    # Keep only setters as explicit methods; getters are forwarded via __getattr__
+    # Convenience mutators for clearer API on frozen dataclass
+    def set_sentence_device(self, value: str | None) -> None:
+        """Set the SentenceTransformer device.
+
+        This method safely updates the internal model defaults using
+        ``object.__setattr__`` via the property's setter, preserving the
+        frozen dataclass guarantees for other attributes.
+
+        :param value: Device identifier (e.g., ``"cuda"``) or ``None``.
+        :returns: None
+        """
+        setter = type(self).sentence_device.fset  # type: ignore[assignment]
+        if setter is not None:
+            setter(self, value)
+
+    def set_sentence_batch_size(self, value: int) -> None:
+        """Set the SentenceTransformer batch size.
+
+        :param value: New batch size.
+        :returns: None
+        """
+        setter = type(self).sentence_batch_size.fset  # type: ignore[assignment]
+        if setter is not None:
+            setter(self, int(value))
+
+    def set_sentence_normalize(self, value: bool) -> None:
+        """Enable or disable L2-normalization for SentenceTransformer embeddings.
+
+        :param value: Normalization flag.
+        :returns: None
+        """
+        setter = type(self).sentence_normalize.fset  # type: ignore[assignment]
+        if setter is not None:
+            setter(self, bool(value))
+
+    # Keep only setters as explicit properties; getters are forwarded via __getattr__

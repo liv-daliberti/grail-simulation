@@ -51,7 +51,7 @@ class OpinionReportData:
 
     metrics: Mapping[str, Mapping[str, object]] = field(default_factory=dict)
     outcomes: Sequence[OpinionSweepOutcome] = ()
-    selections: Mapping[str, OpinionStudySelection] = field(default_factory=dict)
+    selections: Mapping[str, "xgb.pipeline.context.OpinionStudySelection"] = field(default_factory=dict)
     title: str = "XGBoost Opinion Regression"
     description_lines: Sequence[str] | None = None
     predictions_root: Path | None = None

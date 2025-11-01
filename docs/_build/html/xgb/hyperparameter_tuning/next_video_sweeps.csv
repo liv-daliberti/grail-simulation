@@ -1,0 +1,2 @@
+study_key,study_label,issue,config_label,accuracy,accuracy_eligible,coverage,known_hits,known_total,known_availability,avg_probability,evaluated
+study1,Study 1 – Gun Control,gun_control,tfidf_lr0p1_depth4_estim100_sub0p8_col0p8_l21_l10,,,,,,,,

@@ -240,7 +240,7 @@ def _collect_opinion_sweeps(
 
 
 def _collect_opinion_final(
-    selections: Mapping[str, OpinionStudySelection],
+    selections: Mapping[str, "xgb.pipeline.context.OpinionStudySelection"],
     metrics: Mapping[str, Mapping[str, object]],
 ) -> tuple[list[Sequence[str]], set[str]]:
     """Return table rows and unique field set for opinion final evaluations."""

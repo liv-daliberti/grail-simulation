@@ -8,8 +8,9 @@ REPO_ROOT = PROJECT_ROOT.parent
 CACHE_DIR = REPO_ROOT / ".cache" / "pip"
 TMP_DIR = REPO_ROOT / ".tmp"
 PYCACHE_DIR = REPO_ROOT / ".cache" / "pyc"
+EGG_INFO_BASE = TMP_DIR / "egg-info"
 
-for directory in (CACHE_DIR, TMP_DIR, PYCACHE_DIR):
+for directory in (CACHE_DIR, TMP_DIR, PYCACHE_DIR, EGG_INFO_BASE):
     directory.mkdir(parents=True, exist_ok=True)
 
 os.environ.setdefault("PIP_CACHE_DIR", str(CACHE_DIR))
@@ -61,4 +62,10 @@ setup(
         "dev": sorted(set(dev_requirements)),
     },
     include_package_data=True,
+    # Keep generated metadata out of src/ by directing egg-info to a temp area
+    options={
+        "egg_info": {
+            "egg_base": str(EGG_INFO_BASE),
+        }
+    },
 )

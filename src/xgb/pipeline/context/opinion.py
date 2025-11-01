@@ -289,7 +289,7 @@ class OpinionSweepOutcome:
 
     def __init__(
         self,
-        base: BaseOpinionSweepOutcome[SweepConfig] | None = None,
+        base: BaseOpinionSweepOutcome["xgb.pipeline.context.SweepConfig"] | None = None,
         r_squared: float | None = None,
         **kwargs,
     ) -> None:
@@ -445,7 +445,7 @@ class OpinionSweepOutcome:
 
 
 @dataclass(frozen=True)
-class OpinionSweepTask(BaseOpinionSweepTask[SweepConfig]):
+class OpinionSweepTask(BaseOpinionSweepTask["xgb.pipeline.context.SweepConfig"]):
     """
     Extend :class:`common.opinion.sweep_types.BaseOpinionSweepTask` with the
     keyword arguments required by the XGBoost implementation.

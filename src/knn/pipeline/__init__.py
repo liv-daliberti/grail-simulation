@@ -745,7 +745,8 @@ def _align_sentence_transformer_context(
             "Detected cached sentence-transformer device '%s'; overriding configuration.",
             device,
         )
-        type(context).sentence_device.__set__(context, device)
+        # Use explicit mutator on frozen context.
+        context.set_sentence_device(device)
 
     batch_size = overrides.get("batch_size")
     if batch_size is not None and context.sentence_batch_size != batch_size:
@@ -753,7 +754,7 @@ def _align_sentence_transformer_context(
             "Detected cached sentence-transformer batch size %d; overriding configuration.",
             batch_size,
         )
-        type(context).sentence_batch_size.__set__(context, int(batch_size))
+        context.set_sentence_batch_size(int(batch_size))
 
     if "normalize" in overrides and context.sentence_normalize != overrides["normalize"]:
         normalize = bool(overrides["normalize"])
@@ -761,7 +762,7 @@ def _align_sentence_transformer_context(
             "Detected cached sentence-transformer normalization=%s; overriding configuration.",
             "enabled" if normalize else "disabled",
         )
-        type(context).sentence_normalize.__set__(context, normalize)
+        context.set_sentence_normalize(normalize)
 
 
 def _describe_sweep_outcome(outcome: "SweepOutcome") -> str:

@@ -216,8 +216,10 @@ def _configure_basics(state: RunnerState) -> None:
     state.cfg.env.jobs = determine_jobs(state.args)
 
     # Ensure deterministic HuggingFace caches
-    os.environ.setdefault("HF_DATASETS_CACHE", state.cfg.env.paths.cache_dir)
-    os.environ.setdefault("HF_HOME", state.cfg.env.paths.cache_dir)
+    # Be robust if path resolution is unexpectedly None in certain test setups.
+    if state.cfg.env.paths is not None and getattr(state.cfg.env.paths, "cache_dir", None):
+        os.environ.setdefault("HF_DATASETS_CACHE", state.cfg.env.paths.cache_dir)
+        os.environ.setdefault("HF_HOME", state.cfg.env.paths.cache_dir)
 
 
 def _determine_allow_incomplete(state: RunnerState) -> None:
@@ -234,7 +236,9 @@ def _resolve_dataset_specs(state: RunnerState) -> None:
     issue_tokens = _split_tokens(state.args.issues)
     study_tokens = _split_tokens(state.args.studies)
     state.cfg.inputs.study_tokens_tuple = tuple(study_tokens)
-    state.cfg.inputs.study_specs = _resolve_study_specs(
+    # Resolve via top-level xgb.pipeline to allow monkeypatching in tests.
+    resolver = getattr(_importlib.import_module("xgb.pipeline"), "_resolve_study_specs")
+    state.cfg.inputs.study_specs = resolver(
         dataset=state.cfg.env.paths.dataset,
         cache_dir=state.cfg.env.paths.cache_dir,
         requested_issues=issue_tokens,
@@ -300,7 +304,9 @@ def _build_configs(state: RunnerState) -> None:
     -------
     None
     """
-    state.cfg.configs.grid = _build_sweep_configs(state.args)
+    # Resolve via top-level xgb.pipeline to allow monkeypatching in tests.
+    builder = getattr(_importlib.import_module("xgb.pipeline"), "_build_sweep_configs")
+    state.cfg.configs.grid = builder(state.args)
 
 
 def _build_vectorizers(state: RunnerState) -> None:

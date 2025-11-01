@@ -70,10 +70,11 @@ Helpful CLI/environment toggles:
 - `GRAIL_MAX_HISTORY` tunes the watch-history depth forwarded to the prompt
   builder.
 
-The `training/training-grpo.sh` SLURM wrapper automates environment setup,
-launches accelerate, and spins up a vLLM inference server when needed. Override
-`CONFIG`, `MAIN_SCRIPT`, or accelerate-specific variables before submitting to
-try alternate recipes.
+The SLURM wrappers `training/training-grpo-gun.sh` and
+`training/training-grpo-wage.sh` automate environment setup, launch accelerate,
+and (when needed) spin up a vLLM inference server. Override `CONFIG`,
+`MAIN_SCRIPT`, or accelerate-specific variables before submitting to try
+alternate recipes.
 
 ## Running GRAIL (GRPO + discriminator)
 
@@ -93,8 +94,9 @@ Additional environment switches:
 - `GAIL_EVAL_MODE=1` can be exported to ensure the discriminator stays frozen
   during evaluation-only runs.
 
-`training/training-grail.sh` mirrors the baseline launcher but wires in the
-discriminator-specific variables.
+The GRAIL wrappers `training/training-grail-gun.sh` and
+`training/training-grail-wage.sh` mirror the baseline launcher while wiring in
+the discriminator-specific variables.
 
 ## Generation utilities
 
@@ -128,7 +130,7 @@ All trainers load YAML recipes that share a common schema:
 Metrics stream to stdout and Weights & Biases when the relevant environment
 variables or recipe entries (`wandb_project`, `wandb_entity`) are set. Local logs
 land under `${LOG_DIR:-logs/grpo}` (for example `logs/grpo/train_*` when using
-`training-grpo.sh`); accelerator outputs and checkpoints follow the recipe’s
+the GRPO SLURM wrappers); accelerator outputs and checkpoints follow the recipe’s
 `output_dir`.
 
 ## Workflow checklist

@@ -426,7 +426,7 @@ def _filter_specs_by_study(
     return ordered
 
 
-def _build_sweep_configs(args: argparse.Namespace) -> List[SweepConfig]:
+def _build_sweep_configs(args: argparse.Namespace) -> List["xgb.pipeline.context.SweepConfig"]:
     """
     Construct hyper-parameter sweep configurations derived from CLI grids.
 
@@ -532,7 +532,7 @@ def _build_sweep_configs(args: argparse.Namespace) -> List[SweepConfig]:
     )
     param_values = [numeric_grids[key] for key in param_keys]
 
-    configs: List[SweepConfig] = []
+    configs: List["xgb.pipeline.context.SweepConfig"] = []
     for vectorizer in vectorizer_values:
         tag, vectorizer_cli = _vectorizer_cli(vectorizer)
         for combination in product(*param_values):

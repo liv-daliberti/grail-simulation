@@ -561,7 +561,7 @@ def _write_reports_from_inputs(
     outcomes: Sequence[SweepOutcome],
     opinion_sweep_outcomes: Sequence[OpinionSweepOutcome],
     selections: Mapping[str, StudySelection],
-    opinion_selections: Mapping[str, OpinionStudySelection],
+    opinion_selections: Mapping[str, "xgb.pipeline.context.OpinionStudySelection"],
     inputs: _ReportInputs,
 ) -> None:
     """Assemble report payloads and write them to disk."""
@@ -658,7 +658,7 @@ def select_and_log_configs(
     allow_incomplete: bool,
     outcomes: Sequence[SweepOutcome],
     opinion_sweep_outcomes: Sequence[OpinionSweepOutcome],
-) -> tuple[Dict[str, StudySelection], Dict[str, OpinionStudySelection]]:
+) -> tuple[Dict[str, StudySelection], Dict[str, "xgb.pipeline.context.OpinionStudySelection"]]:
     """Choose the best configurations per-study and log selections."""
 
     selections: Dict[str, StudySelection] = {}
@@ -682,7 +682,7 @@ def select_and_log_configs(
                 ),
             )
 
-    opinion_selections: Dict[str, OpinionStudySelection] = {}
+    opinion_selections: Dict[str, "xgb.pipeline.context.OpinionStudySelection"] = {}
     if run_opinion:
         opinion_selections = _select_best_opinion_configs(opinion_sweep_outcomes)
         if not opinion_selections:
@@ -714,7 +714,7 @@ def maybe_reports_stage(
     final_eval_context: FinalEvalContext | None,
     opinion_stage_config: OpinionStageConfig | None,
     selections: Mapping[str, StudySelection],
-    opinion_selections: Mapping[str, OpinionStudySelection],
+    opinion_selections: Mapping[str, "xgb.pipeline.context.OpinionStudySelection"],
     study_specs,
     paths,
     outcomes: Sequence[SweepOutcome],
@@ -756,7 +756,7 @@ def finalize_and_report(
     final_eval_context: FinalEvalContext | None,
     opinion_stage_config: OpinionStageConfig | None,
     selections: Mapping[str, StudySelection],
-    opinion_selections: Mapping[str, OpinionStudySelection],
+    opinion_selections: Mapping[str, "xgb.pipeline.context.OpinionStudySelection"],
     outcomes: Sequence[SweepOutcome],
     opinion_sweep_outcomes: Sequence[OpinionSweepOutcome],
     paths,

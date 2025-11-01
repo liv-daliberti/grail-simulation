@@ -9,7 +9,34 @@ ensures the required attributes exist and are class-like.
 
 from __future__ import annotations
 
+import os
+from pathlib import Path
 import pytest
+
+# Ensure unit tests resolve user-scoped paths relative to the repository PWD.
+# This avoids writes into a real user $HOME and keeps all runtime artefacts
+# confined to the working tree during test runs.
+_PWD = Path.cwd()
+_CACHE = _PWD / ".cache"
+_CONFIG = _PWD / ".config"
+_DATA = _PWD / ".local" / "share"
+_TMP = _PWD / ".tmp"
+_PYC = _CACHE / "pyc"
+for _d in (_CACHE, _CONFIG, _DATA, _TMP, _PYC, _CACHE / "huggingface"):
+    _d.mkdir(parents=True, exist_ok=True)
+
+# Point HOME and common cache/config locations at PWD-scoped directories
+os.environ["HOME"] = str(_PWD)
+os.environ.setdefault("XDG_CACHE_HOME", str(_CACHE))
+os.environ.setdefault("XDG_CONFIG_HOME", str(_CONFIG))
+os.environ.setdefault("XDG_DATA_HOME", str(_DATA))
+os.environ.setdefault("HF_HOME", str(_CACHE / "huggingface"))
+os.environ.setdefault("HF_HUB_CACHE", str(_CACHE / "huggingface"))
+os.environ.setdefault("TRANSFORMERS_CACHE", str(_CACHE / "huggingface" / "hub"))
+os.environ.setdefault("PYTORCH_HOME", str(_CACHE / "torch"))
+os.environ.setdefault("PIP_CACHE_DIR", str(_CACHE / "pip"))
+os.environ.setdefault("TMPDIR", str(_TMP))
+os.environ.setdefault("PYTHONPYCACHEPREFIX", str(_PYC))
 
 
 @pytest.fixture(autouse=True)

@@ -142,7 +142,7 @@ def _opinion_sweep_outcome_from_metrics(
 
 def _build_opinion_vectorizer_config(
     *,
-    config: SweepConfig,
+    config: "xgb.pipeline.context.SweepConfig",
     context: OpinionSweepRunContext,
     run_root: Path,
     study: StudySpec,
@@ -196,7 +196,7 @@ def _build_opinion_vectorizer_config(
 def _build_opinion_request_args(
     *,
     context: OpinionSweepRunContext,
-    config: SweepConfig,
+    config: "xgb.pipeline.context.SweepConfig",
     vectorizer: OpinionVectorizerConfig,
     run_root: Path,
 ) -> Dict[str, object]:
@@ -235,7 +235,7 @@ def _build_opinion_request_args(
 
 def _build_opinion_task(
     *,
-    config: SweepConfig,
+    config: "xgb.pipeline.context.SweepConfig",
     study: StudySpec,
     context: OpinionSweepRunContext,
     task_index: int,
@@ -295,7 +295,7 @@ def _build_opinion_task(
 def _iter_opinion_sweep_tasks(
     *,
     studies: Sequence[StudySpec],
-    configs: Sequence[SweepConfig],
+    configs: Sequence["xgb.pipeline.context.SweepConfig"],
     context: OpinionSweepRunContext,
 ) -> Sequence[OpinionSweepTask]:
     """
@@ -330,7 +330,7 @@ def _iter_opinion_sweep_tasks(
 def _prepare_opinion_sweep_tasks(
     *,
     studies: Sequence[StudySpec],
-    configs: Sequence[SweepConfig],
+    configs: Sequence["xgb.pipeline.context.SweepConfig"],
     context: OpinionSweepRunContext,
     reuse_existing: bool,
 ) -> Tuple[List[OpinionSweepTask], List[OpinionSweepOutcome]]:
@@ -568,7 +568,7 @@ def _load_opinion_from_next_metrics_from_disk(
 
 def _select_best_opinion_configs(
     outcomes: Sequence[OpinionSweepOutcome],
-) -> Dict[str, OpinionStudySelection]:
+) -> Dict[str, "xgb.pipeline.context.OpinionStudySelection"]:
     """
     Pick the best opinion configuration per study prioritising MAE, RMSE, then R².
 
@@ -578,7 +578,7 @@ def _select_best_opinion_configs(
     :rtype: Dict[str, ~xgb.pipeline.context.OpinionStudySelection]
     """
 
-    selections: Dict[str, OpinionStudySelection] = {}
+    selections: Dict[str, "xgb.pipeline.context.OpinionStudySelection"] = {}
     for outcome in outcomes:
         current = selections.get(outcome.study.key)
         if current is None:

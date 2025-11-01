@@ -248,7 +248,7 @@ class SweepConfig:
 
 
 @dataclass
-class SweepOutcome(BasePipelineSweepOutcome[SweepConfig]):
+class SweepOutcome(BasePipelineSweepOutcome["xgb.pipeline.context.SweepConfig"]):
     """Metrics captured for a (study, configuration) sweep evaluation.
 
     The measured fields are exposed as properties backed by the raw
@@ -262,7 +262,7 @@ class SweepOutcome(BasePipelineSweepOutcome[SweepConfig]):
         *,
         order_index: int,
         study,
-        config: "SweepConfig",
+        config: "xgb.pipeline.context.SweepConfig",
         metrics_path: Path | None = None,
         metrics: dict | None = None,
         accuracy: float | None = None,
@@ -328,7 +328,7 @@ class _SweepTaskExtras:
     tree_method: str
 
 
-class SweepTask(ExtrasSweepTask["SweepConfig"]):
+class SweepTask(ExtrasSweepTask["xgb.pipeline.context.SweepConfig"]):
     """Extend :class:`common.opinion.sweep_types.BaseSweepTask` with XGBoost metadata."""
 
     def __init__(
@@ -336,7 +336,7 @@ class SweepTask(ExtrasSweepTask["SweepConfig"]):
         *,
         index: int,
         study,
-        config: "SweepConfig",
+        config: "xgb.pipeline.context.SweepConfig",
         base_cli: Tuple[str, ...],
         extra_cli: Tuple[str, ...],
         run_root: Path,

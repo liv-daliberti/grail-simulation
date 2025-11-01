@@ -236,12 +236,20 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="prompt_builder.html">Prompt Builder Sample Prompts</a></li>
-<li class="toctree-l2"><a class="reference internal" href="knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l2"><a class="reference internal" href="knn_opinion.html">KNN Opinion Regression</a></li>
-<li class="toctree-l2"><a class="reference internal" href="knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
-<li class="toctree-l2"><a class="reference internal" href="knn_opinion_from_next.html">KNN Opinion Regression (Next-Video Config)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="knn_additional_features.html">KNN Additional Features</a></li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="xgb.html">XGBoost Report Catalog</a><input aria-label="Toggle navigation of XGBoost Report Catalog" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_next_video.html#id1">KNN Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_opinion_from_next.html">KNN Opinion Regression (Next-Video Config)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_opinion_from_next.html#knn-opinion-shift-study-next-video-config">KNN Opinion Shift Study (Next-Video Config)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_additional_features.html">KNN Additional Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="knn_additional_features.html#additional-text-features">Additional Text Features</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="xgb.html">XGBoost Report Catalog</a><input aria-label="Toggle navigation of XGBoost Report Catalog" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="xgb_next_video.html">XGBoost Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="xgb_next_video.html#id1">XGBoost Next-Video Baseline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="xgb_opinion.html">XGBoost Opinion Regression</a></li>
@@ -350,7 +358,7 @@ The viewer is a Republican conservative who is somewhat interested in politics a
 <ul class="simple">
 <li><p>Issue: gun control</p></li>
 <li><p>Task: Next-video selection</p></li>
-<li><p>Tags present — think: yes, answer: yes</p></li>
+<li><p>Tags — think: yes, answer: yes</p></li>
 <li><p>Chosen option: 2</p></li>
 <li><p>Short rationale: The viewer is a Republican conservative who is somewhat interested in politics and enthusiastic about guns, with a low gun regulation support score. Given her profile, she might prefer content that aligns with her conservative views and …</p></li>
 </ul>
@@ -413,7 +421,7 @@ Considering her profile and viewing history, Option 4 seems to be the most align
 <ul class="simple">
 <li><p>Issue: gun control</p></li>
 <li><p>Task: Next-video selection</p></li>
-<li><p>Tags present — think: yes, answer: yes</p></li>
+<li><p>Tags — think: yes, answer: yes</p></li>
 <li><p>Chosen option: 4</p></li>
 <li><p>Short rationale: The viewer is a conservative Republican who is somewhat interested in politics and not very concerned about gun policy. She has shown a pattern of not completing videos that are critical of gun ownership or advocate for gun control, as s…</p></li>
 </ul>
@@ -462,7 +470,7 @@ The viewer is an independent conservative who supports a handgun ban but is not 
 <ul class="simple">
 <li><p>Issue: gun control</p></li>
 <li><p>Task: Next-video selection</p></li>
-<li><p>Tags present — think: yes, answer: yes</p></li>
+<li><p>Tags — think: yes, answer: yes</p></li>
 <li><p>Chosen option: 5</p></li>
 <li><p>Short rationale: The viewer is an independent conservative who supports a handgun ban but is not very interested in politics or gun policy. Given his support for gun regulation, he might be interested in content that aligns with his views or provides a b…</p></li>
 </ul>
@@ -511,7 +519,7 @@ Given the viewer&#39;s profile as an independent conservative who supports a han
 <ul class="simple">
 <li><p>Issue: gun control</p></li>
 <li><p>Task: Next-video selection</p></li>
-<li><p>Tags present — think: yes, answer: yes</p></li>
+<li><p>Tags — think: yes, answer: yes</p></li>
 <li><p>Chosen option: 3</p></li>
 <li><p>Short rationale: Given the viewer’s profile as an independent conservative who supports a handgun ban, the viewer might be interested in content that discusses gun control from a perspective that aligns with their views or challenges them. Option 3, “Gun…</p></li>
 </ul>
@@ -558,7 +566,7 @@ The viewer is a college-educated, independent conservative who supports a handgu
 <ul class="simple">
 <li><p>Issue: gun control</p></li>
 <li><p>Task: Next-video selection</p></li>
-<li><p>Tags present — think: yes, answer: yes</p></li>
+<li><p>Tags — think: yes, answer: yes</p></li>
 <li><p>Chosen option: 1</p></li>
 <li><p>Short rationale: The viewer is a college-educated, independent conservative who supports a handgun ban and has shown interest in gun control topics. He recently watched a video from The New York Times about gun control and completed a significant portion…</p></li>
 </ul>
@@ -619,7 +627,7 @@ Considering the viewer&#39;s opposition to the $15 minimum wage and the engageme
 <ul class="simple">
 <li><p>Issue: minimum wage</p></li>
 <li><p>Task: Next-video selection</p></li>
-<li><p>Tags present — think: yes, answer: yes</p></li>
+<li><p>Tags — think: yes, answer: yes</p></li>
 <li><p>Chosen option: 1</p></li>
 <li><p>Short rationale: The viewer opposes a $15 minimum wage and is currently watching a video advocating for it. They have no recent watch history, but their survey highlights show zero support for a $15 minimum wage. Given this, they might be interested in c…</p></li>
 </ul>
@@ -667,7 +675,7 @@ The viewer opposes a $15 minimum wage and is currently watching a video advocati
 <ul class="simple">
 <li><p>Issue: minimum wage</p></li>
 <li><p>Task: Next-video selection</p></li>
-<li><p>Tags present — think: yes, answer: yes</p></li>
+<li><p>Tags — think: yes, answer: yes</p></li>
 <li><p>Chosen option: 1</p></li>
 <li><p>Short rationale: The viewer opposes a $15 minimum wage and is currently watching a video advocating for raising the minimum wage. Given their opposition, they might be interested in content that aligns with their viewpoint or provides a counterargument. …</p></li>
 </ul>
@@ -719,7 +727,7 @@ Considering the viewer&#39;s profile and preferences, Option 3 is the best choic
 <ul class="simple">
 <li><p>Issue: minimum wage</p></li>
 <li><p>Task: Next-video selection</p></li>
-<li><p>Tags present — think: yes, answer: yes</p></li>
+<li><p>Tags — think: yes, answer: yes</p></li>
 <li><p>Chosen option: 3</p></li>
 <li><p>Short rationale: The viewer is a 65-year-old who opposes a $15 minimum wage and has recently watched content both supporting and opposing minimum wage increases. They completed a video from MoveOn, which suggests they are open to hearing different perspe…</p></li>
 </ul>
@@ -778,7 +786,7 @@ Considering the viewer&#39;s profile and viewing history, Option 3 is the most s
 <ul class="simple">
 <li><p>Issue: minimum wage</p></li>
 <li><p>Task: Next-video selection</p></li>
-<li><p>Tags present — think: yes, answer: yes</p></li>
+<li><p>Tags — think: yes, answer: yes</p></li>
 <li><p>Chosen option: 3</p></li>
 <li><p>Short rationale: The viewer is a 65-year-old who opposes a $15 minimum wage and has shown interest in both sides of the debate, as seen from their recent viewing history. They completed videos from both MoveOn.org, which supports raising the minimum wage…</p></li>
 </ul>
@@ -828,7 +836,7 @@ The viewer opposes a $15 minimum wage and has shown interest in content that ali
 <ul class="simple">
 <li><p>Issue: minimum wage</p></li>
 <li><p>Task: Next-video selection</p></li>
-<li><p>Tags present — think: yes, answer: yes</p></li>
+<li><p>Tags — think: yes, answer: yes</p></li>
 <li><p>Chosen option: 3</p></li>
 <li><p>Short rationale: The viewer opposes a $15 minimum wage and has shown interest in content that aligns with this viewpoint, such as “Stossel: Minimum Wage Hurts Beginners.” The viewer completed this video, indicating strong engagement with content that cri…</p></li>
 </ul>

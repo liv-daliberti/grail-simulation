@@ -44,7 +44,8 @@ python src/grail/grail.py \
 Swap `_gun` for `_wage` to target the wage task. Environment variables such as
 `GAIL_WEIGHT`, `GAIL_ALPHA`, `GAIL_DISC_MODEL`, and `GRAIL_MAX_HISTORY` control
 discriminator weighting, architecture, and prompt history depth. The helper
-scripts in `training/training-grail.sh` offer a turn-key launcher for SLURM.
+wrappers `training/training-grail-gun.sh` and `training/training-grail-wage.sh`
+offer a turn-key launcher for SLURM.
 
 ## Extension checklist
 

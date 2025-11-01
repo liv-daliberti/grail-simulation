@@ -294,7 +294,7 @@ def _run_cross_study_evaluations(
 
 def _run_opinion_stage(
     *,
-    selections: Mapping[str, OpinionStudySelection],
+    selections: Mapping[str, "xgb.pipeline.context.OpinionStudySelection"],
     config: OpinionStageConfig,
 ) -> Dict[str, Dict[str, object]]:
     """

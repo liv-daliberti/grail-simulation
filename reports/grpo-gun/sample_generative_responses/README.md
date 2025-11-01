@@ -1,4 +1,4 @@
-# GRPO Sample Generative Model Responses
+# GRPO (Gun) Sample Generative Model Responses
 
 This gallery shows concrete questions given to the model and the
 exact structured <think>/<answer> outputs it produced. Each example

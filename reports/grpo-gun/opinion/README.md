@@ -1,4 +1,4 @@
-# GRPO Opinion Regression
+# GRPO (Gun) Opinion Regression
 
 Opinion-shift evaluation across the canonical participant studies. Baseline metrics treat the pre-study opinion index as the prediction.
 
@@ -18,6 +18,6 @@ Opinion-shift evaluation across the canonical participant studies. Baseline metr
 
 | Study | Participants | Eligible | MAE ↓ | Baseline MAE ↓ | Direction ↑ | Baseline Direction ↑ |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Study 1 – Gun Control (MTurk) | 162 | 162 | 2.831 | 0.259 | 0.704 | 0.074 |
-| Study 2 – Minimum Wage (MTurk) | 0 | 0 | — | — | — | — |
-| Study 3 – Minimum Wage (YouGov) | 0 | 0 | — | — | — | — |
+| Study 1 – Gun Control (MTurk) | 162 | 162 | 2.831 | — | 0.704 | 0.074 |
+| Study 2 – Minimum Wage (MTurk) | 0 | 0 | nan | — | — | — |
+| Study 3 – Minimum Wage (YouGov) | 0 | 0 | nan | — | — | — |

@@ -312,7 +312,7 @@
 <h1>XGBoost Opinion Regression<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h1>
 <p>This summary captures the opinion-regression baselines trained with XGBoost for the selected participant studies.</p>
 <ul class="simple">
-<li><p>Dataset: <code class="docutils literal notranslate"><span class="pre">unknown</span></code></p></li>
+<li><p>Dataset: <code class="docutils literal notranslate"><span class="pre">data/cleaned_grail</span></code></p></li>
 <li><p>Split: validation</p></li>
 <li><p>Metrics track MAE, RMSE, R², directional accuracy, MAE(change), RMSE(change), calibration slope/intercept, calibration ECE, and KL divergence versus the no-change baseline.</p></li>
 <li><p>Δ columns capture improvements relative to that baseline when available.</p></li>
@@ -342,29 +342,75 @@
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>study1</p></td>
+<tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
+<td class="text-right"><p>162</p></td>
+<td class="text-right"><p>0.864</p></td>
+<td class="text-right"><p>0.074</p></td>
+<td class="text-right"><p>+0.790</p></td>
+<td class="text-right"><p>0.012</p></td>
+<td class="text-right"><p>+0.025</p></td>
+<td class="text-right"><p>0.021</p></td>
+<td class="text-right"><p>0.994</p></td>
+<td class="text-right"><p>0.012</p></td>
+<td class="text-right"><p>0.021</p></td>
+<td class="text-right"><p>+0.024</p></td>
+<td class="text-right"><p>1.084</p></td>
+<td class="text-right"><p>-0.003</p></td>
+<td class="text-right"><p>0.004</p></td>
 <td class="text-right"><p>—</p></td>
+<td class="text-right"><p>1.557</p></td>
+<td class="text-right"><p>+19.888</p></td>
+<td class="text-right"><p>0.037</p></td>
+</tr>
+<tr class="row-odd"><td><p>Study 2 – Minimum Wage (MTurk)</p></td>
+<td class="text-right"><p>165</p></td>
+<td class="text-right"><p>0.836</p></td>
+<td class="text-right"><p>0.061</p></td>
+<td class="text-right"><p>+0.776</p></td>
+<td class="text-right"><p>0.036</p></td>
+<td class="text-right"><p>+0.060</p></td>
+<td class="text-right"><p>0.049</p></td>
+<td class="text-right"><p>0.969</p></td>
+<td class="text-right"><p>0.036</p></td>
+<td class="text-right"><p>0.049</p></td>
+<td class="text-right"><p>+0.089</p></td>
+<td class="text-right"><p>1.106</p></td>
+<td class="text-right"><p>-0.003</p></td>
+<td class="text-right"><p>0.013</p></td>
 <td class="text-right"><p>—</p></td>
+<td class="text-right"><p>0.572</p></td>
+<td class="text-right"><p>+17.797</p></td>
+<td class="text-right"><p>0.096</p></td>
+</tr>
+<tr class="row-even"><td><p>Study 3 – Minimum Wage (YouGov)</p></td>
+<td class="text-right"><p>257</p></td>
+<td class="text-right"><p>0.739</p></td>
+<td class="text-right"><p>0.058</p></td>
+<td class="text-right"><p>+0.681</p></td>
+<td class="text-right"><p>0.049</p></td>
+<td class="text-right"><p>+0.036</p></td>
+<td class="text-right"><p>0.069</p></td>
+<td class="text-right"><p>0.930</p></td>
+<td class="text-right"><p>0.049</p></td>
+<td class="text-right"><p>0.069</p></td>
+<td class="text-right"><p>+0.057</p></td>
+<td class="text-right"><p>1.064</p></td>
+<td class="text-right"><p>-0.005</p></td>
+<td class="text-right"><p>0.008</p></td>
 <td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
-<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>0.788</p></td>
+<td class="text-right"><p>+15.792</p></td>
+<td class="text-right"><p>0.084</p></td>
 </tr>
 </tbody>
 </table>
 </div>
+<section id="training-curves">
+<h2>Training Curves<a class="headerlink" href="#training-curves" title="Link to this heading">¶</a></h2>
+<p><img alt="Study 1 – Gun Control (MTurk)" src="../_images/study_1_gun_control_mturk_mae.png" /></p>
+<p><img alt="Study 2 – Minimum Wage (MTurk)" src="../_images/study_2_minimum_wage_mturk_mae.png" /></p>
+<p><img alt="Study 3 – Minimum Wage (YouGov)" src="../_images/study_3_minimum_wage_yougov_mae.png" /></p>
+</section>
 <section id="tfidf-opinion-plots">
 <h2>TFIDF Opinion Plots<a class="headerlink" href="#tfidf-opinion-plots" title="Link to this heading">¶</a></h2>
 <p><img alt="Change Heatmap Study1" src="../reports/xgb/opinion/tfidf/opinion/change_heatmap_study1.png" /></p>
@@ -377,28 +423,55 @@
 <p><img alt="Post Heatmap Study2" src="../reports/xgb/opinion/tfidf/opinion/post_heatmap_study2.png" /></p>
 <p><img alt="Post Heatmap Study3" src="../reports/xgb/opinion/tfidf/opinion/post_heatmap_study3.png" /></p>
 </section>
-<section id="word2vec-opinion-plots">
-<h2>WORD2VEC Opinion Plots<a class="headerlink" href="#word2vec-opinion-plots" title="Link to this heading">¶</a></h2>
-<p><img alt="Change Heatmap Study1" src="../reports/xgb/opinion/word2vec/opinion/change_heatmap_study1.png" /></p>
-<p><img alt="Change Heatmap Study2" src="../reports/xgb/opinion/word2vec/opinion/change_heatmap_study2.png" /></p>
-<p><img alt="Error Histogram Study1" src="../reports/xgb/opinion/word2vec/opinion/error_histogram_study1.png" /></p>
-<p><img alt="Error Histogram Study2" src="../reports/xgb/opinion/word2vec/opinion/error_histogram_study2.png" /></p>
-<p><img alt="Post Heatmap Study1" src="../reports/xgb/opinion/word2vec/opinion/post_heatmap_study1.png" /></p>
-<p><img alt="Post Heatmap Study2" src="../reports/xgb/opinion/word2vec/opinion/post_heatmap_study2.png" /></p>
-</section>
-<section id="sentence-transformer-opinion-plots">
-<h2>SENTENCE_TRANSFORMER Opinion Plots<a class="headerlink" href="#sentence-transformer-opinion-plots" title="Link to this heading">¶</a></h2>
-<p><img alt="Change Heatmap Study3" src="../reports/xgb/opinion/sentence_transformer/opinion/change_heatmap_study3.png" /></p>
-<p><img alt="Error Histogram Study3" src="../reports/xgb/opinion/sentence_transformer/opinion/error_histogram_study3.png" /></p>
-<p><img alt="Post Heatmap Study3" src="../reports/xgb/opinion/sentence_transformer/opinion/post_heatmap_study3.png" /></p>
-</section>
 <section id="cross-study-diagnostics">
 <h2>Cross-Study Diagnostics<a class="headerlink" href="#cross-study-diagnostics" title="Link to this heading">¶</a></h2>
+<section id="weighted-summary">
+<h3>Weighted Summary<a class="headerlink" href="#weighted-summary" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>Weighted MAE 0.035 across 584 participants.</p></li>
+<li><p>Weighted baseline MAE 0.074 (+0.040 vs. final).</p></li>
+<li><p>Weighted directional accuracy 0.801 across 584 participants.</p></li>
+<li><p>Weighted baseline accuracy 0.063 (+0.738 vs. final).</p></li>
+<li><p>Weighted RMSE (change) 0.050 across 584 participants.</p></li>
+<li><p>Weighted baseline RMSE (change) 0.107 (+0.057 vs. final).</p></li>
+<li><p>Weighted calibration ECE 0.008 across 584 participants.</p></li>
+<li><p>Weighted KL divergence 0.940 across 584 participants.</p></li>
+<li><p>Weighted baseline KL divergence 18.435 (+17.495 vs. final).</p></li>
+<li><p>Largest MAE reduction: Study 2 – Minimum Wage (MTurk) (+0.060).</p></li>
+<li><p>Lowest MAE: Study 1 – Gun Control (MTurk) (0.012); Highest MAE: Study 3 – Minimum Wage (YouGov) (0.049).</p></li>
+<li><p>Highest directional accuracy: Study 1 – Gun Control (MTurk) (0.864).</p></li>
+<li><p>Lowest directional accuracy: Study 3 – Minimum Wage (YouGov) (0.739).</p></li>
+<li><p>Largest directional-accuracy gain: Study 1 – Gun Control (MTurk) (+0.790).</p></li>
+<li><p>Largest RMSE(change) reduction: Study 2 – Minimum Wage (MTurk) (+0.089).</p></li>
+<li><p>Lowest RMSE(change): Study 1 – Gun Control (MTurk) (0.021); Highest: Study 3 – Minimum Wage (YouGov) (0.069).</p></li>
+<li><p>Lowest calibration ECE: Study 1 – Gun Control (MTurk) (0.004); Highest: Study 2 – Minimum Wage (MTurk) (0.013).</p></li>
+<li><p>Largest KL divergence drop: Study 1 – Gun Control (MTurk) (+19.888).</p></li>
+<li><p>Lowest KL divergence: Study 2 – Minimum Wage (MTurk) (0.572); Highest: Study 1 – Gun Control (MTurk) (1.557).</p></li>
+<li><p>Unweighted MAE 0.032 (σ 0.015, range 0.012 – 0.049).</p></li>
+<li><p>MAE delta mean 0.040 (σ 0.014, range 0.025 – 0.060).</p></li>
+<li><p>Directional accuracy mean 0.813 (σ 0.054, range 0.739 – 0.864).</p></li>
+<li><p>Accuracy delta mean 0.749 (σ 0.048, range 0.681 – 0.790).</p></li>
+<li><p>RMSE(change) mean 0.046 (σ 0.019, range 0.021 – 0.069).</p></li>
+<li><p>RMSE(change) delta mean 0.057 (σ 0.027, range 0.024 – 0.089).</p></li>
+<li><p>Calibration ECE mean 0.008 (σ 0.004, range 0.004 – 0.013).</p></li>
+<li><p>KL divergence mean 0.972 (σ 0.423, range 0.572 – 1.557).</p></li>
+<li><p>KL divergence delta mean 17.826 (σ 1.672, range 15.792 – 19.888).</p></li>
+</ul>
+</section>
 </section>
 <section id="observations">
 <h2>Observations<a class="headerlink" href="#observations" title="Link to this heading">¶</a></h2>
 <ul class="simple">
-<li><p>study1: MAE — (Δ vs. baseline —), RMSE(change) —, ECE —, KL —, R² —.</p></li>
+<li><p>Study 1 – Gun Control (MTurk): MAE 0.012 (Δ vs. baseline +0.025), RMSE(change) 0.021, ECE 0.004, KL 1.557, R² 0.994.</p></li>
+<li><p>Study 2 – Minimum Wage (MTurk): MAE 0.036 (Δ vs. baseline +0.060), RMSE(change) 0.049, ECE 0.013, KL 0.572, R² 0.969.</p></li>
+<li><p>Study 3 – Minimum Wage (YouGov): MAE 0.049 (Δ vs. baseline +0.036), RMSE(change) 0.069, ECE 0.008, KL 0.788, R² 0.930.</p></li>
+<li><p>Average MAE reduction +0.040 across 3 studies.</p></li>
+<li><p>Mean R² 0.965.</p></li>
+<li><p>Mean RMSE(change) 0.046.</p></li>
+<li><p>Mean RMSE(change) delta 0.057.</p></li>
+<li><p>Mean calibration ECE 0.008.</p></li>
+<li><p>Mean KL divergence 0.972.</p></li>
+<li><p>Mean KL divergence delta 17.826.</p></li>
 </ul>
 </section>
 </section>

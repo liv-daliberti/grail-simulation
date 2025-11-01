@@ -1,6 +1,6 @@
-# GRPO Report Catalog
+# GRPO (Gun) Report Catalog
 
-Finetuned GRPO evaluation artifacts:
+Finetuned GRPO (Gun) evaluation artifacts:
 
 - `next_video/` – slate-ranking metrics for the configured checkpoint.
 - `opinion/` – opinion regression metrics across participant studies.

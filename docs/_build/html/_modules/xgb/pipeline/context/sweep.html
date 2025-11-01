@@ -662,7 +662,19 @@
         <span class="n">extras</span> <span class="o">=</span> <span class="n">_SweepTaskExtras</span><span class="p">(</span><span class="n">tree_method</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">tree_method</span> <span class="ow">or</span> <span class="s2">&quot;hist&quot;</span><span class="p">))</span>
         <span class="c1"># Call base class constructor directly to satisfy pylint and ensure</span>
         <span class="c1"># proper initialisation of BaseSweepTask fields.</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">base_task_kwargs</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="p">,</span> <span class="n">study</span><span class="o">=</span><span class="n">study</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">base_cli</span><span class="o">=</span><span class="n">base_cli</span><span class="p">,</span> <span class="n">extra_cli</span><span class="o">=</span><span class="n">extra_cli</span><span class="p">,</span> <span class="n">run_root</span><span class="o">=</span><span class="n">run_root</span><span class="p">,</span> <span class="n">metrics_path</span><span class="o">=</span><span class="n">metrics_path</span><span class="p">,</span> <span class="n">train_participant_studies</span><span class="o">=</span><span class="n">train_participant_studies</span><span class="p">),</span> <span class="n">extras</span><span class="o">=</span><span class="n">extras</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="o">**</span><span class="n">base_task_kwargs</span><span class="p">(</span>
+                <span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="p">,</span>
+                <span class="n">study</span><span class="o">=</span><span class="n">study</span><span class="p">,</span>
+                <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+                <span class="n">base_cli</span><span class="o">=</span><span class="n">base_cli</span><span class="p">,</span>
+                <span class="n">extra_cli</span><span class="o">=</span><span class="n">extra_cli</span><span class="p">,</span>
+                <span class="n">run_root</span><span class="o">=</span><span class="n">run_root</span><span class="p">,</span>
+                <span class="n">metrics_path</span><span class="o">=</span><span class="n">metrics_path</span><span class="p">,</span>
+                <span class="n">train_participant_studies</span><span class="o">=</span><span class="n">train_participant_studies</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">extras</span><span class="o">=</span><span class="n">extras</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="n">_extras</span><span class="p">:</span> <span class="s2">&quot;_SweepTaskExtras&quot;</span>
 

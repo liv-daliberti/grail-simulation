@@ -73,6 +73,16 @@ def _fmt_rate(value: Optional[float], digits: int = 3) -> str:
     return f"{v:.{digits}f}"
 
 
+def _fmt_int(value: Optional[int]) -> str:
+    """Format an integer with thousands separators or an em dash."""
+    if value is None:
+        return "—"
+    try:
+        return f"{int(value):,}"
+    except (TypeError, ValueError):
+        return "—"
+
+
 def _load_json(path: Path) -> Mapping[str, object]:
     with path.open("r", encoding="utf-8") as handle:
         return json.load(handle)
@@ -213,6 +223,69 @@ def _read_grouped_json_next_video(repo_root: Path, family: str) -> dict[StudyLab
                 continue
             values[label] = acc
     return values
+
+
+def _gather_next_video_baselines(repo_root: Path) -> tuple[dict[StudyLabel, float], dict[StudyLabel, float], dict[StudyLabel, int]]:
+    """Collect per-study next-video baselines and eligible counts.
+
+    Returns three maps keyed by study label:
+      - random baseline expected accuracy
+      - most-frequent gold-index baseline accuracy
+      - eligible row counts (N)
+    """
+    label_map = _label_by_key()
+    random_map: dict[StudyLabel, float] = {}
+    mostfreq_map: dict[StudyLabel, float] = {}
+    eligible_map: dict[StudyLabel, int] = {}
+
+    def _apply_from_metrics(metrics_path: Path) -> None:
+        payload = _load_json(metrics_path)
+        if not isinstance(payload, Mapping):
+            return
+        group = payload.get("group_metrics", {}) if isinstance(payload, Mapping) else {}
+        by_study = group.get("by_participant_study", {}) if isinstance(group, Mapping) else {}
+        # Top-level baselines on this file
+        rand = payload.get("random_baseline_expected_accuracy")
+        most = (
+            payload.get("baseline_most_frequent_gold_index", {}).get("accuracy")
+            if isinstance(payload.get("baseline_most_frequent_gold_index"), Mapping)
+            else None
+        )
+        for key, stats in (by_study.items() if isinstance(by_study, Mapping) else []):
+            label = label_map.get(str(key))
+            if not label:
+                continue
+            try:
+                elig = int(stats.get("n_eligible", 0) or 0)
+            except (TypeError, ValueError):
+                elig = 0
+            if elig:
+                eligible_map[label] = elig
+            try:
+                if rand is not None and label not in random_map:
+                    random_map[label] = float(rand)
+            except (TypeError, ValueError):
+                pass
+            try:
+                if most is not None and label not in mostfreq_map:
+                    mostfreq_map[label] = float(most)
+            except (TypeError, ValueError):
+                pass
+
+    # Prefer RLHF issue-specific metrics, then fall back to GPT-4o
+    for family in ("grpo", "grail", "gpt-4o"):
+        model_root = repo_root / "models" / family
+        if not model_root.exists():
+            continue
+        candidates = _collect_next_video_candidates(model_root)
+        ordered: list[Path] = sorted(
+            candidates,
+            key=lambda p: (0 if not _is_checkpoint_50(p) else 1, p.as_posix()),
+        )
+        for metrics_path in ordered:
+            _apply_from_metrics(metrics_path)
+
+    return random_map, mostfreq_map, eligible_map
 
 
 # ------------------------
@@ -395,6 +468,88 @@ def _read_rlhf_opinion(repo_root: Path, family: str) -> StudyScoresPair:
     return acc, mae
 
 
+def _gather_opinion_baselines(
+    repo_root: Path,
+) -> tuple[dict[StudyLabel, float], dict[StudyLabel, float], dict[StudyLabel, float], dict[StudyLabel, int]]:
+    """Collect opinion baselines and eligible counts per study.
+
+    Returns:
+      - no_change_dir: direction accuracy when predicting no change (use-before baseline)
+      - mae_global_mean: MAE when predicting the global mean of the after scores
+      - mae_using_before: MAE when predicting the pre-study index
+      - eligible_map: evaluation counts per study
+    """
+    label_map = _label_by_key()
+    no_change_dir: dict[StudyLabel, float] = {}
+    mae_global_mean: dict[StudyLabel, float] = {}
+    mae_using_before: dict[StudyLabel, float] = {}
+    eligible_map: dict[StudyLabel, int] = {}
+
+    # Prefer RLHF metrics which include detailed baselines
+    for family in ("grpo", "grail"):
+        root = repo_root / "models" / family
+        if not root.exists():
+            continue
+        for metrics_path in sorted(root.rglob("opinion/**/study*/metrics.json")):
+            payload = _load_json(metrics_path)
+            metrics = payload.get("metrics", payload)
+            baseline = payload.get("baseline", {})
+            if not isinstance(metrics, Mapping):
+                continue
+            study_key = metrics_path.parent.name
+            label = label_map.get(study_key)
+            if not label:
+                continue
+            try:
+                elig = int(metrics.get("eligible", 0) or 0)
+            except (TypeError, ValueError):
+                elig = 0
+            if elig:
+                eligible_map[label] = elig
+            try:
+                val = float(baseline.get("direction_accuracy")) if isinstance(baseline, Mapping) else None
+                if val is not None:
+                    no_change_dir[label] = val
+            except (TypeError, ValueError):
+                pass
+            try:
+                gm = float(baseline.get("mae_global_mean_after")) if isinstance(baseline, Mapping) else None
+                if gm is not None:
+                    mae_global_mean[label] = gm
+            except (TypeError, ValueError):
+                pass
+            try:
+                ub = float(baseline.get("mae_using_before")) if isinstance(baseline, Mapping) else None
+                if ub is not None:
+                    mae_using_before[label] = ub
+            except (TypeError, ValueError):
+                pass
+
+    # Fallback to GPT-4o CSV for no-change baseline and eligible counts
+    gpt_csv = repo_root / "reports" / "gpt4o" / "opinion" / "opinion_metrics.csv"
+    if gpt_csv.exists():
+        import csv as _csv
+        with gpt_csv.open("r", encoding="utf-8", newline="") as handle:
+            reader = _csv.DictReader(handle)
+            for row in reader:
+                key = str(row.get("study") or "").strip()
+                label = label_map.get(key, key)
+                try:
+                    elig = int(row.get("eligible") or 0)
+                except (TypeError, ValueError):
+                    elig = 0
+                if elig and label not in eligible_map:
+                    eligible_map[label] = elig
+                try:
+                    base = float(row.get("baseline_direction_accuracy") or "")
+                except (TypeError, ValueError):
+                    base = None  # type: ignore[assignment]
+                if base is not None and label not in no_change_dir:
+                    no_change_dir[label] = base
+
+    return no_change_dir, mae_global_mean, mae_using_before, eligible_map
+
+
 # ------------------------
 # Report assembly
 # ------------------------
@@ -436,6 +591,9 @@ def _gather_opinion(repo_root: Path) -> tuple[dict[str, StudyScores], dict[str, 
 def _build_next_video_table(
     *,
     studies: Sequence[StudyLabel],
+    n_map: Mapping[StudyLabel, int],
+    random_base: Mapping[StudyLabel, float],
+    mostfreq_base: Mapping[StudyLabel, float],
     gpt4o: Mapping[StudyLabel, float],
     grpo: Mapping[StudyLabel, float],
     grail: Mapping[StudyLabel, float],
@@ -447,6 +605,9 @@ def _build_next_video_table(
         rows.append(
             [
                 study,
+                _fmt_int(n_map.get(study)),
+                _fmt_rate(random_base.get(study)),
+                _fmt_rate(mostfreq_base.get(study)),
                 _fmt_rate(gpt4o.get(study)),
                 _fmt_rate(grpo.get(study)),
                 _fmt_rate(grail.get(study)),
@@ -460,6 +621,7 @@ def _build_next_video_table(
 def _build_opinion_table(
     *,
     studies: Sequence[StudyLabel],
+    n_map: Mapping[StudyLabel, int],
     gpt4o: Mapping[StudyLabel, float],
     grpo: Mapping[StudyLabel, float],
     grail: Mapping[StudyLabel, float],
@@ -471,6 +633,7 @@ def _build_opinion_table(
         rows.append(
             [
                 study,
+                _fmt_int(n_map.get(study)),
                 _fmt_rate(gpt4o.get(study)),
                 _fmt_rate(grpo.get(study)),
                 _fmt_rate(grail.get(study)),
@@ -492,9 +655,11 @@ def generate_portfolio_report(repo_root: Path) -> None:
 
     # Next-video metrics
     next_video = _gather_next_video(repo_root)
+    nv_rand, nv_most, nv_n = _gather_next_video_baselines(repo_root)
 
     # Opinion metrics (opinion_from_next for knn/xgb)
     op_dir, op_mae = _gather_opinion(repo_root)
+    op_no_change, op_mae_mean, op_mae_using_before, op_n = _gather_opinion_baselines(repo_root)
 
     # Assemble Markdown
     reports_dir = repo_root / "reports" / "main"
@@ -510,9 +675,12 @@ def generate_portfolio_report(repo_root: Path) -> None:
     append_markdown_table(
         lines,
         title="## Next-Video Eligible Accuracy (↑)",
-        headers=["Study", "GPT-4o", "GRPO", "GRAIL", "KNN", "XGB"],
+        headers=["Study", "N", "Random", "Most-Freq.", "GPT-4o", "GRPO", "GRAIL", "KNN", "XGB"],
         rows=_build_next_video_table(
             studies=studies,
+            n_map=nv_n,
+            random_base=nv_rand,
+            mostfreq_base=nv_most,
             gpt4o=next_video["gpt4o"],
             grpo=next_video["grpo"],
             grail=next_video["grail"],
@@ -526,30 +694,50 @@ def generate_portfolio_report(repo_root: Path) -> None:
     append_markdown_table(
         lines,
         title="## Opinion Directional Accuracy (↑)",
-        headers=["Study", "GPT-4o", "GRPO", "GRAIL", "KNN", "XGB"],
-        rows=_build_opinion_table(
-            studies=studies,
-            gpt4o=op_dir["gpt4o"],
-            grpo=op_dir["grpo"],
-            grail=op_dir["grail"],
-            knn=op_dir["knn"],
-            xgb=op_dir["xgb"],
-        ),
+        headers=["Study", "N", "Random (1/3)", "No-change", "GPT-4o", "GRPO", "GRAIL", "KNN", "XGB"],
+        rows=[
+            [
+                row[0],
+                row[1],
+                _fmt_rate(1/3),
+                _fmt_rate(op_no_change.get(row[0])),
+                *row[2:],
+            ]
+            for row in _build_opinion_table(
+                studies=studies,
+                n_map=op_n,
+                gpt4o=op_dir["gpt4o"],
+                grpo=op_dir["grpo"],
+                grail=op_dir["grail"],
+                knn=op_dir["knn"],
+                xgb=op_dir["xgb"],
+            )
+        ],
         empty_message="No opinion directional-accuracy metrics available.",
     )
 
     append_markdown_table(
         lines,
         title="## Opinion MAE (↓)",
-        headers=["Study", "GPT-4o", "GRPO", "GRAIL", "KNN", "XGB"],
-        rows=_build_opinion_table(
-            studies=studies,
-            gpt4o=op_mae["gpt4o"],
-            grpo=op_mae["grpo"],
-            grail=op_mae["grail"],
-            knn=op_mae["knn"],
-            xgb=op_mae["xgb"],
-        ),
+        headers=["Study", "N", "Global Mean", "Using Before", "GPT-4o", "GRPO", "GRAIL", "KNN", "XGB"],
+        rows=[
+            [
+                row[0],
+                row[1],
+                _fmt_rate(op_mae_mean.get(row[0])),
+                _fmt_rate(op_mae_using_before.get(row[0])),
+                *row[2:],
+            ]
+            for row in _build_opinion_table(
+                studies=studies,
+                n_map=op_n,
+                gpt4o=op_mae["gpt4o"],
+                grpo=op_mae["grpo"],
+                grail=op_mae["grail"],
+                knn=op_mae["knn"],
+                xgb=op_mae["xgb"],
+            )
+        ],
         empty_message="No opinion MAE metrics available.",
     )
 
@@ -568,6 +756,18 @@ def generate_portfolio_report(repo_root: Path) -> None:
             (
                 "- GRPO/GRAIL metrics are read from `models/<family>/` caches "
                 "when available."
+            ),
+            (
+                "- Baselines: For next-video, 'Random' is the expected accuracy "
+                "of uniformly picking among the slate; 'Most-Freq.' always "
+                "chooses the most common gold index in the split. For opinion "
+                "direction, 'Random (1/3)' assumes equal probability of up/none/down; "
+                "'No-change' predicts the pre-study opinion. For opinion MAE, "
+                "'Global Mean' predicts the dataset mean of the post-study index; "
+                "'Using Before' predicts the pre-study index (when available)."
+            ),
+            (
+                "- Column 'N' reports the number of eligible evaluation examples per study."
             ),
             "",
         ]

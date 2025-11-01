@@ -8,4 +8,4 @@ Finetuned GRPO evaluation artifacts:
   prompts given to the model and the model's <think>/<answer> (and <opinion>)
   outputs, with explanatory notes.
 
-Regenerate via `python -m grpo.pipeline --stage full` after producing updated evaluation artifacts under `models/grpo/`.
+Regenerate via: python -m common.rlhf.aggregate_family_report --family grpo

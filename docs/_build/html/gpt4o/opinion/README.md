@@ -12,7 +12,7 @@
 
 `opinion_metrics.csv` summarises per-study metrics.
 
-## Artefacts
+### Artefacts
 
 - `study1` metrics: `models/gpt-4o/opinion/temp0_tok500_tp1/study1/metrics.json` (predictions: `models/gpt-4o/opinion/temp0_tok500_tp1/study1/predictions.jsonl`, QA log: `logs/gpt/opinion/temp0_tok500_tp1/study1/qa.log`)
 - `study2` metrics: `models/gpt-4o/opinion/temp0_tok500_tp1/study2/metrics.json` (predictions: `models/gpt-4o/opinion/temp0_tok500_tp1/study2/predictions.jsonl`, QA log: `logs/gpt/opinion/temp0_tok500_tp1/study2/qa.log`)

@@ -1,21 +1,23 @@
 # GRAIL Next-Video Baseline
 
-- **Overall accuracy:** 0.437 on 1,871 eligible slates out of 1,871 processed.
-- **Parsed rate:** 0.995
-- **Formatted rate:** 0.995
+- **Overall accuracy:** 0.707 on 75 eligible slates out of 75 processed.
+- **Parsed rate:** 1.000
+- **Formatted rate:** 1.000
 
 ## Accuracy by Issue
 
 | Group | Seen | Eligible | Accuracy ↑ | Parsed ↑ | Formatted ↑ |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| minimum_wage | 1,871 | 1,871 | 0.437 | 0.995 | 0.995 |
+| gun_control | 25 | 25 | 1.000 | 1.000 | 1.000 |
+| minimum_wage | 50 | 50 | 0.560 | 1.000 | 1.000 |
 
 ## Accuracy by Participant Study
 
 | Group | Seen | Eligible | Accuracy ↑ | Parsed ↑ | Formatted ↑ |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| study2 | 671 | 671 | 0.362 | 0.988 | 0.988 |
-| study3 | 1,200 | 1,200 | 0.479 | 0.999 | 0.999 |
+| study1 | 25 | 25 | 1.000 | 1.000 | 1.000 |
+| study2 | 11 | 11 | 0.182 | 1.000 | 1.000 |
+| study3 | 39 | 39 | 0.667 | 1.000 | 1.000 |
 
 ### Notes
 

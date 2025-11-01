@@ -73,7 +73,8 @@ def _merge_next_video_metrics(payloads: dict[str, Mapping[str, object]]) -> Mapp
     total_correct = 0
 
     by_issue: dict[str, dict[str, object]] = {}
-    by_study: dict[str, dict[str, object]] = {}
+    # For studies, accumulate seen/eligible and compute weighted metrics.
+    accum_by_study: dict[str, dict[str, float]] = {}
 
     for issue, metrics in payloads.items():
         # Unwrap nested "metrics" when present
@@ -101,11 +102,53 @@ def _merge_next_video_metrics(payloads: dict[str, Mapping[str, object]]) -> Mapp
         g_study = group.get("by_participant_study", {}) if isinstance(group, Mapping) else {}
         if isinstance(g_study, Mapping):
             for key, val in g_study.items():
-                by_study[key] = dict(val)
+                try:
+                    n_seen = int(val.get("n_seen", 0) or 0)
+                    n_elig = int(val.get("n_eligible", 0) or 0)
+                    acc = float(val.get("accuracy", 0.0) or 0.0)
+                    parsed = float(val.get("parsed_rate", 0.0) or 0.0)
+                    fmt = float(val.get("format_rate", 0.0) or 0.0)
+                except (TypeError, ValueError):
+                    continue
+                acc_item = accum_by_study.setdefault(
+                    key,
+                    {"n_seen": 0.0, "n_eligible": 0.0, "acc_w": 0.0, "parsed_w": 0.0, "format_w": 0.0},
+                )
+                acc_item["n_seen"] += float(n_seen)
+                acc_item["n_eligible"] += float(n_elig)
+                acc_item["acc_w"] += acc * float(n_elig)
+                acc_item["parsed_w"] += parsed * float(n_seen)
+                acc_item["format_w"] += fmt * float(n_seen)
+
+    # Fallback: if per-issue 'correct' wasn't available, approximate from accuracy_overall
+    if total_correct == 0:
+        for m in payloads.values():
+            try:
+                acc_i = float(m.get("accuracy_overall", 0.0) or 0.0)
+                elig_i = int(m.get("n_eligible", 0) or 0)
+                total_correct += int(round(acc_i * elig_i))
+            except (TypeError, ValueError):
+                continue
 
     accuracy_overall = (total_correct / n_eligible) if n_eligible > 0 and total_correct else None
     parsed_rate = (parsed_weight / n_total) if n_total > 0 else None
     format_rate = (format_weight / n_total) if n_total > 0 else None
+
+    # Finalise by-study weighted rows
+    by_study: dict[str, dict[str, object]] = {}
+    for key, acc_item in accum_by_study.items():
+        n_seen = int(acc_item.get("n_seen", 0.0))
+        n_elig = int(acc_item.get("n_eligible", 0.0))
+        acc = (acc_item.get("acc_w", 0.0) / n_elig) if n_elig else None
+        parsed = (acc_item.get("parsed_w", 0.0) / n_seen) if n_seen else None
+        fmt = (acc_item.get("format_w", 0.0) / n_seen) if n_seen else None
+        by_study[key] = {
+            "n_seen": n_seen,
+            "n_eligible": n_elig,
+            "accuracy": acc,
+            "parsed_rate": parsed,
+            "format_rate": fmt,
+        }
 
     return {
         "n_total": n_total,
@@ -297,4 +340,3 @@ def main(argv: Optional[list[str]] = None) -> None:  # pragma: no cover - CLI co
 
 if __name__ == "__main__":  # pragma: no cover
     main()
-

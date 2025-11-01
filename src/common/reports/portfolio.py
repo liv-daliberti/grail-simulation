@@ -29,6 +29,7 @@ from __future__ import annotations
 import csv
 import json
 from dataclasses import dataclass
+import math
 from pathlib import Path
 from typing import Mapping, Optional, Sequence
 
@@ -64,9 +65,12 @@ def _fmt_rate(value: Optional[float], digits: int = 3) -> str:
     if value is None:
         return "—"
     try:
-        return f"{float(value):.{digits}f}"
+        v = float(value)
     except (TypeError, ValueError):
         return "—"
+    if math.isnan(v) or math.isinf(v):
+        return "—"
+    return f"{v:.{digits}f}"
 
 
 def _load_json(path: Path) -> Mapping[str, object]:
@@ -313,24 +317,68 @@ def _read_csv_opinion(repo_root: Path, family: str) -> StudyScoresPair:
 
 
 def _read_rlhf_opinion(repo_root: Path, family: str) -> StudyScoresPair:
-    """Read per-study opinion metrics from RLHF artefacts."""
-    root = repo_root / "models" / family / "opinion"
+    """Read per-study opinion metrics from RLHF artefacts.
+
+    RLHF runs are nested under ``models/<family>/<scenario>/checkpoint-*/opinion``
+    with per-study folders (``study1``, ``study2``, ...). We recursively scan the
+    family directory and extract values from any matching ``metrics.json`` files,
+    preferring checkpoint-50 artefacts when multiple candidates exist.
+    """
+
+    model_root = repo_root / "models" / family
     label_map = _label_by_key()
     acc: StudyScores = {}
     mae: StudyScores = {}
-    if not root.exists():
+    if not model_root.exists():
         return acc, mae
 
-    # Walk all metrics.json files in any run/study directory under opinion
-    for metrics_path in sorted(root.rglob("*/metrics.json")):
-        key = metrics_path.parent.name
-        label = label_map.get(key)
+    # Collect all metrics.json files that belong to opinion runs, excluding sweeps
+    candidates: list[Path] = []
+    for path in sorted(model_root.rglob("metrics.json")):
+        posix = path.as_posix()
+        if "/opinion/" not in posix:
+            continue
+        if "/sweeps/" in posix:
+            continue
+        candidates.append(path)
+
+    # Order so that non-checkpoint-50 are seen first, allowing checkpoint-50 to override
+    ordered: list[Path] = sorted(
+        candidates,
+        key=lambda p: (0 if not _is_checkpoint_50(p) else 1, p.as_posix()),
+    )
+
+    allowed_scenario = {"study1": "gun", "study2": "wage", "study3": "wage"}
+
+    for metrics_path in ordered:
+        # Study key is encoded in the directory name (e.g., .../study1/metrics.json)
+        study_key: Optional[str] = None
+        for part in reversed(metrics_path.parts):
+            if part.startswith("study"):
+                study_key = part
+                break
+        if not study_key:
+            continue
+        # Heuristic: restrict studies to their canonical issue scenario
+        posix = metrics_path.as_posix()
+        scenario = "gun" if "/gun/" in posix else ("wage" if "/wage/" in posix else None)
+        expected = allowed_scenario.get(study_key)
+        if expected is not None and scenario is not None and scenario != expected:
+            continue
+        label = label_map.get(study_key)
         if not label:
             continue
+
         payload = _load_json(metrics_path)
         metrics = payload.get("metrics", payload)
         if not isinstance(metrics, Mapping):
             continue
+        # Skip entries with no eligible rows
+        try:
+            if int(metrics.get("eligible", 0) or 0) <= 0:
+                continue
+        except (TypeError, ValueError):
+            pass
         try:
             direction = float(metrics.get("direction_accuracy"))
         except (TypeError, ValueError):
@@ -343,6 +391,7 @@ def _read_rlhf_opinion(repo_root: Path, family: str) -> StudyScoresPair:
             acc[label] = direction
         if mae_val is not None:
             mae[label] = mae_val
+
     return acc, mae
 
 

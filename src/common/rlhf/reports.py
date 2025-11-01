@@ -218,11 +218,20 @@ def _study_rows(studies) -> Iterable[str]:
         baseline = study_result.baseline
         study_label = study_result.spec.label if study_result.spec else study_result.study_label
         eligible = study_result.eligible or metrics.get("eligible")
+        # Baseline MAE can come from multiple fields depending on producer
+        baseline_mae = None
+        for key in ("mae_after", "mae_global_mean_after", "mae_using_before"):
+            try:
+                val = baseline.get(key) if isinstance(baseline, dict) else None
+                baseline_mae = float(val)
+                break
+            except (TypeError, ValueError):
+                continue
         yield (
             f"| {study_label} | {_format_int(study_result.participants)} | "
             f"{_format_int(eligible)} | "
             f"{_format_rate(metrics.get('mae_after'))} | "
-            f"{_format_rate(baseline.get('mae_after'))} | "
+            f"{_format_rate(baseline_mae)} | "
             f"{_format_rate(metrics.get('direction_accuracy'))} | "
             f"{_format_rate(baseline.get('direction_accuracy'))} |"
         )

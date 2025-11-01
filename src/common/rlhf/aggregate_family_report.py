@@ -59,8 +59,21 @@ def _collect_next_video_metrics(family: str) -> dict[str, tuple[Path, Mapping[st
             continue
         # Prefer the latest metrics for each issue
         prev = issue_payloads.get(issue)
-        if prev is None or metrics_path.stat().st_mtime > prev[0].stat().st_mtime:
+        def _n_elig(m: Mapping[str, object]) -> int:
+            try:
+                return int(m.get("n_eligible", 0) or 0)
+            except (TypeError, ValueError):
+                return 0
+        if prev is None:
             issue_payloads[issue] = (metrics_path, metrics)
+        else:
+            prev_path, prev_metrics = prev
+            prev_elig = _n_elig(prev_metrics)
+            curr_elig = _n_elig(metrics)
+            if curr_elig > prev_elig or (
+                curr_elig == prev_elig and metrics_path.stat().st_mtime > prev_path.stat().st_mtime
+            ):
+                issue_payloads[issue] = (metrics_path, metrics)
     return issue_payloads
 
 
@@ -355,12 +368,28 @@ def _build_opinion_result(family: str) -> Optional[_OpinionResult]:
     for r in rows:
         key = str(r.get("study_key"))
         label = label_map.get(key, key)
+        # Sanitize NaNs for zero-eligible rows to avoid 'nan' rendering in reports.
+        metrics = dict(r.get("metrics", {}))
+        try:
+            elig = int(r.get("eligible", 0) or 0)
+        except (TypeError, ValueError):
+            elig = 0
+        if elig <= 0:
+            for k in (
+                "mae_after",
+                "mae_change",
+                "direction_accuracy",
+                "rmse_after",
+                "rmse_change",
+                "calibration_ece",
+            ):
+                metrics[k] = None
         studies.append(
             _OpinionStudy(
                 spec=_MinimalSpec(label=label),
                 participants=int(r.get("participants", 0) or 0),
                 eligible=int(r.get("eligible", 0) or 0),
-                metrics=r.get("metrics", {}),
+                metrics=metrics,
                 baseline=r.get("baseline", {}),
                 artifacts=_OpinionArtifacts(
                     predictions=r.get("predictions"),

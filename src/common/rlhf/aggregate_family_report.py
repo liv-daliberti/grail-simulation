@@ -260,8 +260,17 @@ def _combine_opinion_metrics(rows: list[dict[str, object]]) -> Mapping[str, obje
 
 
 @dataclass(frozen=True)
+class _MinimalSpec:
+    """Tiny shim carrying a human-readable label to satisfy report helpers."""
+
+    label: str
+
+
+@dataclass(frozen=True)
 class _OpinionStudy:
-    study_label: str
+    """Shape compatible with common.rlhf.reports._study_rows expectations."""
+
+    spec: _MinimalSpec | None
     participants: int
     eligible: int
     metrics: Mapping[str, object]
@@ -294,9 +303,10 @@ def _build_opinion_result(family: str) -> Optional[_OpinionResult]:
     studies: list[_OpinionStudy] = []
     for r in rows:
         key = str(r.get("study_key"))
+        label = label_map.get(key, key)
         studies.append(
             _OpinionStudy(
-                study_label=label_map.get(key, key),
+                spec=_MinimalSpec(label=label),
                 participants=int(r.get("participants", 0) or 0),
                 eligible=int(r.get("eligible", 0) or 0),
                 metrics=r.get("metrics", {}),

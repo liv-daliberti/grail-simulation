@@ -88,7 +88,6 @@ from ...core.vectorizers import (
     TfidfConfig,
     Word2VecVectorizerConfig,
 )
-from .sweep import SweepConfig
 
 
 @dataclass(frozen=True, init=False)

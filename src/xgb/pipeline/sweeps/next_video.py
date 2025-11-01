@@ -27,7 +27,6 @@ from common.pipeline.utils import make_placeholder_metrics, base_sweep_outcome_k
 from ..context import (
     StudySelection,
     StudySpec,
-    SweepConfig,
     SweepOutcome,
     SweepRunContext,
     SweepTask,

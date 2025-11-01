@@ -40,7 +40,6 @@ from ..context import (
     OpinionSweepRunContext,
     OpinionSweepTask,
     StudySpec,
-    SweepConfig,
 )
 from .common import (
     LOGGER,
@@ -343,7 +342,10 @@ def _prepare_opinion_sweep_tasks(
         get_sweeps_attr("_load_metrics"),
     )
     outcome_factory = cast(
-        Callable[[OpinionSweepTask, Mapping[str, object], Path], "xgb.pipeline.context.OpinionSweepOutcome"],
+        Callable[
+            [OpinionSweepTask, Mapping[str, object], Path],
+            "xgb.pipeline.context.OpinionSweepOutcome",
+        ],
         get_sweeps_attr("_opinion_sweep_outcome_from_metrics"),
     )
     for task in _iter_opinion_sweep_tasks(
@@ -368,7 +370,10 @@ def _prepare_opinion_sweep_tasks(
 
 
 _merge_opinion_sweep_outcomes: Callable[
-    [Sequence["xgb.pipeline.context.OpinionSweepOutcome"], Sequence["xgb.pipeline.context.OpinionSweepOutcome"]],
+    [
+        Sequence["xgb.pipeline.context.OpinionSweepOutcome"],
+        Sequence["xgb.pipeline.context.OpinionSweepOutcome"],
+    ],
     List["xgb.pipeline.context.OpinionSweepOutcome"],
 ] = build_merge_sweep_outcomes(
     duplicate_message=(
@@ -381,7 +386,9 @@ _merge_opinion_sweep_outcomes: Callable[
 )
 
 
-def _execute_opinion_sweep_task(task: OpinionSweepTask) -> "xgb.pipeline.context.OpinionSweepOutcome":
+def _execute_opinion_sweep_task(
+    task: OpinionSweepTask,
+) -> "xgb.pipeline.context.OpinionSweepOutcome":
     """
     Execute a single opinion sweep task and return the resulting metrics.
 
@@ -397,7 +404,10 @@ def _execute_opinion_sweep_task(task: OpinionSweepTask) -> "xgb.pipeline.context
         get_sweeps_attr("_load_metrics_with_log"),
     )
     outcome_factory = cast(
-        Callable[[OpinionSweepTask, Mapping[str, object], Path], "xgb.pipeline.context.OpinionSweepOutcome"],
+        Callable[
+            [OpinionSweepTask, Mapping[str, object], Path],
+            "xgb.pipeline.context.OpinionSweepOutcome",
+        ],
         get_sweeps_attr("_opinion_sweep_outcome_from_metrics"),
     )
     args = dict(task.request_args)

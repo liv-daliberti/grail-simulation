@@ -6,18 +6,18 @@ Opinion-shift evaluation across the canonical participant studies. Baseline metr
 
 | Metric | Value |
 | --- | ---: |
-| Eligible | 584 |
-| MAE (post-study) | 2.010 |
-| MAE (change) | 2.010 |
-| Direction accuracy | 0.574 |
-| RMSE (post-study) | 2.230 |
-| RMSE (change) | 2.230 |
-| Calibration ECE | 2.010 |
+| Eligible | 522 |
+| MAE (post-study) | 1.895 |
+| MAE (change) | 1.895 |
+| Direction accuracy | 0.563 |
+| RMSE (post-study) | 2.061 |
+| RMSE (change) | 2.061 |
+| Calibration ECE | 1.895 |
 
 ## Per-Study Breakdown
 
 | Study | Participants | Eligible | MAE ↓ | Baseline MAE ↓ | Direction ↑ | Baseline Direction ↑ |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Study 1 – Gun Control (MTurk) | 162 | 162 | 2.831 | 0.259 | 0.704 | 0.074 |
+| Study 1 – Gun Control (MTurk) | 100 | 100 | 2.740 | 0.228 | 0.730 | 0.080 |
 | Study 2 – Minimum Wage (MTurk) | 165 | 165 | 1.689 | 0.240 | 0.545 | 0.061 |
 | Study 3 – Minimum Wage (YouGov) | 257 | 257 | 1.697 | 0.216 | 0.510 | 0.058 |

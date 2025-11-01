@@ -347,7 +347,19 @@ class SweepTask(ExtrasSweepTask["xgb.pipeline.context.SweepConfig"]):
         extras = _SweepTaskExtras(tree_method=str(tree_method or "hist"))
         # Call base class constructor directly to satisfy pylint and ensure
         # proper initialisation of BaseSweepTask fields.
-        super().__init__(**base_task_kwargs(index=index, study=study, config=config, base_cli=base_cli, extra_cli=extra_cli, run_root=run_root, metrics_path=metrics_path, train_participant_studies=train_participant_studies), extras=extras)
+        super().__init__(
+            **base_task_kwargs(
+                index=index,
+                study=study,
+                config=config,
+                base_cli=base_cli,
+                extra_cli=extra_cli,
+                run_root=run_root,
+                metrics_path=metrics_path,
+                train_participant_studies=train_participant_studies,
+            ),
+            extras=extras,
+        )
 
     _extras: "_SweepTaskExtras"
 

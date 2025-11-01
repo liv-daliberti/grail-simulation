@@ -1,7 +1,7 @@
 # KNN Next-Video Reports
 
 `knn.pipeline.reports.next_video` produces the slate-accuracy sections of the
-pipeline reports. These modules convert evaluation artefacts into tables,
+pipeline reports. These modules convert evaluation artifacts into tables,
 curves, and narrative summaries under `reports/knn/next_video/`.
 
 ## Modules
@@ -14,7 +14,7 @@ curves, and narrative summaries under `reports/knn/next_video/`.
 - `loso.py` – leave-one-study-out analysis helpers.
 - `report.py` – orchestrates the full next-video Markdown document.
 - `sections.py` – section-specific renderers used by `report.py`.
-- `csv_exports.py` – generates CSV artefacts for downstream analysis.
+- `csv_exports.py` – generates CSV artifacts for downstream analysis.
 - `__init__.py` – exports the entry points.
 
 Extend these modules when adding new diagnostics to the slate evaluation so the

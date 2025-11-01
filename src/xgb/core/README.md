@@ -50,7 +50,7 @@ Some submodules depend on the KNN pipeline. For unit tests that don’t need the
 full dependency surface, set the following environment variables before
 importing `xgb` modules:
 
-- `XGB_LIGHT_IMPORTS=1` – avoids initialising CLI/pipeline in `xgb.__init__`.
+- `XGB_LIGHT_IMPORTS=1` – avoids initializing CLI/pipeline in `xgb.__init__`.
 - `XGB_CORE_LIGHT_IMPORTS=1` – avoids importing `data`/`evaluate` in
   `xgb.core.__init__`.
 

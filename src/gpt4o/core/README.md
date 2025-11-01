@@ -20,5 +20,5 @@ utility helpers. Both the CLI and pipeline import from this package.
   checks).
 - `opinion/` – opinion-specific helpers (see its README).
 
-Extend this package when adding new evaluation behaviours or model backends so
+Extend this package when adding new evaluation behaviors or model backends so
 the CLI/pipeline layers remain thin.

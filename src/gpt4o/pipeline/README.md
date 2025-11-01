@@ -10,7 +10,7 @@ structure parallels the kNN/XGBoost pipelines.
   and orchestrates execution across configurations.
 - `models.py` – utilities for loading cached runs, promoting winners, and
   rehydrating conversation settings.
-- `cache.py` – read/write helpers for evaluation artefacts (responses,
+- `cache.py` – read/write helpers for evaluation artifacts (responses,
   metrics, prompts).
 - `__main__.py` – allows execution via `python -m gpt4o.pipeline`.
 - `__init__.py` – exports the public helpers.
@@ -24,5 +24,5 @@ python -m gpt4o.pipeline --stage finalize --reuse-sweeps
 python -m gpt4o.pipeline --stage reports --reuse-final
 ```
 
-The pipeline honours cached artefacts to minimise API usage; extend `cache.py`
+The pipeline honors cached artifacts to minimize API usage; extend `cache.py`
 when storing additional metadata.

@@ -1,6 +1,6 @@
 # Raw Data for Portfolio Reproducibility
 
-This folder is a self‑contained snapshot of the artefacts used to generate
+This folder is a self‑contained snapshot of the artifacts used to generate
 `reports/main/README.md` (the Portfolio Comparison). Keeping this copy ensures
 you can fully regenerate the portfolio table without rerunning training or
 evaluation.
@@ -26,7 +26,7 @@ What’s included (mirrors original locations):
 
 How to regenerate the portfolio report from this snapshot:
 
-1) Restore artefacts to their original locations (non‑destructive):
+1) Restore artifacts to their original locations (non‑destructive):
 
    - `rsync -a home/raw_data/models/ models/`
    - `rsync -a home/raw_data/reports/ reports/`
@@ -37,9 +37,9 @@ How to regenerate the portfolio report from this snapshot:
      (writes `reports/main/README.md`)
 
 Alternatively, you can run the higher‑level entrypoint that also refreshes
- per‑family pages when artefacts are present:
+ per‑family pages when artifacts are present:
 
-- `bash reports/build-reports.sh` (honors existing artefacts without retraining)
+- `bash reports/build-reports.sh` (honors existing artifacts without retraining)
 
 Provenance
 

@@ -12,16 +12,16 @@ define task-specific pieces.
 - `executor.py` – worker pool and subprocess orchestration used when fanning out
   individual CLI invocations.
 - `formatters.py` – status-line and log-format helpers for consistent CLI output.
-- `io.py` – read/write helpers for cached metrics, sweep artefacts, and reports.
+- `io.py` – read/write helpers for cached metrics, sweep artifacts, and reports.
 - `metrics.py`, `models.py`, `types.py` – dataclasses and type definitions that
   describe sweeps, evaluation results, and cached model bundles.
 - `prompts.py` – shared prompt/document utilities consumed by the pipelines.
-- `gpt4o_models.py` – glue for loading GPT-4o sweep artefacts; used to keep
+- `gpt4o_models.py` – glue for loading GPT-4o sweep artifacts; used to keep
   cross-baseline reports in sync.
-- `utils.py` – miscellaneous helpers (path normalisation, timestamp formatting,
+- `utils.py` – miscellaneous helpers (path normalization, timestamp formatting,
   deterministic hashing).
 - `__init__.py` – re-exports the most commonly used helpers.
 
 Import from this package instead of re-implementing orchestration in each
-baseline. When adding new pipeline stages or artefact types, extend the shared
+baseline. When adding new pipeline stages or artifact types, extend the shared
 dataclasses so all consumers stay aligned.

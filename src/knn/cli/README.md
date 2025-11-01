@@ -1,8 +1,8 @@
 # KNN CLI Package
 
-`knn.cli` provides the command-line interface for the k-nearest-neighbour slate
+`knn.cli` provides the command-line interface for the k-nearest-neighbor slate
 baseline. It exposes a single entry point (`python -m knn.cli`) that can train
-indices, evaluate runs, and export artefacts.
+indices, evaluate runs, and export artifacts.
 
 ## Modules
 

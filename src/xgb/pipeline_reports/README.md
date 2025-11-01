@@ -13,6 +13,6 @@ re-exports the modern builders from `xgb.pipeline.reports`.
 - `__init__.py` – exposes the same surface as before so `from xgb.pipeline_reports import runner`
   continues to work.
 
-When updating report behaviour, make changes in `xgb.pipeline.reports` and keep
+When updating report behavior, make changes in `xgb.pipeline.reports` and keep
 the shim modules importing from there. Avoid introducing new logic here—its
 sole purpose is compatibility.

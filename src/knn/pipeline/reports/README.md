@@ -1,6 +1,6 @@
 # KNN Pipeline Reports
 
-`knn.pipeline.reports` turns cached sweep/final artefacts into Markdown reports
+`knn.pipeline.reports` turns cached sweep/final artifacts into Markdown reports
 under `reports/knn/`. The package mirrors the structure used by the XGBoost
 reports while tailoring content to kNN-specific outputs.
 
@@ -9,7 +9,7 @@ reports while tailoring content to kNN-specific outputs.
 - `catalog.py` – orchestrates report generation; loads cached metrics and
   delegates to section-specific builders.
 - `features.py` – documents prompt feature spaces and configuration choices.
-- `hyperparameter.py` – summarises sweep grids, trial counts, and winning
+- `hyperparameter.py` – summarizes sweep grids, trial counts, and winning
   parameters.
 - `opinion.py` / `opinion_sections.py` / `opinion_portfolio.py` /
   `opinion_csv.py` – opinion-shift reports, including CSV exports and portfolio

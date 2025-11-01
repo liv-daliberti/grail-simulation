@@ -13,7 +13,7 @@ that downstream models consume directly.
   prompt documents (e.g., study tags, fairness cohorts).
 - `slate.py` – helpers for describing slate candidates (titles, channels,
   durations) in a structured form.
-- `titles.py` – standardises title normalisation and fallback behaviour.
+- `titles.py` – standardizes title normalization and fallback behavior.
 - `trajectory.py` – routines for capturing viewer watch histories as structured
   sequences.
 - `__init__.py` – exports the builder helpers for import convenience.

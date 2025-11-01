@@ -1,6 +1,6 @@
 # Opinion Evaluation Helpers
 
-`common.opinion` holds the shared utilities for modelling and analysing opinion
+`common.opinion` holds the shared utilities for modeling and analyzing opinion
 shifts. Baselines reuse these modules to ensure consistent metrics and report
 generation across pipelines.
 

@@ -62,12 +62,18 @@ def _collect_opinion_vectors(
 ) -> tuple[list[float], list[float], list[float]]:
     """Collect truth-before, truth-after and predicted-after vectors.
 
-    Skips rows with malformed numbers or NaNs.
+    Ensures values are on a consistent scale. When inputs appear to be on the
+    1–7 Likert scale, normalise those entries to the [0, 1] interval using the
+    mapping ``(v - 1) / 6``. Skips rows with malformed numbers or NaNs.
     """
 
     truth_before: list[float] = []
     truth_after: list[float] = []
     pred_after: list[float] = []
+
+    def _maybe_normalise(v: float) -> float:
+        return (v - 1.0) / 6.0 if v > 1.0 else v
+
     for row in _iter_jsonl_rows(predictions_path):
         try:
             before_val = float(row.get("before"))
@@ -77,9 +83,12 @@ def _collect_opinion_vectors(
             continue
         if any(math.isnan(v) for v in (before_val, after_val, pred_val)):
             continue
-        # Normalise predictions to [0, 1] when they appear in [1, 7]
-        if pred_val > 1.0:
-            pred_val = (pred_val - 1.0) / 6.0
+
+        # Bring each field onto a common [0, 1] scale when needed.
+        before_val = _maybe_normalise(before_val)
+        after_val = _maybe_normalise(after_val)
+        pred_val = _maybe_normalise(pred_val)
+
         truth_before.append(before_val)
         truth_after.append(after_val)
         pred_after.append(pred_val)
@@ -352,18 +361,12 @@ def _load_opinion_from_disk(out_dir: Path) -> OpinionEvaluationResult | None:
             predictions_path = study_dir / "predictions.jsonl"
             if not predictions_path.exists():
                 continue
-            for row in _iter_jsonl_rows(predictions_path):
-                try:
-                    before_val = float(row.get("before"))
-                    after_val = float(row.get("after"))
-                    pred_val = float(row.get("prediction"))
-                except (TypeError, ValueError):
-                    continue
-                if any(math.isnan(v) for v in (before_val, after_val, pred_val)):
-                    continue
-                truth_before_all.append(before_val)
-                truth_after_all.append(after_val)
-                pred_after_all.append(pred_val)
+            tb, ta, pa = _collect_opinion_vectors(predictions_path)
+            if not ta or not pa:
+                continue
+            truth_before_all.extend(tb)
+            truth_after_all.extend(ta)
+            pred_after_all.extend(pa)
         if truth_after_all and len(truth_after_all) == len(pred_after_all):
             combined_metrics = compute_opinion_metrics(
                 truth_after=truth_after_all,

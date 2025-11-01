@@ -2,7 +2,7 @@
 
 This package renders Markdown reports for the XGBoost baseline’s pipeline
 (`python -m xgb.pipeline --stage reports`). The modules transform cached sweep
-and final-run artefacts into human-readable summaries under `reports/xgb/`.
+and final-run artifacts into human-readable summaries under `reports/xgb/`.
 
 ## Modules
 
@@ -23,5 +23,5 @@ Subpackage:
 
 - `opinion/` – detailed opinion-shift report writers (see its README).
 
-When adding new artefacts to the pipeline, extend `catalog.py` and add the
+When adding new artifacts to the pipeline, extend `catalog.py` and add the
 supporting builders so the generated Markdown stays in sync with the metrics.

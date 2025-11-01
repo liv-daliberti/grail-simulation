@@ -27,7 +27,7 @@ execution helpers, and reporting utilities.
   - `stage.py` – task orchestration primitives (stage enums, dry-run
     summaries, execution logging).
   - `executor.py` / `utils.py` – fan-out helpers used by the kNN and XGBoost sweeps to
-    parallelise CLI invocations.
+    parallelize CLI invocations.
   - `models.py`, `types.py`, `io.py` – dataclasses and
     I/O helpers for caching sweep results and metrics.
   - `formatters.py` – shared status-line helpers for sweep reporting.
@@ -42,7 +42,7 @@ execution helpers, and reporting utilities.
   - `vectorizers.py` – TF-IDF/Word2Vec/SentenceTransformer bundles with consistent
     persistence defaults.
   - `embeddings.py` / `utils.py` – sentence-transformer configuration,
-    tokenisation helpers, and normalisation routines backing the vectorisers.
+    tokenization helpers, and normalization routines backing the vectorizers.
   - `title_index.py` – shared lookup helpers for resolving video titles.
 
 - **Reporting (`reports/`, `visualization/`)**
@@ -56,7 +56,7 @@ execution helpers, and reporting utilities.
 
 - **Model-specific helpers (`ml/`)**
   - `xgb/callbacks.py`, `xgb/fit_utils.py` – shared fit-time callbacks and
-    parameter harmonisation for the XGBoost baseline.
+    parameter harmonization for the XGBoost baseline.
 
 ## Usage Notes
 

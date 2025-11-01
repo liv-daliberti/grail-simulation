@@ -137,7 +137,7 @@ def add_sentence_transformer_args(
             "--sentence_transformer_no_normalize",
         ),
         enable_help="L2-normalise sentence-transformer embeddings (default).",
-        disable_help="Disable L2-normalisation for sentence-transformer embeddings.",
+        disable_help="Do not L2-normalise sentence-transformer embeddings.",
     )
 
 

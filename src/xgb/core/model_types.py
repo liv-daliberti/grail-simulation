@@ -8,13 +8,10 @@ inference code to avoid circular imports and keep modules focused.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Optional, Sequence, Tuple, TYPE_CHECKING
+from typing import Any, Optional, Sequence, Tuple
 
 from ._optional import LabelEncoder
 from .vectorizers import BaseTextVectorizer
-
-if TYPE_CHECKING:  # pragma: no cover - type checking only
-    from .model_config import XGBoostTrainConfig  # noqa: F401
 
 
 @dataclass(frozen=True)
@@ -40,7 +37,7 @@ class EvaluationArtifactsContext:
     dataset: Any | None
     vectorizer: BaseTextVectorizer
     encoder: LabelEncoder
-    train_config: "XGBoostTrainConfig"
+    train_config: Any
     extra_fields: Sequence[str] | None = None
 
 
@@ -74,4 +71,3 @@ __all__ = [
     "EvaluationArtifactsContext",
     "XGBoostSlateModel",
 ]
-

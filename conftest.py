@@ -13,8 +13,13 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
-def _ensure_torch_stub():
-    """Guarantee a compatible torch stub is present for every test."""
+def _ensure_torch_and_transformers_stubs():
+    """Guarantee minimal torch/transformers stubs are present for every test.
+
+    Tests only need a handful of class-like attributes so that optional
+    integrations (HF datasets + dill pickler) can register custom reducers
+    without importing heavy dependencies.
+    """
     import sys
     import types
 
@@ -60,4 +65,22 @@ def _ensure_torch_stub():
             dist_mod.is_available = lambda: False  # type: ignore[attr-defined]
             torch.distributed = dist_mod  # type: ignore[attr-defined]
             sys.modules["torch.distributed"] = dist_mod
+
+    # Provide a minimal transformers stub so HF datasets' dill helpers can
+    # register picklers without importing the real library.
+    try:
+        import transformers  # type: ignore
+    except ModuleNotFoundError:
+        tmod = types.ModuleType("transformers")
+        tmod.PreTrainedTokenizerBase = type("PreTrainedTokenizerBase", (), {})
+        sys.modules["transformers"] = tmod
+    else:
+        if not hasattr(transformers, "PreTrainedTokenizerBase") or not isinstance(
+            getattr(transformers, "PreTrainedTokenizerBase"), type
+        ):
+            setattr(
+                transformers,
+                "PreTrainedTokenizerBase",
+                type("PreTrainedTokenizerBase", (), {}),
+            )
     yield

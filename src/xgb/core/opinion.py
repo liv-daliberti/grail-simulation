@@ -153,23 +153,38 @@ class OpinionEvalRequest:
 
 
 @dataclass(frozen=True)
-class StudyOutputsParams:
-    """Container for serialising study outputs with fewer function arguments.
-
-    Bundles metadata, inputs, predictions, and metrics for a single study.
-    """
+class StudyContext:
+    """Static context for a single study output bundle."""
 
     study_dir: Path
     spec: OpinionSpec
     dataset_source: str
     feature_space: str
+    train_config: OpinionTrainConfig
+
+
+@dataclass(frozen=True)
+class StudyEvaluation:
+    """Predictions and metrics resulting from model evaluation."""
+
     eval_examples: Sequence[OpinionExample]
     train_examples: Sequence[OpinionExample]
     predictions_after: np.ndarray
     metrics: Mapping[str, Any]
     baseline: Mapping[str, Any]
     curve_metrics: Optional[Mapping[str, Any]]
-    train_config: OpinionTrainConfig
+
+
+@dataclass(frozen=True)
+class StudyOutputsParams:
+    """Grouped study context and evaluation results.
+
+    Reduces top-level instance attributes to avoid pylint R0902 while keeping
+    call sites simple and explicit.
+    """
+
+    context: StudyContext
+    evaluation: StudyEvaluation
 
 
 def _vectorizer_available() -> None:
@@ -508,8 +523,8 @@ def _make_vectorizer(
     Returns a pair of (resolved_feature_space, vectorizer).
     """
 
-    fs = feature_space.lower()
-    if fs == "word2vec":
+    feature_space_key = feature_space.lower()
+    if feature_space_key == "word2vec":
         base_word2vec_config = request.word2vec_config or Word2VecVectorizerConfig()
         model_dir = base_word2vec_config.model_dir
         if not model_dir:
@@ -519,12 +534,14 @@ def _make_vectorizer(
             model_dir=model_dir,
             seed=request.train_config.seed,
         )
-        return fs, create_vectorizer("word2vec", word2vec=word2vec_config)
-    if fs == "sentence_transformer":
+        return feature_space_key, create_vectorizer(
+            "word2vec", word2vec=word2vec_config
+        )
+    if feature_space_key == "sentence_transformer":
         sentence_config = (
             request.sentence_transformer_config or SentenceTransformerVectorizerConfig()
         )
-        return fs, create_vectorizer(
+        return feature_space_key, create_vectorizer(
             "sentence_transformer",
             sentence_transformer=sentence_config,
         )
@@ -587,58 +604,59 @@ def _prepare_study_dir(study_dir: Path, *, overwrite: bool) -> None:
 def _write_study_outputs(*, params: StudyOutputsParams) -> Dict[str, Any]:
     """Serialise metrics and predictions for a single study and return the payload."""
 
+    ctx = params.context
+    evaluation = params.evaluation
+
     payload: Dict[str, Any] = {
         "model": "xgb_opinion",
-        "feature_space": params.feature_space,
-        "dataset": params.dataset_source,
-        "study": params.spec.key,
-        "issue": params.spec.issue,
-        "label": params.spec.label,
+        "feature_space": ctx.feature_space,
+        "dataset": ctx.dataset_source,
+        "study": ctx.spec.key,
+        "issue": ctx.spec.issue,
+        "label": ctx.spec.label,
         "split": "validation",
-        "n_participants": len(params.eval_examples),
-        "train_participants": len(params.train_examples),
-        "metrics": dict(params.metrics),
-        "baseline": dict(params.baseline),
+        "n_participants": len(evaluation.eval_examples),
+        "train_participants": len(evaluation.train_examples),
+        "metrics": dict(evaluation.metrics),
+        "baseline": dict(evaluation.baseline),
         "config": {
-            "max_participants": params.train_config.max_participants,
-            "max_features": params.train_config.max_features,
-            "learning_rate": params.train_config.booster.learning_rate,
-            "max_depth": params.train_config.booster.max_depth,
-            "n_estimators": params.train_config.booster.n_estimators,
-            "subsample": params.train_config.booster.subsample,
-            "colsample_bytree": params.train_config.booster.colsample_bytree,
-            "reg_lambda": params.train_config.booster.reg_lambda,
-            "reg_alpha": params.train_config.booster.reg_alpha,
-            "tree_method": params.train_config.booster.tree_method,
-            "predict_change": params.train_config.predict_change,
-            "include_before_feature": params.train_config.include_before_feature,
+            "max_participants": ctx.train_config.max_participants,
+            "max_features": ctx.train_config.max_features,
+            "learning_rate": ctx.train_config.booster.learning_rate,
+            "max_depth": ctx.train_config.booster.max_depth,
+            "n_estimators": ctx.train_config.booster.n_estimators,
+            "subsample": ctx.train_config.booster.subsample,
+            "colsample_bytree": ctx.train_config.booster.colsample_bytree,
+            "reg_lambda": ctx.train_config.booster.reg_lambda,
+            "reg_alpha": ctx.train_config.booster.reg_alpha,
+            "tree_method": ctx.train_config.booster.tree_method,
+            "predict_change": ctx.train_config.predict_change,
+            "include_before_feature": ctx.train_config.include_before_feature,
         },
     }
-    if params.curve_metrics:
-        payload["curve_metrics"] = dict(params.curve_metrics)
+    if evaluation.curve_metrics:
+        payload["curve_metrics"] = dict(evaluation.curve_metrics)
     eligible = (
-        params.metrics.get("eligible") if isinstance(params.metrics, Mapping) else None
+        evaluation.metrics.get("eligible") if isinstance(evaluation.metrics, Mapping) else None
     )
     if eligible is not None:
         payload["eligible"] = int(eligible)
 
-    metrics_path = params.study_dir / f"opinion_xgb_{params.spec.key}_validation_metrics.json"
+    metrics_path = ctx.study_dir / f"opinion_xgb_{ctx.spec.key}_validation_metrics.json"
     with open(metrics_path, "w", encoding="utf-8") as handle:
         json.dump(payload, handle, indent=2)
 
-    predictions_path = (
-        params.study_dir / f"opinion_xgb_{params.spec.key}_validation_predictions.jsonl"
-    )
+    predictions_path = ctx.study_dir / f"opinion_xgb_{ctx.spec.key}_validation_predictions.jsonl"
     with open(predictions_path, "w", encoding="utf-8") as handle:
-        for idx, example in enumerate(params.eval_examples):
-            pred_after = float(params.predictions_after[idx])
+        for idx, example in enumerate(evaluation.eval_examples):
+            pred_after = float(evaluation.predictions_after[idx])
             pred_change = float(pred_after - example.before)
             handle.write(
                 json.dumps(
                     {
                         "participant_id": example.participant_id,
-                        "study": params.spec.key,
-                        "issue": params.spec.issue,
+                        "study": ctx.spec.key,
+                        "issue": ctx.spec.issue,
                         "before": example.before,
                         "after": example.after,
                         "prediction": pred_after,
@@ -781,17 +799,21 @@ def _evaluate_spec(  # pylint: disable=too-many-locals,too-many-statements
     curve_metrics = _curve_metrics_from_history(eval_history)
     return _write_study_outputs(
         params=StudyOutputsParams(
-            study_dir=study_dir,
-            spec=spec,
-            dataset_source=dataset_source,
-            feature_space=feature_space,
-            eval_examples=eval_examples,
-            train_examples=train_examples,
-            predictions_after=predictions_after,
-            metrics=metrics,
-            baseline=baseline,
-            curve_metrics=curve_metrics,
-            train_config=request.train_config,
+            context=StudyContext(
+                study_dir=study_dir,
+                spec=spec,
+                dataset_source=dataset_source,
+                feature_space=feature_space,
+                train_config=request.train_config,
+            ),
+            evaluation=StudyEvaluation(
+                eval_examples=eval_examples,
+                train_examples=train_examples,
+                predictions_after=predictions_after,
+                metrics=metrics,
+                baseline=baseline,
+                curve_metrics=curve_metrics,
+            ),
         )
     )
 

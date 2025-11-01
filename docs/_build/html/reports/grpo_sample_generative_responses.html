@@ -178,7 +178,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
         <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
       </label>
     </div>
@@ -204,6 +204,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../api/xgb.html">XGBoost Baseline API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/gpt4o.html">GPT-4o Tools API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/grail.html">GRAIL Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/grpo.html">GRPO Pipeline API</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../api/common.html">Common Utilities API</a></li>
@@ -235,17 +236,22 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="prompt_builder.html">Prompt Builder Sample Prompts</a></li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_next_video.html#id1">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_opinion.html">KNN Opinion Regression</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_opinion_from_next.html">KNN Opinion Regression (Next-Video Config)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_opinion_from_next.html#knn-opinion-shift-study-next-video-config">KNN Opinion Shift Study (Next-Video Config)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_additional_features.html">KNN Additional Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_additional_features.html#additional-text-features">Additional Text Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l2"><a class="reference internal" href="knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="knn_opinion_from_next.html">KNN Opinion Regression (Next-Video Config)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="knn_additional_features.html">KNN Additional Features</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="xgb.html">XGBoost Report Catalog</a><input aria-label="Toggle navigation of XGBoost Report Catalog" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="xgb_next_video.html">XGBoost Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xgb_next_video.html#id1">XGBoost Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xgb_opinion.html">XGBoost Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xgb_opinion.html#id1">XGBoost Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xgb_opinion_from_next.html">XGBoost Opinion (Next-Video Config)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xgb_opinion_from_next.html#xgboost-opinion-regression-next-video-config">XGBoost Opinion Regression (Next-Video Config)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xgb_hyperparameter_tuning.html">XGBoost Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xgb_hyperparameter_tuning.html#hyper-parameter-tuning">Hyper-parameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xgb_additional_features.html">XGBoost Additional Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xgb_additional_features.html#additional-text-features">Additional Text Features</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="main.html">Portfolio Comparison (Main)</a></li>
@@ -286,7 +292,7 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
             <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
           </label>
         </div>
@@ -299,427 +305,7 @@ adds explicit notes clarifying what the model did (selection or
 opinion prediction), whether tags are present, and a short rationale
 summarised from the <think> block.</p>
 <p>Sections are grouped by issue and each includes up to 5 examples.</p>
-<section id="gun-control">
-<h2>Gun Control<a class="headerlink" href="#gun-control" title="Link to this heading">¶</a></h2>
-<section id="example-1-opinion">
-<h3>Example 1 (Opinion)<a class="headerlink" href="#example-1-opinion" title="Link to this heading">¶</a></h3>
-<section id="question">
-<h4>Question<a class="headerlink" href="#question" title="Link to this heading">¶</a></h4>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Issue: Gun Control
-Opinion scale: 1 = strongly oppose, 7 = strongly support.
-Pre-study opinion index: 0.30
-
-Viewer context:
-VIEWER 35-year-old, Caucasian/White (non-Hispanic) man; independent haven&#39;t thought much about it; $10,000-$14,999; college-educated; watches YouTube several times a week.
-Initial Viewpoint: Opposes an assault weapons ban
-
-CURRENTLY WATCHING Parkland Shooting Survivors School Congress on Gun Violence: The Daily Show (from The Daily Show with Trevor Noah)
-
-RECENTLY WATCHED (NEWEST LAST)
-1. Most Americans Want More Gun Control. Why Doesn’t It Happen? | NYT (watched 42s of 231s (18% complete), from The New York Times)
-2. Piers Challenges NRA Member About US Gun Laws | Good Morning Britain (watched 54s of 454s (12% complete), from Good Morning Britain)
-
-SURVEY HIGHLIGHTS
-party identification is Independent, ideology is Haven&#39;t thought much about it, political interest is very interested in politics, watches YouTube several times a week, gun policy importance is not at all important, gun regulation support score is 30%, and identifies as enthusiastic about guns.
-
-OPTIONS
-1. Common arguments for gun control, shot down (Fox News, 238s long) — Engagement: views 145,364, likes 4,263, comments 40
-2. Conservatives Blame Everything but Guns for the Parkland Shooting: The Daily Show — Engagement: views 1,661,094, likes 34,531
-
-QUESTIONS
-1. Which option number will the viewer watch next?
-2. After this recommendation, will the viewer&#39;s opinion on Gun control increase, decrease, or stay the same?
-
-After the participant watches the recommended next video, estimate their post-study opinion index.
-Reason briefly inside &lt;think&gt; then output ONLY the numeric index (1-7) inside &lt;answer&gt;.
-</pre></div>
-</div>
-</section>
-<section id="model-response">
-<h4>Model Response<a class="headerlink" href="#model-response" title="Link to this heading">¶</a></h4>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>&lt;think&gt;
-The viewer is watching a documentary that discusses common arguments against gun control measures. They have been exposed to information supporting gun control policies through recent news articles and social media posts. Given their demographic characteristics and recent viewing habits, they might be more likely to align themselves with opposing viewpoints rather than supportive ones.
-&lt;/think&gt;
-
-&lt;answer&gt;
-1
-&lt;/answer&gt;
-
-&lt;opinion&gt;increase&lt;/opinion&gt;
-</pre></div>
-</div>
-</section>
-<section id="notes">
-<h4>Notes<a class="headerlink" href="#notes" title="Link to this heading">¶</a></h4>
-<ul class="simple">
-<li><p>Issue: gun control</p></li>
-<li><p>Task: Opinion shift prediction</p></li>
-<li><p>Tags present — think: yes, answer: yes</p></li>
-<li><p>Pre-study opinion index: 0.30</p></li>
-<li><p>Predicted post-study index: 1.00</p></li>
-<li><p>Predicted direction: increase</p></li>
-<li><p>Short rationale: The viewer is watching a documentary that discusses common arguments against gun control measures. They have been exposed to information supporting gun control policies through recent news articles and social media posts. Given their dem…</p></li>
-</ul>
-</section>
-</section>
-<section id="example-2-opinion">
-<h3>Example 2 (Opinion)<a class="headerlink" href="#example-2-opinion" title="Link to this heading">¶</a></h3>
-<section id="id1">
-<h4>Question<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h4>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Issue: Gun Control
-Opinion scale: 1 = strongly oppose, 7 = strongly support.
-Pre-study opinion index: 0.15
-
-Viewer context:
-VIEWER 31-year-old, Caucasian/White (non-Hispanic) woman; democrat liberal; $50,000-$59,999; watches YouTube multiple times per day.
-Initial Viewpoint: Opposes stricter gun laws
-
-CURRENTLY WATCHING Actors Read Gun Control Facts For The First Time. (from US News)
-
-RECENTLY WATCHED (NEWEST LAST)
-1. Most Americans Want More Gun Control. Why Doesn’t It Happen? | NYT (watched 227s of 231s (98% complete), from The New York Times)
-2. GUN CONTROL: WHY YOU CAN&#39;T COMPARE AUSTRALIA AND THE U.S (watched 116s of 544s (21% complete), from Sydney Watson)
-3. Parkland Shooting Survivors School Congress on Gun Violence: The Daily Show (watched 479s of 491s (98% complete), from The Daily Show with Trevor Noah)
-
-SURVEY HIGHLIGHTS
-party identification is Democrat, party lean is Strong Democrat, ideology is Liberal, political interest is not at all interested in politics, watches YouTube multiple times per day, gun policy importance is somewhat important, gun regulation support score is 15%, and does not identify as enthusiastic about guns.
-
-OPTIONS
-1. Democrats Need to Listen to Gun Owners (The Atlantic) — Engagement: views 29,001, likes 379
-2. Why restrict &#39;good&#39; gun owners, resident asks President Obama at town hall — Engagement: views 2,248,364, likes 38,943
-
-QUESTIONS
-1. Which option number will the viewer watch next?
-2. After this recommendation, will the viewer&#39;s opinion on Gun control increase, decrease, or stay the same?
-
-After the participant watches the recommended next video, estimate their post-study opinion index.
-Reason briefly inside &lt;think&gt; then output ONLY the numeric index (1-7) inside &lt;answer&gt;.
-</pre></div>
-</div>
-</section>
-<section id="id2">
-<h4>Model Response<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h4>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>&lt;think&gt;
-The viewer is watching videos related to gun control issues. They have been exposed to information that supports stricter gun laws through recent watched content. Their current viewpoint is against stricter gun laws, but they may be more open-minded after hearing arguments for it.
-&lt;/think&gt;
-
-&lt;answer&gt;
-1
-&lt;/answer&gt;
-
-&lt;opinion&gt;increase&lt;/opinion&gt;
-</pre></div>
-</div>
-</section>
-<section id="id3">
-<h4>Notes<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h4>
-<ul class="simple">
-<li><p>Issue: gun control</p></li>
-<li><p>Task: Opinion shift prediction</p></li>
-<li><p>Tags present — think: yes, answer: yes</p></li>
-<li><p>Pre-study opinion index: 0.15</p></li>
-<li><p>Predicted post-study index: 1.00</p></li>
-<li><p>Predicted direction: increase</p></li>
-<li><p>Short rationale: The viewer is watching videos related to gun control issues. They have been exposed to information that supports stricter gun laws through recent watched content. Their current viewpoint is against stricter gun laws, but they may be more…</p></li>
-</ul>
-</section>
-</section>
-</section>
-<section id="minimum-wage">
-<h2>Minimum Wage<a class="headerlink" href="#minimum-wage" title="Link to this heading">¶</a></h2>
-<section id="id4">
-<h3>Example 1 (Opinion)<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
-<section id="id5">
-<h4>Question<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h4>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Issue: Minimum Wage
-Opinion scale: 1 = strongly oppose, 7 = strongly support.
-Pre-study opinion index: 0.14
-
-Viewer context:
-VIEWER 36-year-old, Asian/Pacific Islanders man; democrat liberal; Prefer not to say; college-educated; watches YouTube multiple times per day.
-Initial Viewpoint: Opposes a $15 minimum wage
-
-CURRENTLY WATCHING Who Does a $15 Minimum Wage Help? (from PragerU)
-
-RECENTLY WATCHED (NEWEST LAST)
-1. Edgar the Exploiter - Minimum Wage Consequences (watched 428s of 428s (100% complete), from cowfootman)
-2. Charles Koch: No Minimum Wage will Help the Poor (watched 474s of 474s (100% complete), from Thom Hartmann Program)
-3. Joe Rogan - The Minimum Wage Destroys Jobs (watched 557s of 557s (100% complete), from JRE Clips)
-
-SURVEY HIGHLIGHTS
-party identification is Democrat, party lean is Not very strong Democrat, ideology is Liberal, political interest is not very interested in politics, watches YouTube multiple times per day, preferred minimum wage target is $15, minimum wage support score is twenty-five percent, and $15 minimum wage support is fifty percent.
-
-OPTIONS
-1. Minimum Wage Cost Me My Job (PragerU, 324s long) — Engagement: views 1,999,176, likes 22,178, comments 40
-2. What the US gets wrong about minimum wage (Vox, 306s long) — Engagement: views 2,007,754, likes 59,987, comments 40
-3. SOMEONE GIVE HIM A RAISE: Ben Shapiro kills the minimum wage argument for good (Young America&#39;s Foundation, 164s long) — Engagement: views 2,442,928, likes 29,244, comments 40
-4. Why Raising the Minimum Wage Doesn&#39;t Cause Inflation (Thom Hartmann Program, 264s long) — Engagement: views 5,714, likes 266, comments 40
-
-QUESTIONS
-1. Which option number will the viewer watch next?
-2. After this recommendation, will the viewer&#39;s opinion on Minimum wage increase, decrease, or stay the same?
-
-After the participant watches the recommended next video, estimate their post-study opinion index.
-Reason briefly inside &lt;think&gt; then output ONLY the numeric index (1-7) inside &lt;answer&gt;.
-</pre></div>
-</div>
-</section>
-<section id="id6">
-<h4>Model Response<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h4>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>&lt;think&gt;
-The viewer is currently watching a documentary that supports raising the minimum wage. They have watched videos supporting higher wages before but were against it initially. Watching a supportive video might reinforce their stance.
-&lt;/think&gt;
-
-&lt;answer&gt;
-1
-&lt;/answer&gt;
-
-&lt;opinion&gt;increase&lt;/opinion&gt;
-</pre></div>
-</div>
-</section>
-<section id="id7">
-<h4>Notes<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h4>
-<ul class="simple">
-<li><p>Issue: minimum wage</p></li>
-<li><p>Task: Opinion shift prediction</p></li>
-<li><p>Tags present — think: yes, answer: yes</p></li>
-<li><p>Pre-study opinion index: 0.14</p></li>
-<li><p>Predicted post-study index: 1.00</p></li>
-<li><p>Predicted direction: increase</p></li>
-<li><p>Short rationale: The viewer is currently watching a documentary that supports raising the minimum wage. They have watched videos supporting higher wages before but were against it initially. Watching a supportive video might reinforce their stance.</p></li>
-</ul>
-</section>
-</section>
-<section id="id8">
-<h3>Example 2 (Opinion)<a class="headerlink" href="#id8" title="Link to this heading">¶</a></h3>
-<section id="id9">
-<h4>Question<a class="headerlink" href="#id9" title="Link to this heading">¶</a></h4>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Issue: Minimum Wage
-Opinion scale: 1 = strongly oppose, 7 = strongly support.
-Pre-study opinion index: 0.32
-
-Viewer context:
-VIEWER 43-year-old, Caucasian/White (non-Hispanic) man; democrat liberal; $40,000-$49,999; college-educated; watches YouTube occasionally.
-Initial Viewpoint: Preferred minimum wage is about $0.60
-
-CURRENTLY WATCHING What&#39;s the Right Minimum Wage? (from PragerU)
-
-RECENTLY WATCHED (NEWEST LAST)
-1. $15 minimum wage would cut 1.4 million jobs by 2025: CBO (watched 87s of 88s (99% complete), from Fox Business)
-2. Why Biden’s $15 Minimum Wage Isn’t The Solution - Steve Forbes | What&#39;s Ahead | Forbes (watched 201s of 202s (100% complete), from Forbes)
-3. Briahna Joy Gray: DEBUNKING Corporate Myths About $15 Minimum Wage (watched 375s of 455s (82% complete), from The Hill)
-
-SURVEY HIGHLIGHTS
-party identification is Democrat, party lean is Not very strong Democrat, ideology is Liberal, political interest is not very interested in politics, watches YouTube occasionally, preferred minimum wage target is $10, minimum wage support score is seventy-five percent, and $15 minimum wage support is seventy-five percent.
-
-OPTIONS
-1. What the US gets wrong about minimum wage (Vox, 306s long) — Engagement: views 2,007,754, likes 59,987, comments 40
-2. Milton Friedman on Minimum Wage (amagilly, 219s long) — Engagement: views 484,030, likes 4,493, comments 40
-3. Who Does a $15 Minimum Wage Help? (PragerU, 334s long) — Engagement: views 6,088,611, likes 49,500, comments 40
-4. By the Numbers: Biden’s $15 per hour minimum wage plan (ABC News, 95s long) — Engagement: views 35,630, likes 537, comments 40
-
-QUESTIONS
-1. Which option number will the viewer watch next?
-2. After this recommendation, will the viewer&#39;s opinion on Minimum wage increase, decrease, or stay the same?
-
-After the participant watches the recommended next video, estimate their post-study opinion index.
-Reason briefly inside &lt;think&gt; then output ONLY the numeric index (1-7) inside &lt;answer&gt;.
-</pre></div>
-</div>
-</section>
-<section id="id10">
-<h4>Model Response<a class="headerlink" href="#id10" title="Link to this heading">¶</a></h4>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>&lt;think&gt;
-The viewer is currently watching a documentary that supports raising the minimum wage to $15 per hour. They have watched videos supporting both sides of the issue but lean towards the side that favors higher wages. Given their demographic characteristics and recent viewing habits, they might be more likely to agree with the recommendations for increasing the minimum wage.
-&lt;/think&gt;
-
-&lt;answer&gt;
-1
-&lt;/answer&gt;
-
-&lt;opinion&gt;increase&lt;/opinion&gt;
-</pre></div>
-</div>
-</section>
-<section id="id11">
-<h4>Notes<a class="headerlink" href="#id11" title="Link to this heading">¶</a></h4>
-<ul class="simple">
-<li><p>Issue: minimum wage</p></li>
-<li><p>Task: Opinion shift prediction</p></li>
-<li><p>Tags present — think: yes, answer: yes</p></li>
-<li><p>Pre-study opinion index: 0.32</p></li>
-<li><p>Predicted post-study index: 1.00</p></li>
-<li><p>Predicted direction: increase</p></li>
-<li><p>Short rationale: The viewer is currently watching a documentary that supports raising the minimum wage to $15 per hour. They have watched videos supporting both sides of the issue but lean towards the side that favors higher wages. Given their demographi…</p></li>
-</ul>
-</section>
-</section>
-<section id="example-3-opinion">
-<h3>Example 3 (Opinion)<a class="headerlink" href="#example-3-opinion" title="Link to this heading">¶</a></h3>
-<section id="id12">
-<h4>Question<a class="headerlink" href="#id12" title="Link to this heading">¶</a></h4>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Issue: Minimum Wage
-Opinion scale: 1 = strongly oppose, 7 = strongly support.
-Pre-study opinion index: 0.11
-
-Viewer context:
-VIEWER 43-year-old, Caucasian/White (non-Hispanic),Latino or Hispanic woman; republican conservative; $50,000-$59,999; college-educated; watches YouTube daily.
-Initial Viewpoint: Opposes a $15 minimum wage
-
-CURRENTLY WATCHING Here’s the Truth About a $15 Minimum Wage (from Rep. Dan Crenshaw)
-
-RECENTLY WATCHED (NEWEST LAST)
-1. Raise The Minimum Wage -- Robert Reich &amp; MoveOn.org (watched 149s of 150s (99% complete), from MoveOn)
-2. What the US gets wrong about minimum wage (watched 297s of 306s (97% complete), from Vox)
-3. The 5 Biggest Myths Republicans Use to Avoid Raising the Minimum Wage | Opinions | NowThis (watched 158s of 159s (99% complete), from NowThis News)
-
-SURVEY HIGHLIGHTS
-party identification is Republican, ideology is Conservative, political interest is not very interested in politics, watches YouTube daily, preferred minimum wage target is $15, minimum wage support score is zero percent, and $15 minimum wage support is zero percent.
-
-OPTIONS
-1. Should We Abolish the Minimum Wage? (Kyle Talks Money, 520s long) — Engagement: views 1,096, likes 63, comments 40
-2. Milton Friedman - The Minimum Wage (LibertyPen, 146s long) — Engagement: views 21,588, likes 581, comments 40
-3. A $15 Minimum Wage Will Hurt Workers (PragerU, 237s long) — Engagement: views 480,145, likes 9,339, comments 40
-4. Bernie Sanders: I&#39;ve Heard You TYT, I&#39;m Forcing A Vote on $15 Minimum Wage (The Young Turks, 493s long) — Engagement: views 126,658, likes 8,637, comments 40
-
-QUESTIONS
-1. Which option number will the viewer watch next?
-2. After this recommendation, will the viewer&#39;s opinion on Minimum wage increase, decrease, or stay the same?
-
-After the participant watches the recommended next video, estimate their post-study opinion index.
-Reason briefly inside &lt;think&gt; then output ONLY the numeric index (1-7) inside &lt;answer&gt;.
-</pre></div>
-</div>
-</section>
-<section id="id13">
-<h4>Model Response<a class="headerlink" href="#id13" title="Link to this heading">¶</a></h4>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>&lt;think&gt;
-The viewer is watching videos related to opposing a $15 minimum wage. They have watched several videos that align with their current viewpoint. Watching more content supporting their stance against raising the minimum wage would likely reinforce their opposition further.
-&lt;/think&gt;
-
-&lt;answer&gt;
-1
-&lt;/answer&gt;
-
-&lt;opinion&gt;increase&lt;/opinion&gt;
-</pre></div>
-</div>
-</section>
-<section id="id14">
-<h4>Notes<a class="headerlink" href="#id14" title="Link to this heading">¶</a></h4>
-<ul class="simple">
-<li><p>Issue: minimum wage</p></li>
-<li><p>Task: Opinion shift prediction</p></li>
-<li><p>Tags present — think: yes, answer: yes</p></li>
-<li><p>Pre-study opinion index: 0.11</p></li>
-<li><p>Predicted post-study index: 1.00</p></li>
-<li><p>Predicted direction: increase</p></li>
-<li><p>Short rationale: The viewer is watching videos related to opposing a $15 minimum wage. They have watched several videos that align with their current viewpoint. Watching more content supporting their stance against raising the minimum wage would likely r…</p></li>
-</ul>
-</section>
-</section>
-<section id="example-4-next-video">
-<h3>Example 4 (Next Video)<a class="headerlink" href="#example-4-next-video" title="Link to this heading">¶</a></h3>
-<section id="id15">
-<h4>Question<a class="headerlink" href="#id15" title="Link to this heading">¶</a></h4>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>VIEWER 65-year-old, White (non-Hispanic); watches YouTube a few times a month; lives in Pennsylvania.
-Initial Viewpoint: Opposes a $15 minimum wage
-
-CURRENTLY WATCHING Raise The Minimum Wage -- Robert Reich &amp; MoveOn.org (from MoveOn)
-
-RECENTLY WATCHED (NEWEST LAST)
-(no recently watched videos available)
-
-SURVEY HIGHLIGHTS
-political interest is about sixty-seven percent, religious affiliation is Catholic, watches YouTube a few times a month, follows the news some of the time, minimum wage support score is twenty-five percent, and $15 minimum wage support is twenty-five percent.
-
-OPTIONS
-1. Stossel: Minimum Wage Hurts Beginners (ReasonTV, 276s long) — Engagement: views 48,227, likes 2,635, comments 40
-2. Caller: Minimum Wage Should be set by Supply &amp; Demand (Thom Hartmann Program, 494s long) — Engagement: views 5,149, likes 142, comments 40
-3. Fast Food CEO After Minimum Wage Increase: &quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;&quot;... (Waldorf Nation, 453s long) — Engagement: views 141,333, likes 2,609, comments 40
-4. The 5 Biggest Myths Republicans Use to Avoid Raising the Minimum Wage | Opinions | NowThis (NowThis News, 159s long) — Engagement: views 56,870, likes 4,183, comments 40
-
-QUESTIONS
-1. Which option number will the viewer watch next?
-2. After this recommendation, will the viewer&#39;s opinion on Minimum wage increase, decrease, or stay the same?
-</pre></div>
-</div>
-</section>
-<section id="id16">
-<h4>Model Response<a class="headerlink" href="#id16" title="Link to this heading">¶</a></h4>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>&lt;think&gt;
-The viewer is currently watching a video that supports raising the minimum wage. They oppose it initially but were influenced by the arguments presented in the video. Given their recent viewing history and engagement levels, they might be more likely to watch another video supporting their initial stance against the minimum wage increase.
-&lt;/think&gt;
-
-&lt;answer&gt;
-1
-&lt;/answer&gt;
-</pre></div>
-</div>
-</section>
-<section id="id17">
-<h4>Notes<a class="headerlink" href="#id17" title="Link to this heading">¶</a></h4>
-<ul class="simple">
-<li><p>Issue: minimum wage</p></li>
-<li><p>Task: Next-video selection</p></li>
-<li><p>Tags present — think: yes, answer: yes</p></li>
-<li><p>Chosen option: 1</p></li>
-<li><p>Short rationale: The viewer is currently watching a video that supports raising the minimum wage. They oppose it initially but were influenced by the arguments presented in the video. Given their recent viewing history and engagement levels, they might b…</p></li>
-</ul>
-</section>
-</section>
-<section id="example-5-next-video">
-<h3>Example 5 (Next Video)<a class="headerlink" href="#example-5-next-video" title="Link to this heading">¶</a></h3>
-<section id="id18">
-<h4>Question<a class="headerlink" href="#id18" title="Link to this heading">¶</a></h4>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>VIEWER 65-year-old, White (non-Hispanic); watches YouTube a few times a month; lives in Pennsylvania.
-Initial Viewpoint: Opposes a $15 minimum wage
-
-CURRENTLY WATCHING Stossel: Minimum Wage Hurts Beginners (from ReasonTV)
-
-RECENTLY WATCHED (NEWEST LAST)
-1. Raise The Minimum Wage -- Robert Reich &amp; MoveOn.org (watched 149s of 149s (100% complete), from MoveOn)
-
-SURVEY HIGHLIGHTS
-political interest is about sixty-seven percent, religious affiliation is Catholic, watches YouTube a few times a month, follows the news some of the time, minimum wage support score is twenty-five percent, and $15 minimum wage support is twenty-five percent.
-
-OPTIONS
-1. What the US gets wrong about minimum wage (Vox, 306s long) — Engagement: views 2,007,754, likes 59,987, comments 40
-2. What They DONT TELL YOU About Minimum Wage... | Thomas Sowell (Aporia Institute, 339s long) — Engagement: views 455, likes 62, comments 40
-3. Here’s the Truth About a $15 Minimum Wage (Rep. Dan Crenshaw, 225s long) — Engagement: views 32,771, likes 1,671, comments 40
-4. Gutfeld: Seattle&#39;s minimum wage hike failures (Fox News, 379s long) — Engagement: views 993,258, likes 11,584, comments 40
-
-QUESTIONS
-1. Which option number will the viewer watch next?
-2. After this recommendation, will the viewer&#39;s opinion on Minimum wage increase, decrease, or stay the same?
-</pre></div>
-</div>
-</section>
-<section id="id19">
-<h4>Model Response<a class="headerlink" href="#id19" title="Link to this heading">¶</a></h4>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>&lt;think&gt;
-The viewer is currently watching a video criticizing the minimum wage increase. They oppose it initially but may be swayed by factual arguments supporting higher wages. Given they&#39;re older and follow YouTube regularly, they might prefer longer videos over shorter ones. Option 1 has the highest engagement rate among recent viewers, suggesting they&#39;ll likely continue watching similar content.
-&lt;/think&gt;
-
-&lt;answer&gt;
-1
-&lt;/answer&gt;
-</pre></div>
-</div>
-</section>
-<section id="id20">
-<h4>Notes<a class="headerlink" href="#id20" title="Link to this heading">¶</a></h4>
-<ul class="simple">
-<li><p>Issue: minimum wage</p></li>
-<li><p>Task: Next-video selection</p></li>
-<li><p>Tags present — think: yes, answer: yes</p></li>
-<li><p>Chosen option: 1</p></li>
-<li><p>Short rationale: The viewer is currently watching a video criticizing the minimum wage increase. They oppose it initially but may be swayed by factual arguments supporting higher wages. Given they’re older and follow YouTube regularly, they might prefer …</p></li>
-</ul>
-</section>
-</section>
-</section>
+<p>No examples found in existing predictions. Populate models/*/predictions.jsonl first.</p>
 </section>
 
         </article>
@@ -765,74 +351,8 @@ The viewer is currently watching a video criticizing the minimum wage increase. 
         
       </footer>
     </div>
-    <aside class="toc-drawer">
+    <aside class="toc-drawer no-toc">
       
-      
-      <div class="toc-sticky toc-scroll">
-        <div class="toc-title-container">
-          <span class="toc-title">
-            On this page
-          </span>
-        </div>
-        <div class="toc-tree-container">
-          <div class="toc-tree">
-            <ul>
-<li><a class="reference internal" href="#">GRPO Sample Generative Model Responses</a><ul>
-<li><a class="reference internal" href="#gun-control">Gun Control</a><ul>
-<li><a class="reference internal" href="#example-1-opinion">Example 1 (Opinion)</a><ul>
-<li><a class="reference internal" href="#question">Question</a></li>
-<li><a class="reference internal" href="#model-response">Model Response</a></li>
-<li><a class="reference internal" href="#notes">Notes</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#example-2-opinion">Example 2 (Opinion)</a><ul>
-<li><a class="reference internal" href="#id1">Question</a></li>
-<li><a class="reference internal" href="#id2">Model Response</a></li>
-<li><a class="reference internal" href="#id3">Notes</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#minimum-wage">Minimum Wage</a><ul>
-<li><a class="reference internal" href="#id4">Example 1 (Opinion)</a><ul>
-<li><a class="reference internal" href="#id5">Question</a></li>
-<li><a class="reference internal" href="#id6">Model Response</a></li>
-<li><a class="reference internal" href="#id7">Notes</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#id8">Example 2 (Opinion)</a><ul>
-<li><a class="reference internal" href="#id9">Question</a></li>
-<li><a class="reference internal" href="#id10">Model Response</a></li>
-<li><a class="reference internal" href="#id11">Notes</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#example-3-opinion">Example 3 (Opinion)</a><ul>
-<li><a class="reference internal" href="#id12">Question</a></li>
-<li><a class="reference internal" href="#id13">Model Response</a></li>
-<li><a class="reference internal" href="#id14">Notes</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#example-4-next-video">Example 4 (Next Video)</a><ul>
-<li><a class="reference internal" href="#id15">Question</a></li>
-<li><a class="reference internal" href="#id16">Model Response</a></li>
-<li><a class="reference internal" href="#id17">Notes</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#example-5-next-video">Example 5 (Next Video)</a><ul>
-<li><a class="reference internal" href="#id18">Question</a></li>
-<li><a class="reference internal" href="#id19">Model Response</a></li>
-<li><a class="reference internal" href="#id20">Notes</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-
-          </div>
-        </div>
-      </div>
       
       
     </aside>

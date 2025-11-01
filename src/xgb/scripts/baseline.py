@@ -17,9 +17,6 @@
 
 from __future__ import annotations
 
-# pylint: skip-file
-"""Backward-compatible entry point for the XGBoost baseline."""
-
 from xgb.cli import main
 
 

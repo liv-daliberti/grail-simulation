@@ -18,24 +18,18 @@
 from __future__ import annotations
 
 import argparse
-import logging
 from pathlib import Path
 
 from common.cli.args import add_comma_separated_argument
-from common.cli.options import add_eval_arguments
-
+from common.cli.shortcuts import add_shared_eval_arguments
+from common.cli.run import run_main
+from common.cli.text_fields import DEFAULT_EXTENDED_TEXT_FIELDS
 from ..core.evaluate import run_eval
 from .args_shared import add_sentence_transformer_args, add_word2vec_args
 
 # Align default extra text fields with KNN to reduce signal disparity.
 # These fields augment the base viewer_profile/state_text from prompt_docs.
-DEFAULT_XGB_TEXT_FIELDS = (
-    "pid1,pid2,ideo1,ideo2,pol_interest,religpew,educ,employ,child18,inputstate,"
-    "freq_youtube,youtube_time,newsint,q31,participant_study,slate_source,"
-    "minwage_text_w2,minwage_text_w1,mw_support_w2,mw_support_w1,minwage15_w2,"
-    "minwage15_w1,mw_index_w2,mw_index_w1,gun_importance,gun_index,gun_enthusiasm,"
-    "gun_identity"
-)
+DEFAULT_XGB_TEXT_FIELDS = DEFAULT_EXTENDED_TEXT_FIELDS
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -81,17 +75,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Random seed applied when subsampling the train split.",
     )
     # Shared eval args (dataset, issues, eval_max, out_dir, cache_dir, overwrite, log-level)
-    add_eval_arguments(
-        parser,
-        default_out_dir=str(Path("models") / "xgb"),
-        default_cache_dir=str(Path.cwd() / "hf_cache"),
-        include_llm_args=False,
-        include_opinion_args=False,
-        include_studies_filter=False,
-        dataset_default="data/cleaned_grail",
-        issues_default="",
-        include_legacy_aliases=True,
-    )
+    add_shared_eval_arguments(parser, default_out_dir=Path("models") / "xgb")
     parser.add_argument(
         "--extra_text_fields",
         default=DEFAULT_XGB_TEXT_FIELDS,
@@ -185,20 +169,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> None:
-    """
-    Parse CLI arguments and execute the evaluation routine.
-
-    :param argv: Optional override for command-line arguments.
-    :type argv: list[str], optional
-    """
-
-    parser = build_parser()
-    args = parser.parse_args(argv)
-    logging.basicConfig(
-        level=getattr(logging, args.log_level.upper(), logging.INFO),
-        format="%(asctime)s %(levelname)s: %(message)s",
-    )
-    run_eval(args)
+    """Parse CLI args and run the XGBoost evaluation pipeline."""
+    run_main(build_parser, run_eval, argv)
 
 
 if __name__ == "__main__":  # pragma: no cover

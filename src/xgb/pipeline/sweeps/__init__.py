@@ -88,9 +88,43 @@ __all__ = [
     "_opinion_sweep_outcome_from_metrics",
     "_prepare_opinion_sweep_tasks",
     "_prepare_sweep_tasks",
+    # Public, lint-friendly entry points
+    "prepare_opinion_sweep_tasks",
+    "prepare_sweep_tasks",
     "_run_sweeps",
     "_run_xgb_cli",
     "_select_best_configs",
     "_select_best_opinion_configs",
     "_sweep_outcome_from_metrics",
 ]
+
+
+# Public wrappers to avoid W0212 (protected members) in callers while keeping
+# the private implementation detail stable within the submodules.
+def prepare_sweep_tasks(*, studies, configs, context, reuse_existing):
+    """Public wrapper around the private ``_prepare_sweep_tasks``.
+
+    This preserves the original behaviour while allowing upstream code to call
+    a public API (avoiding Pylint's protected-member warning).
+    """
+
+    return _prepare_sweep_tasks(
+        studies=studies,
+        configs=configs,
+        context=context,
+        reuse_existing=reuse_existing,
+    )
+
+
+def prepare_opinion_sweep_tasks(*, studies, configs, context, reuse_existing):
+    """Public wrapper around the private ``_prepare_opinion_sweep_tasks``.
+
+    See :func:`prepare_sweep_tasks` for rationale.
+    """
+
+    return _prepare_opinion_sweep_tasks(
+        studies=studies,
+        configs=configs,
+        context=context,
+        reuse_existing=reuse_existing,
+    )

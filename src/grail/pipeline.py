@@ -22,7 +22,22 @@ import sys
 from typing import Sequence
 
 from grpo.config import repo_root as _repo_root
-from grpo.pipeline import configure_logging as _configure_logging, main as _grpo_main
+# Import with a defensive fallback to avoid Sphinx autodoc failures when
+# optional GRPO dependencies are missing during docs builds.
+try:  # pragma: no cover - used during docs import
+    from grpo.pipeline import (
+        configure_logging as _configure_logging,
+        main as _grpo_main,
+    )
+except (ImportError, ModuleNotFoundError) as _grpo_import_error:  # pragma: no cover
+    def _configure_logging(_level: str) -> None:  # type: ignore
+        return None
+
+    def _grpo_main(_argv: Sequence[str] | None = None) -> None:  # type: ignore
+        raise RuntimeError(
+            "grpo.pipeline is unavailable during documentation import; "
+            "install optional dependencies or build outside Sphinx."
+        ) from _grpo_import_error
 
 from .reports import DEFAULT_REGENERATE_HINT
 

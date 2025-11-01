@@ -23,8 +23,8 @@ import math
 import re
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Mapping, Sequence, Tuple, cast
-
 from importlib import import_module
+from common.chat.utils import first_system_content, latest_user_content
 from ..config import EVAL_SPLIT, OPINION_SYSTEM_PROMPT
 from ..utils import (
     InvocationParams,
@@ -284,31 +284,8 @@ class OpinionEvaluationRunner:
 
     @staticmethod
     def _extract_log_messages(messages: Sequence[Mapping[str, str]]) -> Tuple[str, str]:
-        """Return the system prompt and latest user message for QA logging.
-
-        :param messages: Chat message sequence used for inference.
-        :returns: Tuple of ``(system_prompt, user_prompt)`` strings (may be empty).
-        :rtype: tuple[str, str]
-        """
-        system_prompt = ""
-        for message in messages:
-            if (
-                isinstance(message, Mapping)
-                and message.get("role") == "system"
-                and message.get("content")
-            ):
-                system_prompt = str(message["content"]).strip()
-                break
-        user_prompt = ""
-        for message in reversed(messages):
-            if (
-                isinstance(message, Mapping)
-                and message.get("role") == "user"
-                and message.get("content")
-            ):
-                user_prompt = str(message["content"]).strip()
-                break
-        return system_prompt, user_prompt
+        """Return the system prompt and latest user message for QA logging."""
+        return first_system_content(messages), latest_user_content(messages)
 
     def _artifacts_for_spec(self, spec: OpinionSpec) -> OpinionArtifacts:
         """Return the artefact paths associated with ``spec``.

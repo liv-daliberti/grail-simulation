@@ -47,7 +47,8 @@ class OpinionSpec:
         :param document: Prompt document presented to the participant.
         :param before: Pre-study opinion value.
         :param after: Post-study opinion value.
-        :returns: Dictionary of keyword arguments suitable for :func:`~common.opinion.opinion_example_kwargs`.
+        :returns: Dictionary of keyword arguments suitable for
+            :func:`~common.opinion.opinion_example_kwargs`.
         """
 
         return opinion_example_kwargs(
@@ -178,7 +179,8 @@ def make_opinion_example(
     while reusing the standardised opinion inputs bundle.
 
     :param spec: Opinion specification describing the study identifiers.
-    :param inputs: Normalised participant inputs produced by :func:`~common.opinion.models.make_opinion_inputs`.
+    :param inputs: Normalised participant inputs produced by
+        :func:`~common.opinion.models.make_opinion_inputs`.
     :param factory: Callable constructing the final example instance.
     :param extra_fields: Additional keyword arguments forwarded to ``factory``.
     :returns: Instance created by ``factory`` populated with shared fields.

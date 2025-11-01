@@ -62,7 +62,7 @@ The viewer is watching a documentary that discusses common arguments against gun
 
 - Issue: gun control
 - Task: Opinion shift prediction
-- Tags present — think: yes, answer: yes
+- Tags — think: yes, answer: yes
 - Pre-study opinion index: 0.30
 - Predicted post-study index: 1.00
 - Predicted direction: increase
@@ -120,7 +120,7 @@ The viewer is watching videos related to gun control issues. They have been expo
 
 - Issue: gun control
 - Task: Opinion shift prediction
-- Tags present — think: yes, answer: yes
+- Tags — think: yes, answer: yes
 - Pre-study opinion index: 0.15
 - Predicted post-study index: 1.00
 - Predicted direction: increase
@@ -182,7 +182,7 @@ The viewer is currently watching a documentary that supports raising the minimum
 
 - Issue: minimum wage
 - Task: Opinion shift prediction
-- Tags present — think: yes, answer: yes
+- Tags — think: yes, answer: yes
 - Pre-study opinion index: 0.14
 - Predicted post-study index: 1.00
 - Predicted direction: increase
@@ -242,7 +242,7 @@ The viewer is currently watching a documentary that supports raising the minimum
 
 - Issue: minimum wage
 - Task: Opinion shift prediction
-- Tags present — think: yes, answer: yes
+- Tags — think: yes, answer: yes
 - Pre-study opinion index: 0.32
 - Predicted post-study index: 1.00
 - Predicted direction: increase
@@ -302,7 +302,7 @@ The viewer is watching videos related to opposing a $15 minimum wage. They have 
 
 - Issue: minimum wage
 - Task: Opinion shift prediction
-- Tags present — think: yes, answer: yes
+- Tags — think: yes, answer: yes
 - Pre-study opinion index: 0.11
 - Predicted post-study index: 1.00
 - Predicted direction: increase
@@ -351,7 +351,7 @@ The viewer is currently watching a video that supports raising the minimum wage.
 
 - Issue: minimum wage
 - Task: Next-video selection
-- Tags present — think: yes, answer: yes
+- Tags — think: yes, answer: yes
 - Chosen option: 1
 - Short rationale: The viewer is currently watching a video that supports raising the minimum wage. They oppose it initially but were influenced by the arguments presented in the video. Given their recent viewing history and engagement levels, they might b...
 ### Example 5 (Next Video)
@@ -398,6 +398,6 @@ The viewer is currently watching a video criticizing the minimum wage increase. 
 
 - Issue: minimum wage
 - Task: Next-video selection
-- Tags present — think: yes, answer: yes
+- Tags — think: yes, answer: yes
 - Chosen option: 1
 - Short rationale: The viewer is currently watching a video criticizing the minimum wage increase. They oppose it initially but may be swayed by factual arguments supporting higher wages. Given they're older and follow YouTube regularly, they might prefer ...

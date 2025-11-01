@@ -87,7 +87,7 @@ def _append_next_video_section(
     lines.append("## Next-Video Pipeline")
     lines.append("")
     if not include_next_video:
-        lines.append("Next-video tasks were disabled for this run.")
+        lines.append("Next-video tasks were not selected for this run.")
         lines.append("")
         return set()
 
@@ -123,7 +123,7 @@ def _append_opinion_section(
     lines.append("## Opinion Regression")
     lines.append("")
     if opinion is None:
-        lines.append("Opinion regression tasks were disabled for this run.")
+        lines.append("Opinion regression tasks were not selected for this run.")
         lines.append("")
         return set()
 

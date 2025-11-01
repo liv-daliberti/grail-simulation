@@ -162,7 +162,28 @@ autodoc_default_options = {
 }
 autodoc_typehints = "description"
 autodoc_type_aliases = {
+    # stdlib/concurrency helpers
     "Future": "concurrent.futures.Future",
+    # Prefer canonical common.pipeline.* anchors for core generics
+    "StudySpec": "common.pipeline.types.StudySpec",
+    "StudySelection": "common.pipeline.types.StudySelection",
+    "OpinionStudySelection": "common.pipeline.types.OpinionStudySelection",
+    # Do not alias Sweep* names globally to avoid conflicts with GPT-4o
+    # pipeline types; let Sphinx resolve by actual module.
+    "BasePipelineSweepOutcome": "common.pipeline.types.BasePipelineSweepOutcome",
+    "BaseOpinionSweepOutcome": "common.opinion.sweep_types.BaseOpinionSweepOutcome",
+    # Report bundles exposed via knn.pipeline.context
+    "ReportSelections": "knn.pipeline.context.ReportSelections",
+    "ReportOutcomes": "knn.pipeline.context.ReportOutcomes",
+    "ReportMetrics": "knn.pipeline.context.ReportMetrics",
+    "ReportPresentation": "knn.pipeline.context.ReportPresentation",
+    # XGBoost config dataclasses (canonical path under core.model_config)
+    "XGBoostBoosterParams": "xgb.core.model_config.XGBoostBoosterParams",
+    "XGBoostTrainConfig": "xgb.core.model_config.XGBoostTrainConfig",
+    # KNN pipeline private bundles referenced in type hints
+    "_PipelinePaths": "knn.pipeline.context_pipeline._PipelinePaths",
+    "_ModelDefaults": "knn.pipeline.context_pipeline._ModelDefaults",
+    "_Workflow": "knn.pipeline.context_pipeline._Workflow",
 }
 autodoc_typehints_format = "fully-qualified"
 python_use_unqualified_type_names = False
@@ -209,6 +230,8 @@ if os.environ.get("SPHINX_ENABLE_INTERSPHINX", "").lower() not in {"1", "true", 
 
 _nitpick_targets = {
     "py:class": [
+        # Typing artifacts introduced by forward-referenced type aliases in 3.12
+        "TypeAliasForwardRef",
         "DatasetDict",
         "Execution",
         "ModelConfig",
@@ -321,13 +344,25 @@ _nitpick_targets = {
         "xgb.core.model._BoosterSampling",
         "xgb.core.model._BoosterRegularization",
         "xgb.core.model._TrainVectorizers",
+        # Private helpers moved to model_config
+        "xgb.core.model_config._BoosterCore",
+        "xgb.core.model_config._BoosterSampling",
+        "xgb.core.model_config._BoosterRegularization",
+        "xgb.core.model_config._TrainVectorizers",
         "xgb.pipeline.context._NextVideoCore",
         "xgb.pipeline.context._NextVideoMeta",
+        "xgb.pipeline.context.metrics_next_video._NextVideoCore",
+        "xgb.pipeline.context.metrics_next_video._NextVideoMeta",
         "xgb.pipeline.context._OpinionAfter",
         "xgb.pipeline.context._OpinionBaseline",
         "xgb.pipeline.context._OpinionCalibration",
         "xgb.pipeline.context._OpinionDeltas",
         "xgb.pipeline.context._OpinionMeta",
+        "xgb.pipeline.context.opinion_summary._OpinionAfter",
+        "xgb.pipeline.context.opinion_summary._OpinionBaseline",
+        "xgb.pipeline.context.opinion_summary._OpinionCalibration",
+        "xgb.pipeline.context.opinion_summary._OpinionDeltas",
+        "xgb.pipeline.context.opinion_summary._OpinionMeta",
         # KNN pipeline private internals referenced from public docs
         "knn.pipeline.context_pipeline._PipelinePaths",
         "knn.pipeline.context_pipeline._ModelDefaults",
@@ -338,6 +373,13 @@ _nitpick_targets = {
         "knn.pipeline.context_reports._ReportOutcomes",
         "knn.pipeline.context_reports._ReportPresentation",
         "knn.pipeline.context_reports._ReportSelections",
+        # Re-exported private bundles also show up under the aggregator module
+        "knn.pipeline.context._PredictionRoots",
+        "knn.pipeline.context._PresentationFlags",
+        "knn.pipeline.context._ReportMetrics",
+        "knn.pipeline.context._ReportOutcomes",
+        "knn.pipeline.context._ReportPresentation",
+        "knn.pipeline.context._ReportSelections",
         "knn.pipeline.context_sweeps._KnnSweepStats",
         "knn.pipeline.context_sweeps._KnnOpinionExtras",
     ],
@@ -407,3 +449,11 @@ for domain, targets in _nitpick_targets.items():
 
 # Enable Sphinx "nitpicky" mode when requested (used in CI to fail on warnings).
 nitpicky = os.environ.get("SPHINX_NITPICKY", "").lower() in {"1", "true", "yes"}
+
+# Suppress MyST cross-reference warnings for optional report assets.
+# The Markdown reports under `reports/` include example image paths that may not
+# exist in fresh checkouts, and MyST treats some literals as cross-references.
+# These are informational and should not fail the docs build.
+suppress_warnings = [
+    "myst.xref_missing",
+]

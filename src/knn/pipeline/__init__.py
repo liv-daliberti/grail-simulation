@@ -22,7 +22,7 @@ KNN workflows used throughout the project."""
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, replace as _dc_replace
+from dataclasses import dataclass
 from typing import Dict, List, Mapping, Sequence, TYPE_CHECKING
 
 from common.pipeline.stage import (
@@ -739,17 +739,13 @@ def _align_sentence_transformer_context(
         return
     overrides = _discover_sentence_transformer_overrides(context)
 
-    # Build a new model-defaults bundle and swap it atomically to avoid
-    # mutating a frozen dataclass via attribute assignment.
-    updates: dict[str, object] = {}
-
     device = overrides.get("device")
     if device and context.sentence_device != device:
         LOGGER.info(
             "Detected cached sentence-transformer device '%s'; overriding configuration.",
             device,
         )
-        updates["sentence_device"] = device
+        type(context).sentence_device.__set__(context, device)
 
     batch_size = overrides.get("batch_size")
     if batch_size is not None and context.sentence_batch_size != batch_size:
@@ -757,7 +753,7 @@ def _align_sentence_transformer_context(
             "Detected cached sentence-transformer batch size %d; overriding configuration.",
             batch_size,
         )
-        updates["sentence_batch_size"] = int(batch_size)
+        type(context).sentence_batch_size.__set__(context, int(batch_size))
 
     if "normalize" in overrides and context.sentence_normalize != overrides["normalize"]:
         normalize = bool(overrides["normalize"])
@@ -765,13 +761,7 @@ def _align_sentence_transformer_context(
             "Detected cached sentence-transformer normalization=%s; overriding configuration.",
             "enabled" if normalize else "disabled",
         )
-        updates["sentence_normalize"] = normalize
-
-    if updates:
-        # context._models is a frozen dataclass; replace returns a new instance.
-        new_models = _dc_replace(context._models, **updates)
-        # Bypass frozen guard intentionally; this mirrors the property setters.
-        object.__setattr__(context, "_models", new_models)
+        type(context).sentence_normalize.__set__(context, normalize)
 
 
 def _describe_sweep_outcome(outcome: "SweepOutcome") -> str:

@@ -22,6 +22,7 @@ Model APIs
    api/xgb
    api/gpt4o
    api/grail
+   api/grpo
 
 Common & Training
 -----------------

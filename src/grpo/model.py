@@ -21,11 +21,11 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Sequence
 
 try:
-    from transformers import (
+    from transformers import (  # pylint: disable=import-error
         AutoModelForCausalLM as _TRANSFORMERS_CAUSAL_LM_FACTORY,
         AutoTokenizer as _TRANSFORMERS_TOKENIZER_FACTORY,
     )
-except Exception as import_error:  # pragma: no cover - optional dependency
+except ImportError as import_error:  # pragma: no cover - optional dependency
     _TRANSFORMERS_CAUSAL_LM_FACTORY = None  # type: ignore[assignment]
     _TRANSFORMERS_TOKENIZER_FACTORY = None  # type: ignore[assignment]
     _TRANSFORMERS_IMPORT_ERROR = import_error
@@ -40,8 +40,8 @@ else:  # pragma: no cover - exercised when transformers missing
     ModelLike = Any  # type: ignore[assignment]
 
 try:
-    import torch as _TORCH_MODULE  # type: ignore[import-not-found]
-except Exception as import_error:  # pragma: no cover - optional dependency
+    import torch as _TORCH_MODULE  # type: ignore[import-not-found]  # pylint: disable=import-error
+except ImportError as import_error:  # pragma: no cover - optional dependency
     _TORCH_MODULE = None  # type: ignore[assignment]
     _TORCH_IMPORT_ERROR = import_error
 else:  # pragma: no cover - trivial branch

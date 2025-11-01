@@ -17,7 +17,23 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Optional, Protocol, Tuple
+
+class _PyplotLike(Protocol):
+    """Lightweight protocol for the subset of pyplot APIs we use."""
+
+    def subplots(self, *args: Any, **kwargs: Any) -> Tuple[Any, Any]:
+        """Create a figure and axes, mirroring ``matplotlib.pyplot.subplots``.
+
+        :returns: Two-tuple of ``(fig, ax)`` handles.
+        """
+
+    def close(self, fig: Any) -> None:
+        """Close the provided figure handle.
+
+        :param fig: Figure object previously created by pyplot.
+        """
+
 
 try:  # pragma: no cover - optional dependency
     import matplotlib
@@ -28,6 +44,6 @@ except ImportError:  # pragma: no cover - optional dependency
     matplotlib = None  # type: ignore[assignment]
     _plt = None  # type: ignore[assignment]
 
-plt: Optional[Any] = _plt
+plt: Optional[_PyplotLike] = _plt
 
 __all__ = ["plt", "matplotlib"]

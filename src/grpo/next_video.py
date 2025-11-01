@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import importlib as _importlib  # avoid triggering gpt4o.core lazy attribute sentinel
 import json
 import logging
 from dataclasses import dataclass, field
@@ -25,38 +26,26 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, List, Mapping, Sequence
 
 from common.evaluation import slate_eval
+from common.evaluation.prediction_rows import (
+    parse_common_row_fields,
+    observation_from_row as _obs_from_row_common,
+)
 from common.pipeline.io import (
     load_metrics_json,
     write_metrics_json,
     write_segmented_markdown_log,
+    iter_jsonl_rows,
 )
-import importlib as _importlib  # avoid triggering gpt4o.core lazy attribute sentinel
-gpt4o_utils = _importlib.import_module("gpt4o.core.utils")
-
+from common.chat.utils import latest_user_content
 from .dataset import PreparedExample, load_dataset_split, prepare_examples
 from .model import generate_chat_completion
+
+gpt4o_utils = _importlib.import_module("gpt4o.core.utils")
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from .model import GenerationSettings, ModelLike, TokenizerLike
 
 LOGGER = logging.getLogger("grpo.next_video")
-
-
-def _extract_user_question(messages: Sequence[Mapping[str, str]]) -> str:
-    """Return the most recent user message content from ``messages``.
-
-    :param messages: Ordered chat message payloads.
-    :returns: Stripped user content or an empty string when missing.
-    """
-
-    for message in reversed(messages):
-        if (
-            isinstance(message, Mapping)
-            and message.get("role") == "user"
-            and message.get("content")
-        ):
-            return str(message["content"]).strip()
-    return ""
 
 def _parse_index(raw_output: str) -> int | None:
     """Parse the predicted option index from raw model output.
@@ -172,12 +161,14 @@ class NextVideoPromptSettings:
 
 @dataclass(frozen=True)
 class NextVideoEvaluationLimits:
-    """Caps controlling the evaluation runtime.
+    """Caps and cadence controlling the evaluation runtime.
 
     :ivar int max_examples: Maximum number of examples to process; 0 disables the cap.
+    :ivar int flush_every: Periodic flush interval in examples; 0 disables flushing.
     """
 
     max_examples: int
+    flush_every: int = 0
 
     def example_cap(self) -> int | None:
         """Return the maximum number of examples to evaluate, if any.
@@ -209,9 +200,6 @@ class NextVideoEvaluationSettings:
     overwrite: bool
     generation: 'GenerationSettings'
     filters: FilterSelection
-    # Periodic flush interval (in examples). When >0, predictions/metrics/QA logs
-    # are written to disk every ``flush_every`` processed examples.
-    flush_every: int = 0
 
 
 @dataclass(frozen=True)
@@ -277,43 +265,21 @@ class _NextVideoRunState:
 def _artefacts_from_saved_row(row: Mapping[str, object]) -> _ExampleArtefacts:
     """Reconstruct evaluation artefacts from a saved prediction row."""
 
-    try:
-        n_options = int(row.get("n_options") or 0)
-    except (TypeError, ValueError):
-        n_options = 0
-    try:
-        position_index = int(row.get("position_index") or -1)
-    except (TypeError, ValueError):
-        position_index = -1
-    try:
-        gold_index = int(row.get("gold_index") or 0)
-    except (TypeError, ValueError):
-        gold_index = 0
-    parsed_index = row.get("parsed_index")
-    try:
-        parsed_index = int(parsed_index) if parsed_index is not None else None
-    except (TypeError, ValueError):
-        parsed_index = None
-    issue = str(row.get("issue") or "unspecified")
-    study = str(row.get("participant_study") or "unspecified")
-    eligible = bool(row.get("eligible"))
-    is_correct = bool(row.get("correct"))
+    (
+        issue,
+        study,
+        _,
+        _,
+        gold_index,
+        parsed_index,
+        _,
+        _,
+    ) = parse_common_row_fields(row)
     messages = row.get("messages")
     raw_output = str(row.get("gpt_output") or "")
     is_formatted = bool(gpt4o_utils.ANS_TAG.search(raw_output)) if raw_output else False
 
-    observation = slate_eval.Observation(
-        issue_label=issue,
-        study_label=study,
-        position_bucket=slate_eval.bucket_from_position(position_index),
-        option_bucket=slate_eval.bucket_from_options(n_options),
-        option_count=n_options,
-        gold_index=gold_index,
-        parsed_index=parsed_index,
-        is_formatted=is_formatted,
-        eligible=eligible,
-        is_correct=is_correct,
-    )
+    observation = _obs_from_row_common(row, is_formatted=is_formatted)
     prediction = dict(row)
     qa_entry = "\n".join(
         [
@@ -343,19 +309,9 @@ def _seed_state_from_predictions(path: Path) -> _NextVideoRunState:
     )
     if not path.exists():
         return state
-    with path.open("r", encoding="utf-8") as handle:
-        for line in handle:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                row = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            if not isinstance(row, Mapping):
-                continue
-            artefacts = _artefacts_from_saved_row(row)
-            state.record(artefacts)
+    for row in iter_jsonl_rows(path):
+        artefacts = _artefacts_from_saved_row(row)
+        state.record(artefacts)
     return state
 
 
@@ -366,6 +322,57 @@ class _NextVideoOutputPaths:
     predictions: Path
     metrics: Path
     qa_log: Path
+
+
+@dataclass(frozen=True)
+class _ResumeState:
+    """Cached progress recovered from a previous run, if any."""
+
+    seeded_state: _NextVideoRunState | None
+    processed_count: int
+    resume: bool
+
+
+def _load_cached_result(run_dir: Path) -> NextVideoEvaluationResult | None:
+    """Return a ready result if ``metrics.json`` already exists in ``run_dir``.
+
+    This supports fast exits when a full evaluation has previously completed.
+    """
+
+    metrics_path = run_dir / "metrics.json"
+    if not metrics_path.exists():
+        return None
+    predictions_path = run_dir / "predictions.jsonl"
+    qa_log = _qa_log_path(run_dir)
+    cached_payload = load_metrics_json(metrics_path)
+    metrics = cached_payload.get("metrics", cached_payload)
+    return NextVideoEvaluationResult(
+        run_dir=run_dir,
+        metrics_path=metrics_path,
+        predictions_path=predictions_path,
+        qa_log_path=qa_log,
+        metrics=metrics,
+    )
+
+
+def _resume_state(run_dir: Path) -> _ResumeState:
+    """Return resume information derived from any existing predictions log."""
+
+    predictions_path = run_dir / "predictions.jsonl"
+    seeded_state = _seed_state_from_predictions(predictions_path)
+    processed = len(seeded_state.predictions)
+    return _ResumeState(seeded_state=seeded_state, processed_count=processed, resume=processed > 0)
+
+
+def _build_metrics_request(settings: NextVideoEvaluationSettings) -> slate_eval.SlateMetricsRequest:
+    """Construct the metrics request object from evaluation settings."""
+
+    return slate_eval.SlateMetricsRequest(
+        model_name=settings.model_label,
+        dataset_name=settings.dataset.name,
+        eval_split=settings.dataset.split,
+        filters=settings.filters.metrics_filters(),
+    )
 
 
 def _build_example_artefacts(example: PreparedExample, response: str) -> _ExampleArtefacts:
@@ -461,13 +468,14 @@ def _evaluate_examples(
         artefacts = _build_example_artefacts(example, response)
         state.record(artefacts)
         # Emit a per-example QA log line with correctness and running accuracy.
-        try:
-            question = _extract_user_question(example.messages)
-        except Exception:  # pragma: no cover - defensive
-            question = ""
+        question = latest_user_content(example.messages)
         running_acc = state.accumulator.accuracy()
         LOGGER.info(
-            "[NEXT][%d] issue=%s study=%s correct=%s parsed=%s gold=%s acc=%.3f\nQuestion: %s\nAnswer: %s",
+            (
+                "[NEXT][%d] issue=%s study=%s correct=%s parsed=%s gold=%s acc=%.3f\n"
+                "Question: %s\n"
+                "Answer: %s"
+            ),
             start_from + idx,
             artefacts.prediction.get("issue", "unspecified"),
             artefacts.prediction.get("participant_study", "unspecified"),
@@ -481,17 +489,13 @@ def _evaluate_examples(
         # Also mirror a concise summary to stdout for SLURM logs.
         print(
             (
-                "[grpo.next_video] ex=%d issue=%s study=%s correct=%s parsed=%s "
-                "gold=%s acc=%.3f"
-            )
-            % (
-                start_from + idx,
-                artefacts.prediction.get("issue", "unspecified"),
-                artefacts.prediction.get("participant_study", "unspecified"),
-                str(artefacts.prediction.get("correct", False)).lower(),
-                artefacts.prediction.get("parsed_index"),
-                artefacts.prediction.get("gold_index"),
-                running_acc,
+                f"[grpo.next_video] ex={start_from + idx} "
+                f"issue={artefacts.prediction.get('issue', 'unspecified')} "
+                f"study={artefacts.prediction.get('participant_study', 'unspecified')} "
+                f"correct={str(artefacts.prediction.get('correct', False)).lower()} "
+                f"parsed={artefacts.prediction.get('parsed_index')} "
+                f"gold={artefacts.prediction.get('gold_index')} "
+                f"acc={running_acc:.3f}"
             ),
             flush=True,
         )
@@ -508,7 +512,7 @@ def _evaluate_examples(
         if on_progress is not None:
             try:
                 on_progress(start_from + idx, state)
-            except Exception:  # pragma: no cover - defensive
+            except (OSError, IOError, ValueError, TypeError):  # pragma: no cover - defensive
                 LOGGER.warning("Progress hook raised; continuing without flush.")
 
     return state
@@ -590,13 +594,12 @@ def run_next_video_evaluation(
         settings.overwrite,
     )
     print(
-        "[grpo.next_video] dataset=%s split=%s issues=%s studies=%s overwrite=%s"
-        % (
-            settings.dataset.name,
-            settings.dataset.split,
-            ",".join(settings.filters.issues) or "<any>",
-            ",".join(settings.filters.studies) or "<any>",
-            settings.overwrite,
+        (
+            f"[grpo.next_video] dataset={settings.dataset.name} "
+            f"split={settings.dataset.split} "
+            f"issues={','.join(settings.filters.issues) or '<any>'} "
+            f"studies={','.join(settings.filters.studies) or '<any>'} "
+            f"overwrite={settings.overwrite}"
         ),
         flush=True,
     )
@@ -617,50 +620,35 @@ def run_next_video_evaluation(
     run_dir = out_dir / config_label
     try:
         _ensure_output_dir(run_dir, settings.overwrite)
-        resume = False
-        seeded_state = None
-        processed_count = 0
+        resume_info = _ResumeState(seeded_state=None, processed_count=0, resume=False)
     except FileExistsError:
-        metrics_path = run_dir / "metrics.json"
-        predictions_path = run_dir / "predictions.jsonl"
-        qa_log = _qa_log_path(run_dir)
-        if metrics_path.exists():
-            LOGGER.info(
-                "[NEXT] found cached artefacts at %s; skipping re-evaluation.", run_dir
-            )
-            cached_payload = load_metrics_json(metrics_path)
-            metrics = cached_payload.get("metrics", cached_payload)
-            return NextVideoEvaluationResult(
-                run_dir=run_dir,
-                metrics_path=metrics_path,
-                predictions_path=predictions_path,
-                qa_log_path=qa_log,
-                metrics=metrics,
-            )
-        # Partial run: resume using existing predictions.jsonl if present.
-        seeded_state = _seed_state_from_predictions(predictions_path)
-        processed_count = len(seeded_state.predictions)
-        resume = processed_count > 0
-        if resume:
+        cached = _load_cached_result(run_dir)
+        if cached is not None:
+            LOGGER.info("[NEXT] found cached artefacts at %s; skipping re-evaluation.", run_dir)
+            return cached
+        resume_info = _resume_state(run_dir)
+        if resume_info.resume:
             LOGGER.info(
                 "[NEXT] resuming evaluation at %d processed examples in %s",
-                processed_count,
+                resume_info.processed_count,
                 run_dir,
             )
-    example_cap = settings.limits.example_cap()
-    if example_cap is not None:
-        LOGGER.info("[NEXT] limiting evaluation to %d examples", example_cap)
-        print(f"[grpo.next_video] limiting to {example_cap} examples", flush=True)
+    if settings.limits.example_cap() is not None:
+        LOGGER.info("[NEXT] limiting evaluation to %d examples", settings.limits.example_cap())
+        print(
+            f"[grpo.next_video] limiting to {settings.limits.example_cap()} examples",
+            flush=True,
+        )
     LOGGER.info("[NEXT] writing artefacts to %s", run_dir)
     print(f"[grpo.next_video] writing artefacts to {run_dir}", flush=True)
 
     # Apply example cap relative to any already processed examples.
     cap = settings.limits.example_cap()
-    if processed_count and cap is not None:
-        cap = max(0, cap - processed_count)
+    if resume_info.processed_count and cap is not None:
+        cap = max(0, cap - resume_info.processed_count)
     # Skip already processed examples if resuming.
-    if processed_count:
-        examples_iter = islice(examples_iter, processed_count, None)
+    if resume_info.processed_count:
+        examples_iter = islice(examples_iter, resume_info.processed_count, None)
 
     # Prepare outputs and request up-front for periodic flushing if enabled.
     outputs = _NextVideoOutputPaths(
@@ -668,15 +656,8 @@ def run_next_video_evaluation(
         metrics=run_dir / "metrics.json",
         qa_log=_qa_log_path(run_dir),
     )
-    request = slate_eval.SlateMetricsRequest(
-        model_name=settings.model_label,
-        dataset_name=settings.dataset.name,
-        eval_split=settings.dataset.split,
-        filters=settings.filters.metrics_filters(),
-    )
-
-    flush_every = int(settings.flush_every or 0)
     def _maybe_flush(processed_abs: int, state: _NextVideoRunState) -> None:
+        flush_every = int(settings.limits.flush_every or 0)
         if flush_every <= 0:
             return
         if processed_abs % flush_every != 0:
@@ -685,7 +666,7 @@ def run_next_video_evaluation(
         # resume and enables report generation from partial runs.
         try:
             _write_predictions(outputs.predictions, state.predictions)
-            metrics = state.accumulator.metrics_payload(request)
+            metrics = state.accumulator.metrics_payload(_build_metrics_request(settings))
             write_metrics_json(outputs.metrics, metrics)
             write_segmented_markdown_log(
                 outputs.qa_log,
@@ -693,7 +674,7 @@ def run_next_video_evaluation(
                 entries=state.qa_entries,
             )
             LOGGER.debug("[NEXT] flushed artefacts at %d examples", processed_abs)
-        except Exception:
+        except (OSError, IOError, ValueError, TypeError):
             LOGGER.warning("[NEXT] flush at %d examples failed; continuing.", processed_abs)
 
     state = _evaluate_examples(
@@ -702,11 +683,11 @@ def run_next_video_evaluation(
         model=model,
         tokenizer=tokenizer,
         example_cap=cap,
-        initial_state=seeded_state,
-        start_from=processed_count,
+        initial_state=resume_info.seeded_state,
+        start_from=resume_info.processed_count,
         on_progress=_maybe_flush,
     )
-    metrics = state.accumulator.metrics_payload(request)
+    metrics = state.accumulator.metrics_payload(_build_metrics_request(settings))
     _write_predictions(outputs.predictions, state.predictions)
     write_metrics_json(outputs.metrics, metrics)
     write_segmented_markdown_log(
@@ -724,13 +705,11 @@ def run_next_video_evaluation(
         state.accumulator.total_seen,
     )
     print(
-        "[grpo.next_video] complete accuracy=%.3f parsed=%.3f formatted=%.3f eligible=%d/%d"
-        % (
-            state.accumulator.accuracy(),
-            state.accumulator.parsed_rate(),
-            state.accumulator.format_rate(),
-            state.accumulator.eligible_overall,
-            state.accumulator.total_seen,
+        (
+            f"[grpo.next_video] complete accuracy={state.accumulator.accuracy():.3f} "
+            f"parsed={state.accumulator.parsed_rate():.3f} "
+            f"formatted={state.accumulator.format_rate():.3f} "
+            f"eligible={state.accumulator.eligible_overall}/{state.accumulator.total_seen}"
         ),
         flush=True,
     )

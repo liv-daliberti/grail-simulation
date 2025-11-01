@@ -47,6 +47,11 @@ Core Modules
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: common.open_r1.example_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 .. automodule:: grail.grail
    :members:
    :undoc-members:

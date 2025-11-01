@@ -21,7 +21,7 @@ import logging
 from operator import attrgetter
 from pathlib import Path
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Generic, List, Sequence, TypeVar, Optional, Tuple
+from typing import Any, Callable, Dict, Generic, List, Mapping, Sequence, TypeVar, Optional, Tuple
 
 
 T = TypeVar("T")
@@ -387,3 +387,29 @@ def ensure_final_stage_overwrite_with_context(
         logger=logger,
         context_labels=labels,
     )
+
+
+def base_sweep_outcome_kwargs(
+    task: object,
+    metrics: Mapping[str, object],
+    metrics_path: Path,
+) -> Dict[str, object]:
+    """
+    Return standard constructor kwargs for pipeline sweep outcomes.
+
+    Centralises repeated snippets that build ``(order_index, study, config, metrics_path,
+    metrics)`` across pipeline implementations.
+
+    :param task: Sweep task carrying ``index``, ``study``, and ``config`` attributes.
+    :param metrics: Raw metrics payload loaded from disk.
+    :param metrics_path: Filesystem path to the metrics artefact.
+    :returns: Dictionary suitable for ``BasePipelineSweepOutcome`` and wrappers.
+    """
+
+    return {
+        "order_index": getattr(task, "index"),
+        "study": getattr(task, "study"),
+        "config": getattr(task, "config"),
+        "metrics_path": metrics_path,
+        "metrics": metrics,
+    }

@@ -171,7 +171,8 @@ Pipeline Modules
    :members:
    :undoc-members:
    :show-inheritance:
-   :exclude-members: StudySpec
+   :imported-members:
+   :exclude-members: StudySpec, ReportSelections, ReportOutcomes, ReportMetrics, ReportPresentation
 
 .. automodule:: knn.pipeline
    :members:
@@ -225,19 +226,22 @@ Context Internals
 .. automodule:: knn.pipeline.context_pipeline
    :members:
    :undoc-members:
-   :private-members:
    :show-inheritance:
+   :private-members:
 
 .. automodule:: knn.pipeline.context_reports
    :members:
    :undoc-members:
-   :private-members:
    :show-inheritance:
 
 .. automodule:: knn.pipeline.context_sweeps
    :members:
    :undoc-members:
-   :private-members:
+   :show-inheritance:
+
+.. automodule:: knn.pipeline.context_config
+   :members:
+   :undoc-members:
    :show-inheritance:
 
 Report Builders
@@ -285,49 +289,41 @@ Next-Video Report Internals
 .. automodule:: knn.pipeline.reports.next_video.inputs
    :members:
    :undoc-members:
-   :private-members:
    :show-inheritance:
 
 .. automodule:: knn.pipeline.reports.next_video.sections
    :members:
    :undoc-members:
-   :private-members:
    :show-inheritance:
 
 .. automodule:: knn.pipeline.reports.next_video.curves
    :members:
    :undoc-members:
-   :private-members:
    :show-inheritance:
 
 .. automodule:: knn.pipeline.reports.next_video.comparison
    :members:
    :undoc-members:
-   :private-members:
    :show-inheritance:
 
 .. automodule:: knn.pipeline.reports.next_video.loso
    :members:
    :undoc-members:
-   :private-members:
    :show-inheritance:
 
 .. automodule:: knn.pipeline.reports.next_video.csv_exports
    :members:
    :undoc-members:
-   :private-members:
    :show-inheritance:
 
 .. automodule:: knn.pipeline.reports.next_video.helpers
    :members:
    :undoc-members:
-   :private-members:
    :show-inheritance:
 
 .. automodule:: knn.pipeline.reports.next_video.report
    :members:
    :undoc-members:
-   :private-members:
    :show-inheritance:
 
 Legacy Report Shims

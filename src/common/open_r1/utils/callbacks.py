@@ -33,7 +33,7 @@ try:  # pragma: no cover - optional dependency
         TrainerState,
         TrainingArguments,
     )
-except Exception as import_error:  # pragma: no cover
+except ImportError as import_error:  # pragma: no cover
     class TrainerCallback:  # type: ignore[too-few-public-methods]  # pylint: disable=too-few-public-methods
         """Fallback that surfaces a helpful error when Transformers is missing."""
 

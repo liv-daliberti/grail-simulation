@@ -24,9 +24,13 @@ while preserving the public API at ``xgb.pipeline.context``.
 
 from __future__ import annotations
 
+# Also re-export StudySpec used pervasively alongside these types
+from common.pipeline.types import StudySpec
+
 # Re-export types from submodules to maintain backwards-compatible imports
 
 from .sweep import (
+    BoosterParams,
     FinalEvalContext,
     StudySelection,
     SweepConfig,
@@ -58,10 +62,8 @@ from .opinion_summary import (
     _OpinionMeta,
 )
 
-# Also re-export StudySpec used pervasively alongside these types
-from common.pipeline.types import StudySpec
-
 __all__ = [
+    "BoosterParams",
     "FinalEvalContext",
     "NextVideoMetricSummary",
     "OpinionStageConfig",
@@ -80,4 +82,3 @@ __all__ = [
     "SweepRunContext",
     "SweepTask",
 ]
-

@@ -18,10 +18,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Callable, Dict, Iterable, List, Mapping, MutableMapping, Sequence, Tuple, cast
+from typing import Callable, Iterable, List, Mapping, MutableMapping, Sequence, Tuple, cast
 
 from importlib import import_module
-import numpy as np
+from common.opinion.baselines import baseline_metrics
+
 _common_opinion = import_module("common.opinion")
 compute_opinion_metrics = _common_opinion.compute_opinion_metrics
 float_or_none = _common_opinion.float_or_none
@@ -103,59 +104,7 @@ def clip_prediction(value: float) -> float:
     return max(1.0, min(7.0, float(value)))
 
 
-def baseline_metrics(
-    truth_before: Sequence[float], truth_after: Sequence[float]
-) -> Dict[str, object]:
-    """Compute baseline metrics mirroring the KNN/XGB implementations.
-
-    The baselines cover two simple predictors:
-    - Global mean of ``truth_after`` for MAE/RMSE.
-    - No-change model using ``truth_before`` as the prediction for direction and
-      calibration baselines.
-
-    :param truth_before: Ground-truth pre-study opinion indices per participant.
-    :param truth_after: Ground-truth post-study opinion indices per participant.
-    :returns: Mapping with keys such as ``global_mean_after``, ``mae_global_mean_after``,
-        ``rmse_global_mean_after``, and derivatives from the no-change baseline
-        (``mae_using_before``, ``rmse_using_before``, ``direction_accuracy``,
-        ``calibration_*``, ``kl_divergence_change_zero``).
-    :rtype: dict[str, object]
-    """
-    after_arr = np.asarray(truth_after, dtype=np.float32)
-    before_arr = np.asarray(truth_before, dtype=np.float32)
-    if after_arr.size == 0:
-        return {}
-
-    baseline_mean = float(np.mean(after_arr))
-    baseline_predictions = np.full_like(after_arr, baseline_mean)
-    mae_mean = float(np.mean(np.abs(baseline_predictions - after_arr)))
-    rmse_mean = float(np.sqrt(np.mean((baseline_predictions - after_arr) ** 2)))
-
-    no_change = compute_opinion_metrics(
-        truth_after=after_arr,
-        truth_before=before_arr,
-        pred_after=before_arr,
-    )
-    direction_accuracy = no_change.get("direction_accuracy")
-    direction_accuracy = (
-        float(direction_accuracy) if isinstance(direction_accuracy, (int, float)) else None
-    )
-
-    return {
-        "global_mean_after": baseline_mean,
-        "mae_global_mean_after": mae_mean,
-        "rmse_global_mean_after": rmse_mean,
-        "mae_using_before": float(no_change.get("mae_after", float("nan"))),
-        "rmse_using_before": float(no_change.get("rmse_after", float("nan"))),
-        "mae_change_zero": float(no_change.get("mae_change", float("nan"))),
-        "rmse_change_zero": float(no_change.get("rmse_change", float("nan"))),
-        "calibration_slope_change_zero": no_change.get("calibration_slope"),
-        "calibration_intercept_change_zero": no_change.get("calibration_intercept"),
-        "calibration_ece_change_zero": no_change.get("calibration_ece"),
-        "calibration_bins_change_zero": no_change.get("calibration_bins"),
-        "kl_divergence_change_zero": no_change.get("kl_divergence_change"),
-        "direction_accuracy": direction_accuracy,
-    }
+# baseline_metrics imported from common.opinion.baselines
 
 
 def load_materialised_split(

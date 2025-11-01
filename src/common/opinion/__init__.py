@@ -38,6 +38,7 @@ from .models import (
     opinion_example_kwargs,
 )
 from .results import OpinionArtifacts, OpinionEvaluationResult, OpinionStudyResult
+from .baselines import baseline_metrics
 from .sweep_types import (
     AccuracySummary,
     BaseOpinionSweepOutcome,
@@ -61,6 +62,7 @@ __all__ = [
     "build_opinion_example",
     "format_opinion_user_prompt",
     "compute_opinion_metrics",
+    "baseline_metrics",
     "exclude_eval_participants",
     "ensure_train_examples",
     "float_or_none",

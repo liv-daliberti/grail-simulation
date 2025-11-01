@@ -622,7 +622,7 @@ def _xgb_leaderboard_section(
     Render ranked leaderboards mirroring the KNN report format.
 
     :param per_study_sorted: Mapping from study key to ordered sweep outcomes.
-    :type per_study_sorted: Mapping[str, Sequence[SweepOutcome]]
+    :type per_study_sorted: Mapping[str, Sequence[~xgb.pipeline.context.SweepOutcome]]
     :param selections: Mapping from study key to selected sweep outcome.
     :type selections: Mapping[str, StudySelection]
     :param top_n: Maximum number of leaderboard entries per study.
@@ -724,7 +724,7 @@ def _xgb_selection_summary_section(
     Render a bullet summary comparing winning configurations to runner-ups.
 
     :param per_study_sorted: Mapping from study key to ordered sweep outcomes.
-    :type per_study_sorted: Mapping[str, Sequence[SweepOutcome]]
+    :type per_study_sorted: Mapping[str, Sequence[~xgb.pipeline.context.SweepOutcome]]
     :param selections: Mapping from study key to selected sweep outcome.
     :type selections: Mapping[str, StudySelection]
     :returns: Markdown bullet list highlighting improvements over runner-ups.
@@ -811,7 +811,7 @@ def _summarise_xgb_config(config: SweepConfig) -> str:
     Return a human-readable description of a sweep configuration.
 
     :param config: Sweep configuration to summarise.
-    :type config: SweepConfig
+    :type config: ~xgb.pipeline.context.SweepConfig
     :returns: Comma-separated summary highlighting key hyper-parameters.
     :rtype: str
     """

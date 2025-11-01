@@ -396,9 +396,9 @@ def _plot_xgb_curve_overview(
     curves_dir.mkdir(parents=True, exist_ok=True)
 
     rows, cols = _compute_grid(len(series_list))
-    fig, axes = plt.subplots(  # type: ignore[attr-defined]
-        rows,  # type: ignore[arg-type]
-        cols,  # type: ignore[arg-type]
+    fig, axes = plt.subplots(
+        rows,
+        cols,
         figsize=(4.6 * cols, 3.2 * rows),
         squeeze=False,
         sharex=False,
@@ -415,8 +415,8 @@ def _plot_xgb_curve_overview(
 
     fig.tight_layout()
     overview_path = curves_dir / "accuracy_overview.png"
-    fig.savefig(overview_path, dpi=135)  # type: ignore[attr-defined]
-    plt.close(fig)  # type: ignore[attr-defined]
+    fig.savefig(overview_path, dpi=135)
+    plt.close(fig)
     try:
         return overview_path.relative_to(directory).as_posix()
     except ValueError:
@@ -483,13 +483,13 @@ def _render_single_curve_plot(
     slug = _slugify_label(series.label, fallback="study")
     plot_path = curves_dir / filename.format(slug=slug)
 
-    fig, axis = plt.subplots(figsize=(6, 3.5))  # type: ignore[attr-defined]
+    fig, axis = plt.subplots(figsize=(6, 3.5))
     _plot_curve_on_axis(axis, series)
     if overlay_payload is not None:
         _plot_eligible_overlay(axis, overlay_payload)
     fig.tight_layout()
-    fig.savefig(plot_path, dpi=120)  # type: ignore[attr-defined]
-    plt.close(fig)  # type: ignore[attr-defined]
+    fig.savefig(plot_path, dpi=120)
+    plt.close(fig)
     try:
         return plot_path.relative_to(directory).as_posix()
     except ValueError:

@@ -188,7 +188,10 @@ def candidate_feature_tokens(
 
 @dataclass
 class PromptSelectionHelper:
-    """Wrap :class:`~common.prompts.docs.builder.PromptDocumentBuilder` with shared selection helpers."""
+    """Wrap the prompt document builder with shared selection helpers.
+
+    See :class:`~common.prompts.docs.builder.PromptDocumentBuilder` for details.
+    """
 
     builder: PromptDocumentBuilder
 
@@ -232,7 +235,9 @@ class PromptSelectionHelper:
 
         return self.builder.prompt_from_builder(dict(example))
 
-    def extract_now_watching(self, example: Mapping[str, object]) -> Optional[Tuple[str, str]]:
+    def extract_now_watching(
+        self, example: Mapping[str, object]
+    ) -> Optional[Tuple[str, str]]:
         """
         Retrieve the currently watched item for ``example``.
 
@@ -252,12 +257,15 @@ class PromptSelectionHelper:
 
         return self.builder.extract_slate_items(dict(example))
 
-    def collect_candidate_metadata(self, example: Mapping[str, object]) -> List[CandidateMetadata]:
+    def collect_candidate_metadata(
+        self, example: Mapping[str, object]
+    ) -> List[CandidateMetadata]:
         """
         Return slate candidate metadata enriched with slot indices and channel info.
 
         :param example: Prompt example providing slate items and metadata.
-        :returns: List of :class:`~common.prompts.selection.CandidateMetadata` entries for the slate.
+        :returns: List of
+            :class:`~common.prompts.selection.CandidateMetadata` entries for the slate.
         """
 
         pairs = self.extract_slate_items(example)
@@ -320,7 +328,11 @@ class PromptSelectionHelper:
             candidates = self.collect_candidate_metadata(example)
 
         gold_index = _parse_gold_index(example.get("gold_index"))
-        tokens = _context_tokens(example, option_count=len(candidates), gold_index=gold_index)
+        tokens = _context_tokens(
+            example,
+            option_count=len(candidates),
+            gold_index=gold_index,
+        )
 
         selected = _selected_candidate_metadata(
             example,
@@ -551,7 +563,9 @@ def collect_candidate_metadata(_example: Mapping[str, object]) -> List[Candidate
     Placeholder bound via :func:`bind_prompt_selection_exports`.
 
     :param _example: Prompt example passed to the helper.
-    :returns: List of :class:`~common.prompts.selection.CandidateMetadata` entries once bound; raises otherwise.
+    :returns: List of
+        :class:`~common.prompts.selection.CandidateMetadata` entries once bound;
+        raises otherwise.
     """
 
     raise _unbound_export("collect_candidate_metadata") from None
@@ -646,7 +660,8 @@ def bind_prompt_selection_exports(
 ) -> Dict[str, object]:
     """Return a mapping of standard prompt-selection helpers exposed by modules.
 
-    :param helper: Instance wrapping a :class:`~common.prompts.docs.builder.PromptDocumentBuilder`.
+    :param helper: Instance wrapping a
+        :class:`~common.prompts.docs.builder.PromptDocumentBuilder`.
     :param include_candidate_tokens: When ``True`` include ``candidate_feature_tokens``.
     :returns: Dictionary suitable for ``globals().update(...)``.
     """

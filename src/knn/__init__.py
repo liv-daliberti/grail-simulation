@@ -42,12 +42,20 @@ __all__ = list(BASELINE_PUBLIC_API)
 
 _ALIAS_MODULES = build_alias_map(
     {
+        # Backwards-compatible top-level module aliases for pre-refactor imports
+        # e.g. `import knn.data` now maps to the reorganized core package.
+        "data": ".core.data",
+        "features": ".core.features",
         "index": ".core.index",
+        "evaluate": ".core.evaluate",
+        "opinion": ".core.opinion",
+        "utils": ".core.utils",
+
+        # Legacy helpers under pipeline
         "cli_utils": ".cli.utils",
         "opinion_sweeps": ".pipeline.opinion_sweeps",
         "pipeline_data": ".pipeline.data",
         "pipeline_io": ".pipeline.io",
-        "pipeline_reports": ".pipeline.reports",
         "pipeline_utils": ".pipeline.utils",
     }
 )

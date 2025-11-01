@@ -53,7 +53,6 @@ def _slugify_label(value: str, *, fallback: str = "item") -> str:
     return slug or fallback
 
 
-# pylint: disable=too-many-return-statements
 def _format_shell_command(bits: Sequence[str]) -> str:
     """
     Join CLI arguments into a shell-friendly command.
@@ -218,8 +217,6 @@ def _write_disabled_report(directory: Path, title: str, message: str) -> None:
     lines.append("")
     write_markdown_lines(path, lines)
 
-
-# pylint: disable=undefined-all-variable
 
 __all__ = [
     "LOGGER",

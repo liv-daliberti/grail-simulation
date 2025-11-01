@@ -17,16 +17,14 @@
 
 from __future__ import annotations
 
-# pylint: disable=duplicate-code,too-many-lines
+from typing import Any, Dict, List, Sequence
+from dataclasses import dataclass
 
-import json
-import os
-import time
-from dataclasses import asdict
-from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Sequence
-
-from common.evaluation.utils import compose_issue_slug, prepare_dataset, safe_div
+from common.evaluation.utils import (
+    compose_issue_slug,
+    prepare_dataset_from_args,
+    safe_div,
+)
 from common.prompts.docs import merge_default_extra_fields
 
 from .data import (
@@ -38,17 +36,7 @@ from .data import (
     issues_in_dataset,
     load_dataset_source,
 )
-from .model import (
-    SentenceTransformerVectorizerConfig,
-    TfidfConfig,
-    Word2VecVectorizerConfig,
-    XGBoostBoosterParams,
-    XGBoostSlateModel,
-    XGBoostTrainConfig,
-    fit_xgboost_model,
-    load_xgboost_model,
-    save_xgboost_model,
-)
+from .model import XGBoostSlateModel
 from .evaluation_metrics import (
     accuracy_curve_from_records,
     bootstrap_uncertainty,
@@ -72,7 +60,18 @@ from .evaluation_types import (
     IssueMetrics,
     PredictionOutcome,
 )
-from .utils import ensure_directory, get_logger
+from .utils import get_logger
+from .evaluate_helpers import (
+    attach_uncertainty as _attach_uncertainty,
+    baseline_top_index as _baseline_top_index,
+    bootstrap_settings as _bootstrap_settings,
+    group_keys_with_fallback as _group_keys_with_fallback,
+    load_or_train_model as _load_or_train_model,
+    log_training_validation_metrics as _log_training_validation_metrics,
+    split_tokens as _split_tokens,
+    write_outputs as _write_outputs,
+)
+from .evaluate_helpers import write_skip_metrics as _write_skip_metrics
 
 # Backwards-compatible aliases for legacy imports (tests, downstream scripts).
 _candidate_probabilities = candidate_probabilities
@@ -93,53 +92,22 @@ _model_params = model_params
 logger = get_logger("xgb.eval")
 
 
-def _log_training_validation_metrics(
-    issue_slug: str,
-    history: Mapping[str, Mapping[str, Sequence[object]]] | None,
-) -> None:
-    """Emit the latest validation metrics captured during booster training."""
-
-    if not history:
-        return
-    summary_bits: List[str] = []
-    for dataset_name, metrics_map in sorted(history.items()):
-        if not isinstance(metrics_map, Mapping):
-            continue
-        if "valid" not in dataset_name.lower():
-            continue
-        metric_parts: List[str] = []
-        for metric_name, values in sorted(metrics_map.items()):
-            if not isinstance(values, Sequence) or not values:
-                continue
-            last_value = values[-1]
-            try:
-                formatted = f"{float(last_value):.4f}"
-            except (TypeError, ValueError):
-                continue
-            metric_parts.append(f"{metric_name}={formatted}")
-        if metric_parts:
-            summary_bits.append(f"{dataset_name}: " + ", ".join(metric_parts))
-    if summary_bits:
-        logger.info(
-            "[XGBoost][Train][Validation] issue=%s %s",
-            issue_slug,
-            " | ".join(summary_bits),
-        )
+    # helpers moved to xgb.core.evaluate_helpers
 
 
-def _split_tokens(raw: Optional[str]) -> List[str]:
+# Expose a monkeypatch-friendly dataset resolver under this module.
+def prepare_dataset(args, *, default_source, loader, issue_lookup):
+    """Compatibility wrapper delegating to prepare_dataset_from_args.
+
+    Tests patch xgb.evaluate.prepare_dataset; defining this indirection here
+    lets those patches take effect without changing the underlying behaviour.
     """
-    Split a comma-delimited string into trimmed tokens.
-
-    :param raw: Raw comma-separated string provided via CLI flags.
-    :type raw: Optional[str]
-    :returns: Sequence of non-empty tokens.
-    :rtype: List[str]
-    """
-
-    if not raw:
-        return []
-    return [token.strip() for token in raw.split(",") if token.strip()]
+    return prepare_dataset_from_args(
+        args,
+        default_source=default_source,
+        loader=loader,
+        issue_lookup=issue_lookup,
+    )
 
 
 def run_eval(args) -> None:
@@ -150,9 +118,8 @@ def run_eval(args) -> None:
     :type args: argparse.Namespace
     """
     dataset_source, base_ds, available_issues = prepare_dataset(
-        dataset=getattr(args, "dataset", None),
+        args=args,
         default_source=DEFAULT_DATASET_SOURCE,
-        cache_dir=args.cache_dir,
         loader=load_dataset_source,
         issue_lookup=issues_in_dataset,
     )
@@ -187,106 +154,26 @@ def run_eval(args) -> None:
         )
 
 
-# pylint: disable=too-many-arguments,too-many-locals
-def _evaluate_issue(
+@dataclass(frozen=True)
+class _FinalizeContext:
+    issue_slug: str
+    model: XGBoostSlateModel
+    train_ds: Any
+    extra_fields: Sequence[str]
+
+
+def _finalize_and_write_outputs(
     args,
-    issue: str,
-    base_ds,
-    *,
-    context: IssueEvaluationContext,
-) -> None:
-    """Evaluate a single issue for the XGBoost baseline and persist outputs.
+    ctx: _FinalizeContext,
+    eval_result: tuple[IssueMetrics, List[Dict[str, Any]], Dict[str, Any]],
+) -> IssueMetrics:
+    """Attach curve metrics, persist outputs, and return metrics.
 
-    :param args: Parsed CLI namespace controlling training/evaluation options.
-    :param issue: Issue label (human-readable) requested for evaluation.
-    :param base_ds: Loaded dataset dictionary containing train/eval splits.
-    :param context: Static context describing dataset metadata and participant filters.
-    :type context: IssueEvaluationContext
+    This helper reduces local variables in the caller by handling
+    curve construction and output persistence in one place.
     """
-
-    train_tokens = [token for token in context.train_study_tokens if token]
-    eval_tokens = [token for token in context.eval_study_tokens if token]
-    issue_slug = compose_issue_slug(issue, eval_tokens)
-
-    logger.info(
-        "[XGBoost] Evaluating issue=%s train_studies=%s eval_studies=%s",
-        issue_slug,
-        ",".join(train_tokens) or "all",
-        ",".join(eval_tokens) or "all",
-    )
-
-    issue_dataset = filter_dataset_for_issue(base_ds, issue)
-    train_ds = filter_split_for_participant_studies(issue_dataset[TRAIN_SPLIT], train_tokens)
-    eval_ds = filter_split_for_participant_studies(issue_dataset[EVAL_SPLIT], eval_tokens)
-
-    train_rows = len(train_ds)
-    eval_rows = len(eval_ds)
-
-    # Emit dataset sizes up-front for sweep visibility
-    logger.info(
-        "[XGBoost] issue=%s train_rows=%d eval_rows=%d train_studies=%s eval_studies=%s",
-        issue_slug,
-        train_rows,
-        eval_rows,
-        ",".join(train_tokens) or "all",
-        ",".join(eval_tokens) or "all",
-    )
-
-    if train_rows == 0 or eval_rows == 0:
-        logger.warning(
-            "[XGBoost] Skipping issue=%s (train_rows=%d eval_rows=%d) after participant "
-            "study filters (train=%s eval=%s).",
-            issue_slug,
-            train_rows,
-            eval_rows,
-            ",".join(train_tokens) or "all",
-            ",".join(eval_tokens) or "all",
-        )
-        # Emit a minimal metrics.json so downstream reuse/caching can detect a skip.
-        out_dir = Path(args.out_dir) / issue_slug
-        ensure_directory(out_dir)
-        skipped_payload = {
-            "issue": issue_slug,
-            "participant_studies": list(eval_tokens),
-            "dataset_source": context.dataset_source,
-            "evaluated": 0,
-            "correct": 0,
-            "accuracy": 0.0,
-            "known_candidate_hits": 0,
-            "known_candidate_total": 0,
-            "coverage": 0.0,
-            "eligible": 0,
-            "timestamp": time.time(),
-            "extra_fields": list(context.extra_fields),
-            "skipped": True,
-            "skip_reason": "No train/eval rows after filters",
-        }
-        with open(out_dir / "metrics.json", "w", encoding="utf-8") as handle:
-            json.dump(skipped_payload, handle, indent=2)
-        return
-
-    model = _load_or_train_model(
-        args,
-        issue_slug,
-        train_ds,
-        eval_ds,
-        context.extra_fields,
-    )
-    _log_training_validation_metrics(issue_slug, getattr(model, "training_history", None))
-
-    eval_config = EvaluationConfig(
-        dataset_source=context.dataset_source,
-        extra_fields=tuple(context.extra_fields),
-        eval_max=args.eval_max,
-        participant_studies=tuple(eval_tokens),
-    )
-    metrics, predictions, eval_curve = evaluate_issue(
-        model=model,
-        eval_ds=eval_ds,
-        issue_slug=issue_slug,
-        config=eval_config,
-    )
-    history_bundle = curve_metrics_from_training_history(model.training_history)
+    metrics, predictions, eval_curve = eval_result
+    history_bundle = curve_metrics_from_training_history(ctx.model.training_history)
     if history_bundle is None:
         curve_bundle: Dict[str, Any] = {
             "axis_label": "Evaluated examples",
@@ -294,17 +181,21 @@ def _evaluate_issue(
             "eval": eval_curve,
         }
         train_curve = curve_metrics_for_split(
-            model=model,
-            dataset=train_ds,
-            extra_fields=tuple(context.extra_fields),
+            model=ctx.model,
+            dataset=ctx.train_ds,
+            extra_fields=tuple(ctx.extra_fields),
         )
         if train_curve.get("n_examples"):
             curve_bundle["train"] = train_curve
         metrics.curve_metrics = curve_bundle
     else:
         metrics.curve_metrics = history_bundle
-    _write_outputs(args, issue_slug, metrics, predictions)
-    # Diagnostic: compare eligible-only and known-candidate accuracy slices.
+    _write_outputs(args, ctx.issue_slug, metrics, predictions)
+    return metrics
+
+
+def _log_eval_diagnostics(issue_slug: str, metrics: IssueMetrics) -> None:
+    """Emit diagnostic summary lines derived from final metrics."""
     try:
         known_total = int(metrics.known_candidate_total)
         known_hits = int(metrics.known_candidate_hits)
@@ -340,111 +231,107 @@ def _evaluate_issue(
     )
 
 
-def _load_or_train_model(
+def _evaluate_issue(
     args,
-    issue_slug: str,
-    train_ds,
-    eval_ds,
-    extra_fields: Sequence[str],
-) -> XGBoostSlateModel:
-    """Return a trained or loaded XGBoost model for the requested issue.
-
-    :param args: Parsed CLI namespace containing training options.
-    :param issue_slug: Normalised issue identifier.
-    :param train_ds: Training dataset split.
-    :param eval_ds: Evaluation dataset split used for history capture.
-    :param extra_fields: Extra text fields passed to the feature builder.
-    :returns: :class:`XGBoostSlateModel` ready for evaluation.
-    :raises ValueError: If neither ``--fit-model`` nor ``--load-model`` is specified.
-    """
-
-    if args.fit_model:
-        logger.info("[XGBoost] Training model for issue=%s", issue_slug)
-        booster_params = XGBoostBoosterParams.create(
-            learning_rate=args.xgb_learning_rate,
-            max_depth=args.xgb_max_depth,
-            n_estimators=args.xgb_n_estimators,
-            subsample=args.xgb_subsample,
-            colsample_bytree=args.xgb_colsample_bytree,
-            tree_method=args.xgb_tree_method,
-            reg_lambda=args.xgb_reg_lambda,
-            reg_alpha=args.xgb_reg_alpha,
-        )
-        word2vec_model_dir = args.word2vec_model_dir
-        if word2vec_model_dir:
-            word2vec_model_dir = str(Path(word2vec_model_dir) / issue_slug)
-        train_config = XGBoostTrainConfig.create(
-            max_train=args.max_train,
-            seed=args.seed,
-            max_features=args.max_features if args.max_features else None,
-            vectorizer_kind=getattr(args, "text_vectorizer", "tfidf"),
-            tfidf=TfidfConfig(max_features=args.max_features if args.max_features else None),
-            word2vec=Word2VecVectorizerConfig(
-                vector_size=args.word2vec_size,
-                window=args.word2vec_window,
-                min_count=args.word2vec_min_count,
-                epochs=args.word2vec_epochs,
-                workers=args.word2vec_workers,
-                seed=args.seed,
-                model_dir=word2vec_model_dir,
-            ),
-            sentence_transformer=SentenceTransformerVectorizerConfig(
-                model_name=args.sentence_transformer_model,
-                device=args.sentence_transformer_device,
-                batch_size=args.sentence_transformer_batch_size,
-                normalize=args.sentence_transformer_normalize,
-            ),
-            booster=booster_params,
-        )
-        model = fit_xgboost_model(
-            train_ds,
-            config=train_config,
-            extra_fields=extra_fields,
-            eval_ds=eval_ds,
-            collect_history=True,
-        )
-        if args.save_model:
-            save_xgboost_model(model, Path(args.save_model) / issue_slug)
-        return model
-
-    if args.load_model:
-        logger.info("[XGBoost] Loading model for issue=%s", issue_slug)
-        return load_xgboost_model(Path(args.load_model) / issue_slug)
-
-    raise ValueError("Set either --fit_model or --load_model to obtain an XGBoost model.")
-
-
-def _write_outputs(
-    args,
-    issue_slug: str,
-    metrics: IssueMetrics,
-    predictions: List[Dict[str, Any]],
+    issue: str,
+    base_ds,
+    *,
+    context: IssueEvaluationContext,
 ) -> None:
-    """Persist metrics and predictions for a single issue evaluation.
+    """Evaluate a single issue for the XGBoost baseline and persist outputs.
 
-    :param args: Parsed CLI namespace controlling output directory handling.
-    :param issue_slug: Issue identifier appended to output paths.
-    :param metrics: Summary metrics produced by :func:`evaluate_issue`.
-    :param predictions: Per-example prediction dictionaries to serialise.
-    :raises FileExistsError: If the output directory exists and ``--overwrite`` is not set.
+    :param args: Parsed CLI namespace controlling training/evaluation options.
+    :param issue: Issue label (human-readable) requested for evaluation.
+    :param base_ds: Loaded dataset dictionary containing train/eval splits.
+    :param context: Static context describing dataset metadata and participant filters.
+    :type context: IssueEvaluationContext
     """
 
-    out_dir = Path(args.out_dir) / issue_slug
-    if out_dir.exists() and not args.overwrite:
-        raise FileExistsError(
-            f"{out_dir} already exists. Use --overwrite to replace outputs."
+    train_tokens = [token for token in context.train_study_tokens if token]
+    eval_tokens = [token for token in context.eval_study_tokens if token]
+    issue_slug = compose_issue_slug(issue, eval_tokens)
+
+    logger.info(
+        "[XGBoost] Evaluating issue=%s train_studies=%s eval_studies=%s",
+        issue_slug,
+        ",".join(train_tokens) or "all",
+        ",".join(eval_tokens) or "all",
+    )
+
+    issue_dataset = filter_dataset_for_issue(base_ds, issue)
+    train_ds = filter_split_for_participant_studies(issue_dataset[TRAIN_SPLIT], train_tokens)
+    eval_ds = filter_split_for_participant_studies(issue_dataset[EVAL_SPLIT], eval_tokens)
+
+    # Emit dataset sizes up-front for sweep visibility
+    logger.info(
+        "[XGBoost] issue=%s train_rows=%d eval_rows=%d train_studies=%s eval_studies=%s",
+        issue_slug,
+        len(train_ds),
+        len(eval_ds),
+        ",".join(train_tokens) or "all",
+        ",".join(eval_tokens) or "all",
+    )
+
+    if len(train_ds) == 0 or len(eval_ds) == 0:
+        logger.warning(
+            "[XGBoost] Skipping issue=%s (train_rows=%d eval_rows=%d) after participant "
+            "study filters (train=%s eval=%s).",
+            issue_slug,
+            len(train_ds),
+            len(eval_ds),
+            ",".join(train_tokens) or "all",
+            ",".join(eval_tokens) or "all",
         )
-    ensure_directory(out_dir)
-    if metrics.curve_metrics:
-        curve_path = out_dir / f"xgb_curves_{issue_slug}.json"
-        with open(curve_path, "w", encoding="utf-8") as handle:
-            json.dump(metrics.curve_metrics, handle, indent=2)
-        metrics.curve_metrics_path = str(curve_path)
-    with open(out_dir / "metrics.json", "w", encoding="utf-8") as handle:
-        json.dump(asdict(metrics), handle, indent=2)
-    with open(out_dir / "predictions.jsonl", "w", encoding="utf-8") as handle:
-        for row in predictions:
-            handle.write(json.dumps(row) + "\n")
+        # Emit a minimal metrics.json so downstream reuse/caching can detect a skip.
+        _write_skip_metrics(
+            args=args,
+            issue_slug=issue_slug,
+            metadata={
+                "participant_studies": list(eval_tokens),
+                "dataset_source": context.dataset_source,
+                "extra_fields": list(context.extra_fields),
+                "reason": "No train/eval rows after filters",
+            },
+        )
+        return
+
+    model = _load_or_train_model(
+        args,
+        issue_slug,
+        train_ds,
+        eval_ds,
+        context.extra_fields,
+    )
+    _log_training_validation_metrics(issue_slug, getattr(model, "training_history", None))
+
+    eval_config = EvaluationConfig(
+        dataset_source=context.dataset_source,
+        extra_fields=tuple(context.extra_fields),
+        eval_max=args.eval_max,
+        participant_studies=tuple(eval_tokens),
+    )
+    metrics = _finalize_and_write_outputs(
+        args,
+        _FinalizeContext(
+            issue_slug=issue_slug,
+            model=model,
+            train_ds=train_ds,
+            extra_fields=tuple(context.extra_fields),
+        ),
+        evaluate_issue(
+            model=model,
+            eval_ds=eval_ds,
+            issue_slug=issue_slug,
+            config=eval_config,
+        ),
+    )
+    _log_eval_diagnostics(issue_slug, metrics)
+
+
+    # load_or_train_model moved to xgb.core.evaluate_helpers
+
+
+    # write_outputs moved to xgb.core.evaluate_helpers
 
 
 def evaluate_issue(
@@ -488,51 +375,16 @@ def evaluate_issue(
     return metrics, predictions, curve_payload
 
 
-def _bootstrap_settings() -> tuple[int, int]:
-    """Return (replicates, seed) parsed from environment with defaults."""
-    try:
-        replicates = int(os.environ.get("XGB_BOOTSTRAP_REPLICATES", "500"))
-    except ValueError:
-        replicates = 500
-    try:
-        bootstrap_seed = int(os.environ.get("XGB_BOOTSTRAP_SEED", "2024"))
-    except ValueError:
-        bootstrap_seed = 2024
-    return replicates, bootstrap_seed
+    # bootstrap_settings moved to xgb.core.evaluate_helpers
 
 
-def _group_keys_with_fallback(eval_ds, n_records: int) -> List[str]:
-    """Return group keys, falling back to per-row identifiers when needed."""
-    try:
-        return compute_group_keys(eval_ds, n_records)
-    except (TypeError, AttributeError):  # pragma: no cover - defensive fallback
-        return [f"row::{i}" for i in range(n_records)]
+    # group_keys_with_fallback moved to xgb.core.evaluate_helpers
 
 
-def _baseline_top_index(metrics: IssueMetrics) -> Optional[int]:
-    """Extract the baseline top-index from metrics when available."""
-    payload = metrics.baseline_most_frequent_gold_index or {}
-    if isinstance(payload, Mapping):
-        try:
-            value = payload.get("top_index")
-            return int(value) if value is not None else None
-        except (TypeError, ValueError):  # pragma: no cover - defensive
-            return None
-    return None
+    # baseline_top_index moved to xgb.core.evaluate_helpers
 
 
-def _attach_uncertainty(metrics: IssueMetrics, uncertainty: Mapping[str, Any] | None) -> None:
-    """Attach uncertainty summaries to ``metrics`` when present."""
-    if not uncertainty or not isinstance(uncertainty, Mapping):
-        return
-    model_uncertainty = uncertainty.get("model")
-    if isinstance(model_uncertainty, Mapping):
-        # Assign defensively in case metrics does not expose optional fields.
-        try:
-            metrics.accuracy_ci_95 = model_uncertainty.get("ci95")  # type: ignore[assignment]
-            metrics.accuracy_uncertainty = uncertainty  # type: ignore[assignment]
-        except AttributeError:  # pragma: no cover - attribute differences
-            return
+    # attach_uncertainty moved to xgb.core.evaluate_helpers
 
 
 __all__ = [

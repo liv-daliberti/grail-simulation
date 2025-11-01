@@ -1288,7 +1288,7 @@ def test_write_reports_handles_disabled_sections(tmp_path: Path) -> None:
     assert "next_video/README.md" not in catalog
 
     hyper = (tmp_path / "hyperparameter_tuning" / "README.md").read_text(encoding="utf-8")
-    assert "disabled" in hyper.lower()
+    assert "not requested" in hyper.lower()
 
     opinion = (tmp_path / "opinion" / "README.md").read_text(encoding="utf-8")
-    assert "disabled" in opinion.lower()
+    assert "not requested" in opinion.lower()

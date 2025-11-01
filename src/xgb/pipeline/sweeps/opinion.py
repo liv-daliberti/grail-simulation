@@ -152,7 +152,7 @@ def _build_opinion_vectorizer_config(
     Construct vectoriser settings for a single opinion sweep.
 
     :param config: Sweep configuration that determines the feature space.
-    :type config: SweepConfig
+    :type config: ~xgb.pipeline.context.SweepConfig
     :param context: Shared opinion sweep execution context.
     :type context: OpinionSweepRunContext
     :param run_root: Root directory receiving sweep artefacts for the task.
@@ -208,7 +208,7 @@ def _build_opinion_request_args(
     :param context: Shared opinion sweep execution context.
     :type context: OpinionSweepRunContext
     :param config: Sweep configuration that produced the task.
-    :type config: SweepConfig
+    :type config: ~xgb.pipeline.context.SweepConfig
     :param vectorizer: Vectoriser configuration derived from the sweep config.
     :type vectorizer: OpinionVectorizerConfig
     :returns: Dictionary forwarded to :func:`run_opinion_eval`.
@@ -245,7 +245,7 @@ def _build_opinion_task(
     for a single study/config pair.
 
     :param config: Sweep configuration describing the model variant to run.
-    :type config: SweepConfig
+    :type config: ~xgb.pipeline.context.SweepConfig
     :param study: Study metadata describing participants and labelling.
     :type study: StudySpec
     :param context: Shared opinion sweep execution context.
@@ -304,7 +304,7 @@ def _iter_opinion_sweep_tasks(
     :param studies: Participant studies targeted by the opinion sweeps.
     :type studies: Sequence[StudySpec]
     :param configs: Hyper-parameter configurations evaluated for each study.
-    :type configs: Sequence[SweepConfig]
+    :type configs: Sequence[~xgb.pipeline.context.SweepConfig]
     :param context: Shared opinion sweep execution context.
     :type context: OpinionSweepRunContext
     :returns: Iterable sequence of opinion sweep tasks sorted by a stable index.

@@ -21,9 +21,9 @@ import logging
 import os
 from pathlib import Path
 from typing import Any, Dict, Mapping, Optional, Sequence
+from importlib import import_module
 
 from common.opinion import (
-    DEFAULT_SPECS,
     OpinionSpec,
     exclude_eval_participants,
     ensure_train_examples,
@@ -69,6 +69,9 @@ from .opinion_predictions import (
 )
 
 LOGGER = logging.getLogger("knn.opinion")
+
+# Re-export for compatibility without triggering unused-import warnings
+DEFAULT_SPECS = import_module("common.opinion").DEFAULT_SPECS
 
 def _resolve_word2vec_config(args: Any, feature_space: str) -> Optional[Word2VecConfig]:
     """

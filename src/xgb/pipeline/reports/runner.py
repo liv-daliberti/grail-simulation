@@ -119,7 +119,7 @@ def _write_reports(
         _write_disabled_report(
             reports_dir / "hyperparameter_tuning",
             "Hyper-parameter Tuning",
-            "Sweep stages were disabled for this run.",
+            "Sweep stages were not requested for this run.",
         )
     if include_next_video:
         _write_next_video_report(
@@ -151,7 +151,7 @@ def _write_reports(
         _write_disabled_report(
             reports_dir / "opinion",
             "Opinion Regression",
-            "Opinion sweeps were disabled for this run.",
+            "Opinion sweeps were not requested for this run.",
         )
     if opinion_from_next is not None:
         _write_opinion_report(

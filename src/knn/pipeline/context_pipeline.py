@@ -29,7 +29,7 @@ class _OpinionPaths:
 class _PipelinePaths:
     """Filesystem locations used by the pipeline.
 
-    Grouping these reduces attribute count on :class:`PipelineContext` while
+    Grouping these reduces attribute count on :class:`~knn.pipeline.context.PipelineContext` while
     still exposing fine-grained read-only accessors.
 
     :param out_dir: Base output directory for the run.
@@ -143,34 +143,13 @@ class PipelineContext:
         *,
         # Common flat fields always required
         dataset: str,
-        # Either grouped bundles OR flat kwargs below must be provided
+        # Either grouped bundles OR flat kwargs provided in **flat
         k_sweep: str | None = None,
         study_tokens: Tuple[str, ...] | None = None,
         paths: _PipelinePaths | None = None,
         models: _ModelDefaults | None = None,
         workflow: _Workflow | None = None,
-        # Legacy/flat keyword arguments (used by tests)
-        out_dir: Path | None = None,
-        cache_dir: str | None = None,
-        sweep_dir: Path | None = None,
-        word2vec_model_dir: Path | None = None,
-        next_video_dir: Path | None = None,
-        opinion_dir: Path | None = None,
-        opinion_sweep_dir: Path | None = None,
-        opinion_word2vec_dir: Path | None = None,
-        word2vec_epochs: int | None = None,
-        word2vec_workers: int | None = None,
-        sentence_model: str | None = None,
-        sentence_device: str | None = None,
-        sentence_batch_size: int | None = None,
-        sentence_normalize: bool | None = None,
-        feature_spaces: Tuple[str, ...] | None = None,
-        jobs: int | None = None,
-        reuse_sweeps: bool | None = None,
-        reuse_final: bool | None = None,
-        allow_incomplete: bool | None = None,
-        run_next_video: bool | None = None,
-        run_opinion: bool | None = None,
+        **flat: object,
     ) -> None:
         """Construct a pipeline context.
 
@@ -181,53 +160,70 @@ class PipelineContext:
 
         # Resolve grouped bundles if not provided
         if paths is None:
-            assert out_dir is not None
-            assert cache_dir is not None
-            assert sweep_dir is not None
-            assert word2vec_model_dir is not None
-            assert next_video_dir is not None
-            assert opinion_dir is not None
-            assert opinion_sweep_dir is not None
-            assert opinion_word2vec_dir is not None
+            # Validate required legacy fields
+            assert flat.get("out_dir") is not None
+            assert flat.get("cache_dir") is not None
+            assert flat.get("sweep_dir") is not None
+            assert flat.get("word2vec_model_dir") is not None
+            assert flat.get("next_video_dir") is not None
+            assert flat.get("opinion_dir") is not None
+            assert flat.get("opinion_sweep_dir") is not None
+            assert flat.get("opinion_word2vec_dir") is not None
             paths = _PipelinePaths(
-                out_dir=out_dir,
-                cache_dir=str(cache_dir),
-                sweep_dir=sweep_dir,
-                word2vec_model_dir=word2vec_model_dir,
-                next_video_dir=next_video_dir,
+                out_dir=flat["out_dir"],  # type: ignore[index]
+                cache_dir=str(flat["cache_dir"]),  # type: ignore[index]
+                sweep_dir=flat["sweep_dir"],  # type: ignore[index]
+                word2vec_model_dir=flat["word2vec_model_dir"],  # type: ignore[index]
+                next_video_dir=flat["next_video_dir"],  # type: ignore[index]
                 opinion=_OpinionPaths(
-                    dir=opinion_dir,
-                    sweep_dir=opinion_sweep_dir,
-                    word2vec_dir=opinion_word2vec_dir,
+                    dir=flat["opinion_dir"],  # type: ignore[index]
+                    sweep_dir=flat["opinion_sweep_dir"],  # type: ignore[index]
+                    word2vec_dir=flat["opinion_word2vec_dir"],  # type: ignore[index]
                 ),
             )
 
         if models is None:
-            assert word2vec_epochs is not None
-            assert word2vec_workers is not None
-            assert sentence_model is not None
-            assert sentence_batch_size is not None
-            assert sentence_normalize is not None
+            assert flat.get("word2vec_epochs") is not None
+            assert flat.get("word2vec_workers") is not None
+            assert flat.get("sentence_model") is not None
+            assert flat.get("sentence_batch_size") is not None
+            assert flat.get("sentence_normalize") is not None
             models = _ModelDefaults(
-                word2vec_epochs=int(word2vec_epochs),
-                word2vec_workers=int(word2vec_workers),
-                sentence_model=str(sentence_model),
-                sentence_device=sentence_device,
-                sentence_batch_size=int(sentence_batch_size),
-                sentence_normalize=bool(sentence_normalize),
+                word2vec_epochs=int(flat["word2vec_epochs"]),  # type: ignore[index]
+                word2vec_workers=int(flat["word2vec_workers"]),  # type: ignore[index]
+                sentence_model=str(flat["sentence_model"]),  # type: ignore[index]
+                sentence_device=flat.get("sentence_device"),
+                sentence_batch_size=int(flat["sentence_batch_size"]),  # type: ignore[index]
+                sentence_normalize=bool(flat["sentence_normalize"]),  # type: ignore[index]
             )
 
         if workflow is None:
-            assert feature_spaces is not None
-            assert jobs is not None
+            assert flat.get("feature_spaces") is not None
+            assert flat.get("jobs") is not None
             workflow = _Workflow(
-                feature_spaces=tuple(feature_spaces),
-                jobs=int(jobs),
-                reuse_sweeps=bool(reuse_sweeps) if reuse_sweeps is not None else False,
-                reuse_final=bool(reuse_final) if reuse_final is not None else False,
-                allow_incomplete=bool(allow_incomplete) if allow_incomplete is not None else False,
-                run_next_video=bool(run_next_video) if run_next_video is not None else True,
-                run_opinion=bool(run_opinion) if run_opinion is not None else True,
+                feature_spaces=tuple(flat["feature_spaces"]),  # type: ignore[index]
+                jobs=int(flat["jobs"]),  # type: ignore[index]
+                reuse_sweeps=(
+                    bool(flat.get("reuse_sweeps"))
+                    if flat.get("reuse_sweeps") is not None
+                    else False
+                ),
+                reuse_final=(
+                    bool(flat.get("reuse_final")) if flat.get("reuse_final") is not None else False
+                ),
+                allow_incomplete=(
+                    bool(flat.get("allow_incomplete"))
+                    if flat.get("allow_incomplete") is not None
+                    else False
+                ),
+                run_next_video=(
+                    bool(flat.get("run_next_video"))
+                    if flat.get("run_next_video") is not None
+                    else True
+                ),
+                run_opinion=(
+                    bool(flat.get("run_opinion")) if flat.get("run_opinion") is not None else True
+                ),
             )
 
         # Public simple fields

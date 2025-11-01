@@ -204,6 +204,7 @@
 <li class="toctree-l1"><a class="reference internal" href="xgb.html">XGBoost Baseline API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gpt4o.html">GPT-4o Tools API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="grail.html">GRAIL Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="grpo.html">GRPO Pipeline API</a></li>
 </ul>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="common.html">Common Utilities API</a></li>
@@ -235,17 +236,22 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reports/knn_next_video.html#id1">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Regression</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion_from_next.html">KNN Opinion Regression (Next-Video Config)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reports/knn_opinion_from_next.html#knn-opinion-shift-study-next-video-config">KNN Opinion Shift Study (Next-Video Config)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reports/knn_additional_features.html">KNN Additional Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reports/knn_additional_features.html#additional-text-features">Additional Text Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reports/knn_opinion_from_next.html">KNN Opinion Regression (Next-Video Config)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reports/knn_additional_features.html">KNN Additional Features</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../reports/xgb.html">XGBoost Report Catalog</a><input aria-label="Toggle navigation of XGBoost Report Catalog" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reports/xgb_next_video.html">XGBoost Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/xgb_next_video.html#id1">XGBoost Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/xgb_opinion.html">XGBoost Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/xgb_opinion.html#id1">XGBoost Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/xgb_opinion_from_next.html">XGBoost Opinion (Next-Video Config)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/xgb_opinion_from_next.html#xgboost-opinion-regression-next-video-config">XGBoost Opinion Regression (Next-Video Config)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/xgb_hyperparameter_tuning.html">XGBoost Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/xgb_hyperparameter_tuning.html#hyper-parameter-tuning">Hyper-parameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/xgb_additional_features.html">XGBoost Additional Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reports/xgb_additional_features.html#additional-text-features">Additional Text Features</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../reports/main.html">Portfolio Comparison (Main)</a></li>
@@ -792,6 +798,151 @@ callers keep the outer function signature small enough for linting.</p>
 </dl>
 </dd></dl>
 
+<p id="module-common.open_r1.example_utils">Utilities for constructing Open-R1 training and evaluation examples.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="common.open_r1.example_utils.call_row_to_training_example">
+<span class="sig-prename descclassname"><span class="pre">common.open_r1.example_utils.</span></span><span class="sig-name descname"><span class="pre">call_row_to_training_example</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system_prompt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solution_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_history=12</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passthrough_fn=&lt;function</span> <span class="pre">collect_passthrough_fields&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields_fn=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/open_r1/example_utils.html#call_row_to_training_example"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.open_r1.example_utils.call_row_to_training_example" title="Link to this definition">¶</a></dt>
+<dd><p>Convenience wrapper around <a class="reference internal" href="#common.open_r1.example_utils.row_to_training_example" title="common.open_r1.example_utils.row_to_training_example"><code class="xref py py-func docutils literal notranslate"><span class="pre">row_to_training_example()</span></code></a>.</p>
+<p>Centralises the keyword arguments setup so higher-level modules can invoke the conversion
+without repeating identical boilerplate, keeping <code class="xref py py-mod docutils literal notranslate"><span class="pre">pylint</span></code> duplicate-code checks quiet.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>example</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Dataset row describing the viewer slate and metadata.</p></li>
+<li><p><strong>system_prompt</strong> (<em>str</em><em> | </em><em>None</em>) – Optional system prompt to pass through.</p></li>
+<li><p><strong>solution_key</strong> (<em>str</em><em> | </em><em>None</em>) – Column containing the gold recommendation identifier.</p></li>
+<li><p><strong>max_history</strong> (<em>int</em>) – Maximum history entries to include in prompts.</p></li>
+<li><p><strong>passthrough_fn</strong> (<em>Callable</em><em>[</em><em>[</em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em><em>, </em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>] </em><em>| </em><em>None</em>) – Callable providing passthrough fields; optional.</p></li>
+<li><p><strong>extra_fields_fn</strong> (<em>Callable</em><em>[</em><em>[</em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>, </em><em>Sequence</em><em>[</em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em><em>]</em><em>, </em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>] </em><em>| </em><em>None</em>) – Callable attaching extra fields to the training example.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Training example dict or <code class="docutils literal notranslate"><span class="pre">None</span></code> when the slate/gold mapping is invalid.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Dict</em>[str, <em>Any</em>] | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="common.open_r1.example_utils.canon">
+<span class="sig-prename descclassname"><span class="pre">common.open_r1.example_utils.</span></span><span class="sig-name descname"><span class="pre">canon</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/open_r1/example_utils.html#canon"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.open_r1.example_utils.canon" title="Link to this definition">¶</a></dt>
+<dd><p>Return a lowercase, punctuation-stripped token for fuzzy comparisons.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>str</em>) – Raw text to normalise.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Canonicalised token ready for string matching.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="common.open_r1.example_utils.derive_next_from_history">
+<span class="sig-prename descclassname"><span class="pre">common.open_r1.example_utils.</span></span><span class="sig-name descname"><span class="pre">derive_next_from_history</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/open_r1/example_utils.html#derive_next_from_history"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.open_r1.example_utils.derive_next_from_history" title="Link to this definition">¶</a></dt>
+<dd><p>Infer the next-click identifier from historical watch data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>example</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Dataset row containing historical watch information.</p></li>
+<li><p><strong>current_id</strong> (<em>str</em>) – Identifier of the current video in the viewer session.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Derived next video identifier or an empty string when unavailable.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="common.open_r1.example_utils.get_gold_next_id">
+<span class="sig-prename descclassname"><span class="pre">common.open_r1.example_utils.</span></span><span class="sig-name descname"><span class="pre">get_gold_next_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solution_key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/open_r1/example_utils.html#get_gold_next_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.open_r1.example_utils.get_gold_next_id" title="Link to this definition">¶</a></dt>
+<dd><p>Return the preferred next-video identifier from <code class="docutils literal notranslate"><span class="pre">example</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>example</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Dataset row containing next-video fields.</p></li>
+<li><p><strong>solution_key</strong> (<em>str</em><em> | </em><em>None</em>) – Optional override for the column holding the gold id.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Gold identifier for the next recommendation.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="common.open_r1.example_utils.gold_index_from_items">
+<span class="sig-prename descclassname"><span class="pre">common.open_r1.example_utils.</span></span><span class="sig-name descname"><span class="pre">gold_index_from_items</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gold</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/open_r1/example_utils.html#gold_index_from_items"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.open_r1.example_utils.gold_index_from_items" title="Link to this definition">¶</a></dt>
+<dd><p>Return the 1-based index of <code class="docutils literal notranslate"><span class="pre">gold</span></code> within <code class="docutils literal notranslate"><span class="pre">items</span></code> or <code class="docutils literal notranslate"><span class="pre">-1</span></code> when missing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gold</strong> (<em>str</em>) – Gold identifier expected to be present in the slate.</p></li>
+<li><p><strong>items</strong> (<em>Sequence</em><em>[</em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – Slate items to search for the identifier.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>1-based index of the gold item or <code class="docutils literal notranslate"><span class="pre">-1</span></code> when not found.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="common.open_r1.example_utils.load_slate_items">
+<span class="sig-prename descclassname"><span class="pre">common.open_r1.example_utils.</span></span><span class="sig-name descname"><span class="pre">load_slate_items</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/open_r1/example_utils.html#load_slate_items"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.open_r1.example_utils.load_slate_items" title="Link to this definition">¶</a></dt>
+<dd><p>Extract and normalise slate metadata from <code class="docutils literal notranslate"><span class="pre">example</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>example</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Dataset row containing slate metadata JSON.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Cleaned list of slate item dictionaries with stable keys.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>List</em>[<em>Dict</em>[str, <em>Any</em>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="common.open_r1.example_utils.row_to_training_example">
+<span class="sig-prename descclassname"><span class="pre">common.open_r1.example_utils.</span></span><span class="sig-name descname"><span class="pre">row_to_training_example</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system_prompt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solution_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_history=12</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passthrough_fn=&lt;function</span> <span class="pre">collect_passthrough_fields&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_fields_fn=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/common/open_r1/example_utils.html#row_to_training_example"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.open_r1.example_utils.row_to_training_example" title="Link to this definition">¶</a></dt>
+<dd><p>Convert a raw dataset <code class="docutils literal notranslate"><span class="pre">example</span></code> into the GRPO training payload.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>example</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Dataset row describing the viewer slate and metadata.</p></li>
+<li><p><strong>system_prompt</strong> (<em>str</em><em> | </em><em>None</em>) – Optional system prompt to include in the example.</p></li>
+<li><p><strong>solution_key</strong> (<em>str</em><em> | </em><em>None</em>) – Column containing the gold recommendation identifier.</p></li>
+<li><p><strong>max_history</strong> (<em>int</em>) – Maximum number of history entries to include.</p></li>
+<li><p><strong>passthrough_fn</strong> (<em>Callable</em><em>[</em><em>[</em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em><em>, </em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – Callable generating passthrough fields to retain.</p></li>
+<li><p><strong>extra_fields_fn</strong> (<em>Callable</em><em>[</em><em>[</em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>, </em><em>Sequence</em><em>[</em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em><em>]</em><em>, </em><em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>] </em><em>| </em><em>None</em>) – Optional callable returning additional fields.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Training example dict or <code class="docutils literal notranslate"><span class="pre">None</span></code> when the slate/gold mapping is invalid.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Dict</em>[str, <em>Any</em>] | None</p>
+</dd>
+</dl>
+</dd></dl>
+
 <p id="module-grail.grail">GRPO training entrypoint with optional discriminator (GAIL-style) shaping.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="grail.grail.LearnableRewardCallable">
@@ -838,6 +989,11 @@ callers keep the outer function signature small enough for linting.</p>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="grail.grail.LearnableRewardMixer.config">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">types.SimpleNamespace</span></em><a class="headerlink" href="#grail.grail.LearnableRewardMixer.config" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="grail.grail.LearnableRewardMixer.current_alpha_beta">
@@ -1118,11 +1274,6 @@ callers keep the outer function signature small enough for linting.</p>
 
 <p id="module-grpo.grpo">Standard GRPO training entrypoint for the GRAIL simulation dataset.</p>
 <dl class="py function">
-<dt class="sig sig-object py" id="grpo.grpo.get_peft_config">
-<span class="sig-prename descclassname"><span class="pre">grpo.grpo.</span></span><span class="sig-name descname"><span class="pre">get_peft_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">_args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#grpo.grpo.get_peft_config" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="grpo.grpo.main">
 <span class="sig-prename descclassname"><span class="pre">grpo.grpo.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">script_args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/grpo/grpo.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grpo.grpo.main" title="Link to this definition">¶</a></dt>
 <dd><p>Orchestrate dataset preparation, trainer construction, and the training loop.</p>
@@ -1131,7 +1282,7 @@ callers keep the outer function signature small enough for linting.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>script_args</strong> (<a class="reference internal" href="#common.open_r1.configs.GRPOScriptArguments" title="common.open_r1.configs.GRPOScriptArguments"><em>common.open_r1.configs.GRPOScriptArguments</em></a>) – High-level script arguments sourced from CLI/YAML.</p></li>
 <li><p><strong>training_args</strong> (<a class="reference internal" href="#common.open_r1.configs.GRPOConfig" title="common.open_r1.configs.GRPOConfig"><em>common.open_r1.configs.GRPOConfig</em></a>) – Training configuration for GRPO runs.</p></li>
-<li><p><strong>model_args</strong> (<em>trl.ModelConfig</em>) – Model configuration required to build tokenizers/models.</p></li>
+<li><p><strong>model_args</strong> (<em>Any</em>) – Model configuration required to build tokenizers/models.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1885,9 +2036,17 @@ estimate the parameter count.</p>
 </li>
 <li><a class="reference internal" href="#common.open_r1.generate.build_distilabel_pipeline"><code class="docutils literal notranslate"><span class="pre">build_distilabel_pipeline()</span></code></a></li>
 <li><a class="reference internal" href="#common.open_r1.generate.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li><a class="reference internal" href="#common.open_r1.example_utils.call_row_to_training_example"><code class="docutils literal notranslate"><span class="pre">call_row_to_training_example()</span></code></a></li>
+<li><a class="reference internal" href="#common.open_r1.example_utils.canon"><code class="docutils literal notranslate"><span class="pre">canon()</span></code></a></li>
+<li><a class="reference internal" href="#common.open_r1.example_utils.derive_next_from_history"><code class="docutils literal notranslate"><span class="pre">derive_next_from_history()</span></code></a></li>
+<li><a class="reference internal" href="#common.open_r1.example_utils.get_gold_next_id"><code class="docutils literal notranslate"><span class="pre">get_gold_next_id()</span></code></a></li>
+<li><a class="reference internal" href="#common.open_r1.example_utils.gold_index_from_items"><code class="docutils literal notranslate"><span class="pre">gold_index_from_items()</span></code></a></li>
+<li><a class="reference internal" href="#common.open_r1.example_utils.load_slate_items"><code class="docutils literal notranslate"><span class="pre">load_slate_items()</span></code></a></li>
+<li><a class="reference internal" href="#common.open_r1.example_utils.row_to_training_example"><code class="docutils literal notranslate"><span class="pre">row_to_training_example()</span></code></a></li>
 <li><a class="reference internal" href="#grail.grail.LearnableRewardCallable"><code class="docutils literal notranslate"><span class="pre">LearnableRewardCallable</span></code></a></li>
 <li><a class="reference internal" href="#grail.grail.LearnableRewardMixer"><code class="docutils literal notranslate"><span class="pre">LearnableRewardMixer</span></code></a><ul>
 <li><a class="reference internal" href="#grail.grail.LearnableRewardMixer.__init__"><code class="docutils literal notranslate"><span class="pre">LearnableRewardMixer.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#grail.grail.LearnableRewardMixer.config"><code class="docutils literal notranslate"><span class="pre">LearnableRewardMixer.config</span></code></a></li>
 <li><a class="reference internal" href="#grail.grail.LearnableRewardMixer.current_alpha_beta"><code class="docutils literal notranslate"><span class="pre">LearnableRewardMixer.current_alpha_beta()</span></code></a></li>
 <li><a class="reference internal" href="#grail.grail.LearnableRewardMixer.forward"><code class="docutils literal notranslate"><span class="pre">LearnableRewardMixer.forward()</span></code></a></li>
 </ul>
@@ -1919,7 +2078,6 @@ estimate the parameter count.</p>
 <li><a class="reference internal" href="#grail.grail.make_gail_reward_fn"><code class="docutils literal notranslate"><span class="pre">make_gail_reward_fn()</span></code></a></li>
 <li><a class="reference internal" href="#grail.grail.parse_and_run"><code class="docutils literal notranslate"><span class="pre">parse_and_run()</span></code></a></li>
 <li><a class="reference internal" href="#grail.grail.resolve_torch_modules"><code class="docutils literal notranslate"><span class="pre">resolve_torch_modules()</span></code></a></li>
-<li><a class="reference internal" href="#grpo.grpo.get_peft_config"><code class="docutils literal notranslate"><span class="pre">get_peft_config()</span></code></a></li>
 <li><a class="reference internal" href="#grpo.grpo.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 <li><a class="reference internal" href="#common.open_r1.rewards.accuracy_reward"><code class="docutils literal notranslate"><span class="pre">accuracy_reward()</span></code></a></li>
 <li><a class="reference internal" href="#common.open_r1.rewards.binary_code_reward"><code class="docutils literal notranslate"><span class="pre">binary_code_reward()</span></code></a></li>

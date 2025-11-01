@@ -10,241 +10,303 @@ Sections are grouped by issue and each includes up to 5 examples.
 
 ## Minimum Wage
 
-### Example 1 (Next Video)
+### Example 1 (Opinion)
 
 #### Question
 
 ```text
-VIEWER 37-year-old, Black or African-American; watches YouTube multiple times per day; lives in Georgia.
+Issue: Minimum Wage
+Opinion scale: 1 = strongly oppose, 7 = strongly support.
+Pre-study opinion index: 0.14
+
+Viewer context:
+VIEWER 36-year-old, Asian/Pacific Islanders man; democrat liberal; Prefer not to say; college-educated; watches YouTube multiple times per day.
 Initial Viewpoint: Opposes a $15 minimum wage
 
-CURRENTLY WATCHING Raise The Minimum Wage -- Robert Reich & MoveOn.org (from MoveOn)
+CURRENTLY WATCHING Who Does a $15 Minimum Wage Help? (from PragerU)
 
 RECENTLY WATCHED (NEWEST LAST)
-(no recently watched videos available)
+1. Edgar the Exploiter - Minimum Wage Consequences (watched 428s of 428s (100% complete), from cowfootman)
+2. Charles Koch: No Minimum Wage will Help the Poor (watched 474s of 474s (100% complete), from Thom Hartmann Program)
+3. Joe Rogan - The Minimum Wage Destroys Jobs (watched 557s of 557s (100% complete), from JRE Clips)
 
 SURVEY HIGHLIGHTS
-political interest is about sixty-seven percent, religious affiliation is Protestant, watches YouTube multiple times per day, follows the news some of the time, minimum wage support score is zero percent, and $15 minimum wage support is zero percent.
+party identification is Democrat, party lean is Not very strong Democrat, ideology is Liberal, political interest is not very interested in politics, watches YouTube multiple times per day, preferred minimum wage target is $15, minimum wage support score is twenty-five percent, and $15 minimum wage support is fifty percent.
 
 OPTIONS
-1. Who Does a $15 Minimum Wage Help? (PragerU, 334s long) — Engagement: views 6,088,611, likes 49,500, comments 40
-2. Walter E Williams - The Effects Of Minimum Wage (LibertyPen, 598s long) — Engagement: views 70,523, likes 2,005, comments 40
-3. What the US gets wrong about minimum wage (Vox, 306s long) — Engagement: views 2,007,754, likes 59,987, comments 40
-4. Caller: Minimum Wage Should be set by Supply & Demand (Thom Hartmann Program, 494s long) — Engagement: views 5,149, likes 142, comments 40
+1. Minimum Wage Cost Me My Job (PragerU, 324s long) — Engagement: views 1,999,176, likes 22,178, comments 40
+2. What the US gets wrong about minimum wage (Vox, 306s long) — Engagement: views 2,007,754, likes 59,987, comments 40
+3. SOMEONE GIVE HIM A RAISE: Ben Shapiro kills the minimum wage argument for good (Young America's Foundation, 164s long) — Engagement: views 2,442,928, likes 29,244, comments 40
+4. Why Raising the Minimum Wage Doesn't Cause Inflation (Thom Hartmann Program, 264s long) — Engagement: views 5,714, likes 266, comments 40
 
 QUESTIONS
 1. Which option number will the viewer watch next?
 2. After this recommendation, will the viewer's opinion on Minimum wage increase, decrease, or stay the same?
+
+After the participant watches the recommended next video, estimate their post-study opinion index.
+Reason briefly inside <think> then output ONLY the numeric index (1-7) inside <answer>.
 ```
 
 #### Model Response
 
 ```text
 <think>
-The viewer is currently watching a video that supports raising the minimum wage, which aligns with their initial viewpoint. They oppose a $15 minimum wage but are interested in understanding who benefits from it. The recent video they watched was about how a $15 minimum wage helps people, so they might want to watch more content supporting this idea.
+The viewer has recently watched videos that discuss the potential negative impacts of a $15 minimum wage, including its effect on jobs and inflation. They also have a background as a Democrat liberal who opposes a $15 minimum wage initially but may be open to considering alternative viewpoints.
 </think>
 
 <answer>
 1
 </answer>
 
+<opinion>increase</opinion>
 ```
 
 #### Notes
 
 - Issue: minimum wage
-- Task: Next-video selection
-- Tags present — think: yes, answer: yes
-- Chosen option: 1
-- Short rationale: The viewer is currently watching a video that supports raising the minimum wage, which aligns with their initial viewpoint. They oppose a $15 minimum wage but are interested in understanding who benefits from it. The recent video they wa...
-### Example 2 (Next Video)
+- Task: Opinion shift prediction
+- Tags — think: yes, answer: yes
+- Pre-study opinion index: 0.14
+- Predicted post-study index: 1.00
+- Predicted direction: increase
+- Short rationale: The viewer has recently watched videos that discuss the potential negative impacts of a $15 minimum wage, including its effect on jobs and inflation. They also have a background as a Democrat liberal who opposes a $15 minimum wage initia...
+### Example 2 (Opinion)
 
 #### Question
 
 ```text
-VIEWER 65-year-old, White (non-Hispanic); watches YouTube a few times a month; lives in Pennsylvania.
-Initial Viewpoint: Opposes a $15 minimum wage
+Issue: Minimum Wage
+Opinion scale: 1 = strongly oppose, 7 = strongly support.
+Pre-study opinion index: 0.32
 
-CURRENTLY WATCHING Raise The Minimum Wage -- Robert Reich & MoveOn.org (from MoveOn)
+Viewer context:
+VIEWER 43-year-old, Caucasian/White (non-Hispanic) man; democrat liberal; $40,000-$49,999; college-educated; watches YouTube occasionally.
+Initial Viewpoint: Preferred minimum wage is about $0.60
 
-RECENTLY WATCHED (NEWEST LAST)
-(no recently watched videos available)
-
-SURVEY HIGHLIGHTS
-political interest is about sixty-seven percent, religious affiliation is Catholic, watches YouTube a few times a month, follows the news some of the time, minimum wage support score is twenty-five percent, and $15 minimum wage support is twenty-five percent.
-
-OPTIONS
-1. Stossel: Minimum Wage Hurts Beginners (ReasonTV, 276s long) — Engagement: views 48,227, likes 2,635, comments 40
-2. Caller: Minimum Wage Should be set by Supply & Demand (Thom Hartmann Program, 494s long) — Engagement: views 5,149, likes 142, comments 40
-3. Fast Food CEO After Minimum Wage Increase: """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""... (Waldorf Nation, 453s long) — Engagement: views 141,333, likes 2,609, comments 40
-4. The 5 Biggest Myths Republicans Use to Avoid Raising the Minimum Wage | Opinions | NowThis (NowThis News, 159s long) — Engagement: views 56,870, likes 4,183, comments 40
-
-QUESTIONS
-1. Which option number will the viewer watch next?
-2. After this recommendation, will the viewer's opinion on Minimum wage increase, decrease, or stay the same?
-```
-
-#### Model Response
-
-```text
-<think>
-The viewer is currently watching a video that supports raising the minimum wage, which aligns with their initial viewpoint but also shows they are open to considering different perspectives. They oppose a $15 minimum wage initially, so they might watch something more moderate or supportive of higher wages.
-</think>
-
-<answer>
-1
-</answer>
-
-```
-
-#### Notes
-
-- Issue: minimum wage
-- Task: Next-video selection
-- Tags present — think: yes, answer: yes
-- Chosen option: 1
-- Short rationale: The viewer is currently watching a video that supports raising the minimum wage, which aligns with their initial viewpoint but also shows they are open to considering different perspectives. They oppose a $15 minimum wage initially, so t...
-### Example 3 (Next Video)
-
-#### Question
-
-```text
-VIEWER 65-year-old, White (non-Hispanic); watches YouTube a few times a month; lives in Pennsylvania.
-Initial Viewpoint: Opposes a $15 minimum wage
-
-CURRENTLY WATCHING Stossel: Minimum Wage Hurts Beginners (from ReasonTV)
+CURRENTLY WATCHING What's the Right Minimum Wage? (from PragerU)
 
 RECENTLY WATCHED (NEWEST LAST)
-1. Raise The Minimum Wage -- Robert Reich & MoveOn.org (watched 149s of 149s (100% complete), from MoveOn)
+1. $15 minimum wage would cut 1.4 million jobs by 2025: CBO (watched 87s of 88s (99% complete), from Fox Business)
+2. Why Biden’s $15 Minimum Wage Isn’t The Solution - Steve Forbes | What's Ahead | Forbes (watched 201s of 202s (100% complete), from Forbes)
+3. Briahna Joy Gray: DEBUNKING Corporate Myths About $15 Minimum Wage (watched 375s of 455s (82% complete), from The Hill)
 
 SURVEY HIGHLIGHTS
-political interest is about sixty-seven percent, religious affiliation is Catholic, watches YouTube a few times a month, follows the news some of the time, minimum wage support score is twenty-five percent, and $15 minimum wage support is twenty-five percent.
+party identification is Democrat, party lean is Not very strong Democrat, ideology is Liberal, political interest is not very interested in politics, watches YouTube occasionally, preferred minimum wage target is $10, minimum wage support score is seventy-five percent, and $15 minimum wage support is seventy-five percent.
 
 OPTIONS
 1. What the US gets wrong about minimum wage (Vox, 306s long) — Engagement: views 2,007,754, likes 59,987, comments 40
-2. What They DONT TELL YOU About Minimum Wage... | Thomas Sowell (Aporia Institute, 339s long) — Engagement: views 455, likes 62, comments 40
-3. Here’s the Truth About a $15 Minimum Wage (Rep. Dan Crenshaw, 225s long) — Engagement: views 32,771, likes 1,671, comments 40
-4. Gutfeld: Seattle's minimum wage hike failures (Fox News, 379s long) — Engagement: views 993,258, likes 11,584, comments 40
+2. Milton Friedman on Minimum Wage (amagilly, 219s long) — Engagement: views 484,030, likes 4,493, comments 40
+3. Who Does a $15 Minimum Wage Help? (PragerU, 334s long) — Engagement: views 6,088,611, likes 49,500, comments 40
+4. By the Numbers: Biden’s $15 per hour minimum wage plan (ABC News, 95s long) — Engagement: views 35,630, likes 537, comments 40
 
 QUESTIONS
 1. Which option number will the viewer watch next?
 2. After this recommendation, will the viewer's opinion on Minimum wage increase, decrease, or stay the same?
+
+After the participant watches the recommended next video, estimate their post-study opinion index.
+Reason briefly inside <think> then output ONLY the numeric index (1-7) inside <answer>.
 ```
 
 #### Model Response
 
 ```text
 <think>
-The viewer is currently watching a video criticizing the effects of a $15 minimum wage. Given their recent viewing history and political interests, they may be more open to hearing arguments against such a policy. Option 1 seems like it would align better with their initial viewpoint, which opposes a $15 minimum wage.
+The viewer has recently watched videos discussing the impact of a $15 minimum wage and its potential effects on employment. They also have a preference for a higher minimum wage ($10). Given their recent exposure to these topics and their ideological alignment with liberalism, they may be more open to considering an alternative perspective that aligns with their values but does not necessarily advocate for a $15 minimum wage.
 </think>
 
 <answer>
 1
 </answer>
 
+<opinion>increase</opinion>
 ```
 
 #### Notes
 
 - Issue: minimum wage
-- Task: Next-video selection
-- Tags present — think: yes, answer: yes
-- Chosen option: 1
-- Short rationale: The viewer is currently watching a video criticizing the effects of a $15 minimum wage. Given their recent viewing history and political interests, they may be more open to hearing arguments against such a policy. Option 1 seems like it ...
-### Example 4 (Next Video)
+- Task: Opinion shift prediction
+- Tags — think: yes, answer: yes
+- Pre-study opinion index: 0.32
+- Predicted post-study index: 1.00
+- Predicted direction: increase
+- Short rationale: The viewer has recently watched videos discussing the impact of a $15 minimum wage and its potential effects on employment. They also have a preference for a higher minimum wage ($10). Given their recent exposure to these topics and thei...
+### Example 3 (Opinion)
 
 #### Question
 
 ```text
-VIEWER 65-year-old, White (non-Hispanic); watches YouTube a few times a month; lives in Pennsylvania.
+Issue: Minimum Wage
+Opinion scale: 1 = strongly oppose, 7 = strongly support.
+Pre-study opinion index: 0.08
+
+Viewer context:
+VIEWER 45-year-old, Caucasian/White (non-Hispanic) man; democrat liberal; $80,000-$99,999; college-educated; watches YouTube multiple times per day.
 Initial Viewpoint: Opposes a $15 minimum wage
 
-CURRENTLY WATCHING What the US gets wrong about minimum wage (from Vox)
+CURRENTLY WATCHING SOMEONE GIVE HIM A RAISE: Ben Shapiro kills the minimum wage argument for good (from Young America's Foundation)
 
 RECENTLY WATCHED (NEWEST LAST)
 1. Raise The Minimum Wage -- Robert Reich & MoveOn.org (watched 149s of 149s (100% complete), from MoveOn)
-2. Stossel: Minimum Wage Hurts Beginners (watched 275s of 276s (100% complete), from ReasonTV)
+2. Why Not Raise The Minimum Wage? (watched 179s of 180s (99% complete), from Counter Arguments)
+3. Milton Friedman on Minimum Wage (watched 218s of 219s (100% complete), from amagilly)
 
 SURVEY HIGHLIGHTS
-political interest is about sixty-seven percent, religious affiliation is Catholic, watches YouTube a few times a month, follows the news some of the time, minimum wage support score is twenty-five percent, and $15 minimum wage support is twenty-five percent.
+party identification is Democrat, party lean is Strong Democrat, ideology is Liberal, political interest is unsure about political interest, watches YouTube multiple times per day, preferred minimum wage target is $15, minimum wage support score is zero percent, and $15 minimum wage support is zero percent.
 
 OPTIONS
-1. The 5 Biggest Myths Republicans Use to Avoid Raising the Minimum Wage | Opinions | NowThis (NowThis News, 159s long) — Engagement: views 56,870, likes 4,183, comments 40
-2. Fast Food CEO After Minimum Wage Increase: """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""... (Waldorf Nation, 453s long) — Engagement: views 141,333, likes 2,609, comments 40
-3. Milton Friedman on Minimum Wage (amagilly, 219s long) — Engagement: views 484,030, likes 4,493, comments 40
-4. Walmart CEO: Federal minimum wage should be raised (CNBC Television, 353s long) — Engagement: views 13,695, likes 155, comments 40
+1. Socialist Tells Ben Shapiro: Workers Should Own the Means of Production (Ben Shapiro, 209s long) — Engagement: views 3,114,055, likes 102,357, comments 40
+2. Who Does a $15 Minimum Wage Help? (PragerU, 334s long) — Engagement: views 6,088,611, likes 49,500, comments 40
+3. What the US gets wrong about minimum wage (Vox, 306s long) — Engagement: views 2,007,754, likes 59,987, comments 40
+4. A $15 minimum wage would hurt those it's meant to help (Learn Liberty, 194s long) — Engagement: views 615,344, likes 5,843, comments 40
 
 QUESTIONS
 1. Which option number will the viewer watch next?
 2. After this recommendation, will the viewer's opinion on Minimum wage increase, decrease, or stay the same?
+
+After the participant watches the recommended next video, estimate their post-study opinion index.
+Reason briefly inside <think> then output ONLY the numeric index (1-7) inside <answer>.
 ```
 
 #### Model Response
 
 ```text
 <think>
-The viewer is currently watching a video criticizing the minimum wage increase from a conservative perspective. They oppose it initially but may change their view after being exposed to different viewpoints.
+The viewer has been exposed to videos that argue against raising the minimum wage. They have also watched a video by Ben Shapiro, who supports a higher minimum wage. Given their recent exposure to arguments against increasing the minimum wage, they may be more open to considering the benefits of a lower minimum wage.
 </think>
 
 <answer>
 1
 </answer>
 
+<opinion>increase</opinion>
 ```
 
 #### Notes
 
 - Issue: minimum wage
-- Task: Next-video selection
-- Tags present — think: yes, answer: yes
-- Chosen option: 1
-- Short rationale: The viewer is currently watching a video criticizing the minimum wage increase from a conservative perspective. They oppose it initially but may change their view after being exposed to different viewpoints.
-### Example 5 (Next Video)
+- Task: Opinion shift prediction
+- Tags — think: yes, answer: yes
+- Pre-study opinion index: 0.08
+- Predicted post-study index: 1.00
+- Predicted direction: increase
+- Short rationale: The viewer has been exposed to videos that argue against raising the minimum wage. They have also watched a video by Ben Shapiro, who supports a higher minimum wage. Given their recent exposure to arguments against increasing the minimum...
+### Example 4 (Opinion)
 
 #### Question
 
 ```text
-VIEWER 65-year-old, White (non-Hispanic); watches YouTube a few times a month; lives in Pennsylvania.
-Initial Viewpoint: Opposes a $15 minimum wage
+Issue: Minimum Wage
+Opinion scale: 1 = strongly oppose, 7 = strongly support.
+Pre-study opinion index: 0.68
 
-CURRENTLY WATCHING The 5 Biggest Myths Republicans Use to Avoid Raising the Minimum Wage | Opinions | NowThis (from NowThis News)
+Viewer context:
+VIEWER 56-year-old, Caucasian/White (non-Hispanic) woman; republican conservative; Less than $10,000; watches YouTube weekly.
+Initial Viewpoint: Preferred minimum wage is about $0.60
+
+CURRENTLY WATCHING What Amazon's New Minimum Wage Means For Inflation And The Future | Velshi & Ruhle | MSNBC (from MSNBC)
 
 RECENTLY WATCHED (NEWEST LAST)
-1. Raise The Minimum Wage -- Robert Reich & MoveOn.org (watched 149s of 149s (100% complete), from MoveOn)
-2. Stossel: Minimum Wage Hurts Beginners (watched 275s of 276s (100% complete), from ReasonTV)
-3. What the US gets wrong about minimum wage (watched 25s of 306s (8% complete), from Vox)
+1. Edgar the Exploiter - Minimum Wage Consequences (watched 420s of 429s (98% complete), from cowfootman)
+2. Charles Koch: No Minimum Wage will Help the Poor (watched 467s of 474s (99% complete), from Thom Hartmann Program)
+3. Who Is the Minimum Wage Really Protecting? (watched 168s of 172s (98% complete), from Foundation for Economic Education)
 
 SURVEY HIGHLIGHTS
-political interest is about sixty-seven percent, religious affiliation is Catholic, watches YouTube a few times a month, follows the news some of the time, minimum wage support score is twenty-five percent, and $15 minimum wage support is twenty-five percent.
+party identification is Republican, ideology is Conservative, political interest is not very interested in politics, watches YouTube weekly, preferred minimum wage target is $10, minimum wage support score is seventy-five percent, and $15 minimum wage support is seventy-five percent.
 
 OPTIONS
-1. Should We Raise the Minimum Wage? (vlogbrothers, 227s long) — Engagement: views 1,305,252, likes 28,589, comments 40
-2. Why Raising the Minimum Wage Doesn't Cause Inflation (Thom Hartmann Program, 264s long) — Engagement: views 5,714, likes 266, comments 40
-3. SOMEONE GIVE HIM A RAISE: Ben Shapiro kills the minimum wage argument for good (Young America's Foundation, 164s long) — Engagement: views 2,442,928, likes 29,244, comments 40
-4. Fast Food CEO After Minimum Wage Increase: """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""... (Waldorf Nation, 453s long) — Engagement: views 141,333, likes 2,609, comments 40
+1. Bernie Sanders: It's Impossible To Live On The Minimum Wage (Secular Talk, 317s long) — Engagement: views 63,202, likes 3,230, comments 40
+2. Joe Rogan - The Minimum Wage Destroys Jobs (JRE Clips, 557s long) — Engagement: views 221,682, likes 2,225, comments 40
+3. Why Not Raise The Minimum Wage? (Counter Arguments, 180s long) — Engagement: views 286,502, likes 8,417, comments 40
+4. Ben Shapiro: Debating Minimum Wage (Mister Danilo, 193s long) — Engagement: views 35,534, likes 632, comments 40
 
 QUESTIONS
 1. Which option number will the viewer watch next?
 2. After this recommendation, will the viewer's opinion on Minimum wage increase, decrease, or stay the same?
+
+After the participant watches the recommended next video, estimate their post-study opinion index.
+Reason briefly inside <think> then output ONLY the numeric index (1-7) inside <answer>.
 ```
 
 #### Model Response
 
 ```text
 <think>
-The viewer is currently watching content related to the minimum wage issue, which includes videos criticizing the idea. They oppose raising the minimum wage initially but may be open to reconsidering it based on the information they're exposed to.
+The viewer is watching content related to the impact of raising the minimum wage, which aligns with their recent interests. They have shown strong support for both maintaining the current minimum wage ($10) and increasing it to $15. Given their background as a Republican conservative who prefers a higher minimum wage, they may be more likely to view options that present arguments supporting such an increase.
 </think>
 
 <answer>
 1
 </answer>
 
+<opinion>increase</opinion>
 ```
 
 #### Notes
 
 - Issue: minimum wage
-- Task: Next-video selection
-- Tags present — think: yes, answer: yes
-- Chosen option: 1
-- Short rationale: The viewer is currently watching content related to the minimum wage issue, which includes videos criticizing the idea. They oppose raising the minimum wage initially but may be open to reconsidering it based on the information they're e...
+- Task: Opinion shift prediction
+- Tags — think: yes, answer: yes
+- Pre-study opinion index: 0.68
+- Predicted post-study index: 1.00
+- Predicted direction: increase
+- Short rationale: The viewer is watching content related to the impact of raising the minimum wage, which aligns with their recent interests. They have shown strong support for both maintaining the current minimum wage ($10) and increasing it to $15. Give...
+### Example 5 (Opinion)
+
+#### Question
+
+```text
+Issue: Minimum Wage
+Opinion scale: 1 = strongly oppose, 7 = strongly support.
+Pre-study opinion index: 0.15
+
+Viewer context:
+VIEWER 59-year-old, Black or African-American (non-Hispanic) woman; independent liberal; $80,000-$99,999; college-educated; watches YouTube several times a week.
+Initial Viewpoint: Opposes a $15 minimum wage
+
+CURRENTLY WATCHING Fast Food CEO After Minimum Wage Increase: """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""... (from Waldorf Nation)
+
+RECENTLY WATCHED (NEWEST LAST)
+1. Edgar the Exploiter - Minimum Wage Consequences (watched 418s of 429s (97% complete), from cowfootman)
+2. Milton Friedman on Minimum Wage (watched 217s of 219s (99% complete), from amagilly)
+3. A $15 minimum wage would hurt those it's meant to help (watched 193s of 194s (99% complete), from Learn Liberty)
+
+SURVEY HIGHLIGHTS
+party identification is Independent, ideology is Liberal, political interest is unsure about political interest, watches YouTube several times a week, preferred minimum wage target is $15, minimum wage support score is zero percent, and $15 minimum wage support is zero percent.
+
+OPTIONS
+1. Study: Minimum Wage Hikes INCREASE Jobs (The Young Turks, 591s long) — Engagement: views 74,228, likes 1,866, comments 40
+2. If a Business Won't pay a Living Wage - it Shouldn't Exist (Thom Hartmann Program, 559s long) — Engagement: views 10,082, likes 175, comments 40
+3. THIS Is What Happened When Minimum Wage Was Hiked Over 20% To $14! (The Money GPS, 541s long) — Engagement: views 16,951, likes 576, comments 40
+4. Charles Koch: No Minimum Wage will Help the Poor (Thom Hartmann Program, 474s long) — Engagement: views 70,217, likes 857, comments 40
+
+QUESTIONS
+1. Which option number will the viewer watch next?
+2. After this recommendation, will the viewer's opinion on Minimum wage increase, decrease, or stay the same?
+
+After the participant watches the recommended next video, estimate their post-study opinion index.
+Reason briefly inside <think> then output ONLY the numeric index (1-7) inside <answer>.
+```
+
+#### Model Response
+
+```text
+<think>
+The viewer is currently watching content related to the effects of increasing the minimum wage in fast food companies. They have shown strong opposition to raising the minimum wage initially but may be interested in understanding how such an increase might impact businesses and employees differently than they expected.
+</think>
+
+<answer>
+1
+</answer>
+
+<opinion>increase</opinion>
+```
+
+#### Notes
+
+- Issue: minimum wage
+- Task: Opinion shift prediction
+- Tags — think: yes, answer: yes
+- Pre-study opinion index: 0.15
+- Predicted post-study index: 1.00
+- Predicted direction: increase
+- Short rationale: The viewer is currently watching content related to the effects of increasing the minimum wage in fast food companies. They have shown strong opposition to raising the minimum wage initially but may be interested in understanding how suc...

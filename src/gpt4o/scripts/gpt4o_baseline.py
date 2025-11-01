@@ -13,12 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""CLI entry point powering the GPT-4o baseline executable."""
+"""CLI entry point powering the GPT-4o baseline executable.
+
+This thin wrapper preserves the legacy invocation pattern
+``python src/gpt4o/scripts/gpt4o_baseline.py`` while deferring to the
+canonical CLI under ``gpt4o.cli``.
+"""
 
 from __future__ import annotations
 
 import sys
 from pathlib import Path
+from importlib import import_module
 
 
 def _ensure_repo_on_path() -> None:
@@ -34,10 +40,16 @@ def _ensure_repo_on_path() -> None:
         sys.path.insert(0, str(repo_root))
 
 
-_ensure_repo_on_path()
+def _forward_to_cli() -> None:
+    """Ensure path and forward to ``gpt4o.cli:main``.
 
-from gpt4o.cli import main
+    Uses :mod:`importlib` to avoid non-top-level imports while preserving
+    backwards-compatible script execution.
+    """
+
+    _ensure_repo_on_path()
+    import_module("gpt4o.cli").main()
 
 
 if __name__ == "__main__":
-    main()
+    _forward_to_cli()

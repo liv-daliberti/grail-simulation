@@ -23,13 +23,11 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence
 
 from common.opinion.models import DEFAULT_SPECS
 
-from prompt_builder import (
-    as_list_json,
-    build_user_prompt,
-    clean_text,
-    is_nanlike,
-    synthesize_viewer_sentence,
-)
+# Import from explicit submodules so static analyzers (pylint) can resolve names.
+from prompt_builder.formatters import clean_text
+from prompt_builder.parsers import as_list_json, is_nanlike
+from prompt_builder.profiles.render import synthesize_viewer_sentence
+from prompt_builder.prompt import build_user_prompt
 
 from .constants import DEFAULT_SYSTEM_PROMPT
 from .shared import build_training_example, collect_passthrough_fields

@@ -34,12 +34,15 @@ from common.cli.options import (
     add_log_level_argument,
     add_overwrite_argument,
     add_stage_arguments,
+    add_reuse_sweeps_argument,
+    add_reuse_final_argument,
+    add_allow_incomplete_argument,
 )
 
 from ..core.data import issues_in_dataset, load_dataset_source
 from ..cli import DEFAULT_XGB_TEXT_FIELDS
 from ..core.opinion import DEFAULT_SPECS
-from .context import StudySpec, SweepConfig
+from .context import StudySpec, SweepConfig, BoosterParams
 from ..cli.args_shared import add_sentence_transformer_args, add_word2vec_args
 
 LOGGER = logging.getLogger("xgb.pipeline.cli")
@@ -183,33 +186,9 @@ def _extend_parser_with_args(parser: argparse.ArgumentParser) -> None:
         help="Log the planned actions without executing sweeps or evaluations.",
     )
     add_overwrite_argument(parser)
-    parser.add_argument(
-        "--reuse-sweeps",
-        action=argparse.BooleanOptionalAction,
-        default=False,
-        help=(
-            "Reuse cached sweep artefacts when available "
-            "(disabled by default; pass --reuse-sweeps to enable)."
-        ),
-    )
-    parser.add_argument(
-        "--reuse-final",
-        action=argparse.BooleanOptionalAction,
-        default=None,
-        help=(
-            "Reuse cached finalize-stage artefacts when available "
-            "(use --no-reuse-final to force recomputation)."
-        ),
-    )
-    parser.add_argument(
-        "--allow-incomplete",
-        action=argparse.BooleanOptionalAction,
-        default=True,
-        help=(
-            "Allow finalize/report stages to proceed with partial sweeps or metrics "
-            "(use --no-allow-incomplete to require completeness)."
-        ),
-    )
+    add_reuse_sweeps_argument(parser)
+    add_reuse_final_argument(parser)
+    add_allow_incomplete_argument(parser)
     add_stage_arguments(parser)
 
 
@@ -374,12 +353,12 @@ def _load_dataset_source_or_none(
             )
             return None
         raise
-    except FileNotFoundError as exc:
+    except (FileNotFoundError, ValueError) as exc:
         if allow_incomplete:
             LOGGER.warning(
                 (
-                    "Dataset path '%s' missing (%s). Proceeding with default study specs "
-                    "because allow-incomplete mode is enabled."
+                    "Dataset '%s' unavailable or invalid (%s). Proceeding with default study "
+                    "specs because allow-incomplete mode is enabled."
                 ),
                 dataset,
                 exc,
@@ -454,7 +433,7 @@ def _build_sweep_configs(args: argparse.Namespace) -> List[SweepConfig]:
     :param args: Parsed CLI namespace.
     :type args: argparse.Namespace
     :returns: List of sweep configurations spanning vectorisers and booster parameters.
-    :rtype: List[SweepConfig]
+    :rtype: List[~xgb.pipeline.context.SweepConfig]
     """
 
     def _parse_grid(raw: str, caster):
@@ -562,13 +541,15 @@ def _build_sweep_configs(args: argparse.Namespace) -> List[SweepConfig]:
                 SweepConfig(
                     text_vectorizer=vectorizer,
                     vectorizer_tag=tag,
-                    learning_rate=params["learning_rate"],
-                    max_depth=params["max_depth"],
-                    n_estimators=params["n_estimators"],
-                    subsample=params["subsample"],
-                    colsample_bytree=params["colsample_bytree"],
-                    reg_lambda=params["reg_lambda"],
-                    reg_alpha=params["reg_alpha"],
+                    booster=BoosterParams(
+                        learning_rate=params["learning_rate"],
+                        max_depth=params["max_depth"],
+                        n_estimators=params["n_estimators"],
+                        subsample=params["subsample"],
+                        colsample_bytree=params["colsample_bytree"],
+                        reg_lambda=params["reg_lambda"],
+                        reg_alpha=params["reg_alpha"],
+                    ),
                     vectorizer_cli=vectorizer_cli,
                 )
             )

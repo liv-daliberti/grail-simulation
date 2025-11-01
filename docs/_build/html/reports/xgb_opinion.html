@@ -3,10 +3,10 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="&lt;no title&gt;" href="xgb_opinion_from_next.html"><link rel="prev" title="&lt;no title&gt;" href="xgb_next_video.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="XGBoost Opinion (Next-Video Config)" href="xgb_opinion_from_next.html"><link rel="prev" title="XGBoost Next-Video Baseline" href="xgb_next_video.html">
 
     <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
-        <title>&lt;no title&gt; - GRAIL Simulation documentation</title>
+        <title>XGBoost Opinion Regression - GRAIL Simulation documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=580074bf" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
@@ -204,6 +204,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../api/xgb.html">XGBoost Baseline API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/gpt4o.html">GPT-4o Tools API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/grail.html">GRAIL Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/grpo.html">GRPO Pipeline API</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../api/common.html">Common Utilities API</a></li>
@@ -214,8 +215,8 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../api/visualization.html">Visualization Utilities</a></li>
 </ul>
-<ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="index.html">Reports</a><input aria-label="Toggle navigation of Reports" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Reports</a><input aria-label="Toggle navigation of Reports" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="prompt_stats.html">Prompt feature report</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="grpo.html">GRPO Reports</a><input aria-label="Toggle navigation of GRPO Reports" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="grpo_sample_generative_responses.html">GRPO Sample Generative Model Responses</a></li>
@@ -235,17 +236,22 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="prompt_builder.html">Prompt Builder Sample Prompts</a></li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_next_video.html#id1">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_opinion.html">KNN Opinion Regression</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_opinion_from_next.html">KNN Opinion Regression (Next-Video Config)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_opinion_from_next.html#knn-opinion-shift-study-next-video-config">KNN Opinion Shift Study (Next-Video Config)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_additional_features.html">KNN Additional Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_additional_features.html#additional-text-features">Additional Text Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l2"><a class="reference internal" href="knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="knn_opinion_from_next.html">KNN Opinion Regression (Next-Video Config)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="knn_additional_features.html">KNN Additional Features</a></li>
+<li class="toctree-l2 current has-children"><a class="reference internal" href="xgb.html">XGBoost Report Catalog</a><input aria-label="Toggle navigation of XGBoost Report Catalog" checked="" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="xgb_next_video.html">XGBoost Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xgb_next_video.html#id1">XGBoost Next-Video Baseline</a></li>
+<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">XGBoost Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id1">XGBoost Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xgb_opinion_from_next.html">XGBoost Opinion (Next-Video Config)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xgb_opinion_from_next.html#xgboost-opinion-regression-next-video-config">XGBoost Opinion Regression (Next-Video Config)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xgb_hyperparameter_tuning.html">XGBoost Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xgb_hyperparameter_tuning.html#hyper-parameter-tuning">Hyper-parameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xgb_additional_features.html">XGBoost Additional Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xgb_additional_features.html#additional-text-features">Additional Text Features</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="main.html">Portfolio Comparison (Main)</a></li>
@@ -291,7 +297,104 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          
+          <section id="xgboost-opinion-regression">
+<h1>XGBoost Opinion Regression<a class="headerlink" href="#xgboost-opinion-regression" title="Link to this heading">¶</a></h1>
+</section>
+<section id="id1">
+<h1>XGBoost Opinion Regression<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h1>
+<p>This summary captures the opinion-regression baselines trained with XGBoost for the selected participant studies.</p>
+<ul class="simple">
+<li><p>Dataset: <code class="docutils literal notranslate"><span class="pre">unknown</span></code></p></li>
+<li><p>Split: validation</p></li>
+<li><p>Metrics track MAE, RMSE, R², directional accuracy, MAE(change), RMSE(change), calibration slope/intercept, calibration ECE, and KL divergence versus the no-change baseline.</p></li>
+<li><p>Δ columns capture improvements relative to that baseline when available.</p></li>
+</ul>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Study</p></th>
+<th class="head text-right"><p>Participants</p></th>
+<th class="head text-right"><p>Accuracy ↑</p></th>
+<th class="head text-right"><p>Baseline ↑</p></th>
+<th class="head text-right"><p>Δ Accuracy ↑</p></th>
+<th class="head text-right"><p>MAE ↓</p></th>
+<th class="head text-right"><p>Δ vs baseline ↓</p></th>
+<th class="head text-right"><p>RMSE ↓</p></th>
+<th class="head text-right"><p>R² ↑</p></th>
+<th class="head text-right"><p>MAE (change) ↓</p></th>
+<th class="head text-right"><p>RMSE (change) ↓</p></th>
+<th class="head text-right"><p>Δ RMSE (change) ↓</p></th>
+<th class="head text-right"><p>Calib slope</p></th>
+<th class="head text-right"><p>Calib intercept</p></th>
+<th class="head text-right"><p>ECE ↓</p></th>
+<th class="head text-right"><p>Δ ECE ↓</p></th>
+<th class="head text-right"><p>KL div ↓</p></th>
+<th class="head text-right"><p>Δ KL ↓</p></th>
+<th class="head text-right"><p>Baseline MAE ↓</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>study1</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+<td class="text-right"><p>—</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<section id="tfidf-opinion-plots">
+<h2>TFIDF Opinion Plots<a class="headerlink" href="#tfidf-opinion-plots" title="Link to this heading">¶</a></h2>
+<p><img alt="Change Heatmap Study1" src="../reports/xgb/opinion/tfidf/opinion/change_heatmap_study1.png" /></p>
+<p><img alt="Change Heatmap Study2" src="../reports/xgb/opinion/tfidf/opinion/change_heatmap_study2.png" /></p>
+<p><img alt="Change Heatmap Study3" src="../reports/xgb/opinion/tfidf/opinion/change_heatmap_study3.png" /></p>
+<p><img alt="Error Histogram Study1" src="../reports/xgb/opinion/tfidf/opinion/error_histogram_study1.png" /></p>
+<p><img alt="Error Histogram Study2" src="../reports/xgb/opinion/tfidf/opinion/error_histogram_study2.png" /></p>
+<p><img alt="Error Histogram Study3" src="../reports/xgb/opinion/tfidf/opinion/error_histogram_study3.png" /></p>
+<p><img alt="Post Heatmap Study1" src="../reports/xgb/opinion/tfidf/opinion/post_heatmap_study1.png" /></p>
+<p><img alt="Post Heatmap Study2" src="../reports/xgb/opinion/tfidf/opinion/post_heatmap_study2.png" /></p>
+<p><img alt="Post Heatmap Study3" src="../reports/xgb/opinion/tfidf/opinion/post_heatmap_study3.png" /></p>
+</section>
+<section id="word2vec-opinion-plots">
+<h2>WORD2VEC Opinion Plots<a class="headerlink" href="#word2vec-opinion-plots" title="Link to this heading">¶</a></h2>
+<p><img alt="Change Heatmap Study1" src="../reports/xgb/opinion/word2vec/opinion/change_heatmap_study1.png" /></p>
+<p><img alt="Change Heatmap Study2" src="../reports/xgb/opinion/word2vec/opinion/change_heatmap_study2.png" /></p>
+<p><img alt="Error Histogram Study1" src="../reports/xgb/opinion/word2vec/opinion/error_histogram_study1.png" /></p>
+<p><img alt="Error Histogram Study2" src="../reports/xgb/opinion/word2vec/opinion/error_histogram_study2.png" /></p>
+<p><img alt="Post Heatmap Study1" src="../reports/xgb/opinion/word2vec/opinion/post_heatmap_study1.png" /></p>
+<p><img alt="Post Heatmap Study2" src="../reports/xgb/opinion/word2vec/opinion/post_heatmap_study2.png" /></p>
+</section>
+<section id="sentence-transformer-opinion-plots">
+<h2>SENTENCE_TRANSFORMER Opinion Plots<a class="headerlink" href="#sentence-transformer-opinion-plots" title="Link to this heading">¶</a></h2>
+<p><img alt="Change Heatmap Study3" src="../reports/xgb/opinion/sentence_transformer/opinion/change_heatmap_study3.png" /></p>
+<p><img alt="Error Histogram Study3" src="../reports/xgb/opinion/sentence_transformer/opinion/error_histogram_study3.png" /></p>
+<p><img alt="Post Heatmap Study3" src="../reports/xgb/opinion/sentence_transformer/opinion/post_heatmap_study3.png" /></p>
+</section>
+<section id="cross-study-diagnostics">
+<h2>Cross-Study Diagnostics<a class="headerlink" href="#cross-study-diagnostics" title="Link to this heading">¶</a></h2>
+</section>
+<section id="observations">
+<h2>Observations<a class="headerlink" href="#observations" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>study1: MAE — (Δ vs. baseline —), RMSE(change) —, ECE —, KL —, R² —.</p></li>
+</ul>
+</section>
+</section>
+
         </article>
       </div>
       <footer>
@@ -302,7 +405,7 @@
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">&lt;no title&gt;</div>
+                <div class="title">XGBoost Opinion (Next-Video Config)</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
@@ -313,7 +416,7 @@
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">&lt;no title&gt;</div>
+                <div class="title">XGBoost Next-Video Baseline</div>
                 
               </div>
             </a>

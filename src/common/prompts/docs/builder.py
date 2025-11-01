@@ -7,11 +7,10 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Sequence, Tuple
 
 from common import canon_video_id, get_logger
-from prompt_builder import (
-    build_user_prompt,
-    clean_text,
-    synthesize_viewer_sentence,
-)
+# Import from explicit submodules so static analyzers (pylint) can resolve names.
+from prompt_builder.formatters import clean_text
+from prompt_builder.prompt import build_user_prompt
+from prompt_builder.profiles.render import synthesize_viewer_sentence
 
 from .extra_fields import format_extra_field
 from .slate import extract_now_watching, extract_slate_items

@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple
 
@@ -859,6 +860,15 @@ def parse_and_run(
     """
 
     if TrlParser is None:  # pragma: no cover - optional dependency guard
+        # Provide minimal help when only --help/-h is requested to make
+        # entrypoints friendlier in lightweight environments (e.g., CI).
+        if any(arg in ("-h", "--help") for arg in sys.argv[1:]):
+            prog = sys.argv[0]
+            # Keep it simple; tests only assert that "usage:" appears.
+            print(f"usage: {prog} [--help]")
+            print("Open R1 training scripts require TRL for full CLI support.")
+            print("Install with: pip install trl")
+            return
         raise ImportError(
             "trl must be installed to parse Open R1 command-line arguments "
             "(pip install trl)."

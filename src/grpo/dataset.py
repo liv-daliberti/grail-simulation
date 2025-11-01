@@ -112,15 +112,23 @@ def _load_dataset_from_hub(
     _hf_datasets.require_dataset_support()
     if LOAD_DATASET is None or DOWNLOAD_CONFIG_CLS is None:  # pragma: no cover - defensive
         raise RuntimeError("datasets.load_dataset is unavailable.")
-    download_config = DOWNLOAD_CONFIG_CLS(resume_download=True, max_retries=2)  # type: ignore[misc]
+    download_config = DOWNLOAD_CONFIG_CLS(  # type: ignore[misc]
+        resume_download=True,
+        max_retries=2,
+    )
     LOGGER.info(
         "[DATASET] fetching hub dataset id=%s revision=%s cache_dir=%s",
         dataset_id,
         revision or "default",
         cache_dir or "<default>",
     )
+    revision_text = revision or "default"
+    cache_text = cache_dir or "<default>"
     print(
-        f"[grpo.dataset] fetching hub dataset id={dataset_id} revision={revision or 'default'} cache_dir={cache_dir or '<default>'}",
+        (
+            f"[grpo.dataset] fetching hub dataset id={dataset_id} "
+            f"revision={revision_text} cache_dir={cache_text}"
+        ),
         flush=True,
     )
     return LOAD_DATASET(  # type: ignore[misc]
@@ -166,7 +174,10 @@ def load_dataset_split(
                     len(rows),
                 )
                 print(
-                    f"[grpo.dataset] using split={candidate} from {source_repr} rows={len(rows)}",
+                    (
+                        f"[grpo.dataset] using split={candidate} "
+                        f"from {source_repr} rows={len(rows)}"
+                    ),
                     flush=True,
                 )
                 return rows

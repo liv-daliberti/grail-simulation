@@ -35,7 +35,7 @@ src/xgb/
 │   └── reports/                 # Markdown builders for reports/xgb/*
 ├── pipeline_reports/            # Legacy shims forwarding to pipeline/reports/*
 ├── scripts/                     # Backwards-compatible entry points
-└── xgboost-baseline.py          # Legacy CLI shim (invokes xgb.cli.main)
+└── xgboost_baseline.py          # Legacy CLI shim (invokes xgb.cli.main)
 ```
 
 Existing imports that target `xgb.pipeline_reports` continue to work through the compatibility

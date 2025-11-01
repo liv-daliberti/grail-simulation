@@ -47,7 +47,7 @@ class OpinionStudyResult:  # pylint: disable=too-many-instance-attributes
     metrics: Mapping[str, object]
     baseline: Mapping[str, object]
     artifacts: OpinionArtifacts
-    spec: "OpinionSpec | None" = None
+    spec: "common.opinion.OpinionSpec | None" = None
 
     @property
     def metrics_path(self) -> Path:

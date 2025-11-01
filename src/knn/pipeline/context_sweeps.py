@@ -42,14 +42,14 @@ class SweepOutcome:
     :param base: Base sweep outcome containing common metadata and metrics.
     :type base: ~common.pipeline.types.BasePipelineSweepOutcome
     :param knn: Extra KNN-specific metrics captured for the run.
-    :type knn: _KnnSweepStats
+    :type knn: object
     """
 
     def __init__(
         self,
         *,
         base: BasePipelineSweepOutcome[SweepConfig] | None = None,
-        knn: _KnnSweepStats | None = None,
+        knn: object | None = None,
         # Legacy flat kwargs for backwards compatibility (used in tests)
         order_index: int | None = None,
         study: StudySpec | None = None,
@@ -200,62 +200,57 @@ class OpinionSweepOutcome:
     :param base: Base opinion outcome carrying common metrics and artefacts.
     :type base: ~common.opinion.sweep_types.BaseOpinionSweepOutcome
     :param knn: Extra KNN opinion metrics captured for the run.
-    :type knn: _KnnOpinionExtras
+    :type knn: object
     """
 
     def __init__(
         self,
         *,
         base: BaseOpinionSweepOutcome[SweepConfig] | None = None,
-        knn: _KnnOpinionExtras | None = None,
-        # Legacy flat kwargs for backwards compatibility
-        order_index: int | None = None,
-        study: StudySpec | None = None,
-        config: "SweepConfig" | None = None,
-        mae: float | None = None,
-        rmse: float | None = None,
-        artifact: object | None = None,
-        accuracy_summary: object | None = None,
-        feature_space: str | None = None,
-        r2_score: float | None = None,
-        baseline_mae: float | None = None,
-        mae_delta: float | None = None,
-        best_k: int | None = None,
-        participants: int | None = None,
+        knn: object | None = None,
+        # Legacy flat kwargs for backwards compatibility (kept keyword-only)
+        **legacy_kwargs: object,
     ) -> None:
         """Construct an opinion sweep outcome.
 
         Accepts composed ``base`` + ``knn`` or legacy flat kwargs used by tests.
         """
         if base is None or knn is None:
-            # Build the composed objects from flat kwargs
-            assert order_index is not None
-            assert study is not None
-            assert config is not None
-            assert mae is not None
-            assert rmse is not None
-            assert artifact is not None
-            assert accuracy_summary is not None
-            assert feature_space is not None
-            assert r2_score is not None
-            assert best_k is not None
-            assert participants is not None
+            # Build the composed objects from flat kwargs passed by tests
+            # Required keys for constructing the base outcome
+            required = [
+                "order_index",
+                "study",
+                "config",
+                "mae",
+                "rmse",
+                "artifact",
+                "accuracy_summary",
+                "feature_space",
+                "r2_score",
+                "best_k",
+                "participants",
+            ]
+            # Validate presence of required legacy kwargs
+            for key in required:
+                assert key in legacy_kwargs and legacy_kwargs[key] is not None
+
             base = BaseOpinionSweepOutcome[SweepConfig](
-                order_index=order_index,
-                study=study,
-                config=config,
-                mae=mae,
-                rmse=rmse,
-                artifact=artifact,  # type: ignore[arg-type]
-                accuracy_summary=accuracy_summary,  # type: ignore[arg-type]
+                order_index=legacy_kwargs["order_index"],
+                study=legacy_kwargs["study"],
+                config=legacy_kwargs["config"],
+                mae=legacy_kwargs["mae"],
+                rmse=legacy_kwargs["rmse"],
+                artifact=legacy_kwargs["artifact"],  # type: ignore[arg-type]
+                accuracy_summary=legacy_kwargs["accuracy_summary"],  # type: ignore[arg-type]
             )
             knn = _KnnOpinionExtras(
-                feature_space=feature_space,
-                r2_score=r2_score,
-                baseline_mae=baseline_mae,
-                mae_delta=mae_delta,
-                best_k=best_k,
-                participants=participants,
+                feature_space=legacy_kwargs["feature_space"],
+                r2_score=legacy_kwargs["r2_score"],
+                baseline_mae=legacy_kwargs.get("baseline_mae"),
+                mae_delta=legacy_kwargs.get("mae_delta"),
+                best_k=legacy_kwargs["best_k"],
+                participants=legacy_kwargs["participants"],
             )
         self._base = base
         self._knn = knn

@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 
+from pathlib import Path
 from .args import add_comma_separated_argument
 
 
@@ -210,7 +211,8 @@ def add_eval_arguments(
             type=float,
             default=1e-6,
             help=(
-                "Tolerance for treating opinion deltas as no-change when measuring direction accuracy."
+                "Tolerance for treating opinion deltas as no-change "
+                "when measuring direction accuracy."
             ),
         )
 
@@ -269,3 +271,99 @@ def add_eval_arguments(
         )
 
     add_log_level_argument(parser)
+
+
+def add_standard_eval_arguments(
+    parser: argparse.ArgumentParser,
+    *,
+    default_out_dir: str,
+    include_llm_args: bool = False,
+    include_opinion_args: bool = False,
+    include_studies_filter: bool = False,
+    dataset_default: str = "data/cleaned_grail",
+    issues_default: str = "",
+    include_legacy_aliases: bool = True,
+) -> None:
+    """
+    Add the common evaluation arguments with repo-wide defaults.
+
+    This thin wrapper reduces duplicate-code blocks across CLIs by pinning the
+    shared defaults (cache dir, dataset default, legacy aliases) while letting
+    callers specify the output root directory.
+
+    :param parser: Argument parser to extend.
+    :param default_out_dir: Default output directory (e.g., "models/knn").
+    :param include_llm_args: Forwarded to :func:`add_eval_arguments`.
+    :param include_opinion_args: Forwarded to :func:`add_eval_arguments`.
+    :param include_studies_filter: Forwarded to :func:`add_eval_arguments`.
+    :param dataset_default: Dataset default; defaults to "data/cleaned_grail".
+    :param issues_default: Issues default; defaults to empty string (all).
+    :param include_legacy_aliases: Whether to include legacy flag aliases.
+    :returns: ``None``.
+    """
+
+    add_eval_arguments(
+        parser,
+        default_out_dir=default_out_dir,
+        default_cache_dir=str(Path.cwd() / "hf_cache"),
+        include_llm_args=include_llm_args,
+        include_opinion_args=include_opinion_args,
+        include_studies_filter=include_studies_filter,
+        dataset_default=dataset_default,
+        issues_default=issues_default,
+        include_legacy_aliases=include_legacy_aliases,
+    )
+
+
+def add_reuse_sweeps_argument(parser: argparse.ArgumentParser) -> None:
+    """Add a standard ``--reuse-sweeps`` boolean option to ``parser``.
+
+    :param parser: Argument parser receiving the reuse flag.
+    :returns: ``None``.
+    """
+
+    parser.add_argument(
+        "--reuse-sweeps",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help=(
+            "Reuse cached sweep artefacts when available "
+            "(default: off; pass --reuse-sweeps to enable)."
+        ),
+    )
+
+
+def add_reuse_final_argument(parser: argparse.ArgumentParser) -> None:
+    """Add a standard ``--reuse-final`` boolean option to ``parser``.
+
+    :param parser: Argument parser receiving the reuse flag.
+    :returns: ``None``.
+    """
+
+    parser.add_argument(
+        "--reuse-final",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help=(
+            "Reuse cached finalize-stage artefacts when available "
+            "(use --no-reuse-final to force recomputation)."
+        ),
+    )
+
+
+def add_allow_incomplete_argument(parser: argparse.ArgumentParser) -> None:
+    """Add a shared ``--allow-incomplete`` flag used by report stages.
+
+    :param parser: Argument parser receiving the allow-incomplete flag.
+    :returns: ``None``.
+    """
+
+    parser.add_argument(
+        "--allow-incomplete",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "Allow finalize/report stages to proceed with partial sweeps or metrics "
+            "(use --no-allow-incomplete to require completeness)."
+        ),
+    )

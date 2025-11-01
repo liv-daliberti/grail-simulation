@@ -85,34 +85,76 @@ class XGBoostBoosterParams:
     # Compatibility accessors
     @property
     def learning_rate(self) -> float:  # pragma: no cover - simple forwarding
+        """Return the booster learning rate (eta).
+
+        :return: Learning rate forwarded from :attr:`core`.
+        :rtype: float
+        """
         return self.core.learning_rate
 
     @property
     def max_depth(self) -> int:  # pragma: no cover
+        """Return the maximum depth of individual trees.
+
+        :return: Max tree depth from :attr:`core`.
+        :rtype: int
+        """
         return self.core.max_depth
 
     @property
     def n_estimators(self) -> int:  # pragma: no cover
+        """Return the number of boosting rounds (trees).
+
+        :return: Number of estimators from :attr:`core`.
+        :rtype: int
+        """
         return self.core.n_estimators
 
     @property
     def tree_method(self) -> str:  # pragma: no cover
+        """Return the tree construction algorithm.
+
+        Typical values include ``hist`` and ``approx``.
+
+        :return: Tree method from :attr:`core`.
+        :rtype: str
+        """
         return self.core.tree_method
 
     @property
     def subsample(self) -> float:  # pragma: no cover
+        """Return the row subsampling ratio for each tree.
+
+        :return: Subsample ratio from :attr:`sampling`.
+        :rtype: float
+        """
         return self.sampling.subsample
 
     @property
     def colsample_bytree(self) -> float:  # pragma: no cover
+        """Return the feature subsampling ratio per tree.
+
+        :return: Column subsample ratio from :attr:`sampling`.
+        :rtype: float
+        """
         return self.sampling.colsample_bytree
 
     @property
     def reg_lambda(self) -> float:  # pragma: no cover
+        """Return the L2 regularisation term (``lambda``).
+
+        :return: L2 penalty from :attr:`regularization`.
+        :rtype: float
+        """
         return self.regularization.reg_lambda
 
     @property
     def reg_alpha(self) -> float:  # pragma: no cover
+        """Return the L1 regularisation term (``alpha``).
+
+        :return: L1 penalty from :attr:`regularization`.
+        :rtype: float
+        """
         return self.regularization.reg_alpha
 
     @classmethod
@@ -165,19 +207,29 @@ class XGBoostTrainConfig:
         *,
         max_train: int = 200_000,
         seed: int = 42,
-        max_features: Optional[int] = 200_000,
         vectorizer_kind: str = "tfidf",
-        booster: XGBoostBoosterParams | None = None,
-        vectorizers: _TrainVectorizers | None = None,
-        tfidf: TfidfConfig | None = None,
-        word2vec: Word2VecVectorizerConfig | None = None,
-        sentence_transformer: SentenceTransformerVectorizerConfig | None = None,
-        **_: Any,
+        **kwargs: Any,
     ) -> None:
+        """Create a training config with a compact signature.
+
+        Backwards-compatible: accepts legacy keyword-only params via ``kwargs``
+        (e.g. ``max_features``, ``booster``, ``tfidf``) and maps them to the
+        appropriate grouped structures.
+        """
+
         self.max_train = max_train
         self.seed = seed
-        self.max_features = max_features
         self.vectorizer_kind = vectorizer_kind
+
+        # Legacy/optional parameters consumed from kwargs
+        max_features = kwargs.pop("max_features", 200_000)
+        booster = kwargs.pop("booster", None)
+        vectorizers = kwargs.pop("vectorizers", None)
+        tfidf = kwargs.pop("tfidf", None)
+        word2vec = kwargs.pop("word2vec", None)
+        sentence_transformer = kwargs.pop("sentence_transformer", None)
+
+        self.max_features = max_features
         self.vectorizers = vectorizers or _TrainVectorizers(
             tfidf=tfidf or TfidfConfig(),
             word2vec=word2vec or Word2VecVectorizerConfig(),
@@ -188,28 +240,58 @@ class XGBoostTrainConfig:
     # Backwards-compatible accessors for vectorizer configs
     @property
     def tfidf(self) -> TfidfConfig:  # pragma: no cover - simple forwarding
+        """Return the TF‑IDF vectoriser configuration.
+
+        :return: Current TF‑IDF configuration.
+        :rtype: ~xgb.core.vectorizers.TfidfConfig
+        """
         return self.vectorizers.tfidf
 
     @tfidf.setter
     def tfidf(self, value: TfidfConfig) -> None:  # pragma: no cover - simple forwarding
+        """Set the TF‑IDF vectoriser configuration.
+
+        :param value: New TF‑IDF configuration applied to training.
+        :type value: ~xgb.core.vectorizers.TfidfConfig
+        """
         self.vectorizers.tfidf = value
 
     @property
     def word2vec(self) -> Word2VecVectorizerConfig:  # pragma: no cover
+        """Return the Word2Vec vectoriser configuration.
+
+        :return: Current Word2Vec configuration.
+        :rtype: ~xgb.core.vectorizers.Word2VecVectorizerConfig
+        """
         return self.vectorizers.word2vec
 
     @word2vec.setter
     def word2vec(self, value: Word2VecVectorizerConfig) -> None:  # pragma: no cover
+        """Set the Word2Vec vectoriser configuration.
+
+        :param value: New Word2Vec configuration used for training.
+        :type value: ~xgb.core.vectorizers.Word2VecVectorizerConfig
+        """
         self.vectorizers.word2vec = value
 
     @property
     def sentence_transformer(self) -> SentenceTransformerVectorizerConfig:  # pragma: no cover
+        """Return the sentence‑transformer vectoriser configuration.
+
+        :return: Current sentence‑transformer configuration.
+        :rtype: ~xgb.core.vectorizers.SentenceTransformerVectorizerConfig
+        """
         return self.vectorizers.sentence_transformer
 
     @sentence_transformer.setter
     def sentence_transformer(
         self, value: SentenceTransformerVectorizerConfig
     ) -> None:  # pragma: no cover
+        """Set the sentence‑transformer vectoriser configuration.
+
+        :param value: New sentence‑transformer settings used during training.
+        :type value: ~xgb.core.vectorizers.SentenceTransformerVectorizerConfig
+        """
         self.vectorizers.sentence_transformer = value
 
     @classmethod
@@ -225,4 +307,3 @@ __all__ = [
     "XGBoostBoosterParams",
     "XGBoostTrainConfig",
 ]
-

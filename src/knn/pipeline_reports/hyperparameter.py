@@ -17,6 +17,6 @@
 
 from __future__ import annotations
 
-from knn.pipeline.reports.hyperparameter import _build_hyperparameter_report  # type: ignore[F401]
+from knn.pipeline.reports.hyperparameter import _build_hyperparameter_report
 
 __all__ = ["_build_hyperparameter_report"]

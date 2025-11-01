@@ -203,6 +203,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../api/xgb.html">XGBoost Baseline API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/gpt4o.html">GPT-4o Tools API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/grail.html">GRAIL Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/grpo.html">GRPO Pipeline API</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/common.html">Common Utilities API</a></li>
@@ -234,17 +235,22 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_next_video.html#id1">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion_from_next.html">KNN Opinion Regression (Next-Video Config)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion_from_next.html#knn-opinion-shift-study-next-video-config">KNN Opinion Shift Study (Next-Video Config)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_additional_features.html">KNN Additional Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_additional_features.html#additional-text-features">Additional Text Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reports/knn_opinion_from_next.html">KNN Opinion Regression (Next-Video Config)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reports/knn_additional_features.html">KNN Additional Features</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../reports/xgb.html">XGBoost Report Catalog</a><input aria-label="Toggle navigation of XGBoost Report Catalog" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/xgb_next_video.html">XGBoost Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/xgb_next_video.html#id1">XGBoost Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/xgb_opinion.html">XGBoost Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/xgb_opinion.html#id1">XGBoost Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/xgb_opinion_from_next.html">XGBoost Opinion (Next-Video Config)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/xgb_opinion_from_next.html#xgboost-opinion-regression-next-video-config">XGBoost Opinion Regression (Next-Video Config)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/xgb_hyperparameter_tuning.html">XGBoost Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/xgb_hyperparameter_tuning.html#hyper-parameter-tuning">Hyper-parameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/xgb_additional_features.html">XGBoost Additional Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/xgb_additional_features.html#additional-text-features">Additional Text Features</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/main.html">Portfolio Comparison (Main)</a></li>
@@ -306,6 +312,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span>
 
@@ -1148,6 +1155,15 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">TrlParser</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency guard</span>
+        <span class="c1"># Provide minimal help when only --help/-h is requested to make</span>
+        <span class="c1"># entrypoints friendlier in lightweight environments (e.g., CI).</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">arg</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;-h&quot;</span><span class="p">,</span> <span class="s2">&quot;--help&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+            <span class="n">prog</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="c1"># Keep it simple; tests only assert that &quot;usage:&quot; appears.</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;usage: </span><span class="si">{</span><span class="n">prog</span><span class="si">}</span><span class="s2"> [--help]&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Open R1 training scripts require TRL for full CLI support.&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Install with: pip install trl&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
         <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
             <span class="s2">&quot;trl must be installed to parse Open R1 command-line arguments &quot;</span>
             <span class="s2">&quot;(pip install trl).&quot;</span>

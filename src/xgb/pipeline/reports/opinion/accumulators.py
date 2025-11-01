@@ -111,7 +111,16 @@ class _MetricContext:
 
 
 @dataclass
-class _OpinionPortfolioAccumulator:  # pylint: disable=too-many-instance-attributes
+class _MetricBundle:
+    """Grouped storage for a metric's entries, deltas, and weighted stats."""
+
+    stats: _WeightedMetricAccumulator = field(default_factory=_WeightedMetricAccumulator)
+    entries: List[Tuple[float, str]] = field(default_factory=list)
+    delta_entries: List[Tuple[float, str]] = field(default_factory=list)
+
+
+@dataclass
+class _OpinionPortfolioAccumulator:
     """
     Aggregate opinion-regression metrics across studies.
 
@@ -123,29 +132,11 @@ class _OpinionPortfolioAccumulator:  # pylint: disable=too-many-instance-attribu
     :ivar accuracy_delta_entries: Recorded directional accuracy deltas with labels.
     """
 
-    mae_stats: _WeightedMetricAccumulator = field(default_factory=_WeightedMetricAccumulator)
-    accuracy_stats: _WeightedMetricAccumulator = field(
-        default_factory=_WeightedMetricAccumulator
-    )
-    rmse_change_stats: _WeightedMetricAccumulator = field(
-        default_factory=_WeightedMetricAccumulator
-    )
-    calibration_ece_stats: _WeightedMetricAccumulator = field(
-        default_factory=_WeightedMetricAccumulator
-    )
-    kl_divergence_stats: _WeightedMetricAccumulator = field(
-        default_factory=_WeightedMetricAccumulator
-    )
-    mae_entries: List[Tuple[float, str]] = field(default_factory=list)
-    delta_entries: List[Tuple[float, str]] = field(default_factory=list)
-    accuracy_entries: List[Tuple[float, str]] = field(default_factory=list)
-    accuracy_delta_entries: List[Tuple[float, str]] = field(default_factory=list)
-    rmse_change_entries: List[Tuple[float, str]] = field(default_factory=list)
-    rmse_change_delta_entries: List[Tuple[float, str]] = field(default_factory=list)
-    calibration_ece_entries: List[Tuple[float, str]] = field(default_factory=list)
-    calibration_ece_delta_entries: List[Tuple[float, str]] = field(default_factory=list)
-    kl_entries: List[Tuple[float, str]] = field(default_factory=list)
-    kl_delta_entries: List[Tuple[float, str]] = field(default_factory=list)
+    mae: _MetricBundle = field(default_factory=_MetricBundle)
+    accuracy: _MetricBundle = field(default_factory=_MetricBundle)
+    rmse_change: _MetricBundle = field(default_factory=_MetricBundle)
+    calibration_ece: _MetricBundle = field(default_factory=_MetricBundle)
+    kl_divergence: _MetricBundle = field(default_factory=_MetricBundle)
 
     def _record_metric(
         self,
@@ -189,9 +180,9 @@ class _OpinionPortfolioAccumulator:  # pylint: disable=too-many-instance-attribu
             metrics.mae,
             metrics.baseline_mae,
             _MetricTarget(
-                entries=self.mae_entries,
-                stats=self.mae_stats,
-                delta_entries=self.delta_entries,
+                entries=self.mae.entries,
+                stats=self.mae.stats,
+                delta_entries=self.mae.delta_entries,
             ),
             _MetricContext(
                 label=label,
@@ -203,9 +194,9 @@ class _OpinionPortfolioAccumulator:  # pylint: disable=too-many-instance-attribu
             metrics.accuracy,
             metrics.baseline_accuracy,
             _MetricTarget(
-                entries=self.accuracy_entries,
-                stats=self.accuracy_stats,
-                delta_entries=self.accuracy_delta_entries,
+                entries=self.accuracy.entries,
+                stats=self.accuracy.stats,
+                delta_entries=self.accuracy.delta_entries,
             ),
             _MetricContext(
                 label=label,
@@ -217,9 +208,9 @@ class _OpinionPortfolioAccumulator:  # pylint: disable=too-many-instance-attribu
             metrics.rmse_change,
             metrics.baseline_rmse_change,
             _MetricTarget(
-                entries=self.rmse_change_entries,
-                stats=self.rmse_change_stats,
-                delta_entries=self.rmse_change_delta_entries,
+                entries=self.rmse_change.entries,
+                stats=self.rmse_change.stats,
+                delta_entries=self.rmse_change.delta_entries,
             ),
             _MetricContext(
                 label=label,
@@ -234,9 +225,9 @@ class _OpinionPortfolioAccumulator:  # pylint: disable=too-many-instance-attribu
             metrics.calibration_ece,
             metrics.baseline_calibration_ece,
             _MetricTarget(
-                entries=self.calibration_ece_entries,
-                stats=self.calibration_ece_stats,
-                delta_entries=self.calibration_ece_delta_entries,
+                entries=self.calibration_ece.entries,
+                stats=self.calibration_ece.stats,
+                delta_entries=self.calibration_ece.delta_entries,
             ),
             _MetricContext(
                 label=label,
@@ -251,9 +242,9 @@ class _OpinionPortfolioAccumulator:  # pylint: disable=too-many-instance-attribu
             metrics.kl_divergence_change,
             metrics.baseline_kl_divergence_change,
             _MetricTarget(
-                entries=self.kl_entries,
-                stats=self.kl_divergence_stats,
-                delta_entries=self.kl_delta_entries,
+                entries=self.kl_divergence.entries,
+                stats=self.kl_divergence.stats,
+                delta_entries=self.kl_divergence.delta_entries,
             ),
             _MetricContext(
                 label=label,
@@ -273,13 +264,13 @@ class _OpinionPortfolioAccumulator:  # pylint: disable=too-many-instance-attribu
         :returns: Ordered list of Markdown lines describing the portfolio.
         """
 
-        if not self.mae_entries:
+        if not self.mae.entries:
             return []
 
         lines: List[str] = []
         if heading:
             lines.extend([heading, ""])
-        participant_total = int(self.mae_stats.weight_total)
+        participant_total = int(self.mae.stats.weight_total)
         lines.extend(self._portfolio_mae_lines(participant_total))
         lines.extend(self._portfolio_accuracy_lines())
         lines.extend(self._portfolio_rmse_change_lines(participant_total))
@@ -303,8 +294,8 @@ class _OpinionPortfolioAccumulator:  # pylint: disable=too-many-instance-attribu
         """
 
         lines: List[str] = []
-        weighted_mae = self.mae_stats.weighted_value()
-        weighted_baseline = self.mae_stats.weighted_baseline()
+        weighted_mae = self.mae.stats.weighted_value()
+        weighted_baseline = self.mae.stats.weighted_baseline()
         if weighted_mae is not None:
             lines.append(
                 "- Weighted MAE "
@@ -330,9 +321,9 @@ class _OpinionPortfolioAccumulator:  # pylint: disable=too-many-instance-attribu
         """
 
         lines: List[str] = []
-        weighted_accuracy = self.accuracy_stats.weighted_value()
-        weighted_baseline = self.accuracy_stats.weighted_baseline()
-        weight_total = int(self.accuracy_stats.weight_total)
+        weighted_accuracy = self.accuracy.stats.weighted_value()
+        weighted_baseline = self.accuracy.stats.weighted_baseline()
+        weight_total = int(self.accuracy.stats.weight_total)
         if weighted_accuracy is not None:
             lines.append(
                 "- Weighted directional accuracy "
@@ -359,9 +350,9 @@ class _OpinionPortfolioAccumulator:  # pylint: disable=too-many-instance-attribu
         """
 
         lines: List[str] = []
-        weighted_rmse = self.rmse_change_stats.weighted_value()
-        weighted_baseline = self.rmse_change_stats.weighted_baseline()
-        weight_total = int(self.rmse_change_stats.weight_total) or participants
+        weighted_rmse = self.rmse_change.stats.weighted_value()
+        weighted_baseline = self.rmse_change.stats.weighted_baseline()
+        weight_total = int(self.rmse_change.stats.weight_total) or participants
         if weighted_rmse is not None:
             lines.append(
                 "- Weighted RMSE (change) "
@@ -388,9 +379,9 @@ class _OpinionPortfolioAccumulator:  # pylint: disable=too-many-instance-attribu
         """
 
         lines: List[str] = []
-        weighted_ece = self.calibration_ece_stats.weighted_value()
-        weighted_baseline = self.calibration_ece_stats.weighted_baseline()
-        weight_total = int(self.calibration_ece_stats.weight_total) or participants
+        weighted_ece = self.calibration_ece.stats.weighted_value()
+        weighted_baseline = self.calibration_ece.stats.weighted_baseline()
+        weight_total = int(self.calibration_ece.stats.weight_total) or participants
         if weighted_ece is not None:
             lines.append(
                 "- Weighted calibration ECE "
@@ -417,9 +408,9 @@ class _OpinionPortfolioAccumulator:  # pylint: disable=too-many-instance-attribu
         """
 
         lines: List[str] = []
-        weighted_kl = self.kl_divergence_stats.weighted_value()
-        weighted_baseline = self.kl_divergence_stats.weighted_baseline()
-        weight_total = int(self.kl_divergence_stats.weight_total) or participants
+        weighted_kl = self.kl_divergence.stats.weighted_value()
+        weighted_baseline = self.kl_divergence.stats.weighted_baseline()
+        weight_total = int(self.kl_divergence.stats.weight_total) or participants
         if weighted_kl is not None:
             lines.append(
                 "- Weighted KL divergence "
@@ -445,15 +436,15 @@ class _OpinionPortfolioAccumulator:  # pylint: disable=too-many-instance-attribu
         """
 
         lines: List[str] = []
-        if self.delta_entries:
-            best_delta = max(self.delta_entries, key=lambda item: item[0])
+        if self.mae.delta_entries:
+            best_delta = max(self.mae.delta_entries, key=lambda item: item[0])
             lines.append(
                 "- Largest MAE reduction: "
                 f"{best_delta[1]} ({_format_delta(best_delta[0])})."
             )
-        if len(self.mae_entries) > 1:
-            lowest = min(self.mae_entries, key=lambda item: item[0])
-            highest = max(self.mae_entries, key=lambda item: item[0])
+        if len(self.mae.entries) > 1:
+            lowest = min(self.mae.entries, key=lambda item: item[0])
+            highest = max(self.mae.entries, key=lambda item: item[0])
             lines.append(
                 "- Lowest MAE: "
                 f"{lowest[1]} ({_format_optional_float(lowest[0])}); "
@@ -469,14 +460,14 @@ class _OpinionPortfolioAccumulator:  # pylint: disable=too-many-instance-attribu
         """
 
         lines: List[str] = []
-        if self.accuracy_entries:
-            best_accuracy = max(self.accuracy_entries, key=lambda item: item[0])
+        if self.accuracy.entries:
+            best_accuracy = max(self.accuracy.entries, key=lambda item: item[0])
             lines.append(
                 "- Highest directional accuracy: "
                 f"{best_accuracy[1]} ({_format_optional_float(best_accuracy[0])})."
             )
-        if len(self.accuracy_entries) > 1:
-            lowest_accuracy = min(self.accuracy_entries, key=lambda item: item[0])
+        if len(self.accuracy.entries) > 1:
+            lowest_accuracy = min(self.accuracy.entries, key=lambda item: item[0])
             lines.append(
                 "- Lowest directional accuracy: "
                 f"{lowest_accuracy[1]} ({_format_optional_float(lowest_accuracy[0])})."
@@ -491,8 +482,8 @@ class _OpinionPortfolioAccumulator:  # pylint: disable=too-many-instance-attribu
         """
 
         lines: List[str] = []
-        if self.accuracy_delta_entries:
-            best_delta = max(self.accuracy_delta_entries, key=lambda item: item[0])
+        if self.accuracy.delta_entries:
+            best_delta = max(self.accuracy.delta_entries, key=lambda item: item[0])
             lines.append(
                 "- Largest directional-accuracy gain: "
                 f"{best_delta[1]} ({_format_delta(best_delta[0])})."
@@ -507,15 +498,15 @@ class _OpinionPortfolioAccumulator:  # pylint: disable=too-many-instance-attribu
         """
 
         lines: List[str] = []
-        if self.rmse_change_delta_entries:
-            best_delta = max(self.rmse_change_delta_entries, key=lambda item: item[0])
+        if self.rmse_change.delta_entries:
+            best_delta = max(self.rmse_change.delta_entries, key=lambda item: item[0])
             lines.append(
                 "- Largest RMSE(change) reduction: "
                 f"{best_delta[1]} ({_format_delta(best_delta[0])})."
             )
-        if len(self.rmse_change_entries) > 1:
-            lowest = min(self.rmse_change_entries, key=lambda item: item[0])
-            highest = max(self.rmse_change_entries, key=lambda item: item[0])
+        if len(self.rmse_change.entries) > 1:
+            lowest = min(self.rmse_change.entries, key=lambda item: item[0])
+            highest = max(self.rmse_change.entries, key=lambda item: item[0])
             lines.append(
                 "- Lowest RMSE(change): "
                 f"{lowest[1]} ({_format_optional_float(lowest[0])}); "
@@ -531,15 +522,15 @@ class _OpinionPortfolioAccumulator:  # pylint: disable=too-many-instance-attribu
         """
 
         lines: List[str] = []
-        if self.calibration_ece_delta_entries:
-            best_delta = max(self.calibration_ece_delta_entries, key=lambda item: item[0])
+        if self.calibration_ece.delta_entries:
+            best_delta = max(self.calibration_ece.delta_entries, key=lambda item: item[0])
             lines.append(
                 "- Largest calibration ECE drop: "
                 f"{best_delta[1]} ({_format_delta(best_delta[0])})."
             )
-        if len(self.calibration_ece_entries) > 1:
-            lowest = min(self.calibration_ece_entries, key=lambda item: item[0])
-            highest = max(self.calibration_ece_entries, key=lambda item: item[0])
+        if len(self.calibration_ece.entries) > 1:
+            lowest = min(self.calibration_ece.entries, key=lambda item: item[0])
+            highest = max(self.calibration_ece.entries, key=lambda item: item[0])
             lines.append(
                 "- Lowest calibration ECE: "
                 f"{lowest[1]} ({_format_optional_float(lowest[0])}); "
@@ -555,15 +546,15 @@ class _OpinionPortfolioAccumulator:  # pylint: disable=too-many-instance-attribu
         """
 
         lines: List[str] = []
-        if self.kl_delta_entries:
-            best_delta = max(self.kl_delta_entries, key=lambda item: item[0])
+        if self.kl_divergence.delta_entries:
+            best_delta = max(self.kl_divergence.delta_entries, key=lambda item: item[0])
             lines.append(
                 "- Largest KL divergence drop: "
                 f"{best_delta[1]} ({_format_delta(best_delta[0])})."
             )
-        if len(self.kl_entries) > 1:
-            lowest = min(self.kl_entries, key=lambda item: item[0])
-            highest = max(self.kl_entries, key=lambda item: item[0])
+        if len(self.kl_divergence.entries) > 1:
+            lowest = min(self.kl_divergence.entries, key=lambda item: item[0])
+            highest = max(self.kl_divergence.entries, key=lambda item: item[0])
             lines.append(
                 "- Lowest KL divergence: "
                 f"{lowest[1]} ({_format_optional_float(lowest[0])}); "

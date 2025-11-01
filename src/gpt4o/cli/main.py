@@ -18,11 +18,11 @@
 from __future__ import annotations
 
 import argparse
-import logging
 from pathlib import Path
 
 from importlib import import_module
 
+from common.cli.run import run_main
 from ..core.config import DEFAULT_CACHE_DIR
 from ..core.evaluate import run_eval
 
@@ -50,20 +50,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> None:
-    """Parse command-line arguments and execute the evaluation routine.
-
-    :param argv: Optional argument list to parse instead of ``sys.argv``.
-    :type argv: list[str] | None
-    """
-
-    parser = build_parser()
-    args = parser.parse_args(argv)
-
-    logging.basicConfig(
-        level=getattr(logging, args.log_level.upper(), logging.INFO),
-        format="%(asctime)s %(levelname)s: %(message)s",
-    )
-    run_eval(args)
+    """Parse CLI args and run evaluation for GPT-4o."""
+    run_main(build_parser, run_eval, argv)
 
 
 if __name__ == "__main__":  # pragma: no cover

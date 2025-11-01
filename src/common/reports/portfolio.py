@@ -30,16 +30,18 @@ import csv
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, Mapping, Optional, Sequence
+from typing import Mapping, Optional, Sequence
 
-from .utils import start_markdown_report
-from .tables import append_markdown_table
 from common.pipeline.io import write_markdown_lines
 from common.opinion import DEFAULT_SPECS
+from .utils import start_markdown_report
+from .tables import append_markdown_table
 
 
 ModelKey = str  # One of: "gpt4o", "grpo", "grail", "knn", "xgb"
 StudyLabel = str  # e.g. "Study 1 – Gun Control (MTurk)"
+StudyScores = dict[StudyLabel, float]
+StudyScoresPair = tuple[StudyScores, StudyScores]
 
 
 @dataclass(frozen=True)
@@ -78,6 +80,46 @@ def _study_order() -> list[StudyLabel]:
 
 def _label_by_key() -> dict[str, str]:
     return {spec.key: spec.label for spec in DEFAULT_SPECS}
+
+
+# ------------------------
+# Internal helpers
+# ------------------------
+
+def _is_checkpoint_50(path: Path) -> bool:
+    parts = path.as_posix().split("/")
+    return "checkpoint-50" in parts
+
+
+def _collect_next_video_candidates(model_root: Path) -> list[Path]:
+    """Collect candidate next_video metrics.json paths for a model family.
+
+    Prefers a flat ``next_video`` layout when present, otherwise searches under
+    the whole family directory. Excludes any file within a ``sweeps`` subtree.
+    """
+    candidates: list[Path] = []
+
+    # First preference: flat next_video tree at the family root
+    flat_root = model_root / "next_video"
+    if flat_root.exists():
+        for sub in sorted(flat_root.glob("*/metrics.json")):
+            if "/sweeps/" in sub.as_posix():
+                continue
+            candidates.append(sub)
+        if not candidates:
+            candidates.extend(sorted(flat_root.rglob("metrics.json")))
+
+    # Fallback: recursively search under the family root for any next_video metrics
+    if not candidates and model_root.exists():
+        for path in sorted(model_root.rglob("metrics.json")):
+            posix = path.as_posix()
+            if "/next_video/" not in posix:
+                continue
+            if "/sweeps/" in posix:
+                continue
+            candidates.append(path)
+
+    return candidates
 
 
 # ------------------------
@@ -125,7 +167,8 @@ def _read_grouped_json_next_video(repo_root: Path, family: str) -> dict[StudyLab
     """Return per-study accuracy from JSON metrics for next-video.
 
     Supports both flat layouts (e.g. ``models/gpt-4o/next_video/<label>/metrics.json``)
-    and nested RLHF layouts (e.g. ``models/<family>/<scenario>/checkpoint-50/next_video/**/metrics.json``).
+    and nested RLHF layouts (e.g.
+    ``models/<family>/<scenario>/checkpoint-50/next_video/**/metrics.json``).
     Aggregates across multiple runs so studies split by issue are combined.
     """
     model_root = repo_root / "models" / family
@@ -134,36 +177,19 @@ def _read_grouped_json_next_video(repo_root: Path, family: str) -> dict[StudyLab
     if not model_root.exists():
         return values
 
-    candidates: list[Path] = []
-    # First preference: flat next_video tree at the family root
-    flat_root = model_root / "next_video"
-    if flat_root.exists():
-        for sub in sorted(flat_root.glob("*/metrics.json")):
-            if "/sweeps/" in sub.as_posix():
-                continue
-            candidates.append(sub)
-        if not candidates:
-            candidates.extend(sorted(flat_root.rglob("metrics.json")))
-
-    # Fallback: recursively search under the family root for any next_video metrics
-    if not candidates:
-        for path in sorted(model_root.rglob("metrics.json")):
-            posix = path.as_posix()
-            if "/next_video/" not in posix:
-                continue
-            if "/sweeps/" in posix:
-                continue
-            candidates.append(path)
+    candidates = _collect_next_video_candidates(model_root)
 
     if not candidates:
         return values
 
     # Process non-checkpoint candidates first, then checkpoint-50 variants so they override
-    def _is_checkpoint_50(p: Path) -> bool:
-        parts = p.as_posix().split("/")
-        return "checkpoint-50" in parts
-
-    ordered: list[Path] = sorted(candidates, key=lambda p: (0 if not _is_checkpoint_50(p) else 1, p.as_posix()))
+    ordered: list[Path] = sorted(
+        candidates,
+        key=lambda path_obj: (
+            0 if not _is_checkpoint_50(path_obj) else 1,
+            path_obj.as_posix(),
+        ),
+    )
 
     for metrics_path in ordered:
         payload = _load_json(metrics_path)
@@ -189,7 +215,7 @@ def _read_grouped_json_next_video(repo_root: Path, family: str) -> dict[StudyLab
 # Opinion readers
 # ------------------------
 
-def _read_knn_opinion_from_next(repo_root: Path) -> tuple[dict[StudyLabel, float], dict[StudyLabel, float]]:
+def _read_knn_opinion_from_next(repo_root: Path) -> StudyScoresPair:
     path = repo_root / "reports" / "knn" / "opinion_from_next" / "opinion_metrics.csv"
     best_acc: dict[StudyLabel, float] = {}
     best_mae: dict[StudyLabel, float] = {}
@@ -212,9 +238,20 @@ def _read_knn_opinion_from_next(repo_root: Path) -> tuple[dict[StudyLabel, float
             prev_mae = best_mae.get(study)
             if direction is None and mae is None:
                 continue
-            if prev_acc is None or (direction is not None and direction > prev_acc) or (
-                direction == prev_acc and mae is not None and (prev_mae is None or mae < prev_mae)
+
+            should_update = False
+            if prev_acc is None:
+                should_update = True
+            elif direction is not None and direction > prev_acc:
+                should_update = True
+            elif (
+                direction == prev_acc
+                and mae is not None
+                and (prev_mae is None or mae < prev_mae)
             ):
+                should_update = True
+
+            if should_update:
                 if direction is not None:
                     best_acc[study] = direction
                 if mae is not None:
@@ -222,7 +259,7 @@ def _read_knn_opinion_from_next(repo_root: Path) -> tuple[dict[StudyLabel, float
     return best_acc, best_mae
 
 
-def _read_xgb_opinion_from_next(repo_root: Path) -> tuple[dict[StudyLabel, float], dict[StudyLabel, float]]:
+def _read_xgb_opinion_from_next(repo_root: Path) -> StudyScoresPair:
     path = repo_root / "reports" / "xgb" / "opinion_from_next" / "opinion_metrics.csv"
     acc: dict[StudyLabel, float] = {}
     mae: dict[StudyLabel, float] = {}
@@ -247,7 +284,7 @@ def _read_xgb_opinion_from_next(repo_root: Path) -> tuple[dict[StudyLabel, float
     return acc, mae
 
 
-def _read_csv_opinion(repo_root: Path, family: str) -> tuple[dict[StudyLabel, float], dict[StudyLabel, float]]:
+def _read_csv_opinion(repo_root: Path, family: str) -> StudyScoresPair:
     """Read opinion CSV written by GPT-4o reports."""
     path = repo_root / "reports" / family / "opinion" / "opinion_metrics.csv"
     acc: dict[StudyLabel, float] = {}
@@ -275,50 +312,77 @@ def _read_csv_opinion(repo_root: Path, family: str) -> tuple[dict[StudyLabel, fl
     return acc, mae
 
 
-def _read_rlhf_opinion(repo_root: Path, family: str) -> tuple[dict[StudyLabel, float], dict[StudyLabel, float]]:
+def _read_rlhf_opinion(repo_root: Path, family: str) -> StudyScoresPair:
     """Read per-study opinion metrics from RLHF artefacts."""
     root = repo_root / "models" / family / "opinion"
     label_map = _label_by_key()
-    acc: dict[StudyLabel, float] = {}
-    mae: dict[StudyLabel, float] = {}
+    acc: StudyScores = {}
+    mae: StudyScores = {}
     if not root.exists():
         return acc, mae
-    # search for any run label that contains study subdirs; aggregate across runs
-    run_dirs = sorted([p for p in root.iterdir() if p.is_dir()])
-    for run in run_dirs:
-        study_dirs = sorted([p for p in run.iterdir() if p.is_dir()])
-        if not study_dirs:
+
+    # Walk all metrics.json files in any run/study directory under opinion
+    for metrics_path in sorted(root.rglob("*/metrics.json")):
+        key = metrics_path.parent.name
+        label = label_map.get(key)
+        if not label:
             continue
-        for study_dir in study_dirs:
-            metrics_path = study_dir / "metrics.json"
-            if not metrics_path.exists():
-                continue
-            payload = _load_json(metrics_path)
-            metrics = payload.get("metrics", payload)
-            if not isinstance(metrics, Mapping):
-                continue
-            key = study_dir.name
-            label = label_map.get(key)
-            if not label:
-                continue
-            try:
-                direction = float(metrics.get("direction_accuracy"))
-            except (TypeError, ValueError):
-                direction = None  # type: ignore[assignment]
-            try:
-                mae_val = float(metrics.get("mae_after"))
-            except (TypeError, ValueError):
-                mae_val = None  # type: ignore[assignment]
-            if direction is not None:
-                acc[label] = direction
-            if mae_val is not None:
-                mae[label] = mae_val
+        payload = _load_json(metrics_path)
+        metrics = payload.get("metrics", payload)
+        if not isinstance(metrics, Mapping):
+            continue
+        try:
+            direction = float(metrics.get("direction_accuracy"))
+        except (TypeError, ValueError):
+            direction = None  # type: ignore[assignment]
+        try:
+            mae_val = float(metrics.get("mae_after"))
+        except (TypeError, ValueError):
+            mae_val = None  # type: ignore[assignment]
+        if direction is not None:
+            acc[label] = direction
+        if mae_val is not None:
+            mae[label] = mae_val
     return acc, mae
 
 
 # ------------------------
 # Report assembly
 # ------------------------
+
+def _gather_next_video(repo_root: Path) -> dict[str, StudyScores]:
+    """Gather per-family next-video accuracy maps."""
+    return {
+        "gpt4o": _read_grouped_json_next_video(repo_root, "gpt-4o"),
+        "grpo": _read_grouped_json_next_video(repo_root, "grpo"),
+        "grail": _read_grouped_json_next_video(repo_root, "grail"),
+        "knn": _read_knn_next_video(repo_root),
+        "xgb": _read_xgb_next_video(repo_root),
+    }
+
+
+def _gather_opinion(repo_root: Path) -> tuple[dict[str, StudyScores], dict[str, StudyScores]]:
+    """Gather per-family opinion direction and MAE maps."""
+    knn_dir, knn_mae = _read_knn_opinion_from_next(repo_root)
+    xgb_dir, xgb_mae = _read_xgb_opinion_from_next(repo_root)
+    gpt4o_dir, gpt4o_mae = _read_csv_opinion(repo_root, "gpt4o")
+    grpo_dir, grpo_mae = _read_rlhf_opinion(repo_root, "grpo")
+    grail_dir, grail_mae = _read_rlhf_opinion(repo_root, "grail")
+    dir_map = {
+        "gpt4o": gpt4o_dir,
+        "grpo": grpo_dir,
+        "grail": grail_dir,
+        "knn": knn_dir,
+        "xgb": xgb_dir,
+    }
+    mae_map = {
+        "gpt4o": gpt4o_mae,
+        "grpo": grpo_mae,
+        "grail": grail_mae,
+        "knn": knn_mae,
+        "xgb": xgb_mae,
+    }
+    return dir_map, mae_map
 
 def _build_next_video_table(
     *,
@@ -347,7 +411,6 @@ def _build_next_video_table(
 def _build_opinion_table(
     *,
     studies: Sequence[StudyLabel],
-    metric_key: str,
     gpt4o: Mapping[StudyLabel, float],
     grpo: Mapping[StudyLabel, float],
     grail: Mapping[StudyLabel, float],
@@ -379,18 +442,10 @@ def generate_portfolio_report(repo_root: Path) -> None:
     studies = _study_order()
 
     # Next-video metrics
-    knn_next = _read_knn_next_video(repo_root)
-    xgb_next = _read_xgb_next_video(repo_root)
-    gpt4o_next = _read_grouped_json_next_video(repo_root, "gpt-4o")
-    grpo_next = _read_grouped_json_next_video(repo_root, "grpo")
-    grail_next = _read_grouped_json_next_video(repo_root, "grail")
+    next_video = _gather_next_video(repo_root)
 
     # Opinion metrics (opinion_from_next for knn/xgb)
-    knn_op_dir, knn_op_mae = _read_knn_opinion_from_next(repo_root)
-    xgb_op_dir, xgb_op_mae = _read_xgb_opinion_from_next(repo_root)
-    gpt4o_op_dir, gpt4o_op_mae = _read_csv_opinion(repo_root, "gpt4o")
-    grpo_op_dir, grpo_op_mae = _read_rlhf_opinion(repo_root, "grpo")
-    grail_op_dir, grail_op_mae = _read_rlhf_opinion(repo_root, "grail")
+    op_dir, op_mae = _gather_opinion(repo_root)
 
     # Assemble Markdown
     reports_dir = repo_root / "reports" / "main"
@@ -409,11 +464,11 @@ def generate_portfolio_report(repo_root: Path) -> None:
         headers=["Study", "GPT-4o", "GRPO", "GRAIL", "KNN", "XGB"],
         rows=_build_next_video_table(
             studies=studies,
-            gpt4o=gpt4o_next,
-            grpo=grpo_next,
-            grail=grail_next,
-            knn=knn_next,
-            xgb=xgb_next,
+            gpt4o=next_video["gpt4o"],
+            grpo=next_video["grpo"],
+            grail=next_video["grail"],
+            knn=next_video["knn"],
+            xgb=next_video["xgb"],
         ),
         empty_message="No next-video metrics available.",
     )
@@ -425,12 +480,11 @@ def generate_portfolio_report(repo_root: Path) -> None:
         headers=["Study", "GPT-4o", "GRPO", "GRAIL", "KNN", "XGB"],
         rows=_build_opinion_table(
             studies=studies,
-            metric_key="direction_accuracy",
-            gpt4o=gpt4o_op_dir,
-            grpo=grpo_op_dir,
-            grail=grail_op_dir,
-            knn=knn_op_dir,
-            xgb=xgb_op_dir,
+            gpt4o=op_dir["gpt4o"],
+            grpo=op_dir["grpo"],
+            grail=op_dir["grail"],
+            knn=op_dir["knn"],
+            xgb=op_dir["xgb"],
         ),
         empty_message="No opinion directional-accuracy metrics available.",
     )
@@ -441,12 +495,11 @@ def generate_portfolio_report(repo_root: Path) -> None:
         headers=["Study", "GPT-4o", "GRPO", "GRAIL", "KNN", "XGB"],
         rows=_build_opinion_table(
             studies=studies,
-            metric_key="mae_after",
-            gpt4o=gpt4o_op_mae,
-            grpo=grpo_op_mae,
-            grail=grail_op_mae,
-            knn=knn_op_mae,
-            xgb=xgb_op_mae,
+            gpt4o=op_mae["gpt4o"],
+            grpo=op_mae["grpo"],
+            grail=op_mae["grail"],
+            knn=op_mae["knn"],
+            xgb=op_mae["xgb"],
         ),
         empty_message="No opinion MAE metrics available.",
     )
@@ -455,9 +508,18 @@ def generate_portfolio_report(repo_root: Path) -> None:
         [
             "Notes",
             "",
-            "- KNN/XGB opinion metrics reflect training on next-video representations (`opinion_from_next`).",
-            "- GPT-4o next-video accuracies and per-study opinion CSVs are sourced from their report artefacts.",
-            "- GRPO/GRAIL metrics are read from `models/<family>/` caches when available.",
+            (
+                "- KNN/XGB opinion metrics reflect training on next-video "
+                "representations (`opinion_from_next`)."
+            ),
+            (
+                "- GPT-4o next-video accuracies and per-study opinion CSVs "
+                "are sourced from their report artefacts."
+            ),
+            (
+                "- GRPO/GRAIL metrics are read from `models/<family>/` caches "
+                "when available."
+            ),
             "",
         ]
     )
@@ -465,10 +527,10 @@ def generate_portfolio_report(repo_root: Path) -> None:
     write_markdown_lines(path, lines)
 
 
-def main(argv: Sequence[str] | None = None) -> None:  # pragma: no cover - CLI convenience
+def main(_argv: Sequence[str] | None = None) -> None:  # pragma: no cover - CLI convenience
     """CLI entry point that regenerates the portfolio report.
 
-    :param argv: Optional sequence of CLI tokens (defaults to ``sys.argv[1:]``).
+    :param _argv: Optional sequence of CLI tokens (unused).
     :returns: ``None``.
     """
     repo_root = Path(__file__).resolve().parents[3]

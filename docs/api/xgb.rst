@@ -32,6 +32,7 @@ normalisation.
    :members:
    :undoc-members:
    :show-inheritance:
+   :exclude-members: XGBoostBoosterParams, XGBoostTrainConfig
 
 Core Config Internals
 ---------------------
@@ -39,7 +40,6 @@ Core Config Internals
 .. automodule:: xgb.core.model_config
    :members:
    :undoc-members:
-   :private-members:
    :show-inheritance:
 
 .. automodule:: xgb.vectorizers
@@ -95,6 +95,20 @@ explaining that the section was intentionally skipped.
    :undoc-members:
    :show-inheritance:
    :exclude-members: StudySpec
+   :noindex:
+
+.. automodule:: xgb.pipeline.context
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: StudySpec
+
+.. automodule:: xgb.pipeline.context.opinion_summary
+   :members:
+   :exclude-members: OpinionSummary
+   :private-members: _OpinionAfter, _OpinionBaseline, _OpinionCalibration, _OpinionDeltas, _OpinionMeta
+   :undoc-members:
+   :show-inheritance:
 
 .. automodule:: xgb.pipeline_evaluate
    :members:

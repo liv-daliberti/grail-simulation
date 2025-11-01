@@ -38,6 +38,7 @@ __all__ = [
     "SentenceTransformerVectorizer",
     "create_vectorizer",
     "load_vectorizer",
+    "build_word2vec_config_from_args",
 ]
 
 VECTORISER_META = "vectorizer.json"
@@ -272,7 +273,7 @@ class Word2VecVectorizer(BaseTextVectorizer):
     Vectoriser that averages Word2Vec embeddings.
 
     :param config: Word2Vec configuration controlling training and inference.
-    :type config: Word2VecVectorizerConfig
+    :type config: ~xgb.core.vectorizers.Word2VecVectorizerConfig
     """
 
     kind = "word2vec"
@@ -282,7 +283,7 @@ class Word2VecVectorizer(BaseTextVectorizer):
         Build a Word2Vec-backed vectoriser.
 
         :param config: Training and inference options for the Word2Vec feature builder.
-        :type config: Word2VecVectorizerConfig
+        :type config: ~xgb.core.vectorizers.Word2VecVectorizerConfig
         """
 
         self.config = config
@@ -529,7 +530,7 @@ def create_vectorizer(
     :param tfidf: Optional TF-IDF configuration.
     :type tfidf: TfidfConfig | None
     :param word2vec: Optional Word2Vec configuration.
-    :type word2vec: Word2VecVectorizerConfig | None
+    :type word2vec: ~xgb.core.vectorizers.Word2VecVectorizerConfig | None
     :param sentence_transformer: Optional sentence-transformer configuration.
     :type sentence_transformer: SentenceTransformerVectorizerConfig | None
     :returns: Concrete vectoriser instance.
@@ -569,3 +570,33 @@ def load_vectorizer(directory: Path) -> BaseTextVectorizer:
     if kind == "sentence_transformer":
         return SentenceTransformerVectorizer.load(directory)
     raise ValueError(f"Unsupported vectorizer kind '{kind}'.")
+
+
+def build_word2vec_config_from_args(
+    args: Any,
+    *,
+    model_dir: str | None = None,
+) -> Word2VecVectorizerConfig:
+    """
+    Build a :class:`~xgb.core.vectorizers.Word2VecVectorizerConfig` from an ``argparse`` namespace.
+
+    This centralises the mapping from CLI flags to the dataclass to avoid
+    duplication across modules.
+
+    :param args: Parsed CLI arguments exposing ``word2vec_*`` fields and ``seed``.
+    :type args: Any
+    :param model_dir: Optional override for the Word2Vec model directory.
+    :type model_dir: str | None
+    :returns: Populated Word2Vec configuration.
+    :rtype: ~xgb.core.vectorizers.Word2VecVectorizerConfig
+    """
+
+    return Word2VecVectorizerConfig(
+        vector_size=getattr(args, "word2vec_size", Word2VecVectorizerConfig.vector_size),
+        window=getattr(args, "word2vec_window", Word2VecVectorizerConfig.window),
+        min_count=getattr(args, "word2vec_min_count", Word2VecVectorizerConfig.min_count),
+        epochs=getattr(args, "word2vec_epochs", Word2VecVectorizerConfig.epochs),
+        workers=getattr(args, "word2vec_workers", Word2VecVectorizerConfig.workers),
+        seed=getattr(args, "seed", Word2VecVectorizerConfig.seed),
+        model_dir=model_dir,
+    )

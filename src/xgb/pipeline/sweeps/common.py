@@ -21,7 +21,7 @@ import logging
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, TypeVar
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, TypeVar, cast
 
 from common.pipeline.io import load_metrics_json
 from common.pipeline.metrics import (
@@ -45,7 +45,7 @@ OutcomeT = TypeVar("OutcomeT")
 
 
 @dataclass(frozen=True)
-class MissingMetricsLogConfig:  # pylint: disable=too-few-public-methods
+class MissingMetricsLogConfig:
     """
     Configuration for logging and persistence of placeholder metrics.
 
@@ -63,6 +63,19 @@ class MissingMetricsLogConfig:  # pylint: disable=too-few-public-methods
     debug_message: str
     log_level: int = logging.WARNING
     logger: logging.Logger | None = None
+
+    def level_name(self) -> str:
+        """Return the textual name for ``log_level`` (e.g., WARNING)."""
+        return logging.getLevelName(self.log_level)
+
+    def as_kwargs(self) -> Dict[str, object]:
+        """Expose a serialisable view suitable for debugging or tests."""
+        return {
+            "message": self.message,
+            "debug_message": self.debug_message,
+            "log_level": int(self.log_level),
+            "logger": getattr(self.logger, "name", None),
+        }
 
 
 def get_sweeps_attr(name: str) -> Any:
@@ -202,7 +215,7 @@ def load_metrics_with_placeholder(
     :param metrics_path: Filesystem path where metrics are stored.
     :type metrics_path: Path
     :param study: Study descriptor used when emitting log messages.
-    :type study: StudySpec
+    :type study: ~common.pipeline.types.StudySpec
     :param loader: Callable mirroring :func:`_load_metrics_with_log` semantics.
     :type loader: Callable[[Path, StudySpec, int, str], Dict[str, object] | None]
     :param placeholder_factory: Callable producing a fallback metrics payload.
@@ -244,9 +257,8 @@ def _gpu_tree_method_supported() -> bool:
     # Prefer the helper exposed in newer releases.
     maybe_has_cuda = getattr(core, "_has_cuda_support", None)
     if callable(maybe_has_cuda):
-        has_cuda_callable: Callable[[], object] = maybe_has_cuda
         try:
-            return bool(has_cuda_callable())  # pylint: disable=not-callable
+            return bool(cast(Callable[[], object], maybe_has_cuda)())
         except (TypeError, ValueError, RuntimeError, AttributeError):
             LOGGER.debug("Failed to query XGBoost CUDA support.", exc_info=True)
             return False

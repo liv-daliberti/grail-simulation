@@ -82,6 +82,7 @@ class ReportBundle:
     :param presentation: Report presentation options and auxiliary paths.
     :type presentation: ~knn.pipeline.context.ReportPresentation
     """
+    __module__ = "knn.pipeline.context"
 
     def __init__(
         self,
@@ -90,63 +91,71 @@ class ReportBundle:
         outcomes: _ReportOutcomes | None = None,
         metrics: _ReportMetrics | None = None,
         presentation: _ReportPresentation | None = None,
-        # Backwards-compatible flat kwargs used across tests/call-sites
-        sweep_outcomes: Sequence["SweepOutcome"] | None = None,
-        opinion_sweep_outcomes: Sequence["OpinionSweepOutcome"] | None = None,
-        selections_mapping: Mapping[str, Mapping[str, "StudySelection"]] | None = None,
-        selections_map: Mapping[str, Mapping[str, "StudySelection"]] | None = None,
-        opinion_selections: Mapping[str, Mapping[str, "OpinionStudySelection"]] | None = None,
-        metrics_by_feature: Mapping[str, Mapping[str, Mapping[str, object]]] | None = None,
-        opinion_metrics: Mapping[str, Mapping[str, Mapping[str, object]]] | None = None,
-        opinion_from_next_metrics: Mapping[str, Mapping[str, Mapping[str, object]]] | None = None,
-        loso_metrics: Mapping[str, Mapping[str, Mapping[str, object]]] | None = None,
-        feature_spaces: Tuple[str, ...] | None = None,
-        sentence_model: str | None = None,
-        k_sweep: str | None = None,
-        studies: Sequence["StudySpec"] | None = None,
-        allow_incomplete: bool | None = None,
-        include_next_video: bool | None = None,
-        include_opinion: bool | None = None,
-        include_opinion_from_next: bool | None = None,
-        opinion_predictions_root: Path | None = None,
-        opinion_from_next_predictions_root: Path | None = None,
+        **flat: object,
     ) -> None:
         # Build grouped structures when not provided from flat kwargs
-        if selections is None:
+        if selections is None or not isinstance(selections, _ReportSelections):
             selections = _ReportSelections(
-                selections=selections_mapping or selections_map or {},  # type: ignore[arg-type]
-                opinion_selections=opinion_selections or {},
+                selections=(
+                    flat.get("selections_mapping")
+                    or flat.get("selections_map")
+                    or (selections or {})
+                ),  # type: ignore[arg-type]
+                opinion_selections=(
+                    flat.get("opinion_selections") or {}
+                ),
             )
-        if outcomes is None:
+        if outcomes is None or not isinstance(outcomes, _ReportOutcomes):
             outcomes = _ReportOutcomes(
-                sweep_outcomes=tuple(sweep_outcomes or ()),
-                opinion_sweep_outcomes=tuple(opinion_sweep_outcomes or ()),
+                sweep_outcomes=tuple(flat.get("sweep_outcomes") or ()),
+                opinion_sweep_outcomes=tuple(
+                    flat.get("opinion_sweep_outcomes") or ()
+                ),
             )
-        if metrics is None:
+        if metrics is None or not isinstance(metrics, _ReportMetrics):
             metrics = _ReportMetrics(
-                metrics_by_feature=metrics_by_feature or {},
-                opinion_metrics=opinion_metrics or {},
-                opinion_from_next_metrics=opinion_from_next_metrics or {},
-                loso_metrics=loso_metrics,
+                metrics_by_feature=(flat.get("metrics_by_feature") or {}),
+                opinion_metrics=(flat.get("opinion_metrics") or {}),
+                opinion_from_next_metrics=(
+                    flat.get("opinion_from_next_metrics") or {}
+                ),
+                loso_metrics=flat.get("loso_metrics"),
             )
-        if presentation is None:
+        if presentation is None or not isinstance(presentation, _ReportPresentation):
+            allow_incomplete = flat.get("allow_incomplete")
+            include_next_video = flat.get("include_next_video")
+            include_opinion = flat.get("include_opinion")
+            include_opinion_from_next = flat.get("include_opinion_from_next")
             flags = _PresentationFlags(
-                allow_incomplete=bool(allow_incomplete) if allow_incomplete is not None else False,
-                include_next_video=bool(include_next_video) if include_next_video is not None else True,
-                include_opinion=bool(include_opinion) if include_opinion is not None else True,
+                allow_incomplete=(
+                    bool(allow_incomplete) if allow_incomplete is not None else False
+                ),
+                include_next_video=(
+                    bool(include_next_video) if include_next_video is not None else True
+                ),
+                include_opinion=(
+                    bool(include_opinion) if include_opinion is not None else True
+                ),
                 include_opinion_from_next=(
-                    bool(include_opinion_from_next) if include_opinion_from_next is not None else False
+                    bool(include_opinion_from_next)
+                    if include_opinion_from_next is not None
+                    else False
                 ),
             )
             predictions = _PredictionRoots(
-                opinion_predictions_root=opinion_predictions_root,
-                opinion_from_next_predictions_root=opinion_from_next_predictions_root,
+                opinion_predictions_root=flat.get("opinion_predictions_root"),
+                opinion_from_next_predictions_root=flat.get(
+                    "opinion_from_next_predictions_root"
+                ),
             )
             presentation = _ReportPresentation(
-                feature_spaces=tuple(feature_spaces or ("tfidf", "word2vec", "sentence_transformer")),
-                sentence_model=sentence_model,
-                k_sweep=k_sweep or "",
-                studies=tuple(studies or ()),
+                feature_spaces=tuple(
+                    flat.get("feature_spaces")
+                    or ("tfidf", "word2vec", "sentence_transformer")
+                ),
+                sentence_model=(flat.get("sentence_model") or None),
+                k_sweep=(flat.get("k_sweep") or ""),
+                studies=tuple(flat.get("studies") or ()),
                 flags=flags,
                 predictions=predictions,
             )

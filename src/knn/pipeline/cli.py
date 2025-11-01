@@ -28,7 +28,13 @@ import os
 from pathlib import Path
 from typing import List, Sequence, Tuple
 
-from common.cli.options import add_jobs_argument, add_stage_arguments, add_studies_argument
+from common.cli.options import (
+    add_jobs_argument,
+    add_stage_arguments,
+    add_studies_argument,
+    add_reuse_sweeps_argument,
+    add_allow_incomplete_argument,
+)
 
 from ..cli.utils import add_sentence_transformer_normalize_flags
 from .context import PipelineContext
@@ -113,15 +119,7 @@ def parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[str
         default="",
         help="Comma-separated subset of pipeline tasks to execute (next_video,opinion).",
     )
-    parser.add_argument(
-        "--reuse-sweeps",
-        action=argparse.BooleanOptionalAction,
-        default=False,
-        help=(
-            "Reuse existing sweep metrics when present instead of rerunning the full grid "
-            "(disabled by default; pass --reuse-sweeps to enable)."
-        ),
-    )
+    add_reuse_sweeps_argument(parser)
     parser.add_argument(
         "--reuse-final",
         action=argparse.BooleanOptionalAction,
@@ -131,15 +129,7 @@ def parse_args(argv: Sequence[str] | None) -> Tuple[argparse.Namespace, List[str
             "(disabled by default; pass --reuse-final to enable)."
         ),
     )
-    parser.add_argument(
-        "--allow-incomplete",
-        action=argparse.BooleanOptionalAction,
-        default=True,
-        help=(
-            "Allow finalize/report stages to proceed with partial sweep data "
-            "(use --no-allow-incomplete to require complete sweeps)."
-        ),
-    )
+    add_allow_incomplete_argument(parser)
     add_jobs_argument(parser)
     parser.add_argument(
         "--sweep-dir",

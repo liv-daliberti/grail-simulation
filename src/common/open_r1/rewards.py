@@ -63,11 +63,8 @@ else:  # pragma: no cover - optional dependency
     parse = _math_parse  # type: ignore[assignment]
     verify = _math_verify  # type: ignore[assignment]
 
-try:  # pragma: no cover - optional dependency
-    import transformers  # type: ignore[import]
-except Exception:  # pragma: no cover - optional dependency
-    # Catch broad exceptions to tolerate environments with partially stubbed deps
-    transformers = None  # type: ignore[assignment]
+# Do not import transformers at runtime to avoid hard dependency during linting.
+# Types that would come from transformers are treated as "Any" below.
 
 try:  # pragma: no cover - optional dependency
     from transformers.utils.import_utils import _is_package_available  # type: ignore[attr-defined]
@@ -789,8 +786,8 @@ def get_soft_overlong_punishment(max_completion_len, soft_punish_cache):
 
 def get_reward_funcs(
     script_args,
-    _ref_model: transformers.PreTrainedModel,
-    _tokenizer: transformers.PreTrainedTokenizerBase,
+    _ref_model: Any,
+    _tokenizer: Any,
 ) -> list[Callable]:
     """
     Assemble the reward functions requested by the training script.

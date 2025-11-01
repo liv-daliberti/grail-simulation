@@ -9,9 +9,27 @@ improve Sphinx autodoc clarity.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Mapping, Optional, Tuple
+from typing import Mapping, Optional, Tuple, cast
 
 from common.opinion import OpinionCalibrationMetrics
+
+
+# Helper factories to avoid lambda default_factories while deferring
+# OpinionSummary name resolution until instance construction time.
+def _new_primary_regression() -> "OpinionSummary.PrimaryRegression":
+    return OpinionSummary.PrimaryRegression()
+
+
+def _new_change_stats() -> "OpinionSummary.ChangeStats":
+    return OpinionSummary.ChangeStats()
+
+
+def _new_baseline_stats() -> "OpinionSummary.BaselineStats":
+    return OpinionSummary.BaselineStats()
+
+
+def _new_regression() -> "OpinionSummary.Regression":
+    return OpinionSummary.Regression()
 
 
 @dataclass(frozen=True)
@@ -68,34 +86,44 @@ class MetricSummary:
         ``random_baseline`` (float), ``best_k`` (int),
         ``n_total`` (int), ``n_eligible`` (int), ``accuracy_all_rows`` (float).
         """
-        acc_val = inputs.get("accuracy")  # type: ignore[assignment]
-        acc_ci = inputs.get("accuracy_ci")  # type: ignore[assignment]
-        base_val = inputs.get("baseline")  # type: ignore[assignment]
-        base_ci = inputs.get("baseline_ci")  # type: ignore[assignment]
+        acc_val = cast(Optional[float], inputs.get("accuracy"))
+        acc_ci = cast(Optional[Tuple[float, float]], inputs.get("accuracy_ci"))
+        base_val = cast(Optional[float], inputs.get("baseline"))
+        base_ci = cast(Optional[Tuple[float, float]], inputs.get("baseline_ci"))
         object.__setattr__(
-            self, "_acc", _AccuracyStats(value=acc_val if isinstance(acc_val, (int, float)) else acc_val, ci95=acc_ci if isinstance(acc_ci, tuple) else acc_ci)  # type: ignore[arg-type]
+            self,
+            "_acc",
+            _AccuracyStats(
+                value=acc_val,
+                ci95=acc_ci,
+            ),
         )
         object.__setattr__(
-            self, "_baseline", _AccuracyStats(value=base_val if isinstance(base_val, (int, float)) else base_val, ci95=base_ci if isinstance(base_ci, tuple) else base_ci)  # type: ignore[arg-type]
+            self,
+            "_baseline",
+            _AccuracyStats(
+                value=base_val,
+                ci95=base_ci,
+            ),
         )
         object.__setattr__(
             self,
             "random_baseline",
-            inputs.get("random_baseline"),  # type: ignore[assignment]
+            cast(Optional[float], inputs.get("random_baseline")),
         )
-        object.__setattr__(self, "best_k", inputs.get("best_k"))  # type: ignore[assignment]
+        object.__setattr__(self, "best_k", cast(Optional[int], inputs.get("best_k")))
         object.__setattr__(
             self,
             "_counts",
             _Counts(
-                total=inputs.get("n_total"),  # type: ignore[arg-type]
-                eligible=inputs.get("n_eligible"),  # type: ignore[arg-type]
+                total=cast(Optional[int], inputs.get("n_total")),
+                eligible=cast(Optional[int], inputs.get("n_eligible")),
             ),
         )
         object.__setattr__(
             self,
             "accuracy_all_rows",
-            inputs.get("accuracy_all_rows"),  # type: ignore[assignment]
+            cast(Optional[float], inputs.get("accuracy_all_rows")),
         )
 
     # Backwards-compatible accessors
@@ -202,19 +230,6 @@ class OpinionSummary(OpinionCalibrationMetrics):
     _calibration_bins: Optional[Tuple[Mapping[str, float], ...]]
 
     @dataclass(frozen=True)
-    class Inputs:
-        """Grouped construction inputs reducing local variables in __init__."""
-
-        calibration: OpinionCalibrationMetrics = field(
-            default_factory=OpinionCalibrationMetrics
-        )
-        regression: "OpinionSummary.Regression" = field(
-            default_factory=lambda: OpinionSummary.Regression()
-        )
-        accuracy: Optional[float] = None
-        calibration_bins: Optional[Tuple[Mapping[str, float], ...]] = None
-
-    @dataclass(frozen=True)
     class PrimaryRegression:
         """Primary regression metrics for opinion models."""
 
@@ -242,15 +257,28 @@ class OpinionSummary(OpinionCalibrationMetrics):
         """Grouped opinion-regression metrics, reducing attribute count."""
 
         primary: "OpinionSummary.PrimaryRegression" = field(
-            default_factory=lambda: OpinionSummary.PrimaryRegression()
+            default_factory=_new_primary_regression
         )
         change: "OpinionSummary.ChangeStats" = field(
-            default_factory=lambda: OpinionSummary.ChangeStats()
+            default_factory=_new_change_stats
         )
         baseline: "OpinionSummary.BaselineStats" = field(
-            default_factory=lambda: OpinionSummary.BaselineStats()
+            default_factory=_new_baseline_stats
         )
         best_k: Optional[int] = None
+
+    @dataclass(frozen=True)
+    class Inputs:
+        """Grouped construction inputs reducing local variables in __init__."""
+
+        calibration: OpinionCalibrationMetrics = field(
+            default_factory=OpinionCalibrationMetrics
+        )
+        regression: "OpinionSummary.Regression" = field(
+            default_factory=_new_regression
+        )
+        accuracy: Optional[float] = None
+        calibration_bins: Optional[Tuple[Mapping[str, float], ...]] = None
 
     def __init__(self, *, inputs: "OpinionSummary.Inputs") -> None:
         # initialise base dataclass using grouped calibration inputs

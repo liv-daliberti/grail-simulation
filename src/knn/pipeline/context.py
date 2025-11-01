@@ -37,10 +37,6 @@ from .context_reports import (
     _ReportSelections as ReportSelections,
 )
 from .context_summaries import MetricSummary, OpinionSummary
-from .context_summaries import OpinionSummary as _OpinionSummaryType
-
-# Public alias for constructing grouped opinion summary inputs
-OpinionSummaryInputs = _OpinionSummaryType.Inputs
 from .context_sweeps import (
     OpinionStudySelection,
     OpinionSweepOutcome,
@@ -48,6 +44,40 @@ from .context_sweeps import (
     SweepOutcome,
 )
 from .context_tasks import OpinionSweepTask, SweepTask, SweepTaskContext
+
+# Public alias for constructing grouped opinion summary inputs
+OpinionSummaryInputs = OpinionSummary.Inputs
+
+# Ensure canonical module for Sphinx: present re-exported classes as
+# originating from this aggregator module without breaking dataclasses.
+for _t in (
+    StudySpec,
+    ReportBundle,
+    ReportSelections,
+    ReportOutcomes,
+    ReportMetrics,
+    ReportPresentation,
+    PresentationFlags,
+    PredictionRoots,
+    StudySelection,
+    SweepOutcome,
+    OpinionStudySelection,
+    OpinionSweepOutcome,
+    EvaluationContext,
+    EvaluationOutputs,
+    EvaluationWord2VecPaths,
+    PipelineContext,
+    SweepTask,
+    SweepTaskContext,
+    OpinionSweepTask,
+    SweepConfig,
+):
+    try:  # pragma: no cover - defensive: some may be functions/aliases
+        _t.__module__ = __name__
+    except (TypeError, AttributeError):
+        # Some built-in/extension types or aliases may not allow assignment
+        # to __module__; safely skip those.
+        pass
 
 __all__ = [
     "MetricSummary",

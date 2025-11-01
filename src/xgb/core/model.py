@@ -18,7 +18,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple
+from typing import Any, Dict, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -110,8 +110,7 @@ def _ensure_float32(matrix: Any) -> Any:
 # Types moved to model_types (EncodedDataset, TrainingBatch, EvaluationArtifactsContext,
 # XGBoostSlateModel)
 
-
-"""Config dataclasses moved to model_config (XGBoostBoosterParams, XGBoostTrainConfig)."""
+# Config dataclasses moved to model_config (XGBoostBoosterParams, XGBoostTrainConfig).
 
 
 def fit_xgboost_model(

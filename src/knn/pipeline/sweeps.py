@@ -32,7 +32,7 @@ from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from common.pipeline.executor import execute_indexed_tasks
 from common.pipeline.types import BasePipelineSweepOutcome
-from common.pipeline.utils import merge_indexed_outcomes
+from common.pipeline.utils import merge_indexed_outcomes, base_sweep_outcome_kwargs
 from common.prompts.docs import merge_default_extra_fields
 
 # Access the sibling module through the package namespace to satisfy pylint checks.
@@ -523,11 +523,7 @@ def sweep_outcome_from_metrics(
     )
     return SweepOutcome(
         base=BasePipelineSweepOutcome(
-            order_index=task.index,
-            study=task.study,
-            config=task.config,
-            metrics_path=metrics_path,
-            metrics=metrics,
+            **base_sweep_outcome_kwargs(task, metrics, metrics_path)
         ),
         knn=_KnnSweepStats(
             feature_space=task.config.feature_space,

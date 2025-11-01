@@ -202,6 +202,7 @@
 <li class="toctree-l1"><a class="reference internal" href="api/xgb.html">XGBoost Baseline API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/gpt4o.html">GPT-4o Tools API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/grail.html">GRAIL Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/grpo.html">GRPO Pipeline API</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api/common.html">Common Utilities API</a></li>
@@ -233,17 +234,22 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="reports/knn_next_video.html#id1">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="reports/knn_opinion.html">KNN Opinion Regression</a></li>
-<li class="toctree-l3"><a class="reference internal" href="reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="reports/knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
-<li class="toctree-l3"><a class="reference internal" href="reports/knn_opinion_from_next.html">KNN Opinion Regression (Next-Video Config)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="reports/knn_opinion_from_next.html#knn-opinion-shift-study-next-video-config">KNN Opinion Shift Study (Next-Video Config)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="reports/knn_additional_features.html">KNN Additional Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="reports/knn_additional_features.html#additional-text-features">Additional Text Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reports/knn_opinion_from_next.html">KNN Opinion Regression (Next-Video Config)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reports/knn_additional_features.html">KNN Additional Features</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="reports/xgb.html">XGBoost Report Catalog</a><input aria-label="Toggle navigation of XGBoost Report Catalog" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="reports/xgb_next_video.html">XGBoost Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reports/xgb_next_video.html#id1">XGBoost Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reports/xgb_opinion.html">XGBoost Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reports/xgb_opinion.html#id1">XGBoost Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reports/xgb_opinion_from_next.html">XGBoost Opinion (Next-Video Config)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reports/xgb_opinion_from_next.html#xgboost-opinion-regression-next-video-config">XGBoost Opinion Regression (Next-Video Config)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reports/xgb_hyperparameter_tuning.html">XGBoost Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reports/xgb_hyperparameter_tuning.html#hyper-parameter-tuning">Hyper-parameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reports/xgb_additional_features.html">XGBoost Additional Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reports/xgb_additional_features.html#additional-text-features">Additional Text Features</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="reports/main.html">Portfolio Comparison (Main)</a></li>
@@ -486,6 +492,12 @@
   <tr class="cg-2">
     <td></td>
     <td>&#160;&#160;&#160;
+        <a href="api/open_r1.html#module-common.open_r1.example_utils"><code class="xref">common.open_r1.example_utils</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
         <a href="api/open_r1.html#module-common.open_r1.generate"><code class="xref">common.open_r1.generate</code></a></td><td>
     <em></em></td>
   </tr>
@@ -540,13 +552,37 @@
   <tr class="cg-2">
     <td></td>
     <td>&#160;&#160;&#160;
+        <a href="api/common.html#module-common.opinion.baselines"><code class="xref">common.opinion.baselines</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="api/common.html#module-common.opinion.metrics"><code class="xref">common.opinion.metrics</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
         <a href="api/common.html#module-common.opinion.models"><code class="xref">common.opinion.models</code></a></td><td>
     <em></em></td>
   </tr>
   <tr class="cg-2">
     <td></td>
     <td>&#160;&#160;&#160;
-        <a href="api/common.html#module-common.opinion.sweep_types"><code class="xref">common.opinion.sweep_types</code></a></td><td>
+        <a href="api/common.html#module-common.opinion.plots"><code class="xref">common.opinion.plots</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="api/common.html#module-common.opinion.prompts"><code class="xref">common.opinion.prompts</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="api/common.html#module-common.opinion.results"><code class="xref">common.opinion.results</code></a></td><td>
     <em></em></td>
   </tr>
   <tr class="cg-2">
@@ -738,6 +774,24 @@
         <a href="api/open_r1.html#module-grpo.grpo"><code class="xref">grpo.grpo</code></a></td><td>
     <em></em></td>
   </tr>
+  <tr class="cg-5">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="api/grpo.html#module-grpo.pipeline"><code class="xref">grpo.pipeline</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-5">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="api/grpo.html#module-grpo.pipeline_cli"><code class="xref">grpo.pipeline_cli</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-5">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="api/grpo.html#module-grpo.pipeline_setup"><code class="xref">grpo.pipeline_setup</code></a></td><td>
+    <em></em></td>
+  </tr>
   <tr class="pcap">
     <td></td><td>&#160;</td><td></td>
   </tr>
@@ -899,6 +953,12 @@
     <td></td>
     <td>&#160;&#160;&#160;
         <a href="api/knn.html#module-knn.pipeline.context"><code class="xref">knn.pipeline.context</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-6">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="api/knn.html#module-knn.pipeline.context_config"><code class="xref">knn.pipeline.context_config</code></a></td><td>
     <em></em></td>
   </tr>
   <tr class="cg-6">
@@ -1255,13 +1315,19 @@
   <tr class="cg-9">
     <td></td>
     <td>&#160;&#160;&#160;
-        <a href="api/xgb.html#module-xgb.pipeline_cli"><code class="xref">xgb.pipeline_cli</code></a></td><td>
+        <a href="api/xgb.html#module-xgb.pipeline.context"><code class="xref">xgb.pipeline.context</code></a></td><td>
     <em></em></td>
   </tr>
   <tr class="cg-9">
     <td></td>
     <td>&#160;&#160;&#160;
-        <a href="api/xgb.html#module-xgb.pipeline_context"><code class="xref">xgb.pipeline_context</code></a></td><td>
+        <a href="api/xgb.html#module-xgb.pipeline.context.opinion_summary"><code class="xref">xgb.pipeline.context.opinion_summary</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-9">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="api/xgb.html#module-xgb.pipeline_cli"><code class="xref">xgb.pipeline_cli</code></a></td><td>
     <em></em></td>
   </tr>
   <tr class="cg-9">

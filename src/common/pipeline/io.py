@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Mapping, Sequence
+from typing import Iterable, Mapping, Sequence
 
 
 def load_metrics_json(path: Path) -> Mapping[str, object]:
@@ -101,9 +101,62 @@ def write_markdown_lines(path: Path, lines: Sequence[str]) -> None:
     path.write_text(text, encoding="utf-8")
 
 
+def iter_jsonl_rows(path: Path, *, ignore_errors: bool = True) -> Iterable[Mapping[str, object]]:
+    """
+    Yield JSON objects from a JSONL file one by one.
+
+    - Skips blank lines.
+    - When ``ignore_errors`` is ``True`` (default), skips malformed lines.
+
+    :param path: Path to the JSONL file.
+    :param ignore_errors: Whether to skip lines that fail JSON decoding.
+    :yields: Mapping rows parsed from the file.
+    """
+    try:
+        with path.open("r", encoding="utf-8") as handle:
+            for line in handle:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                except json.JSONDecodeError:
+                    if ignore_errors:
+                        continue
+                    raise
+                if isinstance(obj, Mapping):
+                    yield obj
+    except FileNotFoundError:
+        # Nothing to yield when the file is missing.
+        return
+
+
+def write_jsonl_rows(
+    path: Path,
+    rows: Sequence[Mapping[str, object]],
+    *,
+    ensure_ascii: bool = False,
+) -> None:
+    """
+    Write a sequence of mappings to ``path`` as JSON Lines.
+
+    :param path: Destination file.
+    :param rows: Sequence of mapping objects to serialise.
+    :param ensure_ascii: Forwarded to :func:`json.dumps` (defaults to ``False``).
+    :returns: ``None``.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as handle:
+        for entry in rows:
+            handle.write(json.dumps(entry, ensure_ascii=ensure_ascii))
+            handle.write("\n")
+
+
 __all__ = [
     "load_metrics_json",
     "write_markdown_lines",
     "write_metrics_json",
     "write_segmented_markdown_log",
+    "iter_jsonl_rows",
+    "write_jsonl_rows",
 ]

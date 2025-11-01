@@ -203,6 +203,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../api/xgb.html">XGBoost Baseline API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/gpt4o.html">GPT-4o Tools API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/grail.html">GRAIL Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/grpo.html">GRPO Pipeline API</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/common.html">Common Utilities API</a></li>
@@ -234,17 +235,22 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/prompt_builder.html">Prompt Builder Sample Prompts</a></li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../../../reports/knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_next_video.html#id1">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion_from_next.html">KNN Opinion Regression (Next-Video Config)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_opinion_from_next.html#knn-opinion-shift-study-next-video-config">KNN Opinion Shift Study (Next-Video Config)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_additional_features.html">KNN Additional Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../reports/knn_additional_features.html#additional-text-features">Additional Text Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reports/knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reports/knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reports/knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reports/knn_opinion_from_next.html">KNN Opinion Regression (Next-Video Config)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reports/knn_additional_features.html">KNN Additional Features</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../reports/xgb.html">XGBoost Report Catalog</a><input aria-label="Toggle navigation of XGBoost Report Catalog" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/xgb_next_video.html">XGBoost Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/xgb_next_video.html#id1">XGBoost Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/xgb_opinion.html">XGBoost Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/xgb_opinion.html#id1">XGBoost Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/xgb_opinion_from_next.html">XGBoost Opinion (Next-Video Config)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/xgb_opinion_from_next.html#xgboost-opinion-regression-next-video-config">XGBoost Opinion Regression (Next-Video Config)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/xgb_hyperparameter_tuning.html">XGBoost Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/xgb_hyperparameter_tuning.html#hyper-parameter-tuning">Hyper-parameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/xgb_additional_features.html">XGBoost Additional Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reports/xgb_additional_features.html#additional-text-features">Additional Text Features</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../../reports/main.html">Portfolio Comparison (Main)</a></li>
@@ -325,7 +331,7 @@
 <span class="sd">    :param order_index: Deterministic ordering index assigned to the task.</span>
 <span class="sd">    :type order_index: int</span>
 <span class="sd">    :param study: Study metadata associated with the sweep.</span>
-<span class="sd">    :type study: ~common.pipeline.models.StudySpec</span>
+<span class="sd">    :type study: ~common.pipeline.types.StudySpec</span>
 <span class="sd">    :param config: Evaluated sweep configuration.</span>
 <span class="sd">    :type config: ConfigT</span>
 <span class="sd">    :param metrics_path: Filesystem path to the metrics artefact.</span>
@@ -335,7 +341,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">order_index</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">study</span><span class="p">:</span> <span class="n">StudySpec</span>
+    <span class="n">study</span><span class="p">:</span> <span class="s2">&quot;common.pipeline.types.StudySpec&quot;</span>
     <span class="n">config</span><span class="p">:</span> <span class="n">ConfigT</span>
     <span class="n">metrics_path</span><span class="p">:</span> <span class="n">Path</span>
     <span class="n">metrics</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span></div>
@@ -349,12 +355,12 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Container describing the selected outcome for a study.</span>
 
 <span class="sd">    :param study: Study metadata that produced the selected outcome.</span>
-<span class="sd">    :type study: ~common.pipeline.models.StudySpec</span>
+<span class="sd">    :type study: ~common.pipeline.types.StudySpec</span>
 <span class="sd">    :param outcome: Outcome object that contains the runnable configuration.</span>
 <span class="sd">    :type outcome: OutcomeT</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">study</span><span class="p">:</span> <span class="n">StudySpec</span>
+    <span class="n">study</span><span class="p">:</span> <span class="s2">&quot;common.pipeline.types.StudySpec&quot;</span>
     <span class="n">outcome</span><span class="p">:</span> <span class="n">OutcomeT</span>
 
     <span class="nd">@property</span>
@@ -384,12 +390,12 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Container describing the selected opinion outcome for a study.</span>
 
 <span class="sd">    :param study: Study metadata that produced the selected outcome.</span>
-<span class="sd">    :type study: ~common.pipeline.models.StudySpec</span>
+<span class="sd">    :type study: ~common.pipeline.types.StudySpec</span>
 <span class="sd">    :param outcome: Opinion outcome chosen for downstream processing.</span>
 <span class="sd">    :type outcome: OutcomeT</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">study</span><span class="p">:</span> <span class="n">StudySpec</span>
+    <span class="n">study</span><span class="p">:</span> <span class="s2">&quot;common.pipeline.types.StudySpec&quot;</span>
     <span class="n">outcome</span><span class="p">:</span> <span class="n">OutcomeT</span>
 
     <span class="nd">@property</span>

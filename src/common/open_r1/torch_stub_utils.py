@@ -128,6 +128,41 @@ class TensorStub:
         """
         return self
 
+    def __truediv__(self, _other):
+        """Return ``self`` for division operations.
+
+        :param _other: Ignored operand kept for signature parity.
+        :returns: The current stub tensor instance.
+        """
+        return self
+
+    def __rtruediv__(self, _other):
+        """Return ``self`` when divided from the right.
+
+        :param _other: Ignored operand kept for signature parity.
+        :returns: The current stub tensor instance.
+        """
+        return self
+
+    def __getitem__(self, _idx):
+        """Return ``self`` for index access on 1-D tensors.
+
+        :param _idx: Ignored index for compatibility.
+        :returns: The current stub tensor instance.
+        """
+        return self
+
+    def view(self, *_shape):  # pylint: disable=unused-argument
+        """Return ``self`` to mimic shape manipulations.
+
+        :returns: The current stub tensor instance.
+        """
+        return self
+
+    def backward(self, *_args, **_kwargs):  # pylint: disable=unused-argument
+        """No-op autograd backward for documentation/test environments."""
+        return None
+
     def __bool__(self) -> bool:
         """Return truthiness based on whether any backing data exists.
 
@@ -174,6 +209,15 @@ def build_torch_stubs() -> Tuple[Any, Any, Any]:
             :returns: ``None``. Stores no internal state.
             """
             del _args, _kwargs
+
+        def forward(self, *args: Any, **kwargs: Any):  # pragma: no cover - placeholder
+            """Default forward that raises until subclasses override it."""
+            del args, kwargs
+            raise TypeError(f"{self.__class__.__name__} has no forward method defined")
+
+        def __call__(self, *args: Any, **kwargs: Any):  # pragma: no cover - simple delegation
+            """Delegate calls to ``forward`` to mimic ``nn.Module`` behaviour."""
+            return self.forward(*args, **kwargs)
 
         def register_buffer(self, *_args: Any, **_kwargs: Any) -> None:
             """Ignore buffer registration in the stub implementation.
@@ -272,6 +316,7 @@ def build_torch_stubs() -> Tuple[Any, Any, Any]:
     torch_stub = types.SimpleNamespace(
         Tensor=TensorStub,
         tensor=_make_tensor,
+        as_tensor=_make_tensor,
         zeros=lambda *args, **kwargs: TensorStub(
             [0.0] * int(args[0]) if args else [], device=kwargs.get("device")
         ),
@@ -281,6 +326,7 @@ def build_torch_stubs() -> Tuple[Any, Any, Any]:
         ),
         ones_like=lambda *_args, **_kwargs: TensorStub(),
         stack=lambda *_args, **_kwargs: TensorStub(),
+        matmul=lambda *_args, **_kwargs: TensorStub(),
         softmax=lambda *_args, **_kwargs: TensorStub(),
         no_grad=lambda: (lambda func: func),
         isfinite=lambda *_args, **_kwargs: types.SimpleNamespace(all=lambda: True),

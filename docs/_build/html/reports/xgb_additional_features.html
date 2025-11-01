@@ -3,10 +3,10 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Portfolio Comparison (Main)" href="main.html"><link rel="prev" title="&lt;no title&gt;" href="xgb_hyperparameter_tuning.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Portfolio Comparison (Main)" href="main.html"><link rel="prev" title="XGBoost Hyperparameter Tuning" href="xgb_hyperparameter_tuning.html">
 
     <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
-        <title>&lt;no title&gt; - GRAIL Simulation documentation</title>
+        <title>XGBoost Additional Features - GRAIL Simulation documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=580074bf" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
@@ -204,6 +204,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../api/xgb.html">XGBoost Baseline API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/gpt4o.html">GPT-4o Tools API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/grail.html">GRAIL Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/grpo.html">GRPO Pipeline API</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../api/common.html">Common Utilities API</a></li>
@@ -214,8 +215,8 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../api/visualization.html">Visualization Utilities</a></li>
 </ul>
-<ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="index.html">Reports</a><input aria-label="Toggle navigation of Reports" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Reports</a><input aria-label="Toggle navigation of Reports" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="prompt_stats.html">Prompt feature report</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="grpo.html">GRPO Reports</a><input aria-label="Toggle navigation of GRPO Reports" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="grpo_sample_generative_responses.html">GRPO Sample Generative Model Responses</a></li>
@@ -235,17 +236,22 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="prompt_builder.html">Prompt Builder Sample Prompts</a></li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="knn.html">KNN Report Catalog</a><input aria-label="Toggle navigation of KNN Report Catalog" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="knn_next_video.html">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_next_video.html#id1">KNN Next-Video Baseline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_opinion.html">KNN Opinion Regression</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_opinion.html#knn-opinion-shift-study">KNN Opinion Shift Study</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_hyperparameter_tuning.html#hyper-parameter-sweep-results">Hyper-Parameter Sweep Results</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_opinion_from_next.html">KNN Opinion Regression (Next-Video Config)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_opinion_from_next.html#knn-opinion-shift-study-next-video-config">KNN Opinion Shift Study (Next-Video Config)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_additional_features.html">KNN Additional Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="knn_additional_features.html#additional-text-features">Additional Text Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="knn_next_video.html">KNN Next-Video Baseline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="knn_opinion.html">KNN Opinion Regression</a></li>
+<li class="toctree-l2"><a class="reference internal" href="knn_hyperparameter_tuning.html">KNN Hyperparameter Tuning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="knn_opinion_from_next.html">KNN Opinion Regression (Next-Video Config)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="knn_additional_features.html">KNN Additional Features</a></li>
+<li class="toctree-l2 current has-children"><a class="reference internal" href="xgb.html">XGBoost Report Catalog</a><input aria-label="Toggle navigation of XGBoost Report Catalog" checked="" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="xgb_next_video.html">XGBoost Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xgb_next_video.html#id1">XGBoost Next-Video Baseline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xgb_opinion.html">XGBoost Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xgb_opinion.html#id1">XGBoost Opinion Regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xgb_opinion_from_next.html">XGBoost Opinion (Next-Video Config)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xgb_opinion_from_next.html#xgboost-opinion-regression-next-video-config">XGBoost Opinion Regression (Next-Video Config)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xgb_hyperparameter_tuning.html">XGBoost Hyperparameter Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xgb_hyperparameter_tuning.html#hyper-parameter-tuning">Hyper-parameter Tuning</a></li>
+<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">XGBoost Additional Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#additional-text-features">Additional Text Features</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="main.html">Portfolio Comparison (Main)</a></li>
@@ -291,7 +297,101 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          
+          <section id="xgboost-additional-features">
+<h1>XGBoost Additional Features<a class="headerlink" href="#xgboost-additional-features" title="Link to this heading">¶</a></h1>
+</section>
+<section id="additional-text-features">
+<h1>Additional Text Features<a class="headerlink" href="#additional-text-features" title="Link to this heading">¶</a></h1>
+<p>This report tracks the supplementary text columns appended to the prompt builder output during training and evaluation.</p>
+<section id="next-video-pipeline">
+<h2>Next-Video Pipeline<a class="headerlink" href="#next-video-pipeline" title="Link to this heading">¶</a></h2>
+<section id="sweep-configurations">
+<h3>Sweep Configurations<a class="headerlink" href="#sweep-configurations" title="Link to this heading">¶</a></h3>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Study</p></th>
+<th class="head"><p>Configuration</p></th>
+<th class="head"><p>Extra text fields</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
+<td><p>tfidf_lr0p03_depth3_estim200_sub0p75_col0p8_l20p5_l10</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">viewer_profile</span></code>, <code class="docutils literal notranslate"><span class="pre">state_text</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="final-evaluations">
+<h3>Final Evaluations<a class="headerlink" href="#final-evaluations" title="Link to this heading">¶</a></h3>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Study</p></th>
+<th class="head"><p>Issue</p></th>
+<th class="head"><p>Extra text fields</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
+<td><p>gun_control</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">viewer_profile</span></code>, <code class="docutils literal notranslate"><span class="pre">state_text</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+<section id="opinion-regression">
+<h2>Opinion Regression<a class="headerlink" href="#opinion-regression" title="Link to this heading">¶</a></h2>
+<section id="id1">
+<h3>Sweep Configurations<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Study</p></th>
+<th class="head"><p>Configuration</p></th>
+<th class="head"><p>Extra text fields</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
+<td><p>tfidf_lr0p03_depth3_estim200_sub0p75_col0p8_l20p5_l10</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">viewer_profile</span></code>, <code class="docutils literal notranslate"><span class="pre">state_text</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="id2">
+<h3>Final Evaluations<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Study</p></th>
+<th class="head"><p>Extra text fields</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Study 1 – Gun Control (MTurk)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">viewer_profile</span></code>, <code class="docutils literal notranslate"><span class="pre">state_text</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+<section id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Default extra text fields: <code class="docutils literal notranslate"><span class="pre">viewer_profile</span></code>, <code class="docutils literal notranslate"><span class="pre">state_text</span></code></p></li>
+<li><p>Additional fields observed: none (defaults only).</p></li>
+</ul>
+</section>
+</section>
+
         </article>
       </div>
       <footer>
@@ -313,7 +413,7 @@
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">&lt;no title&gt;</div>
+                <div class="title">XGBoost Hyperparameter Tuning</div>
                 
               </div>
             </a>

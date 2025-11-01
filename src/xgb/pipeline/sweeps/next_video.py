@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple, cast
 
 from common.pipeline.executor import execute_indexed_tasks
-from common.pipeline.utils import make_placeholder_metrics
+from common.pipeline.utils import make_placeholder_metrics, base_sweep_outcome_kwargs
 
 from ..context import (
     StudySelection,
@@ -56,23 +56,14 @@ def _sweep_outcome_from_metrics(
     :param metrics_path: Filesystem location of the metrics artefact.
     :type metrics_path: Path
     :returns: Sweep outcome populated with accuracy, coverage, and support.
-    :rtype: SweepOutcome
+    :rtype: ~xgb.pipeline.context.SweepOutcome
     """
 
     # Prefer eligible-only accuracy when available; fall back to overall.
     acc_value = metrics.get("accuracy_eligible")
     if acc_value is None:
         acc_value = metrics.get("accuracy")
-    return SweepOutcome(
-        order_index=task.index,
-        study=task.study,
-        config=task.config,
-        accuracy=float(acc_value or 0.0),
-        coverage=float(metrics.get("coverage", 0.0)),
-        evaluated=int(metrics.get("evaluated", 0)),
-        metrics_path=metrics_path,
-        metrics=metrics,
-    )
+    return SweepOutcome(**base_sweep_outcome_kwargs(task, metrics, metrics_path))
 
 
 def _iter_sweep_tasks(
@@ -85,9 +76,9 @@ def _iter_sweep_tasks(
     Yield sweep tasks with deterministic ordering.
 
     :param studies: Participant studies slated for evaluation.
-    :type studies: Sequence[StudySpec]
+    :type studies: Sequence[~common.pipeline.types.StudySpec]
     :param configs: Hyper-parameter configurations to explore.
-    :type configs: Sequence[SweepConfig]
+    :type configs: Sequence[~xgb.pipeline.context.SweepConfig]
     :param context: Shared sweep execution context.
     :type context: SweepRunContext
     :returns: Iterable sequence of sweep tasks sorted by deterministic index.
@@ -103,18 +94,22 @@ def _iter_sweep_tasks(
         for study in studies:
             run_root = context.sweep_dir / study.issue_slug / study.study_slug / config.label()
             metrics_path = run_root / study.evaluation_slug / "metrics.json"
-            train_studies: Tuple[str, ...] = tuple()
             tasks.append(
                 SweepTask(
                     index=task_index,
                     study=study,
                     config=config,
-                    base_cli=base_cli_tuple,
+                    base_cli=tuple(
+                        list(base_cli_tuple)
+                        + [
+                            "--xgb_tree_method",
+                            context.tree_method,
+                        ]
+                    ),
                     extra_cli=extra_cli_tuple,
                     run_root=run_root,
                     tree_method=context.tree_method,
                     metrics_path=metrics_path,
-                    train_participant_studies=train_studies,
                 )
             )
             task_index += 1
@@ -134,13 +129,13 @@ def _prepare_sweep_tasks(
     :param studies: Participant studies slated for evaluation.
     :type studies: Sequence[~common.pipeline.types.StudySpec]
     :param configs: Hyper-parameter configurations to explore.
-    :type configs: Sequence[SweepConfig]
+    :type configs: Sequence[~xgb.pipeline.context.SweepConfig]
     :param context: Shared sweep execution context.
     :type context: SweepRunContext
     :param reuse_existing: Flag controlling whether cached artefacts should be reused.
     :type reuse_existing: bool
     :returns: Tuple containing pending tasks and cached outcomes.
-    :rtype: Tuple[List[SweepTask], List[SweepOutcome]]
+    :rtype: Tuple[List[SweepTask], List[~xgb.pipeline.context.SweepOutcome]]
     """
 
     pending: List[SweepTask] = []
@@ -193,7 +188,7 @@ def _execute_sweep_tasks(
     :param jobs: Maximum number of parallel workers.
     :type jobs: int
     :returns: Ordered list of sweep outcomes.
-    :rtype: List[SweepOutcome]
+    :rtype: List[~xgb.pipeline.context.SweepOutcome]
     """
 
     return execute_indexed_tasks(
@@ -217,11 +212,11 @@ def _run_sweeps(
     :param studies: Participant studies slated for evaluation.
     :type studies: Sequence[~common.pipeline.types.StudySpec]
     :param configs: Hyper-parameter configurations to explore.
-    :type configs: Sequence[SweepConfig]
+    :type configs: Sequence[~xgb.pipeline.context.SweepConfig]
     :param context: Shared sweep execution context.
     :type context: SweepRunContext
     :returns: Ordered list of combined cached and executed outcomes.
-    :rtype: List[SweepOutcome]
+    :rtype: List[~xgb.pipeline.context.SweepOutcome]
     """
 
     pending_tasks, cached_outcomes = _prepare_sweep_tasks(
@@ -241,32 +236,24 @@ def _execute_sweep_task(task: SweepTask) -> SweepOutcome:
     :param task: Sweep task to execute.
     :type task: SweepTask
     :returns: Sweep outcome populated with metrics.
-    :rtype: SweepOutcome
+    :rtype: ~xgb.pipeline.context.SweepOutcome
     """
 
     run_root = task.run_root
     run_root.mkdir(parents=True, exist_ok=True)
 
     cli_args: List[str] = list(task.base_cli)
-    cli_args.extend(task.config.cli_args(task.tree_method))
+    cli_args.extend(task.config.cli_args(None))
     cli_args.extend(["--issues", task.study.issue])
     cli_args.extend(["--participant_studies", task.study.key])
     cli_args.extend(["--out_dir", str(run_root)])
     cli_args.extend(task.extra_cli)
-    if task.train_participant_studies:
-        cli_args.extend(
-            [
-                "--train_participant_studies",
-                ",".join(task.train_participant_studies),
-            ]
-        )
-    else:
-        # Within-study training: do not include alternate studies.
-        LOGGER.info(
-            "[SWEEP] issue=%s study=%s training restricted to within-study only.",
-            task.study.issue,
-            task.study.key,
-        )
+    # Within-study training only for sweeps.
+    LOGGER.info(
+        "[SWEEP] issue=%s study=%s training restricted to within-study only.",
+        task.study.issue,
+        task.study.key,
+    )
 
     evaluation_dir = task.metrics_path.parent
     has_existing_outputs = evaluation_dir.exists()
@@ -332,9 +319,6 @@ def _execute_sweep_task(task: SweepTask) -> SweepOutcome:
         order_index=task.index,
         study=task.study,
         config=task.config,
-        accuracy=float(metrics.get("accuracy", 0.0)),
-        coverage=float(metrics.get("coverage", 0.0)),
-        evaluated=int(metrics.get("evaluated", 0)),
         metrics_path=task.metrics_path,
         metrics=metrics,
     )
@@ -425,7 +409,7 @@ def _select_best_configs(outcomes: Sequence[SweepOutcome]) -> Dict[str, StudySel
     Pick the best configuration per study using accuracy, coverage, and support.
 
     :param outcomes: Sweep outcomes covering all studies and configurations.
-    :type outcomes: Sequence[SweepOutcome]
+    :type outcomes: Sequence[~xgb.pipeline.context.SweepOutcome]
     :returns: Mapping from study key to the chosen configuration.
     :rtype: Dict[str, StudySelection]
     """

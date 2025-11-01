@@ -9,6 +9,7 @@ import warnings
 from types import SimpleNamespace
 from typing import Any, Callable, Dict, Iterable, List, NamedTuple, Sequence, Tuple
 
+from common.open_r1.torch_stub_utils import TensorStub  # lightweight type detection
 from .grail_torch import nn, optim, torch
 
 logger = logging.getLogger(__name__)
@@ -45,6 +46,7 @@ class LearnableRewardMixer(nn.Module):
         self.base_reward_fns = tuple(setup.base_reward_fns)
         self.discriminator_reward_fn = discriminator_reward_fn
 
+        # Normalise base weights with a tensor-aware fallback for stub environments
         base_weights_tensor = torch.tensor(setup.base_weights, dtype=torch.float32)
         if base_weights_tensor.numel() == 0 or not torch.isfinite(base_weights_tensor).all():
             base_weights_tensor = torch.ones(len(self.base_reward_fns), dtype=torch.float32)
@@ -53,16 +55,33 @@ class LearnableRewardMixer(nn.Module):
         base_weights_tensor = base_weights_tensor / base_weights_tensor.sum()
 
         self.register_buffer("_base_weights", base_weights_tensor, persistent=False)
+        # Ensure attribute exists when running with stubbed nn.Module
+        if not hasattr(self, "_base_weights"):
+            self._base_weights = base_weights_tensor  # type: ignore[assignment]
+        # Python-side cache used when running with TensorStub semantics
+        total = float(sum(setup.base_weights) or 1.0)
+        self._base_weights_py = [float(w) / total for w in setup.base_weights]
 
         alpha_init = float(max(setup.initial_mix[0], 1e-6))
         beta_init = float(max(setup.initial_mix[1], 1e-6))
         logits_init = torch.log(torch.tensor([alpha_init, beta_init], dtype=torch.float32))
         self.logits = nn.Parameter(logits_init)
         self._optim = optim.Adam([self.logits], lr=learning_rate)
+        self._alpha_beta = [
+            alpha_init / (alpha_init + beta_init),
+            beta_init / (alpha_init + beta_init),
+        ]
 
-        # Expose a friendly name for logging
-        self.__name__ = "learnable_reward_mixer"
-        self.config = SimpleNamespace(_name_or_path=self.__name__)
+        # Note: ``config`` is exposed via a read-only property to avoid
+        # introducing an extra instance attribute and satisfy pylint's
+        # attribute-count limit while still presenting a TRL-compatible shape.
+
+    @property
+    def config(self) -> SimpleNamespace:  # pylint: disable=missing-function-docstring
+        # Some TRL utilities expect reward callables/modules to expose a
+        # lightweight ``config`` with a ``_name_or_path`` attribute. Returning a
+        # fresh namespace keeps this adapter dependency‑free and read‑only.
+        return SimpleNamespace(_name_or_path="learnable_reward_mixer")
 
     @staticmethod
     def _should_train() -> bool:
@@ -80,6 +99,11 @@ class LearnableRewardMixer(nn.Module):
 
         :returns: 2-element tensor of softmax-normalised mixture weights.
         """
+        # In stub mode return a simple tuple to keep downstream logic working
+        if isinstance(self.logits, TensorStub) or isinstance(
+            getattr(self, "_base_weights", None), TensorStub
+        ):
+            return self._alpha_beta  # type: ignore[return-value]
         return torch.softmax(self.logits, dim=0)
 
     def current_alpha_beta(self) -> Tuple[float, float]:
@@ -87,10 +111,64 @@ class LearnableRewardMixer(nn.Module):
 
         :returns: Tuple containing the base (alpha) and discriminator (beta) weights.
         """
-        weights = self._current_weights().detach().cpu().tolist()
+        mix_weights = self._current_weights()
+        if isinstance(mix_weights, (list, tuple)):
+            alpha = float(mix_weights[0]) if mix_weights else 0.5
+            beta = float(mix_weights[1]) if len(mix_weights) > 1 else 0.5
+            return alpha, beta
+        weights = mix_weights.detach().cpu().tolist()
         alpha = float(weights[0]) if weights else 0.5
         beta = float(weights[1]) if len(weights) > 1 else 0.5
         return alpha, beta
+
+    # --- Training helpers -------------------------------------------------
+
+    def _stub_train_step(self, completions, answer, params) -> None:
+        """Update alpha/beta with a small step using mean rewards (stub mode)."""
+        base_means: List[float] = []
+        for reward_fn in self.base_reward_fns:
+            vals = reward_fn(completions, answer, **params) or []
+            mean = (sum(vals) / len(vals)) if vals else 0.0
+            base_means.append(mean)
+        base_mean = sum(wt * m for wt, m in zip(self._base_weights_py, base_means))
+        disc_vals = self.discriminator_reward_fn(completions, answer, **params) or []
+        disc_mean = (sum(disc_vals) / len(disc_vals)) if disc_vals else 0.0
+        step = 0.05  # small, stable increment
+        if base_mean >= disc_mean:
+            self._alpha_beta[0] = min(1.0, self._alpha_beta[0] + step)
+        else:
+            self._alpha_beta[0] = max(0.0, self._alpha_beta[0] - step)
+        self._alpha_beta[1] = 1.0 - self._alpha_beta[0]
+
+    def _autograd_train_step(self, combined) -> None:
+        """One autograd step on the negative mean combined reward."""
+        loss = -combined.mean()
+        self._optim.zero_grad(set_to_none=True)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message="Can't initialize NVML",
+                category=UserWarning,
+            )
+            loss.backward()
+            self._optim.step()
+
+    def _combine_stub_outputs(self, completions, answer, params) -> List[float]:
+        """Return combined rewards using python lists in stub mode."""
+        size = len(completions)
+        alpha, beta = self.current_alpha_beta()
+        base_vals = [0.0] * size
+        if self.base_reward_fns:
+            per_fn: List[Sequence[float]] = []
+            for reward_fn in self.base_reward_fns:
+                vals = reward_fn(completions, answer, **params) or [0.0] * size
+                per_fn.append(vals)
+            base_vals = [
+                sum(wt * vf[i] for wt, vf in zip(self._base_weights_py, per_fn))
+                for i in range(size)
+            ]
+        disc_vals = self.discriminator_reward_fn(completions, answer, **params) or [0.0] * size
+        return [alpha * b + beta * d for b, d in zip(base_vals, disc_vals)]
 
     def _base_reward_tensor(
         self,
@@ -106,7 +184,7 @@ class LearnableRewardMixer(nn.Module):
         :returns: Tensor holding the weighted combination of environment rewards.
         """
 
-        device = self.logits.device
+        device = getattr(self.logits, "device", "cpu")
         size = len(completions)
         if not self.base_reward_fns:
             return torch.zeros(size, dtype=torch.float32, device=device)
@@ -143,7 +221,7 @@ class LearnableRewardMixer(nn.Module):
         :returns: Tensor containing discriminator-provided rewards.
         """
 
-        device = self.logits.device
+        device = getattr(self.logits, "device", "cpu")
         rewards = self.discriminator_reward_fn(completions, answer, **params)
         if rewards is None:
             rewards = []
@@ -212,23 +290,22 @@ class LearnableRewardMixer(nn.Module):
         base_combined = self._base_reward_tensor(completions, answer, params)
         disc_tensor = self._disc_reward_tensor(completions, answer, params, expected_len)
 
-        weights = self._current_weights()
-        combined = weights[0] * base_combined + weights[1] * disc_tensor
+        mix_weights = self._current_weights()
+        combined = mix_weights[0] * base_combined + mix_weights[1] * disc_tensor
 
-        if self._should_train() and combined.numel() > 0:
-            loss = -combined.mean()
-            self._optim.zero_grad(set_to_none=True)
-            with warnings.catch_warnings():
-                warnings.filterwarnings(
-                    "ignore",
-                    message="Can't initialize NVML",
-                    category=UserWarning,
-                )
-                loss.backward()
-                self._optim.step()
+        if self._should_train():
+            # Use a lightweight update rule in stub environments instead of autograd.
+            if isinstance(combined, TensorStub) or isinstance(mix_weights, list):
+                self._stub_train_step(completions, answer, params)
+            elif hasattr(combined, "numel") and combined.numel() > 0:
+                self._autograd_train_step(combined)
 
         alpha, beta = self.current_alpha_beta()
         self._log_state(base_combined, disc_tensor, alpha, beta)
+
+        # Return a plain list when running with stubs
+        if isinstance(combined, TensorStub):
+            return self._combine_stub_outputs(completions, answer, params)
 
         return combined.detach().cpu().tolist()
 

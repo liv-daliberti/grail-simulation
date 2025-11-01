@@ -20,10 +20,19 @@ slate-ranking and opinion-regression experiments."""
 
 from __future__ import annotations
 
+import os
+
 from common.import_utils import install_package_aliases
 from common.package_baseline import BASELINE_PUBLIC_API, build_alias_map
 
-from . import cli, core, pipeline, scripts
+# Allow lightweight imports that avoid bringing in CLI/pipeline dependencies
+# during unit tests. When XGB_LIGHT_IMPORTS=1 only the minimal package surface is
+# initialised and users can import `xgb.core.model` without transitively pulling
+# `knn`.
+if os.getenv("XGB_LIGHT_IMPORTS") == "1":  # pragma: no cover - import-time switch
+    from . import core  # type: ignore
+else:  # default behaviour
+    from . import cli, core, pipeline, scripts  # type: ignore
 
 __all__ = list(BASELINE_PUBLIC_API)
 

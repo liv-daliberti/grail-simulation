@@ -6,12 +6,13 @@ Split from ``context.py`` to reduce module size and clarify responsibilities.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence, Tuple
 
 from common.pipeline.types import StudySpec
-from common.opinion.sweep_types import BaseOpinionSweepTask, BaseSweepTask
+from common.opinion.sweep_types import BaseOpinionSweepTask
+from common.opinion.sweep_helpers import ExtrasSweepTask, base_task_kwargs
 
 from .context_config import SweepConfig
 
@@ -33,10 +34,9 @@ class _SweepTaskExtras:
     word2vec_model_dir: Path | None
     issue: str
     issue_slug: str
-    train_participant_studies: Tuple[str, ...] = field(default_factory=tuple)
 
 
-class SweepTask(BaseSweepTask["SweepConfig"]):
+class SweepTask(ExtrasSweepTask["SweepConfig"]):
     """Extend :class:`common.opinion.sweep_types.BaseSweepTask` with KNN metadata."""
 
     def __init__(
@@ -54,24 +54,23 @@ class SweepTask(BaseSweepTask["SweepConfig"]):
         issue_slug: str,
         train_participant_studies: Tuple[str, ...] = (),
     ) -> None:
-        super().__init__(
-            index=index,
-            study=study,
-            config=config,
-            base_cli=base_cli,
-            extra_cli=extra_cli,
-            run_root=run_root,
-            metrics_path=metrics_path,
+        extras = _SweepTaskExtras(
+            word2vec_model_dir=word2vec_model_dir,
+            issue=issue,
+            issue_slug=issue_slug,
         )
-        object.__setattr__(
-            self,
-            "_extras",
-            _SweepTaskExtras(
-                word2vec_model_dir=word2vec_model_dir,
-                issue=issue,
-                issue_slug=issue_slug,
-                train_participant_studies=tuple(train_participant_studies or ()),
+        super().__init__(
+            **base_task_kwargs(
+                index=index,
+                study=study,
+                config=config,
+                base_cli=base_cli,
+                extra_cli=extra_cli,
+                run_root=run_root,
+                metrics_path=metrics_path,
+                train_participant_studies=train_participant_studies,
             ),
+            extras=extras,
         )
 
     _extras: "_SweepTaskExtras"
@@ -91,10 +90,7 @@ class SweepTask(BaseSweepTask["SweepConfig"]):
         """Filesystem-friendly slug for the task's target issue."""
         return self._extras.issue_slug
 
-    @property
-    def train_participant_studies(self) -> Tuple[str, ...]:  # pragma: no cover - forwarding
-        """Training participant-study keys for within/cross-study selection."""
-        return self._extras.train_participant_studies
+    # train_participant_studies provided by BaseSweepTask
 
 
 @dataclass(frozen=True)

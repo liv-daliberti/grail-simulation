@@ -89,8 +89,33 @@ Opinion Utilities
    :members:
    :undoc-members:
    :show-inheritance:
+   :exclude-members: OpinionSpec
 
-.. automodule:: common.opinion.sweep_types
+..
+   Note: sweep_types are re-exported via common.opinion to avoid duplicate
+   cross-reference targets.
+
+.. automodule:: common.opinion.metrics
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: common.opinion.baselines
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: common.opinion.results
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: common.opinion.prompts
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: common.opinion.plots
    :members:
    :undoc-members:
    :show-inheritance:

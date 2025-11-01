@@ -22,20 +22,15 @@ import logging
 from pathlib import Path
 
 from common.cli.args import add_comma_separated_argument
-from common.cli.options import add_eval_arguments
+from common.cli.shortcuts import add_shared_eval_arguments
+from common.cli.text_fields import DEFAULT_EXTENDED_TEXT_FIELDS
 
 from ..core.evaluate import run_eval
 from ..core.opinion import run_opinion_eval
 from ..core.features import Word2VecConfig
 from .utils import add_sentence_transformer_normalize_flags
 
-DEFAULT_KNN_TEXT_FIELDS = (
-    "pid1,pid2,ideo1,ideo2,pol_interest,religpew,educ,employ,child18,inputstate,"
-    "freq_youtube,youtube_time,newsint,q31,participant_study,slate_source,"
-    "minwage_text_w2,minwage_text_w1,mw_support_w2,mw_support_w1,minwage15_w2,"
-    "minwage15_w1,mw_index_w2,mw_index_w1,gun_importance,gun_index,gun_enthusiasm,"
-    "gun_identity"
-)
+DEFAULT_KNN_TEXT_FIELDS = DEFAULT_EXTENDED_TEXT_FIELDS
 
 def build_parser() -> argparse.ArgumentParser:
     """
@@ -140,17 +135,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Random seed applied when subsampling the train split.",
     )
     # Shared eval args (dataset, issues, eval_max, out_dir, cache_dir, overwrite)
-    add_eval_arguments(
-        parser,
-        default_out_dir=str(Path("models") / "knn"),
-        default_cache_dir=str(Path.cwd() / "hf_cache"),
-        include_llm_args=False,
-        include_opinion_args=False,
-        include_studies_filter=False,
-        dataset_default="data/cleaned_grail",
-        issues_default="",
-        include_legacy_aliases=True,
-    )
+    add_shared_eval_arguments(parser, default_out_dir=Path("models") / "knn")
     parser.add_argument(
         "--word2vec-size",
         "--word2vec_size",

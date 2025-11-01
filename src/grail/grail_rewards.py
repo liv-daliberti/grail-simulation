@@ -19,7 +19,10 @@ except ImportError as _gail_import_error:  # pragma: no cover - optional depende
         The operational discriminator lives in :mod:`grail.grail_gail` and is
         only available when the transformers dependency is installed.
         """
-        def __init__(self, *_args, **_kwargs) -> None:
+
+        __is_stub__ = True
+
+        def __init__(self, *_args, **_kwargs) -> None:  # noqa: D401 - docstring above
             raise ImportError(
                 "GAIL components require transformers. Install it with `pip install transformers`."
             ) from _gail_import_error
@@ -33,10 +36,14 @@ except ImportError as _gail_import_error:  # pragma: no cover - optional depende
             "GAIL components require transformers. Install it with `pip install transformers`."
         )
 
+    # Mark stub for runtime detection without invoking it.
+    setattr(make_gail_reward_fn, "__is_stub__", True)
+
     def _select_disc_device(*_args, **_kwargs):  # type: ignore[empty-body]
         raise ImportError(
             "GAIL components require transformers. Install it with `pip install transformers`."
         )
+    setattr(_select_disc_device, "__is_stub__", True)
 from .grail_mixer import LearnableRewardCallable, LearnableRewardMixer, MixerSetup
 
 logger = logging.getLogger(__name__)
@@ -65,22 +72,50 @@ def _maybe_enable_gail(reward_fns: List[Any]) -> bool:
     """
 
     use_gail = os.environ.get("GAIL_USE", "1") != "0"
-    if not use_gail or not _GAIL_AVAILABLE:
-        suffix = " (missing transformers)" if not _GAIL_AVAILABLE else ""
-        logger.info("GAIL shaping DISABLED%s", suffix)
+    if not use_gail:
+        logger.info("GAIL shaping DISABLED")
         return False
 
+    # Prefer compiled GAIL. Allow monkeypatched stand-ins only when they replace
+    # the import-time stubs (identified by the ``__is_stub__`` flag).
+    if not _GAIL_AVAILABLE:
+        disc_cls = globals().get("OnlineDiscriminator")
+        select_dev = globals().get("_select_disc_device")
+        disc_ok = callable(disc_cls) and not getattr(disc_cls, "__is_stub__", False)
+        dev_ok = callable(select_dev) and not getattr(select_dev, "__is_stub__", False)
+        if not (disc_ok and dev_ok):
+            logger.info("GAIL shaping DISABLED (missing transformers)")
+            return False
+
     disc_model = os.environ.get("GAIL_DISC_MODEL", "distilbert-base-uncased")
+    # Safe: either real import, or a monkeypatched replacement was detected.
     disc_device = _select_disc_device()
     disc_lr = float(os.environ.get("GAIL_LR", "2e-5"))
     gail_alpha = float(os.environ.get("GAIL_ALPHA", "1.0"))
 
-    discriminator = OnlineDiscriminator(
-        disc_model,
-        disc_device,
-        learning_rate=disc_lr,
-    )
-    gail_fn = make_gail_reward_fn(discriminator, alpha=gail_alpha)
+    try:
+        discriminator = OnlineDiscriminator(
+            disc_model,
+            disc_device,
+            learning_rate=disc_lr,
+        )
+    except ImportError as exc:  # pragma: no cover - surfaced in integration runs
+        logger.info("GAIL shaping DISABLED (unavailable dependencies: %s)", exc)
+        return False
+
+    # Try to use the full reward-factory when available; otherwise fall back to
+    # a minimal adapter that multiplies discriminator probabilities.
+    gail_fn: Any
+    if callable(make_gail_reward_fn) and not getattr(make_gail_reward_fn, "__is_stub__", False):
+        gail_fn = make_gail_reward_fn(discriminator, alpha=gail_alpha)
+    else:
+        def _fallback_reward(completions, answer, **_kwargs):
+            del answer
+            texts = [c if isinstance(c, str) else "" for c in completions]
+            probs = discriminator.prob_positive(texts)
+            return [float(gail_alpha * p) for p in probs]
+
+        gail_fn = _fallback_reward
     gail_fn.__name__ = "gail_reward"
     reward_fns.append(gail_fn)
     logger.info(

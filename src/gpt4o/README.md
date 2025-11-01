@@ -61,7 +61,7 @@ Curious how the cleaned rows are produced before uploading to Hugging Face?
 `clean_data/sessions/README.md` walks through the session-ingestion pipeline
 that backs every downstream baseline.
 
-> 💡 The helper command `python src/gpt4o/scripts/gpt-4o-baseline.py` forwards to
+> 💡 The helper command `python src/gpt4o/scripts/gpt4o_baseline.py` forwards to
 > `gpt4o.cli:main` for local experiments.
 
 ## Module layout

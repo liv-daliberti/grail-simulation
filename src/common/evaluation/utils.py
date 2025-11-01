@@ -101,6 +101,34 @@ def prepare_dataset(
     return dataset_source, base_ds, available_issues
 
 
+def prepare_dataset_from_args(
+    args,
+    *,
+    default_source: str,
+    loader: Callable[[str, str], _Dataset],
+    issue_lookup: Callable[[_Dataset], Sequence[str]],
+) -> Tuple[str, _Dataset, Sequence[str]]:
+    """
+    Convenience wrapper to call :func:`prepare_dataset` using common CLI attributes.
+
+    The wrapper reduces boilerplate in pipelines by extracting ``dataset`` and
+    ``cache_dir`` from the provided ``args`` namespace.
+
+    :param args: Namespace exposing optional ``dataset`` and required ``cache_dir``.
+    :param default_source: Default dataset identifier when ``args.dataset`` is unset.
+    :param loader: Dataset loader callable.
+    :param issue_lookup: Callable returning issue labels for the loaded dataset.
+    :returns: Tuple of ``(dataset_source, base_ds, available_issues)``.
+    """
+    return prepare_dataset(
+        dataset=getattr(args, "dataset", None),
+        default_source=default_source,
+        cache_dir=getattr(args, "cache_dir"),
+        loader=loader,
+        issue_lookup=issue_lookup,
+    )
+
+
 def compose_issue_slug(issue: str, study_tokens: Sequence[str]) -> str:
     """
     Return a filesystem-safe slug combining ``issue`` and ``study_tokens``.

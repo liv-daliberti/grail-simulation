@@ -21,14 +21,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Generic, Mapping, Optional, Tuple, TypeVar
 
-from ..pipeline.types import StudySpec
 
 
 ConfigT = TypeVar("ConfigT")
 
 
 @dataclass(frozen=True)
-class BaseSweepTask(Generic[ConfigT]):
+class BaseSweepTask(Generic[ConfigT]):  # pylint: disable=too-many-instance-attributes
     """Describe shared attributes for sweep execution tasks.
 
     :param index: Stable ordinal used to preserve submission order.
@@ -45,15 +44,22 @@ class BaseSweepTask(Generic[ConfigT]):
     :type run_root: Path
     :param metrics_path: Expected location of the metrics artefact.
     :type metrics_path: Path
+    :param train_participant_studies: Optional set of study keys used to restrict
+        training to a subset of participants (e.g., within-study only). Defaults
+        to an empty tuple which many pipelines interpret as within-study.
+    :type train_participant_studies: Tuple[str, ...]
     """
 
+    __module__ = "common.opinion"
+
     index: int
-    study: StudySpec
+    study: "common.pipeline.types.StudySpec"
     config: ConfigT
     base_cli: Tuple[str, ...]
     extra_cli: Tuple[str, ...]
     run_root: Path
     metrics_path: Path
+    train_participant_studies: Tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -70,8 +76,10 @@ class BaseOpinionSweepTask(Generic[ConfigT]):
     :type metrics_path: Path
     """
 
+    __module__ = "common.opinion"
+
     index: int
-    study: StudySpec
+    study: "common.pipeline.types.StudySpec"
     config: ConfigT
     metrics_path: Path
 
@@ -80,6 +88,8 @@ class BaseOpinionSweepTask(Generic[ConfigT]):
 class MetricsArtifact:
     """Container bundling the on-disk metrics artefact and its payload."""
 
+    __module__ = "common.opinion"
+
     path: Path
     payload: Mapping[str, object]
 
@@ -87,6 +97,8 @@ class MetricsArtifact:
 @dataclass(frozen=True)
 class AccuracySummary:
     """Capture directional accuracy metrics emitted by sweep evaluations."""
+
+    __module__ = "common.opinion"
 
     value: Optional[float] = None
     baseline: Optional[float] = None
@@ -114,8 +126,10 @@ class BaseOpinionSweepOutcome(Generic[ConfigT]):
     :type accuracy_summary: AccuracySummary
     """
 
+    __module__ = "common.opinion"
+
     order_index: int
-    study: StudySpec
+    study: "common.pipeline.types.StudySpec"
     config: ConfigT
     mae: float
     rmse: float

@@ -42,7 +42,18 @@ from .shared import plt
 
 
 @dataclass
-class _PortfolioAccumulator:  # pylint: disable=too-many-instance-attributes
+class _PortfolioCounts:
+    """Grouped counters for portfolio-level aggregations."""
+
+    evaluated: int = 0
+    correct_eligible: int = 0
+    eligible: int = 0
+    known_hits: int = 0
+    known_total: int = 0
+
+
+@dataclass
+class _PortfolioAccumulator:
     """
     Accumulate portfolio-level statistics across studies.
 
@@ -56,11 +67,7 @@ class _PortfolioAccumulator:  # pylint: disable=too-many-instance-attributes
     :ivar probability_values: Recorded mean probabilities for known candidates.
     """
 
-    total_evaluated: int = 0
-    total_correct_eligible: int = 0
-    total_eligible: int = 0
-    total_known_hits: int = 0
-    total_known_total: int = 0
+    counts: _PortfolioCounts = field(default_factory=_PortfolioCounts)
     accuracy_entries: List[Tuple[float, str]] = field(default_factory=list)
     probability_values: List[float] = field(default_factory=list)
 
@@ -88,12 +95,12 @@ class _PortfolioAccumulator:  # pylint: disable=too-many-instance-attributes
         """
 
         if summary.correct is not None and summary.evaluated is not None:
-            self.total_evaluated += summary.evaluated
+            self.counts.evaluated += summary.evaluated
         # Track eligible-only tallies for parity with KNN.
         if summary.correct_eligible is not None and summary.eligible is not None:
             try:
-                self.total_correct_eligible += int(summary.correct_eligible)
-                self.total_eligible += int(summary.eligible)
+                self.counts.correct_eligible += int(summary.correct_eligible)
+                self.counts.eligible += int(summary.eligible)
             except (TypeError, ValueError):
                 pass
 
@@ -107,8 +114,8 @@ class _PortfolioAccumulator:  # pylint: disable=too-many-instance-attributes
 
         if summary.known_hits is None or summary.known_total is None:
             return
-        self.total_known_hits += summary.known_hits
-        self.total_known_total += summary.known_total
+        self.counts.known_hits += summary.known_hits
+        self.counts.known_total += summary.known_total
 
     def _record_accuracy_entry(self, summary: "NextVideoMetricSummary", label: str) -> None:
         """
@@ -148,7 +155,7 @@ class _PortfolioAccumulator:  # pylint: disable=too-many-instance-attributes
         :rtype: List[str]
         """
 
-        if not self.total_evaluated and not self.accuracy_entries:
+        if not self.counts.evaluated and not self.accuracy_entries:
             return []
         lines: List[str] = ["## Portfolio Summary", ""]
 
@@ -156,14 +163,14 @@ class _PortfolioAccumulator:  # pylint: disable=too-many-instance-attributes
         if weighted_accuracy is not None:
             lines.append(
                 f"- Weighted eligible-only accuracy {_format_optional_float(weighted_accuracy)} "
-                f"across {_format_count(self.total_eligible)} eligible slates."
+                f"across {_format_count(self.counts.eligible)} eligible slates."
             )
 
         weighted_coverage = self._weighted_coverage()
         if weighted_coverage is not None:
             lines.append(
                 f"- Weighted known-candidate coverage {_format_optional_float(weighted_coverage)} "
-                f"over {_format_count(self.total_known_total)} eligible slates."
+                f"over {_format_count(self.counts.known_total)} eligible slates."
             )
 
         weighted_availability = self._weighted_availability()
@@ -207,9 +214,9 @@ class _PortfolioAccumulator:  # pylint: disable=too-many-instance-attributes
         :rtype: Optional[float]
         """
 
-        if not self.total_eligible:
+        if not self.counts.eligible:
             return None
-        return self.total_correct_eligible / self.total_eligible
+        return self.counts.correct_eligible / self.counts.eligible
 
     def _weighted_coverage(self) -> Optional[float]:
         """
@@ -219,9 +226,9 @@ class _PortfolioAccumulator:  # pylint: disable=too-many-instance-attributes
         :rtype: Optional[float]
         """
 
-        if not self.total_known_total:
+        if not self.counts.known_total:
             return None
-        return self.total_known_hits / self.total_known_total
+        return self.counts.known_hits / self.counts.known_total
 
     def _weighted_availability(self) -> Optional[float]:
         """
@@ -231,9 +238,9 @@ class _PortfolioAccumulator:  # pylint: disable=too-many-instance-attributes
         :rtype: Optional[float]
         """
 
-        if not self.total_evaluated:
+        if not self.counts.evaluated:
             return None
-        return self.total_known_total / self.total_evaluated
+        return self.counts.known_total / self.counts.evaluated
 
     def _mean_probability(self) -> Optional[float]:
         """

@@ -31,6 +31,8 @@ except ImportError:  # pragma: no cover - optional dependency
     load_dataset = None  # type: ignore
     load_from_disk = None  # type: ignore
 
+from common.pipeline.io import iter_jsonl_rows
+
 from .models import TreeData, TreeEdge, _natural_sort_key
 
 
@@ -231,16 +233,7 @@ def _read_jsonl_metadata(path: Path) -> List[Mapping[str, object]]:
     :returns: List of mapping records parsed from the file.
     """
 
-    records: List[Mapping[str, object]] = []
-    with path.open("r", encoding="utf-8") as handle:
-        for line in handle:
-            line = line.strip()
-            if not line:
-                continue
-            obj = json.loads(line)
-            if isinstance(obj, Mapping):
-                records.append(obj)
-    return records
+    return list(iter_jsonl_rows(path, ignore_errors=True))
 
 
 def _records_to_lookup(

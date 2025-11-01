@@ -24,3 +24,35 @@ Both the CLI (`xgb.cli`) and pipeline (`xgb.pipeline`) import these modules.
 Extend this package when introducing new feature spaces or evaluation modes so
 the higher-level CLIs remain thin orchestration layers. Keep expensive imports
 behind `_optional.py` to maintain fast startup times.
+
+## Model Module Split (Refactor)
+
+To improve maintainability and satisfy lint constraints, the original
+`model.py` has been split into a few focused modules while keeping the public
+API stable via re-exports:
+
+- `model_types.py` – lightweight dataclasses (e.g. `XGBoostSlateModel`,
+  `EncodedDataset`, `TrainingBatch`).
+- `model_config.py` – configuration dataclasses for training and booster
+  hyper-parameters (`XGBoostTrainConfig`, `XGBoostBoosterParams`). The
+  constructors accept grouped configs and `**kwargs` for backwards
+  compatibility with flat argument styles.
+- `model_predict.py` – persistence (`save_xgboost_model`, `load_xgboost_model`)
+  and inference (`predict_among_slate`) helpers.
+
+All of the above are re-exported from `model.py`, so existing imports like
+`from xgb.model import XGBoostTrainConfig, save_xgboost_model` continue to work
+unchanged.
+
+## Lightweight Imports for Tests
+
+Some submodules depend on the KNN pipeline. For unit tests that don’t need the
+full dependency surface, set the following environment variables before
+importing `xgb` modules:
+
+- `XGB_LIGHT_IMPORTS=1` – avoids initialising CLI/pipeline in `xgb.__init__`.
+- `XGB_CORE_LIGHT_IMPORTS=1` – avoids importing `data`/`evaluate` in
+  `xgb.core.__init__`.
+
+With these enabled, importing `xgb.core.model` and the related split modules
+does not pull in `knn` or other heavy dependencies.

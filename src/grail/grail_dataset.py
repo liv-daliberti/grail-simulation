@@ -32,7 +32,8 @@ from common.open_r1.shared import (
     collect_passthrough_fields,
 )
 from common.open_r1.utils import get_dataset, get_tokenizer
-from prompt_builder import as_list_json
+# Import directly from submodule to satisfy static analyzers
+from prompt_builder.parsers import as_list_json
 
 TRAIN_KEEP_COLUMNS = BASE_TRAIN_KEEP_COLUMNS | {"slate_items_with_meta"}
 PASSTHROUGH_FIELDS = _SHARED_PASSTHROUGH_FIELDS

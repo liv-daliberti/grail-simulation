@@ -17,15 +17,24 @@
 
 from __future__ import annotations
 
-from . import (
-    data,
-    evaluate,
-    features,
-    model,
-    opinion,
-    utils,
-    vectorizers,
-)
+import os
+
+# Support faster and lighter imports (useful for unit tests that don't need the
+# full dependency surface like `knn`). When XGB_CORE_LIGHT_IMPORTS=1, only
+# import a minimal subset of submodules to avoid importing `data`/`evaluate`
+# which depend on the KNN pipeline.
+if os.getenv("XGB_CORE_LIGHT_IMPORTS") == "1":  # pragma: no cover - import-time switch
+    from . import model, vectorizers  # type: ignore
+else:  # default behaviour preserves full API surface
+    from . import (  # type: ignore
+        data,
+        evaluate,
+        features,
+        model,
+        opinion,
+        utils,
+        vectorizers,
+    )
 
 __all__ = [
     "data",

@@ -38,9 +38,9 @@ from typing import (
 )
 
 from common.pipeline.formatters import safe_float, safe_int
+from common.opinion import OpinionCalibrationMetrics
 
 from .context import MetricSummary, OpinionSummary, StudySpec, OpinionSummaryInputs
-from common.opinion import OpinionCalibrationMetrics
 
 TaskT = TypeVar("TaskT")
 OutcomeT = TypeVar("OutcomeT")

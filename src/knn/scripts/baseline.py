@@ -18,7 +18,6 @@
 Backward-compatible entry point for the refactored KNN baseline.
 """
 
-# pylint: skip-file
 from __future__ import annotations
 
 from knn.cli import main

@@ -22,9 +22,9 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
-from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 from common.opinion.metrics import compute_opinion_metrics
+from common.opinion.baselines import baseline_metrics as _baseline_opinion_metrics
 
 from .opinion_index import _similarity_from_distances, _transform_documents, _weighted_mean
 from .opinion_models import OpinionExample, OpinionIndex
@@ -564,47 +564,12 @@ def _curve_payload(
 
 
 def _baseline_metrics(eval_examples: Sequence[OpinionExample]) -> Dict[str, float]:
-    """
-    Return baseline error metrics for opinion prediction.
-
-    :param eval_examples: Iterable of evaluation examples to score with the index.
-    :type eval_examples: Sequence[~knn.core.opinion_models.OpinionExample]
-    :returns: Baseline error metrics for opinion prediction.
-    :rtype: Dict[str, float]
-    """
-    truth_after = np.asarray([example.after for example in eval_examples], dtype=np.float32)
-    truth_before = np.asarray([example.before for example in eval_examples], dtype=np.float32)
-    baseline_mean = float(truth_after.mean()) if truth_after.size else float("nan")
-    baseline_predictions = np.full_like(truth_after, baseline_mean)
-    mae_mean = float(mean_absolute_error(truth_after, baseline_predictions))
-    rmse_mean = float(math.sqrt(mean_squared_error(truth_after, baseline_predictions)))
-
-    no_change_metrics = compute_opinion_metrics(
-        truth_after=truth_after,
-        truth_before=truth_before,
-        pred_after=truth_before,
+    """Return baseline metrics via the shared opinion baseline helper."""
+    truth_after = [example.after for example in eval_examples]
+    truth_before = [example.before for example in eval_examples]
+    return dict(
+        _baseline_opinion_metrics(truth_before=truth_before, truth_after=truth_after)
     )
-    baseline_direction_accuracy = no_change_metrics.get("direction_accuracy")
-    if baseline_direction_accuracy is not None and not math.isnan(baseline_direction_accuracy):
-        baseline_direction_accuracy = float(baseline_direction_accuracy)
-    else:
-        baseline_direction_accuracy = float("nan")
-
-    return {
-        "mae_global_mean_after": mae_mean,
-        "rmse_global_mean_after": rmse_mean,
-        "mae_using_before": float(no_change_metrics["mae_after"]),
-        "rmse_using_before": float(no_change_metrics["rmse_after"]),
-        "mae_change_zero": float(no_change_metrics["mae_change"]),
-        "rmse_change_zero": float(no_change_metrics["rmse_change"]),
-        "calibration_slope_change_zero": no_change_metrics.get("calibration_slope"),
-        "calibration_intercept_change_zero": no_change_metrics.get("calibration_intercept"),
-        "calibration_ece_change_zero": no_change_metrics.get("calibration_ece"),
-        "calibration_bins_change_zero": no_change_metrics.get("calibration_bins"),
-        "kl_divergence_change_zero": no_change_metrics.get("kl_divergence_change"),
-        "global_mean_after": baseline_mean,
-        "direction_accuracy": baseline_direction_accuracy,
-    }
 
 
 @dataclass(frozen=True)

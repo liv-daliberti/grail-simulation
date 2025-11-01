@@ -23,7 +23,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 from common.evaluation.utils import (
     compose_issue_slug,
-    prepare_dataset,
+    prepare_dataset_from_args,
     safe_div,
 )
 from common.prompts.docs import merge_default_extra_fields
@@ -638,10 +638,9 @@ def run_eval(args) -> None:
     :returns: ``None``. Evaluation artefacts are persisted via downstream helpers.
     """
 
-    dataset_source, base_ds, available_issues = prepare_dataset(
-        dataset=getattr(args, "dataset", None),
+    dataset_source, base_ds, available_issues = prepare_dataset_from_args(
+        args,
         default_source=DEFAULT_DATASET_SOURCE,
-        cache_dir=args.cache_dir,
         loader=load_dataset_source,
         issue_lookup=issues_in_dataset,
     )

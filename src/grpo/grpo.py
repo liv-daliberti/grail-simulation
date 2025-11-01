@@ -15,27 +15,109 @@
 
 """Standard GRPO training entrypoint for the GRAIL simulation dataset."""
 
+import importlib
 import logging
 import os
 import sys
 from pathlib import Path
 from typing import Any, List, Optional
 
-try:  # pragma: no cover - optional dependency
-    from transformers import set_seed
-except Exception:  # pragma: no cover - optional dependency
-    # Catch broad exceptions because some environments inject partial stubs
-    # (e.g. openai) that cause non-ImportError failures during import resolution.
-    set_seed = None  # type: ignore[assignment]
+_SENTINEL = object()
 
-try:  # pragma: no cover - optional dependency
-    from trl import ModelConfig, get_peft_config
-    from trl.trainer.grpo_trainer import GRPOTrainer
-except Exception:  # pragma: no cover - optional dependency
-    # Be defensive – treat any import failure as the dependency being unavailable.
-    ModelConfig = None  # type: ignore[assignment]
-    get_peft_config = None  # type: ignore[assignment]
-    GRPOTrainer = None  # type: ignore[assignment]
+## Exposed for tests: allow monkeypatching to simulate missing deps.
+# These are initialised lazily from dynamic imports when left as _SENTINEL.
+set_seed = _SENTINEL  # pylint: disable=invalid-name
+ModelConfig = _SENTINEL  # pylint: disable=invalid-name
+get_peft_config = _SENTINEL  # pylint: disable=invalid-name
+GRPOTrainer = _SENTINEL  # pylint: disable=invalid-name
+
+
+def _require_transformers_set_seed():
+    """Return ``transformers.set_seed`` or raise an informative error.
+
+    Uses dynamic import to avoid static import errors in lint-only environments.
+    """
+
+    try:  # pragma: no cover - optional dependency
+        transformers = importlib.import_module("transformers")
+    except ImportError as exc:  # pragma: no cover - optional dependency
+        raise ImportError(
+            (
+                "transformers must be installed to run GRPO training "
+                "(pip install transformers)."
+            )
+        ) from exc
+    func = getattr(transformers, "set_seed", None)
+    if func is None:  # pragma: no cover - optional dependency
+        raise ImportError(
+            (
+                "transformers.set_seed not found; ensure a compatible "
+                "transformers version is installed."
+            )
+        )
+    return func
+
+
+def _require_trl_symbols():
+    """Return ``(ModelConfig, get_peft_config, GRPOTrainer)`` from TRL.
+
+    Imports dynamically to sidestep static import errors when TRL isn't present.
+    """
+
+    try:  # pragma: no cover - optional dependency
+        trl_mod = importlib.import_module("trl")
+        grpo_mod = importlib.import_module("trl.trainer.grpo_trainer")
+    except ImportError as exc:  # pragma: no cover - optional dependency
+        raise ImportError(
+            "trl must be installed to run GRPO training (pip install trl)."
+        ) from exc
+
+    model_config_cls = getattr(trl_mod, "ModelConfig", None)
+    peft_fn = getattr(trl_mod, "get_peft_config", None)
+    trainer_cls = getattr(grpo_mod, "GRPOTrainer", None)
+    if model_config_cls is None or peft_fn is None or trainer_cls is None:  # pragma: no cover
+        raise ImportError(
+            (
+                "trl installation is incomplete or incompatible; "
+                "ModelConfig/get_peft_config/GRPOTrainer missing."
+            )
+        )
+    return model_config_cls, peft_fn, trainer_cls
+
+
+def _get_set_seed_fn():
+    """Return a set_seed callable, resolving from module attr or dynamic import."""
+
+    mod = sys.modules[__name__]
+    existing = getattr(mod, "set_seed", _SENTINEL)
+    if existing is _SENTINEL:  # lazily import when not overridden by tests
+        existing = _require_transformers_set_seed()
+        setattr(mod, "set_seed", existing)
+    if existing is None:
+        raise ImportError(
+            "transformers must be installed to run GRPO training (pip install transformers)."
+        )
+    return existing  # type: ignore[return-value]
+
+
+def _get_trl_symbols():
+    """Return (ModelConfig, get_peft_config, GRPOTrainer) honoring test overrides."""
+
+    mod = sys.modules[__name__]
+    model_config_cls = getattr(mod, "ModelConfig", _SENTINEL)
+    peft_config_fn = getattr(mod, "get_peft_config", _SENTINEL)
+    grpo_trainer_cls = getattr(mod, "GRPOTrainer", _SENTINEL)
+    if (
+        model_config_cls is _SENTINEL
+        or peft_config_fn is _SENTINEL
+        or grpo_trainer_cls is _SENTINEL
+    ):
+        model_config_cls, peft_config_fn, grpo_trainer_cls = _require_trl_symbols()
+        # Surface the resolved symbols on the module for test monkeypatching.
+        setattr(mod, "ModelConfig", model_config_cls)
+        setattr(mod, "get_peft_config", peft_config_fn)
+        setattr(mod, "GRPOTrainer", grpo_trainer_cls)
+    return model_config_cls, peft_config_fn, grpo_trainer_cls
 
 try:
     from common.data.hf_datasets import DatasetDict
@@ -98,20 +180,27 @@ def _ensure_training_dependencies() -> None:
     :returns: ``None``. Raises ``ImportError`` when required packages are missing.
     """
 
-    if set_seed is None:  # pragma: no cover - optional dependency guard
+    # Validate that we can import the optional training dependencies at runtime,
+    # but respect test overrides when module-level names are explicitly set.
+    try:
+        _get_set_seed_fn()
+    except ImportError as exc:
         raise ImportError(
-            "transformers must be installed to run GRPO training "
-            "(pip install transformers)."
-        )
-    if (
-        ModelConfig is None
-        or get_peft_config is None
-        or GRPOTrainer is None
-    ):  # pragma: no cover - optional dependency guard
+            (
+                "transformers must be installed to run GRPO training "
+                "(pip install transformers)."
+            )
+        ) from exc
+
+    try:
+        model_config_cls, peft_fn, trainer_cls = _get_trl_symbols()
+    except ImportError as exc:
         raise ImportError(
-            "trl must be installed to run GRPO training "
-            "(pip install trl)."
-        )
+            "trl must be installed to run GRPO training (pip install trl)."
+        ) from exc
+
+    if model_config_cls is None or peft_fn is None or trainer_cls is None:
+        raise ImportError("trl must be installed to run GRPO training (pip install trl).")
 
 
 def _prune_columns(dataset: DatasetDict) -> DatasetDict:
@@ -197,8 +286,11 @@ def _ensure_reward_weights(training_args: GRPOConfig, reward_fns: List[Any]) -> 
         return
     if len(weights) != len(reward_fns):
         raise ValueError(
-            f"reward_weights length ({len(weights)}) != number of rewards ({len(reward_fns)}). "
-            "Update the recipe so every reward has a matching weight."
+            (
+                f"reward_weights length ({len(weights)}) != number of rewards "
+                f"({len(reward_fns)}). "
+            )
+            + "Update the recipe so every reward has a matching weight."
         )
     if training_args.reward_weights:
         normalised = [max(0.0, float(value)) for value in training_args.reward_weights]
@@ -209,7 +301,7 @@ def _ensure_reward_weights(training_args: GRPOConfig, reward_fns: List[Any]) -> 
 def main(
     script_args: GRPOScriptArguments,
     training_args: GRPOConfig,
-    model_args: ModelConfig,
+    model_args: Any,
 ) -> None:
     """Orchestrate dataset preparation, trainer construction, and the training loop.
 
@@ -220,7 +312,7 @@ def main(
     """
     _ensure_training_dependencies()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    set_seed(training_args.seed)
+    _get_set_seed_fn()(training_args.seed)
 
     solution_key = getattr(script_args, "dataset_solution_column", None)
     max_hist = int(os.environ.get("GRAIL_MAX_HISTORY", "12") or "12")
@@ -245,7 +337,24 @@ def main(
         )
     )
 
+def _cli_entrypoint() -> None:
+    """Entry point wrapper that supports ``--help`` without heavy deps."""
+
+    # Allow "--help" without requiring heavy optional dependencies.
+    if any(arg in ("-h", "--help") for arg in sys.argv[1:]):
+        try:
+            model_config_type, _, _ = _get_trl_symbols()
+        except ImportError:
+            # Defer to shared.parse_and_run's lightweight help when TRL is missing.
+            parse_and_run(main, (GRPOScriptArguments, GRPOConfig, object))
+        else:
+            parse_and_run(main, (GRPOScriptArguments, GRPOConfig, model_config_type))
+        return
+
+    _ensure_training_dependencies()
+    model_config_type, _, _ = _get_trl_symbols()
+    parse_and_run(main, (GRPOScriptArguments, GRPOConfig, model_config_type))
+
 
 if __name__ == "__main__":
-    _ensure_training_dependencies()
-    parse_and_run(main, (GRPOScriptArguments, GRPOConfig, ModelConfig))
+    _cli_entrypoint()

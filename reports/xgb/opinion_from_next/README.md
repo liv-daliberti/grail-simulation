@@ -1,6 +1,7 @@
 # XGBoost Opinion Regression (Next-Video Config)
 
-This section reuses the selected next-video configuration to estimate post-study opinion change.
+This section reuses the selected next-video configuration to 
+estimate post-study opinion change.
 
 - Dataset: `data/cleaned_grail`
 - Split: validation

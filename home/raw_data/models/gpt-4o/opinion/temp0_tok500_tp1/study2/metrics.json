@@ -1,0 +1,111 @@
+{
+  "study": "study2",
+  "issue": "minimum_wage",
+  "study_label": "Study 2 – Minimum Wage (MTurk)",
+  "participants": 165,
+  "metrics": {
+    "eligible": 165,
+    "mae_after": 0.6712861952861953,
+    "rmse_after": 0.7260946372097862,
+    "r2_after": -5.883736221256738,
+    "mae_change": 0.6712861952861953,
+    "rmse_change": 0.7260946372097862,
+    "direction_accuracy": 0.5454545454545454,
+    "calibration_slope": -0.05321530483814818,
+    "calibration_intercept": 0.08274592593323682,
+    "calibration_bins": [
+      {
+        "lower": 0.05555555555555558,
+        "upper": 0.33797222222222223,
+        "count": 17,
+        "mean_pred": 0.24387254901960784,
+        "mean_actual": 0.07509803921568628
+      },
+      {
+        "lower": 0.33797222222222223,
+        "upper": 0.4902777777777778,
+        "count": 16,
+        "mean_pred": 0.42943576388888893,
+        "mean_actual": -0.011024305555555555
+      },
+      {
+        "lower": 0.4902777777777778,
+        "upper": 0.6321666666666668,
+        "count": 17,
+        "mean_pred": 0.5531781045751634,
+        "mean_actual": 0.13295751633986927
+      },
+      {
+        "lower": 0.6321666666666668,
+        "upper": 0.7099722222222222,
+        "count": 16,
+        "mean_pred": 0.6759548611111111,
+        "mean_actual": 0.09417534722222222
+      },
+      {
+        "lower": 0.7099722222222222,
+        "upper": 0.7856944444444445,
+        "count": 16,
+        "mean_pred": 0.7531336805555555,
+        "mean_actual": 0.03189236111111111
+      },
+      {
+        "lower": 0.7856944444444445,
+        "upper": 0.866,
+        "count": 17,
+        "mean_pred": 0.8212418300653594,
+        "mean_actual": 0.034591503267973854
+      },
+      {
+        "lower": 0.866,
+        "upper": 0.8881944444444445,
+        "count": 15,
+        "mean_pred": 0.8759537037037038,
+        "mean_actual": 0.04022222222222222
+      },
+      {
+        "lower": 0.8881944444444445,
+        "upper": 0.9213333333333333,
+        "count": 18,
+        "mean_pred": 0.903804012345679,
+        "mean_actual": 0.00797067901234568
+      },
+      {
+        "lower": 0.9213333333333333,
+        "upper": 0.95,
+        "count": 12,
+        "mean_pred": 0.9339930555555557,
+        "mean_actual": -0.013923611111111109
+      },
+      {
+        "lower": 0.95,
+        "upper": 0.975,
+        "count": 21,
+        "mean_pred": 0.9650462962962963,
+        "mean_actual": 0.039113756613756614
+      }
+    ],
+    "calibration_ece": 0.6712861952861953,
+    "kl_divergence_change": 13.689068591183318
+  },
+  "baseline": {
+    "global_mean_after": 0.3287138044834137,
+    "mae_global_mean_after": 0.24027135968208313,
+    "rmse_global_mean_after": 0.27674585580825806,
+    "mae_using_before": 0.09619781065619352,
+    "rmse_using_before": 0.13807202050944545,
+    "mae_change_zero": 0.09619781065619352,
+    "rmse_change_zero": 0.13807202050944545,
+    "calibration_slope_change_zero": null,
+    "calibration_intercept_change_zero": null,
+    "calibration_ece_change_zero": null,
+    "calibration_bins_change_zero": null,
+    "kl_divergence_change_zero": 18.3686299910487,
+    "direction_accuracy": 0.06060606060606061
+  },
+  "config": {
+    "temperature": 0.0,
+    "max_tokens": 32,
+    "top_p": null
+  }
+}

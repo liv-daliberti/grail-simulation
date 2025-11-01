@@ -1,21 +1,23 @@
 # GRPO Next-Video Baseline
 
-- **Overall accuracy:** 0.445 on 550 eligible slates out of 550 processed.
-- **Parsed rate:** 0.953
-- **Formatted rate:** 0.942
+- **Overall accuracy:** 0.584 on 1,748 eligible slates out of 1,748 processed.
+- **Parsed rate:** 0.958
+- **Formatted rate:** 0.953
 
 ## Accuracy by Issue
 
 | Group | Seen | Eligible | Accuracy ↑ | Parsed ↑ | Formatted ↑ |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| minimum_wage | 550 | 550 | 0.445 | 0.953 | 0.942 |
+| gun_control | 548 | 548 | 0.962 | 0.998 | 0.998 |
+| minimum_wage | 1,200 | 1,200 | 0.411 | 0.940 | 0.932 |
 
 ## Accuracy by Participant Study
 
 | Group | Seen | Eligible | Accuracy ↑ | Parsed ↑ | Formatted ↑ |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| study2 | 191 | 191 | 0.414 | 0.969 | 0.958 |
-| study3 | 359 | 359 | 0.462 | 0.944 | 0.933 |
+| study1 | 548 | 548 | 0.962 | 0.998 | 0.998 |
+| study2 | 423 | 423 | 0.357 | 0.941 | 0.929 |
+| study3 | 777 | 777 | 0.440 | 0.940 | 0.934 |
 
 ### Notes
 

@@ -36,40 +36,80 @@ class _SweepTaskExtras:
     issue_slug: str
 
 
+@dataclass(frozen=True)
+class SweepTaskBase:
+    """Grouped base fields required to construct a :class:`SweepTask`."""
+
+    index: int
+    study: StudySpec
+    config: "SweepConfig"
+    base_cli: Tuple[str, ...]
+    extra_cli: Tuple[str, ...]
+    run_root: Path
+    metrics_path: Path
+    train_participant_studies: Tuple[str, ...] = ()
+
+
 class SweepTask(ExtrasSweepTask["SweepConfig"]):
     """Extend :class:`common.opinion.sweep_types.BaseSweepTask` with KNN metadata."""
 
     def __init__(
         self,
         *,
-        index: int,
-        study: StudySpec,
-        config: "SweepConfig",
-        base_cli: Tuple[str, ...],
-        extra_cli: Tuple[str, ...],
-        run_root: Path,
-        metrics_path: Path,
-        word2vec_model_dir: Path | None,
-        issue: str,
-        issue_slug: str,
-        train_participant_studies: Tuple[str, ...] = (),
+        base: SweepTaskBase | None = None,
+        extras: _SweepTaskExtras | None = None,
+        **legacy_kwargs: object,
     ) -> None:
-        extras = _SweepTaskExtras(
-            word2vec_model_dir=word2vec_model_dir,
-            issue=issue,
-            issue_slug=issue_slug,
-        )
+        """Construct a sweep task from grouped ``base`` fields and ``extras``.
+
+        Grouping reduces argument count and clarifies call sites while keeping
+        the underlying :class:`ExtrasSweepTask` initialisation intact.
+        """
+        # Backwards compatibility: accept legacy flat kwargs used in tests.
+        if base is None or extras is None:
+            required = [
+                "index",
+                "study",
+                "config",
+                "base_cli",
+                "extra_cli",
+                "run_root",
+                "metrics_path",
+                "word2vec_model_dir",
+                "issue",
+                "issue_slug",
+            ]
+            for key in required:
+                assert key in legacy_kwargs and legacy_kwargs[key] is not None
+            base = SweepTaskBase(
+                index=legacy_kwargs["index"],
+                study=legacy_kwargs["study"],
+                config=legacy_kwargs["config"],
+                base_cli=tuple(legacy_kwargs["base_cli"]),  # type: ignore[arg-type]
+                extra_cli=tuple(legacy_kwargs["extra_cli"]),  # type: ignore[arg-type]
+                run_root=legacy_kwargs["run_root"],
+                metrics_path=legacy_kwargs["metrics_path"],
+                train_participant_studies=tuple(
+                    legacy_kwargs.get("train_participant_studies", ())  # type: ignore[arg-type]
+                ),
+            )
+            extras = _SweepTaskExtras(
+                word2vec_model_dir=legacy_kwargs["word2vec_model_dir"],
+                issue=legacy_kwargs["issue"],
+                issue_slug=legacy_kwargs["issue_slug"],
+            )
+
         # Use the shared initialiser from ExtrasSweepTask to avoid duplicate
         # forwarding boilerplate and keep logic in one place.
         self._init_shared(
-            index=index,
-            study=study,
-            config=config,
-            base_cli=base_cli,
-            extra_cli=extra_cli,
-            run_root=run_root,
-            metrics_path=metrics_path,
-            train_participant_studies=train_participant_studies,
+            index=base.index,
+            study=base.study,
+            config=base.config,
+            base_cli=base.base_cli,
+            extra_cli=base.extra_cli,
+            run_root=base.run_root,
+            metrics_path=base.metrics_path,
+            train_participant_studies=base.train_participant_studies,
             extras=extras,
         )
 
@@ -103,32 +143,49 @@ class _OpinionTaskExtras:
     word2vec_model_dir: Path | None
 
 
+@dataclass(frozen=True)
+class OpinionTaskBase:
+    """Grouped base fields required to construct an :class:`OpinionSweepTask`."""
+
+    index: int
+    study: StudySpec
+    config: SweepConfig
+    metrics_path: Path
+
+
 class OpinionSweepTask(BaseOpinionSweepTask[SweepConfig]):
     """Extend :class:`common.opinion.sweep_types.BaseOpinionSweepTask` with CLI context."""
 
     def __init__(
         self,
         *,
-        index: int,
-        study: StudySpec,
-        config: SweepConfig,
-        metrics_path: Path,
-        base_cli: Tuple[str, ...],
-        extra_cli: Tuple[str, ...],
-        run_root: Path,
-        word2vec_model_dir: Path | None,
+        base: OpinionTaskBase | None = None,
+        extras: _OpinionTaskExtras | None = None,
+        **legacy_kwargs: object,
     ) -> None:
-        super().__init__(index=index, study=study, config=config, metrics_path=metrics_path)
-        object.__setattr__(
-            self,
-            "_extras",
-            _OpinionTaskExtras(
-                base_cli=tuple(base_cli),
-                extra_cli=tuple(extra_cli),
-                run_root=run_root,
-                word2vec_model_dir=word2vec_model_dir,
-            ),
+        if base is None or extras is None:
+            required = ["index", "study", "config", "metrics_path", "base_cli", "extra_cli", "run_root"]
+            for key in required:
+                assert key in legacy_kwargs and legacy_kwargs[key] is not None
+            base = OpinionTaskBase(
+                index=legacy_kwargs["index"],
+                study=legacy_kwargs["study"],
+                config=legacy_kwargs["config"],
+                metrics_path=legacy_kwargs["metrics_path"],
+            )
+            extras = _OpinionTaskExtras(
+                base_cli=tuple(legacy_kwargs["base_cli"]),  # type: ignore[arg-type]
+                extra_cli=tuple(legacy_kwargs["extra_cli"]),  # type: ignore[arg-type]
+                run_root=legacy_kwargs["run_root"],
+                word2vec_model_dir=legacy_kwargs.get("word2vec_model_dir"),
+            )
+        super().__init__(
+            index=base.index,
+            study=base.study,
+            config=base.config,
+            metrics_path=base.metrics_path,
         )
+        object.__setattr__(self, "_extras", extras)
 
     _extras: "_OpinionTaskExtras"
 

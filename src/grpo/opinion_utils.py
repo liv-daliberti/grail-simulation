@@ -16,7 +16,7 @@ NUMBER_PATTERN = re.compile(r"[-+]?\d+(?:\.\d+)?")
 
 
 def _clip_prediction(value: float) -> float:
-    """Clamp predictions to the 1–7 opinion scale."""
+    """Clamp predictions to the 1–7 opinion index range."""
 
     return min(7.0, max(1.0, value))
 
@@ -37,7 +37,9 @@ def _parse_prediction(raw_output: str) -> float:
         fallback = NUMBER_PATTERN.search(raw_output)
         candidate = fallback.group(0) if fallback else ""
     try:
-        return _clip_prediction(float(candidate))
+        # Parse numeric index, clamp to [1, 7], then normalise to [0, 1]
+        clipped = _clip_prediction(float(candidate))
+        return (clipped - 1.0) / 6.0
     except (TypeError, ValueError):
         LOGGER.warning("Unable to parse opinion prediction from output: %r", raw_output)
         return float("nan")

@@ -2941,19 +2941,20 @@ attribute counts small for linting.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="knn.pipeline.context.EvaluationContext.from_args">
-<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_cli</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_cli</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">next_video_out_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opinion_out_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">next_video_word2vec_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opinion_word2vec_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reuse_existing</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">overrides</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/pipeline/context_evaluation.html#EvaluationContext.from_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.pipeline.context.EvaluationContext.from_args" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_cli</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_cli</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reuse_existing</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dirs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">overrides</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/pipeline/context_evaluation.html#EvaluationContext.from_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.pipeline.context.EvaluationContext.from_args" title="Link to this definition">¶</a></dt>
 <dd><p>Build an <a class="reference internal" href="#knn.pipeline.context.EvaluationContext" title="knn.pipeline.context.EvaluationContext"><code class="xref py py-class docutils literal notranslate"><span class="pre">EvaluationContext</span></code></a> from legacy or task-specific overrides.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>base_cli</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Base CLI arguments used by evaluation commands.</p></li>
 <li><p><strong>extra_cli</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Additional CLI flags toggled by the caller.</p></li>
-<li><p><strong>next_video_out_dir</strong> (<em>pathlib.Path</em><em> | </em><em>None</em>) – Default next-video output directory.</p></li>
-<li><p><strong>opinion_out_dir</strong> (<em>pathlib.Path</em><em> | </em><em>None</em>) – Default opinion output directory.</p></li>
-<li><p><strong>next_video_word2vec_dir</strong> (<em>pathlib.Path</em><em> | </em><em>None</em>) – Default next-video Word2Vec cache directory.</p></li>
-<li><p><strong>opinion_word2vec_dir</strong> (<em>pathlib.Path</em><em> | </em><em>None</em>) – Default opinion Word2Vec cache directory.</p></li>
+<li><p><strong>next_video_out_dir</strong> – Default next-video output directory.</p></li>
+<li><p><strong>opinion_out_dir</strong> – Default opinion output directory.</p></li>
+<li><p><strong>next_video_word2vec_dir</strong> – Default next-video Word2Vec cache directory.</p></li>
+<li><p><strong>opinion_word2vec_dir</strong> – Default opinion Word2Vec cache directory.</p></li>
 <li><p><strong>reuse_existing</strong> (<em>bool</em>) – Whether to reuse existing artefacts on disk.</p></li>
 <li><p><strong>overrides</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>]</em>) – Optional keywords to override directory defaults.</p></li>
+<li><p><strong>dirs</strong> (<em>knn.pipeline.context_evaluation.EvaluationOverrides</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -3809,20 +3810,15 @@ KNN-specific opinion metrics.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="knn.pipeline.context.OpinionSweepTask">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">knn.pipeline.context.</span></span><span class="sig-name descname"><span class="pre">OpinionSweepTask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_cli</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_cli</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">word2vec_model_dir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#knn.pipeline.context.OpinionSweepTask" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">knn.pipeline.context.</span></span><span class="sig-name descname"><span class="pre">OpinionSweepTask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extras</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">legacy_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#knn.pipeline.context.OpinionSweepTask" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="common.html#common.opinion.BaseOpinionSweepTask" title="common.opinion.BaseOpinionSweepTask"><code class="xref py py-class docutils literal notranslate"><span class="pre">common.opinion.BaseOpinionSweepTask</span></code></a>[<a class="reference internal" href="#knn.pipeline.context.SweepConfig" title="knn.pipeline.context.SweepConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">knn.pipeline.context.SweepConfig</span></code></a>]</p>
 <p>Extend <code class="xref py py-class docutils literal notranslate"><span class="pre">common.opinion.sweep_types.BaseOpinionSweepTask</span></code> with CLI context.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>index</strong> (<em>int</em>)</p></li>
-<li><p><strong>study</strong> (<a class="reference internal" href="common.html#common.pipeline.types.StudySpec" title="knn.pipeline.context.StudySpec"><em>StudySpec</em></a>)</p></li>
-<li><p><strong>config</strong> (<a class="reference internal" href="#knn.pipeline.context.SweepConfig" title="knn.pipeline.context.SweepConfig"><em>SweepConfig</em></a>)</p></li>
-<li><p><strong>metrics_path</strong> (<em>Path</em>)</p></li>
-<li><p><strong>base_cli</strong> (<em>Tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>)</p></li>
-<li><p><strong>extra_cli</strong> (<em>Tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>)</p></li>
-<li><p><strong>run_root</strong> (<em>Path</em>)</p></li>
-<li><p><strong>word2vec_model_dir</strong> (<em>Path</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>base</strong> (<em>OpinionTaskBase</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>extras</strong> (<em>_OpinionTaskExtras</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>legacy_kwargs</strong> (<em>object</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -4369,7 +4365,7 @@ surface it here as a thin proxy to the underlying outcome.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="knn.pipeline.context.SweepConfig">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">knn.pipeline.context.</span></span><span class="sig-name descname"><span class="pre">SweepConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_space</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">word2vec_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">word2vec_window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">word2vec_min_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">word2vec_epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">word2vec_workers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sentence_transformer_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sentence_transformer_device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sentence_transformer_batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sentence_transformer_normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#knn.pipeline.context.SweepConfig" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">knn.pipeline.context.</span></span><span class="sig-name descname"><span class="pre">SweepConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_space</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">word2vec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sentence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">legacy_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#knn.pipeline.context.SweepConfig" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Describe a single hyper-parameter configuration scheduled for execution.</p>
 <dl class="field-list simple">
@@ -4378,15 +4374,17 @@ surface it here as a thin proxy to the underlying outcome.</p>
 <li><p><strong>feature_space</strong> (<em>str</em>) – One of ‘tfidf’, ‘word2vec’, or ‘sentence_transformer’.</p></li>
 <li><p><strong>metric</strong> (<em>str</em>) – Target metric label used for selection.</p></li>
 <li><p><strong>text_fields</strong> (<em>Tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>) – Ordered text fields to include when building feature space.</p></li>
-<li><p><strong>word2vec_size</strong> (<em>int</em><em> | </em><em>None</em>) – Word2Vec vector size.</p></li>
-<li><p><strong>word2vec_window</strong> (<em>int</em><em> | </em><em>None</em>) – Word2Vec context window.</p></li>
-<li><p><strong>word2vec_min_count</strong> (<em>int</em><em> | </em><em>None</em>) – Word2Vec minimum token count.</p></li>
-<li><p><strong>word2vec_epochs</strong> (<em>int</em><em> | </em><em>None</em>) – Word2Vec training epochs.</p></li>
-<li><p><strong>word2vec_workers</strong> (<em>int</em><em> | </em><em>None</em>) – Word2Vec worker processes.</p></li>
-<li><p><strong>sentence_transformer_model</strong> (<em>str</em><em> | </em><em>None</em>) – SentenceTransformer model name.</p></li>
-<li><p><strong>sentence_transformer_device</strong> (<em>str</em><em> | </em><em>None</em>) – Device hint for encoding.</p></li>
-<li><p><strong>sentence_transformer_batch_size</strong> (<em>int</em><em> | </em><em>None</em>) – Batch size for encoding.</p></li>
-<li><p><strong>sentence_transformer_normalize</strong> (<em>bool</em><em> | </em><em>None</em>) – Whether to L2-normalize embeddings.</p></li>
+<li><p><strong>word2vec_size</strong> – Word2Vec vector size.</p></li>
+<li><p><strong>word2vec_window</strong> – Word2Vec context window.</p></li>
+<li><p><strong>word2vec_min_count</strong> – Word2Vec minimum token count.</p></li>
+<li><p><strong>word2vec_epochs</strong> – Word2Vec training epochs.</p></li>
+<li><p><strong>word2vec_workers</strong> – Word2Vec worker processes.</p></li>
+<li><p><strong>sentence_transformer_model</strong> – SentenceTransformer model name.</p></li>
+<li><p><strong>sentence_transformer_device</strong> – Device hint for encoding.</p></li>
+<li><p><strong>sentence_transformer_batch_size</strong> – Batch size for encoding.</p></li>
+<li><p><strong>sentence_transformer_normalize</strong> – Whether to L2-normalize embeddings.</p></li>
+<li><p><strong>word2vec</strong> (<em>_Word2VecConfig</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>sentence</strong> (<em>_SentenceTransformerConfig</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -4567,7 +4565,7 @@ when the feature space is <code class="docutils literal notranslate"><span class
 
 <dl class="py class">
 <dt class="sig sig-object py" id="knn.pipeline.context.SweepOutcome">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">knn.pipeline.context.</span></span><span class="sig-name descname"><span class="pre">SweepOutcome</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">knn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">study</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_space</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">best_k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eligible</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#knn.pipeline.context.SweepOutcome" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">knn.pipeline.context.</span></span><span class="sig-name descname"><span class="pre">SweepOutcome</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">knn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">legacy_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#knn.pipeline.context.SweepOutcome" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Persisted metrics for evaluating a configuration against a single study.</p>
 <p>Composition-based wrapper around
@@ -4578,21 +4576,13 @@ feature-space metadata and KNN-specific statistics.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>base</strong> (<a class="reference internal" href="common.html#common.pipeline.types.BasePipelineSweepOutcome" title="common.pipeline.types.BasePipelineSweepOutcome"><em>BasePipelineSweepOutcome</em></a>) – Base sweep outcome containing common metadata and metrics.</p></li>
 <li><p><strong>knn</strong> (<em>object</em>) – Extra KNN-specific metrics captured for the run.</p></li>
-<li><p><strong>order_index</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>study</strong> (<a class="reference internal" href="common.html#common.pipeline.types.StudySpec" title="knn.pipeline.context.StudySpec"><em>StudySpec</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>config</strong> (<em>'SweepConfig'</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>metrics_path</strong> (<em>Path</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>metrics</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>] </em><em>| </em><em>None</em>)</p></li>
-<li><p><strong>feature_space</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>accuracy</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>best_k</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>eligible</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>legacy_kwargs</strong> (<em>object</em>)</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="knn.pipeline.context.SweepOutcome.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">knn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">study</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_space</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">best_k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eligible</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/pipeline/context_sweeps.html#SweepOutcome.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.pipeline.context.SweepOutcome.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">knn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">legacy_kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/pipeline/context_sweeps.html#SweepOutcome.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.pipeline.context.SweepOutcome.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>Construct a KNN sweep outcome.</p>
 <p>Accepts either a composed <code class="docutils literal notranslate"><span class="pre">base</span></code> + <code class="docutils literal notranslate"><span class="pre">knn</span></code> pair, or a legacy flat set
 of keyword arguments (<code class="docutils literal notranslate"><span class="pre">order_index</span></code>, <code class="docutils literal notranslate"><span class="pre">study</span></code>, <code class="docutils literal notranslate"><span class="pre">config</span></code>,
@@ -4603,15 +4593,7 @@ of keyword arguments (<code class="docutils literal notranslate"><span class="pr
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>base</strong> (<a class="reference internal" href="common.html#common.pipeline.types.BasePipelineSweepOutcome" title="common.pipeline.types.BasePipelineSweepOutcome"><em>BasePipelineSweepOutcome</em></a><em>[</em><a class="reference internal" href="#knn.pipeline.context.SweepConfig" title="knn.pipeline.context.SweepConfig"><em>SweepConfig</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
 <li><p><strong>knn</strong> (<em>object</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>order_index</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>study</strong> (<a class="reference internal" href="common.html#common.pipeline.types.StudySpec" title="knn.pipeline.context.StudySpec"><em>StudySpec</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>config</strong> (<em>'SweepConfig'</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>metrics_path</strong> (<em>Path</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>metrics</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>object</em><em>] </em><em>| </em><em>None</em>)</p></li>
-<li><p><strong>feature_space</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>accuracy</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>best_k</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>eligible</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>legacy_kwargs</strong> (<em>object</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -4750,26 +4732,38 @@ of keyword arguments (<code class="docutils literal notranslate"><span class="pr
 
 <dl class="py class">
 <dt class="sig sig-object py" id="knn.pipeline.context.SweepTask">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">knn.pipeline.context.</span></span><span class="sig-name descname"><span class="pre">SweepTask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_cli</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_cli</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">word2vec_model_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issue_slug</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_participant_studies</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#knn.pipeline.context.SweepTask" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">knn.pipeline.context.</span></span><span class="sig-name descname"><span class="pre">SweepTask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extras</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">legacy_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#knn.pipeline.context.SweepTask" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">common.opinion.sweep_helpers.ExtrasSweepTask</span></code>[<a class="reference internal" href="#knn.pipeline.context.SweepConfig" title="knn.pipeline.context.SweepConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">SweepConfig</span></code></a>]</p>
 <p>Extend <code class="xref py py-class docutils literal notranslate"><span class="pre">common.opinion.sweep_types.BaseSweepTask</span></code> with KNN metadata.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>index</strong> (<em>int</em>)</p></li>
-<li><p><strong>study</strong> (<a class="reference internal" href="common.html#common.pipeline.types.StudySpec" title="knn.pipeline.context.StudySpec"><em>StudySpec</em></a>)</p></li>
-<li><p><strong>config</strong> (<a class="reference internal" href="#knn.pipeline.context.SweepConfig" title="knn.pipeline.context.SweepConfig"><em>SweepConfig</em></a>)</p></li>
-<li><p><strong>base_cli</strong> (<em>Tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>)</p></li>
-<li><p><strong>extra_cli</strong> (<em>Tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>)</p></li>
-<li><p><strong>run_root</strong> (<em>Path</em>)</p></li>
-<li><p><strong>metrics_path</strong> (<em>Path</em>)</p></li>
-<li><p><strong>word2vec_model_dir</strong> (<em>Path</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>issue</strong> (<em>str</em>)</p></li>
-<li><p><strong>issue_slug</strong> (<em>str</em>)</p></li>
-<li><p><strong>train_participant_studies</strong> (<em>Tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>)</p></li>
+<li><p><strong>base</strong> (<em>SweepTaskBase</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>extras</strong> (<em>_SweepTaskExtras</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>legacy_kwargs</strong> (<em>object</em>)</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="knn.pipeline.context.SweepTask.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extras</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">legacy_kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/knn/pipeline/context_tasks.html#SweepTask.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#knn.pipeline.context.SweepTask.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Construct a sweep task from grouped <code class="docutils literal notranslate"><span class="pre">base</span></code> fields and <code class="docutils literal notranslate"><span class="pre">extras</span></code>.</p>
+<p>Grouping reduces argument count and clarifies call sites while keeping
+the underlying <code class="xref py py-class docutils literal notranslate"><span class="pre">ExtrasSweepTask</span></code> initialisation intact.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base</strong> (<em>knn.pipeline.context_tasks.SweepTaskBase</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>extras</strong> (<em>knn.pipeline.context_tasks._SweepTaskExtras</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>legacy_kwargs</strong> (<em>object</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py property">
 <dt class="sig sig-object py" id="knn.pipeline.context.SweepTask.issue">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">issue</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#knn.pipeline.context.SweepTask.issue" title="Link to this definition">¶</a></dt>
@@ -7458,6 +7452,7 @@ pre-refactor invocations.</p></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#knn.pipeline.context.SweepTask"><code class="docutils literal notranslate"><span class="pre">SweepTask</span></code></a><ul>
+<li><a class="reference internal" href="#knn.pipeline.context.SweepTask.__init__"><code class="docutils literal notranslate"><span class="pre">SweepTask.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#knn.pipeline.context.SweepTask.issue"><code class="docutils literal notranslate"><span class="pre">SweepTask.issue</span></code></a></li>
 <li><a class="reference internal" href="#knn.pipeline.context.SweepTask.issue_slug"><code class="docutils literal notranslate"><span class="pre">SweepTask.issue_slug</span></code></a></li>
 <li><a class="reference internal" href="#knn.pipeline.context.SweepTask.word2vec_model_dir"><code class="docutils literal notranslate"><span class="pre">SweepTask.word2vec_model_dir</span></code></a></li>

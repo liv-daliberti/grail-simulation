@@ -50,16 +50,8 @@ class SweepOutcome:
         *,
         base: BasePipelineSweepOutcome[SweepConfig] | None = None,
         knn: object | None = None,
-        # Legacy flat kwargs for backwards compatibility (used in tests)
-        order_index: int | None = None,
-        study: StudySpec | None = None,
-        config: "SweepConfig" | None = None,
-        metrics_path: Path | None = None,
-        metrics: Mapping[str, object] | None = None,
-        feature_space: str | None = None,
-        accuracy: float | None = None,
-        best_k: int | None = None,
-        eligible: int | None = None,
+        # Legacy flat kwargs for backwards compatibility (kept keyword-only)
+        **legacy_kwargs: object,
     ) -> None:
         """Construct a KNN sweep outcome.
 
@@ -69,28 +61,32 @@ class SweepOutcome:
         ``best_k``, ``eligible``).
         """
         if base is None or knn is None:
-            # Build from legacy flat kwargs
-            assert order_index is not None
-            assert study is not None
-            assert config is not None
-            assert metrics_path is not None
-            assert metrics is not None
-            assert feature_space is not None
-            assert accuracy is not None
-            assert best_k is not None
-            assert eligible is not None
+            # Build from legacy flat kwargs expected by tests
+            required = [
+                "order_index",
+                "study",
+                "config",
+                "metrics_path",
+                "metrics",
+                "feature_space",
+                "accuracy",
+                "best_k",
+                "eligible",
+            ]
+            for key in required:
+                assert key in legacy_kwargs and legacy_kwargs[key] is not None
             base = BasePipelineSweepOutcome[SweepConfig](
-                order_index=order_index,
-                study=study,
-                config=config,
-                metrics_path=metrics_path,
-                metrics=metrics,
+                order_index=legacy_kwargs["order_index"],
+                study=legacy_kwargs["study"],
+                config=legacy_kwargs["config"],
+                metrics_path=legacy_kwargs["metrics_path"],
+                metrics=legacy_kwargs["metrics"],
             )
             knn = _KnnSweepStats(
-                feature_space=feature_space,
-                accuracy=accuracy,
-                best_k=best_k,
-                eligible=eligible,
+                feature_space=legacy_kwargs["feature_space"],
+                accuracy=legacy_kwargs["accuracy"],
+                best_k=legacy_kwargs["best_k"],
+                eligible=legacy_kwargs["eligible"],
             )
         self._base = base
         self._knn = knn

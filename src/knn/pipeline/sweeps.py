@@ -52,6 +52,7 @@ from .context import (
     SweepTaskContext,
 )
 from .context_sweeps import _KnnSweepStats
+from .context_tasks import SweepTaskBase, _SweepTaskExtras
 from .data import issue_slug_for_study
 from .io import load_metrics
 from .utils import (
@@ -395,17 +396,21 @@ def _build_sweep_task(
             extras.context.word2vec_model_base / "sweeps" / study.study_slug / config.label()
         )
     return SweepTask(
-        index=index,
-        study=study,
-        config=config,
-        base_cli=extras.base_cli,
-        extra_cli=extras.extra_cli,
-        run_root=run_root,
-        word2vec_model_dir=word2vec_model_dir,
-        issue=study.issue,
-        issue_slug=issue_slug,
-        metrics_path=metrics_path,
-        train_participant_studies=extras.train_keys_func(study.key),
+        base=SweepTaskBase(
+            index=index,
+            study=study,
+            config=config,
+            base_cli=extras.base_cli,
+            extra_cli=extras.extra_cli,
+            run_root=run_root,
+            metrics_path=metrics_path,
+            train_participant_studies=extras.train_keys_func(study.key),
+        ),
+        extras=_SweepTaskExtras(
+            word2vec_model_dir=word2vec_model_dir,
+            issue=study.issue,
+            issue_slug=issue_slug,
+        ),
     )
 
 

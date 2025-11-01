@@ -1,0 +1,11 @@
+{
+  "metrics": {
+    "eligible": 0,
+    "mae_after": NaN,
+    "rmse_after": NaN,
+    "r2_after": NaN,
+    "mae_change": NaN,
+    "rmse_change": NaN
+  },
+  "baseline": {}
+}

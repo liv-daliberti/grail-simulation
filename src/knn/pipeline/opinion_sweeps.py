@@ -35,6 +35,7 @@ from .context import (
     SweepTaskContext,
 )
 from .context_sweeps import _KnnOpinionExtras
+from .context_tasks import OpinionTaskBase, _OpinionTaskExtras
 from .utils import (
     ensure_dir,
     ensure_opinion_selection_coverage,
@@ -138,14 +139,18 @@ def _build_opinion_task(
             context.word2vec_model_base / "sweeps_opinion" / study.study_slug / config.label()
         )
     task = OpinionSweepTask(
-        index=index,
-        study=study,
-        config=config,
-        base_cli=tuple(context.base_cli),
-        extra_cli=tuple(context.extra_cli),
-        run_root=run_root,
-        word2vec_model_dir=word2vec_model_dir,
-        metrics_path=metrics_path,
+        base=OpinionTaskBase(
+            index=index,
+            study=study,
+            config=config,
+            metrics_path=metrics_path,
+        ),
+        extras=_OpinionTaskExtras(
+            base_cli=tuple(context.base_cli),
+            extra_cli=tuple(context.extra_cli),
+            run_root=run_root,
+            word2vec_model_dir=word2vec_model_dir,
+        ),
     )
     return task
 

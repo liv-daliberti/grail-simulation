@@ -58,6 +58,22 @@ class EvaluationOutputs:
 
 
 @dataclass(frozen=True)
+class EvaluationOverrides:
+    """Grouped directory overrides accepted by :meth:`EvaluationContext.from_args`.
+
+    All attributes are optional and default to ``None``; when omitted, the
+    builder falls back to the legacy keyword arguments or reasonable defaults.
+    """
+
+    out_dir: Path | None = None
+    next_video_out_dir: Path | None = None
+    opinion_out_dir: Path | None = None
+    word2vec_model_dir: Path | None = None
+    next_video_word2vec_dir: Path | None = None
+    opinion_word2vec_dir: Path | None = None
+
+
+@dataclass(frozen=True)
 class EvaluationWord2VecPaths:
     """Normalised Word2Vec cache layout for next-video and opinion runs."""
 
@@ -117,11 +133,8 @@ class EvaluationContext:
         *,
         base_cli: Sequence[str],
         extra_cli: Sequence[str],
-        next_video_out_dir: Path | None = None,
-        opinion_out_dir: Path | None = None,
-        next_video_word2vec_dir: Path | None = None,
-        opinion_word2vec_dir: Path | None = None,
         reuse_existing: bool,
+        dirs: "EvaluationOverrides | None" = None,
         **overrides: Mapping[str, object],
     ) -> "EvaluationContext":
         """Build an :class:`EvaluationContext` from legacy or task-specific overrides.
@@ -149,37 +162,46 @@ class EvaluationContext:
         if unexpected:
             formatted = ", ".join(sorted(unexpected))
             raise TypeError(f"EvaluationContext received unexpected keyword(s): {formatted}")
-
-        # Support both legacy flat args passed directly and explicit overrides
-        outputs = EvaluationOutputs.from_keywords(
-            out_dir=(overrides.get("out_dir") if overrides.get("out_dir") is not None else None),
-            next_video_out_dir=(
-                overrides.get("next_video_out_dir")  # type: ignore[arg-type]
-                if overrides.get("next_video_out_dir") is not None
-                else next_video_out_dir
-            ),
-            opinion_out_dir=(
-                overrides.get("opinion_out_dir")  # type: ignore[arg-type]
-                if overrides.get("opinion_out_dir") is not None
-                else opinion_out_dir
-            ),
+        # Allow callers to pass grouped overrides via ``dirs`` while
+        # maintaining backwards compatibility with legacy flat kwargs.
+        _out_dir = (overrides.get("out_dir") if overrides.get("out_dir") is not None else None)
+        _next_out = (
+            overrides.get("next_video_out_dir")  # type: ignore[arg-type]
+            if overrides.get("next_video_out_dir") is not None
+            else (dirs.next_video_out_dir if dirs is not None else None)
         )
+        _opinion_out = (
+            overrides.get("opinion_out_dir")  # type: ignore[arg-type]
+            if overrides.get("opinion_out_dir") is not None
+            else (dirs.opinion_out_dir if dirs is not None else None)
+        )
+
+        outputs = EvaluationOutputs.from_keywords(
+            out_dir=_out_dir,
+            next_video_out_dir=_next_out,
+            opinion_out_dir=_opinion_out,
+        )
+
+        _w2v_root = (
+            overrides.get("word2vec_model_dir")  # type: ignore[arg-type]
+            if overrides.get("word2vec_model_dir") is not None
+            else (dirs.word2vec_model_dir if dirs is not None else None)
+        )
+        _w2v_next = (
+            overrides.get("next_video_word2vec_dir")  # type: ignore[arg-type]
+            if overrides.get("next_video_word2vec_dir") is not None
+            else (dirs.next_video_word2vec_dir if dirs is not None else None)
+        )
+        _w2v_opinion = (
+            overrides.get("opinion_word2vec_dir")  # type: ignore[arg-type]
+            if overrides.get("opinion_word2vec_dir") is not None
+            else (dirs.opinion_word2vec_dir if dirs is not None else None)
+        )
+
         word2vec_paths = EvaluationWord2VecPaths.from_keywords(
-            word2vec_model_dir=(
-                overrides.get("word2vec_model_dir")  # type: ignore[arg-type]
-                if overrides.get("word2vec_model_dir") is not None
-                else None
-            ),
-            next_video_word2vec_dir=(
-                overrides.get("next_video_word2vec_dir")  # type: ignore[arg-type]
-                if overrides.get("next_video_word2vec_dir") is not None
-                else next_video_word2vec_dir
-            ),
-            opinion_word2vec_dir=(
-                overrides.get("opinion_word2vec_dir")  # type: ignore[arg-type]
-                if overrides.get("opinion_word2vec_dir") is not None
-                else opinion_word2vec_dir
-            ),
+            word2vec_model_dir=_w2v_root,
+            next_video_word2vec_dir=_w2v_next,
+            opinion_word2vec_dir=_w2v_opinion,
             fallback_parent=outputs.next_video,
         )
         return cls(

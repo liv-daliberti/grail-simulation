@@ -1,0 +1,111 @@
+{
+  "study": "study3",
+  "issue": "minimum_wage",
+  "study_label": "Study 3 – Minimum Wage (YouGov)",
+  "participants": 257,
+  "metrics": {
+    "eligible": 257,
+    "mae_after": 0.6972703199308258,
+    "rmse_after": 0.7444163691562965,
+    "r2_after": -7.152966066416425,
+    "mae_change": 0.6972703199308258,
+    "rmse_change": 0.7444163691562965,
+    "direction_accuracy": 0.5097276264591439,
+    "calibration_slope": 0.06920563329966663,
+    "calibration_intercept": -0.028516542390035763,
+    "calibration_bins": [
+      {
+        "lower": 0.02777777777777779,
+        "upper": 0.30500000000000005,
+        "count": 26,
+        "mean_pred": 0.17849893162393166,
+        "mean_actual": -0.01945512820512821
+      },
+      {
+        "lower": 0.30500000000000005,
+        "upper": 0.5013888888888889,
+        "count": 25,
+        "mean_pred": 0.39964999999999995,
+        "mean_actual": -0.015905555555555548
+      },
+      {
+        "lower": 0.5013888888888889,
+        "upper": 0.6529166666666668,
+        "count": 26,
+        "mean_pred": 0.5860363247863247,
+        "mean_actual": 0.07409188034188034
+      },
+      {
+        "lower": 0.6529166666666668,
+        "upper": 0.7527777777777778,
+        "count": 26,
+        "mean_pred": 0.7116826923076923,
+        "mean_actual": -0.022799145299145302
+      },
+      {
+        "lower": 0.7527777777777778,
+        "upper": 0.815,
+        "count": 25,
+        "mean_pred": 0.7852333333333332,
+        "mean_actual": 0.04535555555555555
+      },
+      {
+        "lower": 0.815,
+        "upper": 0.8616111111111111,
+        "count": 26,
+        "mean_pred": 0.8364850427350426,
+        "mean_actual": 0.01479166666666666
+      },
+      {
+        "lower": 0.8616111111111111,
+        "upper": 0.8944444444444445,
+        "count": 22,
+        "mean_pred": 0.8754797979797982,
+        "mean_actual": 0.030713383838383825
+      },
+      {
+        "lower": 0.8944444444444445,
+        "upper": 0.9222222222222223,
+        "count": 26,
+        "mean_pred": 0.9059829059829061,
+        "mean_actual": 0.04534722222222221
+      },
+      {
+        "lower": 0.9222222222222223,
+        "upper": 0.95,
+        "count": 26,
+        "mean_pred": 0.9328617216117217,
+        "mean_actual": 0.026435439560439568
+      },
+      {
+        "lower": 0.95,
+        "upper": 0.975,
+        "count": 29,
+        "mean_pred": 0.9595019157088123,
+        "mean_actual": 0.03307950191570881
+      }
+    ],
+    "calibration_ece": 0.6972703199308258,
+    "kl_divergence_change": 13.278688347464302
+  },
+  "baseline": {
+    "global_mean_after": 0.30272969603538513,
+    "mae_global_mean_after": 0.2155860811471939,
+    "rmse_global_mean_after": 0.2607102394104004,
+    "mae_using_before": 0.08410413092516855,
+    "rmse_using_before": 0.1253597842689445,
+    "mae_change_zero": 0.08410413092516855,
+    "rmse_change_zero": 0.1253597842689445,
+    "calibration_slope_change_zero": null,
+    "calibration_intercept_change_zero": null,
+    "calibration_ece_change_zero": null,
+    "calibration_bins_change_zero": null,
+    "kl_divergence_change_zero": 16.580013833752695,
+    "direction_accuracy": 0.058365758754863814
+  },
+  "config": {
+    "temperature": 0.0,
+    "max_tokens": 32,
+    "top_p": null
+  }
+}

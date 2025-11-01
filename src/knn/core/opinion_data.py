@@ -32,6 +32,7 @@ from common.prompts.docs import merge_default_extra_fields
 
 from .features import assemble_document, viewer_profile_sentence
 from .opinion_models import OpinionExample, SessionInfo
+from dataclasses import dataclass
 
 LOGGER = logging.getLogger("knn.opinion")
 
@@ -139,12 +140,14 @@ def _collapse_dataset_split(
         key = (participant_id, spec.key)
         existing = per_participant.get(key)
         candidate = _make_opinion_candidate(
-            spec=spec,
-            example=example,
-            participant_id=participant_id,
-            document=document,
-            scores=(before, after),
-            step_index=step_index,
+            inputs=OpinionCandidateInputs(
+                spec=spec,
+                example=example,
+                participant_id=participant_id,
+                document=document,
+                scores=(before, after),
+                step_index=step_index,
+            )
         )
         if existing is None or step_index >= existing.step_index:
             per_participant[key] = candidate
@@ -181,28 +184,32 @@ def _parse_step_index(raw) -> int:
         return -1
 
 
-def _make_opinion_candidate(
-    *,
-    spec: OpinionSpec,
-    example,
-    participant_id: str,
-    document: str,
-    scores: Tuple[float, float],
-    step_index: int,
-) -> OpinionExample:
+@dataclass(frozen=True)
+class OpinionCandidateInputs:
+    """Grouped inputs required to construct an :class:`OpinionExample`."""
+
+    spec: OpinionSpec
+    example: object
+    participant_id: str
+    document: str
+    scores: Tuple[float, float]
+    step_index: int
+
+
+def _make_opinion_candidate(*, inputs: OpinionCandidateInputs) -> OpinionExample:
     """
     Construct an :class:`~knn.core.opinion_models.OpinionExample` from the
     raw ``example`` and precomputed fields.
     """
-    session_id = example.get("session_id")
+    session_id = inputs.example.get("session_id")
     return make_opinion_example_from_values(
-        spec,
-        participant_id,
-        document,
-        scores=scores,
+        inputs.spec,
+        inputs.participant_id,
+        inputs.document,
+        scores=inputs.scores,
         factory=OpinionExample,
         session=SessionInfo(
-            step_index=step_index,
+            step_index=inputs.step_index,
             session_id=str(session_id) if session_id is not None else None,
         ),
     )

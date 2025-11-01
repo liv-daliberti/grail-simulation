@@ -1,0 +1,162 @@
+{
+  "model": "/n/fs/similarity/grail-simulation/models/grail/wage/checkpoint-50",
+  "dataset": "/n/fs/similarity/grail-simulation/data/cleaned_grail/minimum_wage",
+  "split": "validation",
+  "n_total": 475,
+  "n_eligible": 475,
+  "accuracy_overall": 0.4673684210526316,
+  "parsed_rate": 0.9978947368421053,
+  "format_rate": 0.9978947368421053,
+  "position_stats": {
+    "1": {
+      "n_seen": 0,
+      "n_eligible": 0,
+      "correct": 0,
+      "accuracy": 0.0,
+      "parsed_rate": 0.0,
+      "format_rate": 0.0
+    },
+    "2": {
+      "n_seen": 0,
+      "n_eligible": 0,
+      "correct": 0,
+      "accuracy": 0.0,
+      "parsed_rate": 0.0,
+      "format_rate": 0.0
+    },
+    "3": {
+      "n_seen": 0,
+      "n_eligible": 0,
+      "correct": 0,
+      "accuracy": 0.0,
+      "parsed_rate": 0.0,
+      "format_rate": 0.0
+    },
+    "4": {
+      "n_seen": 0,
+      "n_eligible": 0,
+      "correct": 0,
+      "accuracy": 0.0,
+      "parsed_rate": 0.0,
+      "format_rate": 0.0
+    },
+    "5+": {
+      "n_seen": 0,
+      "n_eligible": 0,
+      "correct": 0,
+      "accuracy": 0.0,
+      "parsed_rate": 0.0,
+      "format_rate": 0.0
+    },
+    "unknown": {
+      "n_seen": 475,
+      "n_eligible": 475,
+      "correct": 222,
+      "accuracy": 0.4673684210526316,
+      "parsed_rate": 0.0,
+      "format_rate": 0.0
+    }
+  },
+  "by_n_options": {
+    "hist_seen": {
+      "1": 0,
+      "2": 3,
+      "3": 23,
+      "4": 448,
+      "5+": 1
+    },
+    "hist_eligible": {
+      "1": 0,
+      "2": 3,
+      "3": 23,
+      "4": 448,
+      "5+": 1
+    },
+    "hist_correct": {
+      "1": 0,
+      "2": 0,
+      "3": 13,
+      "4": 209,
+      "5+": 0
+    },
+    "accuracy": {
+      "1": 0.0,
+      "2": 0.0,
+      "3": 0.5652173913043478,
+      "4": 0.46651785714285715,
+      "5+": 0.0
+    },
+    "parsed_rate": {
+      "1": 0.0,
+      "2": 1.0,
+      "3": 1.0,
+      "4": 0.9977678571428571,
+      "5+": 1.0
+    },
+    "format_rate": {
+      "1": 0.0,
+      "2": 1.0,
+      "3": 1.0,
+      "4": 0.9977678571428571,
+      "5+": 1.0
+    }
+  },
+  "split_single_vs_multi": {
+    "n_single": 0,
+    "n_multi": 475,
+    "eligible_single": 0,
+    "eligible_multi": 475,
+    "accuracy_single": 0.0,
+    "accuracy_multi": 0.4673684210526316,
+    "parsed_rate_multi": 0.9978947368421053,
+    "format_rate_multi": 0.9978947368421053
+  },
+  "group_metrics": {
+    "by_issue": {
+      "minimum_wage": {
+        "n_seen": 475,
+        "n_eligible": 475,
+        "correct": 222,
+        "accuracy": 0.4673684210526316,
+        "parsed_rate": 0.9978947368421053,
+        "format_rate": 0.9978947368421053
+      }
+    },
+    "by_participant_study": {
+      "study2": {
+        "n_seen": 167,
+        "n_eligible": 167,
+        "correct": 70,
+        "accuracy": 0.41916167664670656,
+        "parsed_rate": 0.9940119760479041,
+        "format_rate": 0.9940119760479041
+      },
+      "study3": {
+        "n_seen": 308,
+        "n_eligible": 308,
+        "correct": 152,
+        "accuracy": 0.4935064935064935,
+        "parsed_rate": 1.0,
+        "format_rate": 1.0
+      }
+    }
+  },
+  "filters": {
+    "issues": [],
+    "studies": []
+  },
+  "gold_index_distribution": {
+    "1": 222,
+    "2": 113,
+    "3": 74,
+    "4": 65,
+    "5": 1
+  },
+  "baseline_most_frequent_gold_index": {
+    "top_index": 1,
+    "count": 222,
+    "accuracy": 0.4673684210526316
+  },
+  "random_baseline_expected_accuracy": 0.2555087719298246,
+  "notes": "Accuracy computed over eligible rows (gold_index>0). Buckets: 1..4, 5+, unknown."
+}

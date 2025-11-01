@@ -83,6 +83,33 @@ def _fmt_int(value: Optional[int]) -> str:
         return "—"
 
 
+def _wilson_ci(p: float, n: int, z: float = 1.959963984540054) -> tuple[float, float]:
+    """Wilson score interval for a binomial proportion.
+
+    Uses z≈1.96 for a 95% CI by default. Returns (lower, upper).
+    """
+    if n <= 0 or not (0.0 <= p <= 1.0):
+        return (0.0, 0.0)
+    denom = 1.0 + (z * z) / n
+    center = (p + (z * z) / (2 * n)) / denom
+    half_width = z * math.sqrt((p * (1 - p)) / n + (z * z) / (4 * n * n)) / denom
+    lo = max(0.0, center - half_width)
+    hi = min(1.0, center + half_width)
+    return (lo, hi)
+
+
+def _fmt_rate_ci(p: Optional[float], n: Optional[int]) -> str:
+    """Format a rate with its 95% Wilson CI in brackets when possible."""
+    try:
+        if p is None or n is None or n <= 0:
+            return "—"
+        p_f = float(p)
+        lo, hi = _wilson_ci(p_f, int(n))
+        return f"{_fmt_rate(p_f)} [{_fmt_rate(lo)}, {_fmt_rate(hi)}]"
+    except Exception:  # pragma: no cover - defensive
+        return _fmt_rate(p)
+
+
 def _load_json(path: Path) -> Mapping[str, object]:
     with path.open("r", encoding="utf-8") as handle:
         return json.load(handle)
@@ -588,6 +615,51 @@ def _gather_opinion(repo_root: Path) -> tuple[dict[str, StudyScores], dict[str, 
     }
     return dir_map, mae_map
 
+
+def _build_opinion_dir_table(
+    *,
+    studies: Sequence[StudyLabel],
+    n_map: Mapping[StudyLabel, int],
+    no_change: Mapping[StudyLabel, float],
+    gpt4o: Mapping[StudyLabel, float],
+    grpo: Mapping[StudyLabel, float],
+    grail: Mapping[StudyLabel, float],
+    knn: Mapping[StudyLabel, float],
+    xgb: Mapping[StudyLabel, float],
+) -> list[list[str]]:
+    rows: list[list[str]] = []
+    for study in studies:
+        n = n_map.get(study)
+        rand_str = _fmt_rate_ci(1 / 3, n)
+        base_str = _fmt_rate_ci(no_change.get(study), n)
+        p_base = no_change.get(study)
+        base_bounds = None
+        if p_base is not None and n:
+            base_bounds = _wilson_ci(float(p_base), int(n))
+
+        def model_cell(p: Optional[float]) -> str:
+            s = _fmt_rate_ci(p, n)
+            if p is None or base_bounds is None or n is None or n <= 0:
+                return s
+            lo_m, _ = _wilson_ci(float(p), int(n))
+            _, hi_b = base_bounds
+            return f"**{s}**" if lo_m > hi_b else s
+
+        rows.append(
+            [
+                study,
+                _fmt_int(n),
+                rand_str,
+                base_str,
+                model_cell(gpt4o.get(study)),
+                model_cell(grpo.get(study)),
+                model_cell(grail.get(study)),
+                model_cell(knn.get(study)),
+                model_cell(xgb.get(study)),
+            ]
+        )
+    return rows
+
 def _build_next_video_table(
     *,
     studies: Sequence[StudyLabel],
@@ -602,17 +674,35 @@ def _build_next_video_table(
 ) -> list[list[str]]:
     rows: list[list[str]] = []
     for study in studies:
+        n = n_map.get(study)
+        # Baselines with CI
+        rand_str = _fmt_rate_ci(random_base.get(study), n)
+        most_str = _fmt_rate_ci(mostfreq_base.get(study), n)
+        # Baseline bounds for significance check
+        p_base = mostfreq_base.get(study)
+        base_bounds = None
+        if p_base is not None and n:
+            base_bounds = _wilson_ci(float(p_base), int(n))
+
+        def model_cell(p: Optional[float]) -> str:
+            s = _fmt_rate_ci(p, n)
+            if p is None or base_bounds is None or n is None or n <= 0:
+                return s
+            lo_m, _ = _wilson_ci(float(p), int(n))
+            _, hi_b = base_bounds
+            return f"**{s}**" if lo_m > hi_b else s
+
         rows.append(
             [
                 study,
-                _fmt_int(n_map.get(study)),
-                _fmt_rate(random_base.get(study)),
-                _fmt_rate(mostfreq_base.get(study)),
-                _fmt_rate(gpt4o.get(study)),
-                _fmt_rate(grpo.get(study)),
-                _fmt_rate(grail.get(study)),
-                _fmt_rate(knn.get(study)),
-                _fmt_rate(xgb.get(study)),
+                _fmt_int(n),
+                rand_str,
+                most_str,
+                model_cell(gpt4o.get(study)),
+                model_cell(grpo.get(study)),
+                model_cell(grail.get(study)),
+                model_cell(knn.get(study)),
+                model_cell(xgb.get(study)),
             ]
         )
     return rows
@@ -695,24 +785,16 @@ def generate_portfolio_report(repo_root: Path) -> None:
         lines,
         title="## Opinion Directional Accuracy (↑)",
         headers=["Study", "N", "Random (1/3)", "No-change", "GPT-4o", "GRPO", "GRAIL", "KNN", "XGB"],
-        rows=[
-            [
-                row[0],
-                row[1],
-                _fmt_rate(1/3),
-                _fmt_rate(op_no_change.get(row[0])),
-                *row[2:],
-            ]
-            for row in _build_opinion_table(
-                studies=studies,
-                n_map=op_n,
-                gpt4o=op_dir["gpt4o"],
-                grpo=op_dir["grpo"],
-                grail=op_dir["grail"],
-                knn=op_dir["knn"],
-                xgb=op_dir["xgb"],
-            )
-        ],
+        rows=_build_opinion_dir_table(
+            studies=studies,
+            n_map=op_n,
+            no_change=op_no_change,
+            gpt4o=op_dir["gpt4o"],
+            grpo=op_dir["grpo"],
+            grail=op_dir["grail"],
+            knn=op_dir["knn"],
+            xgb=op_dir["xgb"],
+        ),
         empty_message="No opinion directional-accuracy metrics available.",
     )
 
@@ -768,6 +850,11 @@ def generate_portfolio_report(repo_root: Path) -> None:
             ),
             (
                 "- Column 'N' reports the number of eligible evaluation examples per study."
+            ),
+            (
+                "- Accuracy entries include 95% Wilson CIs in brackets. Bold "
+                "indicates the model's lower CI exceeds the baseline's upper "
+                "CI (Most‑Freq. for next‑video; No‑change for opinion)."
             ),
             "",
         ]

@@ -200,6 +200,11 @@ The repository stitches together several subsystems to turn raw CodeOcean logs i
 - Gun control split: <https://huggingface.co/datasets/od2961/grail-gun>
 - Prompt statistics (plots + Markdown): `reports/prompt_stats`
 
+- GRPO trained on gun control data: <https://huggingface.co/od2961/Qwen2.5-1.5B-OpenR1-GRPO-GUN>
+- GRPO training on minimum wage data: <https://huggingface.co/od2961/Qwen2.5-1.5B-OpenR1-GRPO>
+- GRAIL trained on gun control data: <https://huggingface.co/od2961/Qwen2.5-1.5B-OpenR1-GRAIL-GUN>
+- GRAIL trained on minimum wage data: <https://huggingface.co/od2961/Qwen2.5-1.5B-OpenR1-GRAIL-WAGE>
+
 ## Training
 
 Launch the reinforcement-learning recipes via SLURM:

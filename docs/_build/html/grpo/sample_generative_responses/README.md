@@ -48,11 +48,11 @@ Reason briefly inside <think> then output ONLY the numeric index (1-7) inside <a
 
 ```text
 <think>
-The viewer is watching a documentary that discusses common arguments against gun control measures. They have been exposed to information supporting gun control policies through recent news articles and social media posts. Given their demographic characteristics and recent viewing habits, they might be more likely to align themselves with opposing viewpoints rather than supportive ones.
+The viewer is currently watching content related to gun violence and gun control. They have expressed opposition to gun control initially and are likely to be influenced by recent events. Watching "Common Arguments for Gun Control" might align better with their current stance than "Conservatives Blame Everything but Guns."
 </think>
 
 <answer>
-1
+2
 </answer>
 
 <opinion>increase</opinion>
@@ -64,9 +64,9 @@ The viewer is watching a documentary that discusses common arguments against gun
 - Task: Opinion shift prediction
 - Tags — think: yes, answer: yes
 - Pre-study opinion index: 0.30
-- Predicted post-study index: 1.00
+- Predicted post-study index: 2.00
 - Predicted direction: increase
-- Short rationale: The viewer is watching a documentary that discusses common arguments against gun control measures. They have been exposed to information supporting gun control policies through recent news articles and social media posts. Given their dem...
+- Short rationale: The viewer is currently watching content related to gun violence and gun control. They have expressed opposition to gun control initially and are likely to be influenced by recent events. Watching "Common Arguments for Gun Control" might...
 ### Example 2 (Opinion)
 
 #### Question
@@ -106,11 +106,11 @@ Reason briefly inside <think> then output ONLY the numeric index (1-7) inside <a
 
 ```text
 <think>
-The viewer is watching videos related to gun control issues. They have been exposed to information that supports stricter gun laws through recent watched content. Their current viewpoint is against stricter gun laws, but they may be more open-minded after hearing arguments for it.
+The viewer is currently watching an article about gun control facts for the first time. They have recently watched videos discussing gun violence and gun policy importance. Given that they are a Democrat liberal who is concerned about gun control but has no enthusiasm for guns, I think they might be drawn back to the topic by the information provided in the new video.
 </think>
 
 <answer>
-1
+2
 </answer>
 
 <opinion>increase</opinion>
@@ -122,163 +122,42 @@ The viewer is watching videos related to gun control issues. They have been expo
 - Task: Opinion shift prediction
 - Tags — think: yes, answer: yes
 - Pre-study opinion index: 0.15
-- Predicted post-study index: 1.00
+- Predicted post-study index: 2.00
 - Predicted direction: increase
-- Short rationale: The viewer is watching videos related to gun control issues. They have been exposed to information that supports stricter gun laws through recent watched content. Their current viewpoint is against stricter gun laws, but they may be more...
-## Minimum Wage
-
-### Example 1 (Opinion)
-
-#### Question
-
-```text
-Issue: Minimum Wage
-Opinion scale: 1 = strongly oppose, 7 = strongly support.
-Pre-study opinion index: 0.14
-
-Viewer context:
-VIEWER 36-year-old, Asian/Pacific Islanders man; democrat liberal; Prefer not to say; college-educated; watches YouTube multiple times per day.
-Initial Viewpoint: Opposes a $15 minimum wage
-
-CURRENTLY WATCHING Who Does a $15 Minimum Wage Help? (from PragerU)
-
-RECENTLY WATCHED (NEWEST LAST)
-1. Edgar the Exploiter - Minimum Wage Consequences (watched 428s of 428s (100% complete), from cowfootman)
-2. Charles Koch: No Minimum Wage will Help the Poor (watched 474s of 474s (100% complete), from Thom Hartmann Program)
-3. Joe Rogan - The Minimum Wage Destroys Jobs (watched 557s of 557s (100% complete), from JRE Clips)
-
-SURVEY HIGHLIGHTS
-party identification is Democrat, party lean is Not very strong Democrat, ideology is Liberal, political interest is not very interested in politics, watches YouTube multiple times per day, preferred minimum wage target is $15, minimum wage support score is twenty-five percent, and $15 minimum wage support is fifty percent.
-
-OPTIONS
-1. Minimum Wage Cost Me My Job (PragerU, 324s long) — Engagement: views 1,999,176, likes 22,178, comments 40
-2. What the US gets wrong about minimum wage (Vox, 306s long) — Engagement: views 2,007,754, likes 59,987, comments 40
-3. SOMEONE GIVE HIM A RAISE: Ben Shapiro kills the minimum wage argument for good (Young America's Foundation, 164s long) — Engagement: views 2,442,928, likes 29,244, comments 40
-4. Why Raising the Minimum Wage Doesn't Cause Inflation (Thom Hartmann Program, 264s long) — Engagement: views 5,714, likes 266, comments 40
-
-QUESTIONS
-1. Which option number will the viewer watch next?
-2. After this recommendation, will the viewer's opinion on Minimum wage increase, decrease, or stay the same?
-
-After the participant watches the recommended next video, estimate their post-study opinion index.
-Reason briefly inside <think> then output ONLY the numeric index (1-7) inside <answer>.
-```
-
-#### Model Response
-
-```text
-<think>
-The viewer is currently watching a documentary that supports raising the minimum wage. They have watched videos supporting higher wages before but were against it initially. Watching a supportive video might reinforce their stance.
-</think>
-
-<answer>
-1
-</answer>
-
-<opinion>increase</opinion>
-```
-
-#### Notes
-
-- Issue: minimum wage
-- Task: Opinion shift prediction
-- Tags — think: yes, answer: yes
-- Pre-study opinion index: 0.14
-- Predicted post-study index: 1.00
-- Predicted direction: increase
-- Short rationale: The viewer is currently watching a documentary that supports raising the minimum wage. They have watched videos supporting higher wages before but were against it initially. Watching a supportive video might reinforce their stance.
-### Example 2 (Opinion)
-
-#### Question
-
-```text
-Issue: Minimum Wage
-Opinion scale: 1 = strongly oppose, 7 = strongly support.
-Pre-study opinion index: 0.32
-
-Viewer context:
-VIEWER 43-year-old, Caucasian/White (non-Hispanic) man; democrat liberal; $40,000-$49,999; college-educated; watches YouTube occasionally.
-Initial Viewpoint: Preferred minimum wage is about $0.60
-
-CURRENTLY WATCHING What's the Right Minimum Wage? (from PragerU)
-
-RECENTLY WATCHED (NEWEST LAST)
-1. $15 minimum wage would cut 1.4 million jobs by 2025: CBO (watched 87s of 88s (99% complete), from Fox Business)
-2. Why Biden’s $15 Minimum Wage Isn’t The Solution - Steve Forbes | What's Ahead | Forbes (watched 201s of 202s (100% complete), from Forbes)
-3. Briahna Joy Gray: DEBUNKING Corporate Myths About $15 Minimum Wage (watched 375s of 455s (82% complete), from The Hill)
-
-SURVEY HIGHLIGHTS
-party identification is Democrat, party lean is Not very strong Democrat, ideology is Liberal, political interest is not very interested in politics, watches YouTube occasionally, preferred minimum wage target is $10, minimum wage support score is seventy-five percent, and $15 minimum wage support is seventy-five percent.
-
-OPTIONS
-1. What the US gets wrong about minimum wage (Vox, 306s long) — Engagement: views 2,007,754, likes 59,987, comments 40
-2. Milton Friedman on Minimum Wage (amagilly, 219s long) — Engagement: views 484,030, likes 4,493, comments 40
-3. Who Does a $15 Minimum Wage Help? (PragerU, 334s long) — Engagement: views 6,088,611, likes 49,500, comments 40
-4. By the Numbers: Biden’s $15 per hour minimum wage plan (ABC News, 95s long) — Engagement: views 35,630, likes 537, comments 40
-
-QUESTIONS
-1. Which option number will the viewer watch next?
-2. After this recommendation, will the viewer's opinion on Minimum wage increase, decrease, or stay the same?
-
-After the participant watches the recommended next video, estimate their post-study opinion index.
-Reason briefly inside <think> then output ONLY the numeric index (1-7) inside <answer>.
-```
-
-#### Model Response
-
-```text
-<think>
-The viewer is currently watching a documentary that supports raising the minimum wage to $15 per hour. They have watched videos supporting both sides of the issue but lean towards the side that favors higher wages. Given their demographic characteristics and recent viewing habits, they might be more likely to agree with the recommendations for increasing the minimum wage.
-</think>
-
-<answer>
-1
-</answer>
-
-<opinion>increase</opinion>
-```
-
-#### Notes
-
-- Issue: minimum wage
-- Task: Opinion shift prediction
-- Tags — think: yes, answer: yes
-- Pre-study opinion index: 0.32
-- Predicted post-study index: 1.00
-- Predicted direction: increase
-- Short rationale: The viewer is currently watching a documentary that supports raising the minimum wage to $15 per hour. They have watched videos supporting both sides of the issue but lean towards the side that favors higher wages. Given their demographi...
+- Short rationale: The viewer is currently watching an article about gun control facts for the first time. They have recently watched videos discussing gun violence and gun policy importance. Given that they are a Democrat liberal who is concerned about gu...
 ### Example 3 (Opinion)
 
 #### Question
 
 ```text
-Issue: Minimum Wage
+Issue: Gun Control
 Opinion scale: 1 = strongly oppose, 7 = strongly support.
-Pre-study opinion index: 0.11
+Pre-study opinion index: 0.95
 
 Viewer context:
-VIEWER 43-year-old, Caucasian/White (non-Hispanic),Latino or Hispanic woman; republican conservative; $50,000-$59,999; college-educated; watches YouTube daily.
-Initial Viewpoint: Opposes a $15 minimum wage
+VIEWER 68-year-old, Caucasian/White (non-Hispanic) woman; republican conservative; $80,000-$99,999; college-educated; watches YouTube rarely.
+Initial Viewpoint: Supports stricter gun laws
 
-CURRENTLY WATCHING Here’s the Truth About a $15 Minimum Wage (from Rep. Dan Crenshaw)
+CURRENTLY WATCHING Kurt Russell Walks Off 2nd Interview on Gun Control [2 separate interviews here] (from Trans PonderNews)
 
 RECENTLY WATCHED (NEWEST LAST)
-1. Raise The Minimum Wage -- Robert Reich & MoveOn.org (watched 149s of 150s (99% complete), from MoveOn)
-2. What the US gets wrong about minimum wage (watched 297s of 306s (97% complete), from Vox)
-3. The 5 Biggest Myths Republicans Use to Avoid Raising the Minimum Wage | Opinions | NowThis (watched 158s of 159s (99% complete), from NowThis News)
+1. Mark Robinson takes on City Council In Gun Show Debate (watched 262s of 351s (75% complete), from BlazeTV)
+2. Gun Rights woman makes a total fool out of clueless BBC reporter (watched 250s of 583s (43% complete), from RobinHoodUKIP)
+3. Gun Show turns tragic for gun control agenda. lol (watched 179s of 348s (51% complete), from Florida Cracka)
 
 SURVEY HIGHLIGHTS
-party identification is Republican, ideology is Conservative, political interest is not very interested in politics, watches YouTube daily, preferred minimum wage target is $15, minimum wage support score is zero percent, and $15 minimum wage support is zero percent.
+party identification is Republican, ideology is Conservative, political interest is unsure about political interest, watches YouTube rarely, gun policy importance is very important, gun regulation support score is 95%, and identifies as enthusiastic about guns.
 
 OPTIONS
-1. Should We Abolish the Minimum Wage? (Kyle Talks Money, 520s long) — Engagement: views 1,096, likes 63, comments 40
-2. Milton Friedman - The Minimum Wage (LibertyPen, 146s long) — Engagement: views 21,588, likes 581, comments 40
-3. A $15 Minimum Wage Will Hurt Workers (PragerU, 237s long) — Engagement: views 480,145, likes 9,339, comments 40
-4. Bernie Sanders: I've Heard You TYT, I'm Forcing A Vote on $15 Minimum Wage (The Young Turks, 493s long) — Engagement: views 126,658, likes 8,637, comments 40
+1. ""I AM THE MAJORITY!"" Full Gun Rights Speech *MUST WATCH* (TWANGnBANG, 261s long) — Engagement: views 475,839, likes 35,388, comments 40
+2. Mark Robinson takes on City Council In Gun Show Debate (BlazeTV) — Engagement: views 12,977, likes 824, comments 40
+3. The Truth About Gun Control (Encounter Books) — Engagement: views 80,676, likes 1,765, comments 40
+4. Gun Control Won’t Fix This: Tyshawn Lee (Colion Noir, 239s long) — Engagement: views 102,981, likes 6,248, comments 40
+5. 15 year old girl leaves anti-gun politicians speechless — Engagement: views 11,168,597, likes 124,955
 
 QUESTIONS
 1. Which option number will the viewer watch next?
-2. After this recommendation, will the viewer's opinion on Minimum wage increase, decrease, or stay the same?
+2. After this recommendation, will the viewer's opinion on Gun control increase, decrease, or stay the same?
 
 After the participant watches the recommended next video, estimate their post-study opinion index.
 Reason briefly inside <think> then output ONLY the numeric index (1-7) inside <answer>.
@@ -288,11 +167,11 @@ Reason briefly inside <think> then output ONLY the numeric index (1-7) inside <a
 
 ```text
 <think>
-The viewer is watching videos related to opposing a $15 minimum wage. They have watched several videos that align with their current viewpoint. Watching more content supporting their stance against raising the minimum wage would likely reinforce their opposition further.
+The viewer is currently watching videos related to gun rights and gun show debates. They have expressed support for stricter gun laws initially but seem to be leaning towards gun rights due to recent content engagement with pro-gun rights viewpoints.
 </think>
 
 <answer>
-1
+5
 </answer>
 
 <opinion>increase</opinion>
@@ -300,104 +179,126 @@ The viewer is watching videos related to opposing a $15 minimum wage. They have 
 
 #### Notes
 
-- Issue: minimum wage
+- Issue: gun control
 - Task: Opinion shift prediction
 - Tags — think: yes, answer: yes
-- Pre-study opinion index: 0.11
-- Predicted post-study index: 1.00
+- Pre-study opinion index: 0.95
+- Predicted post-study index: 5.00
 - Predicted direction: increase
-- Short rationale: The viewer is watching videos related to opposing a $15 minimum wage. They have watched several videos that align with their current viewpoint. Watching more content supporting their stance against raising the minimum wage would likely r...
-### Example 4 (Next Video)
+- Short rationale: The viewer is currently watching videos related to gun rights and gun show debates. They have expressed support for stricter gun laws initially but seem to be leaning towards gun rights due to recent content engagement with pro-gun right...
+### Example 4 (Opinion)
 
 #### Question
 
 ```text
-VIEWER 65-year-old, White (non-Hispanic); watches YouTube a few times a month; lives in Pennsylvania.
-Initial Viewpoint: Opposes a $15 minimum wage
+Issue: Gun Control
+Opinion scale: 1 = strongly oppose, 7 = strongly support.
+Pre-study opinion index: 0.05
 
-CURRENTLY WATCHING Raise The Minimum Wage -- Robert Reich & MoveOn.org (from MoveOn)
+Viewer context:
+VIEWER 33-year-old, Caucasian/White (non-Hispanic) woman; democrat liberal; $120,000-$149,999; college-educated; watches YouTube a few times a month.
+Initial Viewpoint: Opposes stricter gun laws
+
+CURRENTLY WATCHING Why restrict 'good' gun owners, resident asks President Obama at town hall (from PBS NewsHour)
 
 RECENTLY WATCHED (NEWEST LAST)
-(no recently watched videos available)
+1. Do We Need Stricter Gun Control? - The People Speak (watched 44s of 260s (17% complete), from VICE News)
+2. Most Americans Want More Gun Control. Why Doesn’t It Happen? | NYT (watched 103s of 231s (45% complete), from The New York Times)
+3. President Donald Trump Indicates He’s Open To Stricter Gun Laws | TODAY (watched 73s of 203s (36% complete), from TODAY)
 
 SURVEY HIGHLIGHTS
-political interest is about sixty-seven percent, religious affiliation is Catholic, watches YouTube a few times a month, follows the news some of the time, minimum wage support score is twenty-five percent, and $15 minimum wage support is twenty-five percent.
+party identification is Democrat, party lean is Strong Democrat, ideology is Liberal, political interest is not at all interested in politics, watches YouTube a few times a month, gun policy importance is somewhat important, gun regulation support score is 5%, and does not identify as enthusiastic about guns.
 
 OPTIONS
-1. Stossel: Minimum Wage Hurts Beginners (ReasonTV, 276s long) — Engagement: views 48,227, likes 2,635, comments 40
-2. Caller: Minimum Wage Should be set by Supply & Demand (Thom Hartmann Program, 494s long) — Engagement: views 5,149, likes 142, comments 40
-3. Fast Food CEO After Minimum Wage Increase: """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""... (Waldorf Nation, 453s long) — Engagement: views 141,333, likes 2,609, comments 40
-4. The 5 Biggest Myths Republicans Use to Avoid Raising the Minimum Wage | Opinions | NowThis (NowThis News, 159s long) — Engagement: views 56,870, likes 4,183, comments 40
+1. Democrats Need to Listen to Gun Owners (The Atlantic) — Engagement: views 29,001, likes 379
+2. President Obama Targets Gun Violence: The Daily Show — Engagement: views 2,456,066, likes 38,121
 
 QUESTIONS
 1. Which option number will the viewer watch next?
-2. After this recommendation, will the viewer's opinion on Minimum wage increase, decrease, or stay the same?
+2. After this recommendation, will the viewer's opinion on Gun control increase, decrease, or stay the same?
+
+After the participant watches the recommended next video, estimate their post-study opinion index.
+Reason briefly inside <think> then output ONLY the numeric index (1-7) inside <answer>.
 ```
 
 #### Model Response
 
 ```text
 <think>
-The viewer is currently watching a video that supports raising the minimum wage. They oppose it initially but were influenced by the arguments presented in the video. Given their recent viewing history and engagement levels, they might be more likely to watch another video supporting their initial stance against the minimum wage increase.
+The viewer is currently watching an article discussing gun restrictions among residents and has recently watched videos supporting gun rights. They have expressed opposition to stricter gun laws but may be open-minded after learning more about both sides.
 </think>
 
 <answer>
-1
+2
 </answer>
 
+<opinion>increase</opinion>
 ```
 
 #### Notes
 
-- Issue: minimum wage
-- Task: Next-video selection
+- Issue: gun control
+- Task: Opinion shift prediction
 - Tags — think: yes, answer: yes
-- Chosen option: 1
-- Short rationale: The viewer is currently watching a video that supports raising the minimum wage. They oppose it initially but were influenced by the arguments presented in the video. Given their recent viewing history and engagement levels, they might b...
-### Example 5 (Next Video)
+- Pre-study opinion index: 0.05
+- Predicted post-study index: 2.00
+- Predicted direction: increase
+- Short rationale: The viewer is currently watching an article discussing gun restrictions among residents and has recently watched videos supporting gun rights. They have expressed opposition to stricter gun laws but may be open-minded after learning more...
+### Example 5 (Opinion)
 
 #### Question
 
 ```text
-VIEWER 65-year-old, White (non-Hispanic); watches YouTube a few times a month; lives in Pennsylvania.
-Initial Viewpoint: Opposes a $15 minimum wage
+Issue: Gun Control
+Opinion scale: 1 = strongly oppose, 7 = strongly support.
+Pre-study opinion index: 0.30
 
-CURRENTLY WATCHING Stossel: Minimum Wage Hurts Beginners (from ReasonTV)
+Viewer context:
+VIEWER 31-year-old, Caucasian/White (non-Hispanic) man; democrat liberal; $30,000-$39,999; college-educated; watches YouTube daily.
+Initial Viewpoint: Opposes stricter gun laws
+
+CURRENTLY WATCHING Piers Morgan On Gun Control In America (from Sky News)
 
 RECENTLY WATCHED (NEWEST LAST)
-1. Raise The Minimum Wage -- Robert Reich & MoveOn.org (watched 149s of 149s (100% complete), from MoveOn)
+1. Piers Challenges NRA Member About US Gun Laws | Good Morning Britain (watched 31s of 454s (7% complete), from Good Morning Britain)
+2. Florida School Shooting Survivor Says Arming Teachers is 'Absurd' | Good Morning Britain (watched 70s of 413s (17% complete), from Good Morning Britain)
+3. Should The UN Intervene In America's Gun Violence Crisis? (watched 56s of 273s (21% complete), from The Young Turks)
 
 SURVEY HIGHLIGHTS
-political interest is about sixty-seven percent, religious affiliation is Catholic, watches YouTube a few times a month, follows the news some of the time, minimum wage support score is twenty-five percent, and $15 minimum wage support is twenty-five percent.
+party identification is Democrat, party lean is Not very strong Democrat, ideology is Liberal, political interest is not at all interested in politics, watches YouTube daily, gun policy importance is somewhat important, gun regulation support score is 30%, and does not identify as enthusiastic about guns.
 
 OPTIONS
-1. What the US gets wrong about minimum wage (Vox, 306s long) — Engagement: views 2,007,754, likes 59,987, comments 40
-2. What They DONT TELL YOU About Minimum Wage... | Thomas Sowell (Aporia Institute, 339s long) — Engagement: views 455, likes 62, comments 40
-3. Here’s the Truth About a $15 Minimum Wage (Rep. Dan Crenshaw, 225s long) — Engagement: views 32,771, likes 1,671, comments 40
-4. Gutfeld: Seattle's minimum wage hike failures (Fox News, 379s long) — Engagement: views 993,258, likes 11,584, comments 40
+1. Democrats Need to Listen to Gun Owners (The Atlantic) — Engagement: views 29,001, likes 379
+2. Donald Trump Is Coming For Your Guns — Engagement: likes 34,343
 
 QUESTIONS
 1. Which option number will the viewer watch next?
-2. After this recommendation, will the viewer's opinion on Minimum wage increase, decrease, or stay the same?
+2. After this recommendation, will the viewer's opinion on Gun control increase, decrease, or stay the same?
+
+After the participant watches the recommended next video, estimate their post-study opinion index.
+Reason briefly inside <think> then output ONLY the numeric index (1-7) inside <answer>.
 ```
 
 #### Model Response
 
 ```text
 <think>
-The viewer is currently watching a video criticizing the minimum wage increase. They oppose it initially but may be swayed by factual arguments supporting higher wages. Given they're older and follow YouTube regularly, they might prefer longer videos over shorter ones. Option 1 has the highest engagement rate among recent viewers, suggesting they'll likely continue watching similar content.
+The viewer is currently watching content related to gun control policies, which aligns with their interest level. They have recently watched videos discussing gun violence and gun policy importance. Given that they are not very engaged with politics but do watch YouTube daily, it seems likely they would be drawn back to topics involving gun control.
 </think>
 
 <answer>
-1
+2
 </answer>
 
+<opinion>increase</opinion>
 ```
 
 #### Notes
 
-- Issue: minimum wage
-- Task: Next-video selection
+- Issue: gun control
+- Task: Opinion shift prediction
 - Tags — think: yes, answer: yes
-- Chosen option: 1
-- Short rationale: The viewer is currently watching a video criticizing the minimum wage increase. They oppose it initially but may be swayed by factual arguments supporting higher wages. Given they're older and follow YouTube regularly, they might prefer ...
+- Pre-study opinion index: 0.30
+- Predicted post-study index: 2.00
+- Predicted direction: increase
+- Short rationale: The viewer is currently watching content related to gun control policies, which aligns with their interest level. They have recently watched videos discussing gun violence and gun policy importance. Given that they are not very engaged w...

@@ -74,53 +74,48 @@ class SweepConfig:
         feature_space: str,
         metric: str,
         text_fields: Tuple[str, ...],
-        word2vec_size: int | None = None,
-        word2vec_window: int | None = None,
-        word2vec_min_count: int | None = None,
-        word2vec_epochs: int | None = None,
-        word2vec_workers: int | None = None,
-        sentence_transformer_model: str | None = None,
-        sentence_transformer_device: str | None = None,
-        sentence_transformer_batch_size: int | None = None,
-        sentence_transformer_normalize: bool | None = None,
+        word2vec: _Word2VecConfig | None = None,
+        sentence: _SentenceTransformerConfig | None = None,
+        **legacy_kwargs,
     ) -> None:
         object.__setattr__(self, "feature_space", feature_space)
         object.__setattr__(self, "metric", metric)
         object.__setattr__(self, "text_fields", tuple(text_fields))
-        w2v = None
-        if any(
-            v is not None
-            for v in (
-                word2vec_size,
-                word2vec_window,
-                word2vec_min_count,
-                word2vec_epochs,
-                word2vec_workers,
+
+        # Backwards compatibility: build grouped configs from legacy flat kwargs
+        if word2vec is None and any(
+            legacy_kwargs.get(k) is not None
+            for k in (
+                "word2vec_size",
+                "word2vec_window",
+                "word2vec_min_count",
+                "word2vec_epochs",
+                "word2vec_workers",
             )
         ):
-            w2v = _Word2VecConfig(
-                size=word2vec_size,
-                window=word2vec_window,
-                min_count=word2vec_min_count,
-                epochs=word2vec_epochs,
-                workers=word2vec_workers,
+            word2vec = _Word2VecConfig(
+                size=legacy_kwargs.get("word2vec_size"),
+                window=legacy_kwargs.get("word2vec_window"),
+                min_count=legacy_kwargs.get("word2vec_min_count"),
+                epochs=legacy_kwargs.get("word2vec_epochs"),
+                workers=legacy_kwargs.get("word2vec_workers"),
             )
-        object.__setattr__(self, "_w2v", w2v)
-        sentence = None
-        if any(
-            v is not None
-            for v in (
-                sentence_transformer_model,
-                sentence_transformer_device,
-                sentence_transformer_batch_size,
-                sentence_transformer_normalize,
+        object.__setattr__(self, "_w2v", word2vec)
+
+        if sentence is None and any(
+            legacy_kwargs.get(k) is not None
+            for k in (
+                "sentence_transformer_model",
+                "sentence_transformer_device",
+                "sentence_transformer_batch_size",
+                "sentence_transformer_normalize",
             )
         ):
             sentence = _SentenceTransformerConfig(
-                model=sentence_transformer_model,
-                device=sentence_transformer_device,
-                batch_size=sentence_transformer_batch_size,
-                normalize=sentence_transformer_normalize,
+                model=legacy_kwargs.get("sentence_transformer_model"),
+                device=legacy_kwargs.get("sentence_transformer_device"),
+                batch_size=legacy_kwargs.get("sentence_transformer_batch_size"),
+                normalize=legacy_kwargs.get("sentence_transformer_normalize"),
             )
         object.__setattr__(self, "_sentence", sentence)
 

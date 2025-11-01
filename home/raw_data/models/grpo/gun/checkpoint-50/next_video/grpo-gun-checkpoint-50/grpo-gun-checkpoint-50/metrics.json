@@ -1,0 +1,156 @@
+{
+  "model": "/n/fs/similarity/grail-simulation/models/grpo/gun/checkpoint-50",
+  "dataset": "/n/fs/similarity/grail-simulation/data/cleaned_grail",
+  "split": "validation",
+  "n_total": 548,
+  "n_eligible": 548,
+  "accuracy_overall": 0.9616788321167883,
+  "parsed_rate": 0.9981751824817519,
+  "format_rate": 0.9981751824817519,
+  "position_stats": {
+    "1": {
+      "n_seen": 0,
+      "n_eligible": 0,
+      "correct": 0,
+      "accuracy": 0.0,
+      "parsed_rate": 0.0,
+      "format_rate": 0.0
+    },
+    "2": {
+      "n_seen": 0,
+      "n_eligible": 0,
+      "correct": 0,
+      "accuracy": 0.0,
+      "parsed_rate": 0.0,
+      "format_rate": 0.0
+    },
+    "3": {
+      "n_seen": 0,
+      "n_eligible": 0,
+      "correct": 0,
+      "accuracy": 0.0,
+      "parsed_rate": 0.0,
+      "format_rate": 0.0
+    },
+    "4": {
+      "n_seen": 0,
+      "n_eligible": 0,
+      "correct": 0,
+      "accuracy": 0.0,
+      "parsed_rate": 0.0,
+      "format_rate": 0.0
+    },
+    "5+": {
+      "n_seen": 0,
+      "n_eligible": 0,
+      "correct": 0,
+      "accuracy": 0.0,
+      "parsed_rate": 0.0,
+      "format_rate": 0.0
+    },
+    "unknown": {
+      "n_seen": 548,
+      "n_eligible": 548,
+      "correct": 527,
+      "accuracy": 0.9616788321167883,
+      "parsed_rate": 0.0,
+      "format_rate": 0.0
+    }
+  },
+  "by_n_options": {
+    "hist_seen": {
+      "1": 0,
+      "2": 225,
+      "3": 0,
+      "4": 27,
+      "5+": 296
+    },
+    "hist_eligible": {
+      "1": 0,
+      "2": 225,
+      "3": 0,
+      "4": 27,
+      "5+": 296
+    },
+    "hist_correct": {
+      "1": 0,
+      "2": 225,
+      "3": 0,
+      "4": 7,
+      "5+": 295
+    },
+    "accuracy": {
+      "1": 0.0,
+      "2": 1.0,
+      "3": 0.0,
+      "4": 0.25925925925925924,
+      "5+": 0.9966216216216216
+    },
+    "parsed_rate": {
+      "1": 0.0,
+      "2": 1.0,
+      "3": 0.0,
+      "4": 1.0,
+      "5+": 0.9966216216216216
+    },
+    "format_rate": {
+      "1": 0.0,
+      "2": 1.0,
+      "3": 0.0,
+      "4": 1.0,
+      "5+": 0.9966216216216216
+    }
+  },
+  "split_single_vs_multi": {
+    "n_single": 0,
+    "n_multi": 548,
+    "eligible_single": 0,
+    "eligible_multi": 548,
+    "accuracy_single": 0.0,
+    "accuracy_multi": 0.9616788321167883,
+    "parsed_rate_multi": 0.9981751824817519,
+    "format_rate_multi": 0.9981751824817519
+  },
+  "group_metrics": {
+    "by_issue": {
+      "gun_control": {
+        "n_seen": 548,
+        "n_eligible": 548,
+        "correct": 527,
+        "accuracy": 0.9616788321167883,
+        "parsed_rate": 0.9981751824817519,
+        "format_rate": 0.9981751824817519
+      }
+    },
+    "by_participant_study": {
+      "study1": {
+        "n_seen": 548,
+        "n_eligible": 548,
+        "correct": 527,
+        "accuracy": 0.9616788321167883,
+        "parsed_rate": 0.9981751824817519,
+        "format_rate": 0.9981751824817519
+      }
+    }
+  },
+  "filters": {
+    "issues": [
+      "gun_control"
+    ],
+    "studies": []
+  },
+  "gold_index_distribution": {
+    "1": 15,
+    "2": 232,
+    "3": 3,
+    "4": 2,
+    "5": 296
+  },
+  "baseline_most_frequent_gold_index": {
+    "top_index": 5,
+    "count": 296,
+    "accuracy": 0.5401459854014599
+  },
+  "random_baseline_expected_accuracy": 0.32563868613138686,
+  "notes": "Accuracy computed over eligible rows (gold_index>0). Buckets: 1..4, 5+, unknown."
+}

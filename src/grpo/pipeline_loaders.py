@@ -77,6 +77,9 @@ def _collect_opinion_vectors(
             continue
         if any(math.isnan(v) for v in (before_val, after_val, pred_val)):
             continue
+        # Normalise predictions to [0, 1] when they appear in [1, 7]
+        if pred_val > 1.0:
+            pred_val = (pred_val - 1.0) / 6.0
         truth_before.append(before_val)
         truth_after.append(after_val)
         pred_after.append(pred_val)
@@ -246,6 +249,55 @@ def _build_opinion_study(study_dir: Path) -> OpinionStudyResult | None:
         return None
     payload = _load_json(metrics_path)
     metrics = payload.get("metrics", payload)
+    # Heuristic: if MAE is clearly on a 1–7 scale (>1.0) or predictions include
+    # values outside [0, 1], rebuild metrics from predictions with normalisation.
+    need_rescale = False
+    try:
+        mae_val = float(metrics.get("mae_after", float("nan")))
+        if math.isfinite(mae_val) and mae_val > 1.0:
+            need_rescale = True
+    except (TypeError, ValueError):
+        pass
+    if predictions_path.exists() and not need_rescale:
+        # Peek a few rows for >1 predictions
+        try:
+            with predictions_path.open("r", encoding="utf-8") as handle:
+                for _ in range(10):
+                    line = handle.readline()
+                    if not line:
+                        break
+                    try:
+                        row = json.loads(line)
+                        pred_val = float(row.get("prediction"))
+                        if pred_val > 1.0:
+                            need_rescale = True
+                            break
+                    except Exception:
+                        continue
+        except OSError:
+            pass
+    if need_rescale and predictions_path.exists():
+        LOGGER.info(
+            "Rescaling opinion study metrics from %s due to scale mismatch.",
+            predictions_path,
+        )
+        truth_before, truth_after, pred_after = _collect_opinion_vectors(
+            predictions_path
+        )
+        metrics = compute_opinion_metrics(
+            truth_after=truth_after,
+            truth_before=truth_before,
+            pred_after=pred_after,
+            direction_tolerance=1e-6,
+        )
+        metrics = dict(metrics)
+        metrics["participants"] = metrics.get("eligible", 0)
+        baseline = opinion_baseline_metrics(truth_before, truth_after)
+        try:
+            write_metrics_json(metrics_path, {"metrics": metrics, "baseline": baseline})
+            payload = {"metrics": metrics, "baseline": baseline}
+        except OSError:
+            LOGGER.warning("Unable to overwrite rescaled opinion metrics at %s", metrics_path)
     spec = _resolve_opinion_spec(study_dir.name)
     if spec is None:
         LOGGER.warning("Unknown opinion study directory %s; skipping.", study_dir)

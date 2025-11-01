@@ -28,7 +28,7 @@ from pathlib import Path
 from typing import List, Sequence, Tuple
 
 from common.pipeline.types import BasePipelineSweepOutcome, StudySelection as BaseStudySelection
-from common.opinion.sweep_helpers import ExtrasSweepTask, base_task_kwargs
+from common.opinion.sweep_helpers import ExtrasSweepTask
 
 from ...core.model import XGBoostBoosterParams
 
@@ -345,19 +345,17 @@ class SweepTask(ExtrasSweepTask["xgb.pipeline.context.SweepConfig"]):
         train_participant_studies: Tuple[str, ...] = (),
     ) -> None:
         extras = _SweepTaskExtras(tree_method=str(tree_method or "hist"))
-        # Call base class constructor directly to satisfy pylint and ensure
-        # proper initialisation of BaseSweepTask fields.
-        super().__init__(
-            **base_task_kwargs(
-                index=index,
-                study=study,
-                config=config,
-                base_cli=base_cli,
-                extra_cli=extra_cli,
-                run_root=run_root,
-                metrics_path=metrics_path,
-                train_participant_studies=train_participant_studies,
-            ),
+        # Use the shared initialiser from ExtrasSweepTask to avoid duplicate
+        # forwarding boilerplate and keep logic in one place.
+        self._init_shared(
+            index=index,
+            study=study,
+            config=config,
+            base_cli=base_cli,
+            extra_cli=extra_cli,
+            run_root=run_root,
+            metrics_path=metrics_path,
+            train_participant_studies=train_participant_studies,
             extras=extras,
         )
 

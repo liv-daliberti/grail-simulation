@@ -64,20 +64,18 @@ class ExtrasSweepTask(BaseSweepTask[ConfigT]):
         train_participant_studies: tuple[str, ...] | Tuple[str, ...] | list[str] | None = None,
         extras: Any,
     ) -> None:
-        # Initialise base fields directly to satisfy linters and keep clarity.
-        super().__init__(
-            **base_task_kwargs(
-                index=index,
-                study=study,
-                config=config,
-                base_cli=base_cli,
-                extra_cli=extra_cli,
-                run_root=run_root,
-                metrics_path=metrics_path,
-                train_participant_studies=train_participant_studies,
-            )
+        # Delegate to the shared initialiser to avoid duplication across subclasses.
+        self._init_shared(
+            index=index,
+            study=study,
+            config=config,
+            base_cli=base_cli,
+            extra_cli=extra_cli,
+            run_root=run_root,
+            metrics_path=metrics_path,
+            train_participant_studies=train_participant_studies,
+            extras=extras,
         )
-        object.__setattr__(self, "_extras", extras)
 
     def _init_shared(
         self,

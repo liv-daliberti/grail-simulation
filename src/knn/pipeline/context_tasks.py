@@ -12,7 +12,7 @@ from typing import Sequence, Tuple
 
 from common.pipeline.types import StudySpec
 from common.opinion.sweep_types import BaseOpinionSweepTask
-from common.opinion.sweep_helpers import ExtrasSweepTask, base_task_kwargs
+from common.opinion.sweep_helpers import ExtrasSweepTask
 
 from .context_config import SweepConfig
 
@@ -59,17 +59,17 @@ class SweepTask(ExtrasSweepTask["SweepConfig"]):
             issue=issue,
             issue_slug=issue_slug,
         )
-        super().__init__(
-            **base_task_kwargs(
-                index=index,
-                study=study,
-                config=config,
-                base_cli=base_cli,
-                extra_cli=extra_cli,
-                run_root=run_root,
-                metrics_path=metrics_path,
-                train_participant_studies=train_participant_studies,
-            ),
+        # Use the shared initialiser from ExtrasSweepTask to avoid duplicate
+        # forwarding boilerplate and keep logic in one place.
+        self._init_shared(
+            index=index,
+            study=study,
+            config=config,
+            base_cli=base_cli,
+            extra_cli=extra_cli,
+            run_root=run_root,
+            metrics_path=metrics_path,
+            train_participant_studies=train_participant_studies,
             extras=extras,
         )
 

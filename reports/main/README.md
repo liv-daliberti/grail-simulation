@@ -6,25 +6,25 @@ This report compares grail, grpo, gpt4o, knn, and xgb across the next-video and 
 
 | Study | GPT-4o | GRPO | GRAIL | KNN | XGB |
 | --- | --- | --- | --- | --- | --- |
-| Study 1 – Gun Control (MTurk) | 0.261 | — | 0.964 | 0.763 | 0.874 |
-| Study 2 – Minimum Wage (MTurk) | 0.286 | 0.356 | 0.477 | 0.355 | 0.329 |
-| Study 3 – Minimum Wage (YouGov) | 0.251 | 0.442 | 0.504 | 0.320 | 0.359 |
+| Study 1 – Gun Control (MTurk) | 0.261 | 0.963 | 0.980 | 0.763 | — |
+| Study 2 – Minimum Wage (MTurk) | 0.286 | 0.478 | 0.477 | 0.355 | — |
+| Study 3 – Minimum Wage (YouGov) | 0.251 | 0.405 | 0.504 | 0.320 | — |
 
 ## Opinion Directional Accuracy (↑)
 
 | Study | GPT-4o | GRPO | GRAIL | KNN | XGB |
 | --- | --- | --- | --- | --- | --- |
-| Study 1 – Gun Control (MTurk) | 0.704 | — | — | 0.704 | 0.759 |
-| Study 2 – Minimum Wage (MTurk) | 0.545 | — | — | 0.564 | 0.558 |
-| Study 3 – Minimum Wage (YouGov) | 0.510 | — | — | 0.521 | 0.549 |
+| Study 1 – Gun Control (MTurk) | 0.704 | 0.704 | 0.704 | 0.704 | — |
+| Study 2 – Minimum Wage (MTurk) | 0.545 | 0.545 | 0.545 | 0.564 | — |
+| Study 3 – Minimum Wage (YouGov) | 0.510 | 0.510 | 0.510 | 0.521 | — |
 
 ## Opinion MAE (↓)
 
 | Study | GPT-4o | GRPO | GRAIL | KNN | XGB |
 | --- | --- | --- | --- | --- | --- |
-| Study 1 – Gun Control (MTurk) | 0.535 | — | — | 0.030 | 0.026 |
-| Study 2 – Minimum Wage (MTurk) | 0.671 | — | — | 0.091 | 0.090 |
-| Study 3 – Minimum Wage (YouGov) | 0.697 | — | — | 0.089 | 0.083 |
+| Study 1 – Gun Control (MTurk) | 0.535 | 0.554 | nan | 0.030 | — |
+| Study 2 – Minimum Wage (MTurk) | 0.671 | 0.853 | 0.902 | 0.091 | — |
+| Study 3 – Minimum Wage (YouGov) | 0.697 | 0.722 | 0.892 | 0.089 | — |
 
 Notes
 

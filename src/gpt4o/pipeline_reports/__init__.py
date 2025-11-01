@@ -572,7 +572,7 @@ def _write_opinion_report(
 
     _write_opinion_csv(directory, csv_rows)
 
-    lines.append("### Artefacts")
+    lines.append("## Artefacts")
     lines.append("")
     lines.extend(_artifact_lines(opinion, context.repo_root))
 

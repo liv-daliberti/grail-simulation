@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import json
 from dataclasses import dataclass
+import math
 from math import sqrt
 from pathlib import Path
 from typing import Mapping, Optional
@@ -193,6 +194,16 @@ def _build_next_video_result(family: str) -> Optional[_NVResult]:
     )
 
 
+def _count_prediction_rows(path: Path) -> int:
+    """Return the number of JSONL rows in ``path`` if it exists, else 0."""
+
+    try:
+        with path.open("r", encoding="utf-8") as handle:
+            return sum(1 for _ in handle)
+    except FileNotFoundError:
+        return 0
+
+
 def _collect_opinion_studies(family: str) -> list[dict[str, object]]:
     """Return per-study opinion payloads from both gun and wage runs."""
 
@@ -204,11 +215,20 @@ def _collect_opinion_studies(family: str) -> list[dict[str, object]]:
         baseline = payload.get("baseline", {})
         study_key = metrics_path.parent.name
         predictions = metrics_path.parent / "predictions.jsonl"
+        participants = 0
+        try:
+            participants = int(metrics.get("participants", 0) or 0)
+        except (TypeError, ValueError):
+            participants = 0
+        predictions = metrics_path.parent / "predictions.jsonl"
+        if participants <= 0:
+            participants = _count_prediction_rows(predictions)
+
         row = {
             "study_key": study_key,
             "metrics": metrics,
             "baseline": baseline if isinstance(baseline, Mapping) else {},
-            "participants": int(metrics.get("participants", 0) or 0),
+            "participants": participants,
             "eligible": int(metrics.get("eligible", 0) or 0),
             "predictions": predictions,
         }
@@ -230,32 +250,63 @@ def _combine_opinion_metrics(rows: list[dict[str, object]]) -> Mapping[str, obje
     if total_elig <= 0:
         return {}
 
-    def _get_float(r: dict, key: str) -> float:
+    def _get_float(r: dict, key: str) -> float | None:
         try:
-            return float(r.get("metrics", {}).get(key) or 0.0)
+            val = float(r.get("metrics", {}).get(key))
         except (TypeError, ValueError):
-            return 0.0
+            return None
+        return None if math.isnan(val) else val
 
     # Weighted sums
-    w_mae_after = sum(_get_float(r, "mae_after") * int(r.get("eligible", 0) or 0) for r in rows)
-    w_mae_change = sum(_get_float(r, "mae_change") * int(r.get("eligible", 0) or 0) for r in rows)
-    w_dir_ok = sum(_get_float(r, "direction_accuracy") * int(r.get("eligible", 0) or 0) for r in rows)
+    w_mae_after = 0.0
+    w_mae_change = 0.0
+    w_dir_ok = 0.0
+    for r in rows:
+        elig = int(r.get("eligible", 0) or 0)
+        if elig <= 0:
+            continue
+        mae_after = _get_float(r, "mae_after")
+        mae_change = _get_float(r, "mae_change")
+        dir_acc = _get_float(r, "direction_accuracy")
+        if mae_after is not None:
+            w_mae_after += mae_after * elig
+        if mae_change is not None:
+            w_mae_change += mae_change * elig
+        if dir_acc is not None:
+            w_dir_ok += dir_acc * elig
 
     # RMSE requires SSE aggregation: rmse^2 * n
-    sse_after = sum(((_get_float(r, "rmse_after") ** 2) * int(r.get("eligible", 0) or 0)) for r in rows)
-    sse_change = sum(((_get_float(r, "rmse_change") ** 2) * int(r.get("eligible", 0) or 0)) for r in rows)
+    sse_after = 0.0
+    sse_change = 0.0
+    for r in rows:
+        elig = int(r.get("eligible", 0) or 0)
+        if elig <= 0:
+            continue
+        rmse_after = _get_float(r, "rmse_after")
+        rmse_change = _get_float(r, "rmse_change")
+        if rmse_after is not None:
+            sse_after += (rmse_after ** 2) * elig
+        if rmse_change is not None:
+            sse_change += (rmse_change ** 2) * elig
 
     # Calibration ECE: approximate with eligible-weighted average
-    w_ece = sum(_get_float(r, "calibration_ece") * int(r.get("eligible", 0) or 0) for r in rows)
+    w_ece = 0.0
+    for r in rows:
+        elig = int(r.get("eligible", 0) or 0)
+        if elig <= 0:
+            continue
+        ece = _get_float(r, "calibration_ece")
+        if ece is not None:
+            w_ece += ece * elig
 
     return {
         "eligible": total_elig,
-        "mae_after": (w_mae_after / total_elig) if total_elig else None,
-        "mae_change": (w_mae_change / total_elig) if total_elig else None,
-        "direction_accuracy": (w_dir_ok / total_elig) if total_elig else None,
+        "mae_after": (w_mae_after / total_elig) if total_elig and w_mae_after else None,
+        "mae_change": (w_mae_change / total_elig) if total_elig and w_mae_change else None,
+        "direction_accuracy": (w_dir_ok / total_elig) if total_elig and w_dir_ok else None,
         "rmse_after": sqrt(sse_after / total_elig) if total_elig and sse_after else None,
         "rmse_change": sqrt(sse_change / total_elig) if total_elig and sse_change else None,
-        "calibration_ece": (w_ece / total_elig) if total_elig else None,
+        "calibration_ece": (w_ece / total_elig) if total_elig and w_ece else None,
     }
 
 

@@ -31,8 +31,6 @@ from common.pipeline.io import write_markdown_lines
 from common.reports.utils import start_markdown_report
 
 from ..context import (
-    OpinionStudySelection,
-    OpinionSweepOutcome,
     StudySelection,
     SweepOutcome,
 )

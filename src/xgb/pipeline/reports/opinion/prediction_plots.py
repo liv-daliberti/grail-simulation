@@ -309,7 +309,7 @@ def _opinion_feature_plot_section(directory: Path) -> List[str]:
             unique_images.append(image)
         if not unique_images:
             continue
-        sections.append(f"### {feature_space.upper()} Opinion Plots")
+        sections.append(f"## {feature_space.upper()} Opinion Plots")
         sections.append("")
         for image in unique_images:
             append_image_section(

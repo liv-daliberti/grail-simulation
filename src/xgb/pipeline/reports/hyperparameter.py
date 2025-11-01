@@ -38,9 +38,7 @@ from common.reports.fields import (
 )
 
 from ..context import (
-    OpinionStudySelection,
     OpinionSummary,
-    OpinionSweepOutcome,
     StudySelection,
     SweepConfig,
     SweepOutcome,

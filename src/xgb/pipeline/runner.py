@@ -27,9 +27,7 @@ from dataclasses import dataclass, field
 from common.prompts.docs import merge_default_extra_fields
 
 from .cli import (
-    _build_sweep_configs,
     _parse_args,
-    _resolve_study_specs,
     _split_tokens,
 )
 from .context import FinalEvalContext

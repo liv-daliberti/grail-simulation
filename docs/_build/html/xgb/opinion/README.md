@@ -11,7 +11,7 @@ This summary captures the opinion-regression baselines trained with XGBoost for 
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | study1 | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 
-### TFIDF Opinion Plots
+## TFIDF Opinion Plots
 
 ![Change Heatmap Study1](tfidf/opinion/change_heatmap_study1.png)
 
@@ -31,7 +31,7 @@ This summary captures the opinion-regression baselines trained with XGBoost for 
 
 ![Post Heatmap Study3](tfidf/opinion/post_heatmap_study3.png)
 
-### WORD2VEC Opinion Plots
+## WORD2VEC Opinion Plots
 
 ![Change Heatmap Study1](word2vec/opinion/change_heatmap_study1.png)
 
@@ -45,7 +45,7 @@ This summary captures the opinion-regression baselines trained with XGBoost for 
 
 ![Post Heatmap Study2](word2vec/opinion/post_heatmap_study2.png)
 
-### SENTENCE_TRANSFORMER Opinion Plots
+## SENTENCE_TRANSFORMER Opinion Plots
 
 ![Change Heatmap Study3](sentence_transformer/opinion/change_heatmap_study3.png)
 
